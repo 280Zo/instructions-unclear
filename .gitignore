@@ -1,0 +1,41 @@
+# PMB project-local memory
+.pmb/
+
+# superpowers planning and execution scratch (local only)
+.superpowers/
+docs/superpowers/
+
+node_modules/
+
+# Credentials and auth files. These never belong here; this is a backstop
+# in case one is copied in by mistake.
+.env
+.env.*
+*.key
+*.pem
+.claude.json
+.credentials.json
+auth.json
+oauth_creds.json
+
+# Written by `rulesync import`, which copies live config verbatim,
+# including any tokens in MCP server env values and headers.
+.rulesync/
+
+# The repo's AI guide. Re-included because a global gitignore may ignore
+# AGENTS.md everywhere.
+!/AGENTS.md
+
+# Files rulesync writes into this repo if generate is run WITHOUT --global.
+# They are never source files; delete them if they appear. (It would also
+# overwrite AGENTS.md above; restore it with `git checkout -- AGENTS.md`.)
+/CLAUDE.md
+/GEMINI.md
+/opencode.json
+/opencode.jsonc
+/.opencode/
+/.claude/
+/.codex/
+/.gemini/
+/.agents/
+/.mcp.json

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
+  // Everything in this repo is user-level configuration. ALWAYS run
+  // generate with --global: rulesync ignores "global": true in this file
+  // when inputRoots is set, and without the flag it writes into this repo.
+  // OpenCode by default. Pass --targets to generate for other assistants.
+  "targets": ["opencode"],
+  // A complete install. If you already have these skills and MCP servers
+  // set up by hand, run with --features rules,subagents instead (see README).
+  "features": ["rules", "subagents", "skills", "mcp"],
+  // Never delete files rulesync did not create (installed skills, etc.).
+  "delete": false,
+  // Each folder below is one source tree. Rules from all of them are merged
+  // into one AGENTS.md; MCP servers from every mcp.jsonc are merged.
+  "inputRoots": [
+    "house-rules",
+    "tools/docling",
+    "tools/exa",
+    "tools/pmb",
+    "collections/careers",
+    "collections/humanizer"
+  ]
+}
