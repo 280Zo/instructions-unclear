@@ -1,0 +1,10 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
+  // Security profile: every Trail of Bits skill and agent, installed into one
+  // folder instead of your home folder. Run from the repo root; paths below
+  // are relative to it. See this folder's README. Never run this with --global.
+  "targets": ["opencode"],
+  "features": ["skills", "subagents"],
+  "delete": false,
+  "inputRoots": ["skills/trailofbits"]
+}

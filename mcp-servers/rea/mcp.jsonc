@@ -1,0 +1,14 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/mcp-schema.json",
+  "mcpServers": {
+    // Pinned to the same release as skills/reverse-engineer-anything.
+    // Change both together (README, "Updating").
+    "rea": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "rea-agents@6.5.0", "mcp"],
+      // The first start downloads the package.
+      "timeout": 60000
+    }
+  }
+}

@@ -7,10 +7,14 @@ docs/superpowers/
 
 node_modules/
 
+# Your own pick of folders to install; rulesync overlays it on rulesync.jsonc.
+rulesync.local.jsonc
+
 # Credentials and auth files. These never belong here; this is a backstop
 # in case one is copied in by mistake.
 .env
 .env.*
+!.env.example
 *.key
 *.pem
 .claude.json

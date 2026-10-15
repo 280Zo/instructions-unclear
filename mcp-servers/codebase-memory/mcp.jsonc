@@ -1,0 +1,14 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/mcp-schema.json",
+  "mcpServers": {
+    // Runs the installed binary (see README). Off by default; turn it on in
+    // your tool when you want it. Named as upstream names it, so existing
+    // permission rules for "codebase-memory-mcp_*" keep matching.
+    "codebase-memory-mcp": {
+      "type": "stdio",
+      "command": "codebase-memory-mcp",
+      "args": [],
+      "disabled": true
+    }
+  }
+}

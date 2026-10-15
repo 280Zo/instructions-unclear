@@ -11,13 +11,34 @@
   // Never delete files rulesync did not create (installed skills, etc.).
   "delete": false,
   // Each folder below is one source tree. Rules from all of them are merged
-  // into one AGENTS.md; MCP servers from every mcp.jsonc are merged.
+  // into one AGENTS.md in this order; MCP servers from every mcp.jsonc are
+  // merged. Keep rules/shell-preamble first and its reminder last.
   "inputRoots": [
-    "house-rules",
-    "tools/docling",
-    "tools/exa",
-    "tools/pmb",
-    "collections/careers",
-    "collections/humanizer"
+    "rules/shell-preamble",
+    "rules/scope-secrets-approvals",
+    "rules/engineering",
+    "rules/secure-coding",
+    "rules/communication",
+    "skills/package-management",
+    "plugins/superpowers",
+    "agents/second-opinion",
+    "mcp-servers/docling",
+    "mcp-servers/exa",
+    "mcp-servers/pmb",
+    "mcp-servers/presenton",
+    "mcp-servers/freecad",
+    "mcp-servers/codebase-memory",
+    "skills/eli5",
+    "skills/report",
+    "skills/careers",
+    "skills/humanizer",
+    "skills/visual-explainer",
+    "skills/diagram-design",
+    "skills/frontend-slides",
+    "skills/anthropic-design",
+    "skills/geo-sleuth",
+    "skills/distilly",
+    "agents/local-model",
+    "rules/shell-preamble-reminder"
   ]
 }

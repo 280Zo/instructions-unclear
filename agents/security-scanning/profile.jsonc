@@ -1,0 +1,9 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
+  // Security scanning profile. Run from the repo root with --output-roots
+  // pointing at your chosen folder. See this folder's README. Never run this with --global.
+  "targets": ["opencode"],
+  "features": ["subagents", "skills", "commands"],
+  "delete": false,
+  "inputRoots": ["agents/security-scanning"]
+}
