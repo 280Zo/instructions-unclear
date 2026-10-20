@@ -9,8 +9,8 @@ From this repo it's a **profile**: it lives in one folder you choose, so it load
 From the repo root:
 
 ```bash
-mkdir -p ~/security
-npx rulesync@33.0.0 generate --config skills/trailofbits/profile.jsonc --output-roots ~/security --targets claudecode,codexcli,opencode
+mkdir -p ~/AI/security
+npx rulesync@33.0.0 generate --config skills/trailofbits/profile.jsonc --output-roots ~/AI/security --targets claudecode,codexcli,opencode
 ```
 
 Swap `--targets` for your tools. Never add `--global`. Run the same command again to update the folder.
@@ -25,7 +25,7 @@ Optional: for the parts this copy leaves out (slash commands, hooks, workflows, 
 The profile folder is where your tool starts, not where your code has to be. Start the tool there and point it at the code by path:
 
 ```bash
-cd ~/security
+cd ~/AI/security
 opencode        # or claude, codex
 ```
 
@@ -35,7 +35,36 @@ opencode        # or claude, codex
 - "We fixed this bug; find other places with the same pattern" (`variant-analysis`)
 - "Check the supply-chain risk of this project's dependencies" (`supply-chain-risk-auditor`)
 
-Many skills drive tools you install yourself: Semgrep, CodeQL, fuzzers, sanitizers, `cargo +nightly`. Each skill names what it needs.
+## Tools you need
+
+This is a collection of instructions, scripts and agents, not an installer for
+all security software. Pick the row for your task; exact requirements live in
+the selected skill. Review scripts and installs before running them.
+
+| Task | Tools and prerequisites |
+| --- | --- |
+| Code review and threat analysis | Source files and Git; many review skills need no separate scanner |
+| Static analysis | Semgrep, or CodeQL CLI with query packs and the project's supported build toolchain |
+| Python helpers | Python and an isolated environment; several script folders have their own `pyproject.toml` or lockfile. Follow those rather than installing every helper into one global environment |
+| Native sanitizers | A supported C/C++ compiler and sanitizer runtime, commonly Clang/LLVM or GCC, plus a build you can instrument |
+| Fuzzing | The selected engine: libFuzzer/LLVM, AFL++, libAFL, cargo-fuzz with a supported Rust nightly, or Python engines such as Atheris. Corpora and harnesses are project-specific |
+| Rust review | Rust/Cargo and applicable Clippy, Miri, nightly or mutation tools required by the specific workflow |
+| Blockchain review | Only the relevant ecosystem: for example Slither/solc, Foundry, or the chosen chain's compiler and SDK |
+| Crypto/protocol workflows | Tools such as ProVerif, or compiler/assembly tooling for timing analysis, where named by the skill |
+| Artifact analysis | A YARA-compatible engine for YARA workflows; Burp Suite project files for the Burp parser; debug information for DWARF workflows |
+| External model reviews | The configured external CLI/provider, account and network access; a model-review skill does not install or authenticate them |
+
+For standalone Python scanners, isolated installs are an option:
+
+```bash
+uv tool install semgrep
+uv tool install slither-analyzer
+```
+
+Other tools come from their official distributions or your OS package manager.
+CodeQL, Burp and hosted services have their own license/access requirements.
+Do not install this entire table just to load the skills. The upstream plugin
+resources omitted from this copy are a separate limitation described below.
 
 ## Changes from upstream
 

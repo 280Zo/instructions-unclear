@@ -1,0 +1,12 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/mcp-schema.json",
+  "mcpServers": {
+    // Official MCP add-on 0.4.0: preserve HTTPS and raw Authorization key.
+    "zap": {
+      "type": "http",
+      "url": "https://localhost:8282",
+      "headers": {"Authorization": "${ZAP_MCP_SECURITY_KEY}"},
+      "disabled": true
+    }
+  }
+}

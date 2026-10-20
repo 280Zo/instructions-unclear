@@ -4,36 +4,39 @@
 
 From this repo, REA is a **profile**: it lives in one folder you choose. Start your coding tool in that folder and REA's tools and instructions are there. Start it anywhere else and REA isn't loaded at all, so it costs nothing in your everyday sessions.
 
-| File | What it is |
-|---|---|
-| `mcp.jsonc` | The `rea` MCP server, run as `npx -y rea-agents@6.5.0 mcp` |
+| File                                | What it is                                                                                           |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `mcp.jsonc`                         | The `rea` MCP server, run as `npx -y rea-agents@6.5.0 mcp`                                           |
 | `skills/reverse-engineer-anything/` | REA's investigation playbook: which tool to run for which kind of target, and how to report findings |
-| `profile.jsonc` | Installs both into your chosen folder |
+| `profile.jsonc`                     | Installs both into your chosen folder                                                                |
 
 ## Install
 
 1. Have Node.js 22.19+, 24.11+ or 26+. The first start downloads `rea-agents`, so it's slower than later ones.
+
 2. From the repo root, install into the folder you'll work in:
 
    ```bash
-   mkdir -p ~/rea
-   npx rulesync@33.0.0 generate --config mcp-servers/rea/profile.jsonc --output-roots ~/rea --targets claudecode,codexcli,opencode
+   mkdir -p ~/AI/reverse_engineering/rea
+   npx rulesync@33.0.0 generate --config mcp-servers/rea/profile.jsonc --output-roots ~/AI/reverse_engineering/rea --targets claudecode,codexcli,opencode
    ```
 
    Swap `--targets` for the tools you use. Never add `--global`: that would put REA in every session.
 
 That's enough for JavaScript, Electron, .NET and websites. Other targets need extra tools installed separately:
 
-| Target | Needs |
-|---|---|
-| Native binaries | Ghidra 12.1.x (set `GHIDRA_INSTALL_DIR` before starting your tool), IDA or Hopper |
-| Android, firmware, packet captures | The tools in [REA's list](https://github.com/morluto/rea#what-you-can-analyze) |
-| JavaScript and Electron, on Linux | A procps-compatible `ps` on your `PATH` (most distributions have it) |
+| Target                             | Needs                                                                             |
+| ---------------------------------- | --------------------------------------------------------------------------------- |
+| Native binaries                    | Ghidra 12.1.x (set `GHIDRA_INSTALL_DIR` before starting your tool), IDA or Hopper |
+| Android, firmware, packet captures | The tools in [REA's list](https://github.com/morluto/rea#what-you-can-analyze)    |
+| JavaScript and Electron, on Linux  | A procps-compatible `ps` on your `PATH` (most distributions have it)              |
 
 ## Use
 
+See the [tooling assessment](../../reference/security-re-tooling.md) for the complete inventory and overlap decisions. The [reverse-engineering group](../../groups/README.md#reverse_engineering) adds IoTHackBot and ReVa skills plus disabled ReVa/radare2 connections; this REA-only profile remains unchanged.
+
 ```bash
-cd ~/rea
+cd ~/AI/reverse_engineering/rea
 opencode        # or claude, codex
 ```
 

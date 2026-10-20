@@ -4,7 +4,7 @@ A skill for clean, editorial diagrams: 39 types, from architecture and flowchart
 
 ## Install
 
-Skills are added alongside what you already have, so this folder can be installed on its own. From the repo root:
+This folder holds the skill and a one-line rule (written for this repo) telling the agent when to use it. The rule goes into your tool's instructions file, which rulesync replaces on every run, so to get it, add `skills/diagram-design` to `inputRoots` in your `rulesync.local.jsonc` with your other rule folders, or use an [install group](../../groups/). To add just the skill, from the repo root:
 
 ```bash
 npx rulesync@33.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/diagram-design
@@ -19,7 +19,7 @@ Swap `--targets` for your tools. To keep it in your regular install, add `skills
 - "Match the style of https://example.com" (it reads the site to pick colours and fonts)
 - "Redraw this Mermaid diagram properly" (it converts draw.io and Mermaid sources)
 
-The communication rule sends diagram requests here, and `report` uses it for the diagrams in reports. Browse every type in [upstream's gallery](https://cathrynlavery.github.io/diagram-design/), or open `skills/diagram-design/assets/index.html` locally.
+Its rule sends diagram requests here, and `report` uses it for the diagrams in reports. Browse every type in [upstream's gallery](https://cathrynlavery.github.io/diagram-design/), or open `skills/diagram-design/assets/index.html` locally.
 
 ## Origin
 

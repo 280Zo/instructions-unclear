@@ -1,0 +1,11 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/mcp-schema.json",
+  "mcpServers": {
+    // ReVa v7.3.1 assistant mode; start the matched Ghidra extension separately.
+    "reva": {
+      "type": "http",
+      "url": "http://127.0.0.1:8080/mcp/message",
+      "disabled": true
+    }
+  }
+}

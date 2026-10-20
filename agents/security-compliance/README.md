@@ -2,27 +2,41 @@
 
 One agent, `security-compliance-security-auditor`, and one command, `compliance-check`, from Seth Hobson's agent collection: DevSecOps, compliance frameworks (GDPR, HIPAA, SOC 2) and audit evidence.
 
-From this repo it's a **profile**: it installs into one folder you choose, not your home folder.
+This bundle is included in the default global install. Installing the context
+files does not run a scan, install tools or authorize changes to a project.
 
 ## Install
 
 From the repo root:
 
 ```bash
-mkdir -p ~/security
-npx rulesync@33.0.0 generate --config agents/security-compliance/profile.jsonc --output-roots ~/security --targets opencode,claudecode,codexcli
+npx rulesync@33.0.0 generate --global --targets opencode,claudecode,codexcli --features subagents,commands --input-roots agents/security-compliance
 ```
 
-Swap `--targets` for your tools. Never add `--global`. Run the same command again to update. Codex gets the agent but not the command: rulesync 33.0.0 only writes Codex commands globally.
+Swap `--targets` for your tools. The command installs just this bundle without
+replacing rules or MCP settings. The repo's default install includes it too.
+Run the same command again to update. Commands are included in global output
+for OpenCode, Claude Code and Codex; invocation depends on the assistant.
+
+Older workspace-profile copies are not removed automatically. If you used one,
+review that workspace for duplicate agents and commands after installing globally.
 
 ## Use
 
-Start your tool in the profile folder and point it at the code by path:
+Start your tool in the project you want reviewed:
 
 - "Use the security auditor to list the evidence we'd need for a SOC 2 review of `~/code/app`"
 - `/compliance-check` (OpenCode, Claude Code)
 
 The command can run checks and propose changes; say what it may touch first. Your installed rules still apply.
+
+## Tools you need
+
+No scanner is required to discuss compliance requirements or assemble an
+evidence checklist. Automated evidence collection needs the relevant project's
+runtime, test tools and any scanners you choose. The prompt contains example
+code, not a preinstalled audit application. Installing this bundle does not
+establish compliance or replace a qualified compliance review.
 
 ## Changes from upstream
 

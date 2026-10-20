@@ -1,0 +1,27 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
+  // Rules plus writing, reporting and visual skills. Run from the repo root
+  // with --global. Does not write MCP settings.
+  "targets": ["opencode"],
+  "features": ["rules", "subagents", "skills"],
+  "delete": false,
+  "inputRoots": [
+    "rules/shell-preamble",
+    "rules/scope-secrets-approvals",
+    "rules/engineering",
+    "rules/communication",
+    "skills/package-management",
+    "agents/second-opinion",
+    "mcp-servers/docling",
+    "mcp-servers/exa",
+    "mcp-servers/pmb",
+    "skills/eli5",
+    "skills/report",
+    "skills/humanizer",
+    "skills/visual-explainer",
+    "skills/diagram-design",
+    "skills/frontend-slides",
+    "skills/anthropic-design",
+    "rules/shell-preamble-reminder"
+  ]
+}

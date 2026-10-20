@@ -14,9 +14,13 @@ Add it to `plugins` in `~/.config/opencode/opencode.jsonc` and restart OpenCode:
 
 Upstream's setup wizard (`npx @slkiser/opencode-quota init`) does the same and also offers a sidebar panel and a status line. Some providers, Anthropic among them, need a setup step; `/quota_status` tells you which.
 
-### Install with an agent
+### Let your agent do it
 
-Ask your agent: "Install opencode-quota by following `plugins/opencode-quota/README.md` in this repo." The steps below are for the agent.
+Skip this if you installed it by hand. Otherwise, start your coding tool in this repo and say:
+
+> Install opencode-quota for me, using `plugins/opencode-quota/README.md`.
+
+The agent follows these steps:
 
 1. Get the user's approval before editing their OpenCode config.
 2. Open `~/.config/opencode/opencode.jsonc`. If `plugins` (OpenCode 2) or `plugin` (OpenCode 1) already lists `@slkiser/opencode-quota`, stop: it's installed. Otherwise add `"@slkiser/opencode-quota@latest"` to that list, creating `plugins` if neither key exists. Edit only that list; keep every comment and other setting.

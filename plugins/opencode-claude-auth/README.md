@@ -17,9 +17,13 @@ No rules or skills go with it: it changes how OpenCode connects, not what the ag
 
 This is for OpenCode 2 only. OpenCode 1 uses the original [opencode-claude-auth](https://github.com/griffinmartin/opencode-claude-auth) under a singular `plugin` key; don't put both keys in one config.
 
-### Install with an agent
+### Let your agent do it
 
-Ask your agent: "Install opencode-claude-auth by following `plugins/opencode-claude-auth/README.md` in this repo." The steps below are for the agent.
+Skip this if you installed it by hand. Otherwise, start your coding tool in this repo and say:
+
+> Install opencode-claude-auth for me, using `plugins/opencode-claude-auth/README.md`.
+
+The agent follows these steps:
 
 1. Get the user's approval before editing their OpenCode config.
 2. Check the OpenCode version with `opencode --version`. If it's OpenCode 1, stop and point the user to the original plugin linked above.

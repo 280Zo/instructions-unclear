@@ -1,0 +1,12 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/mcp-schema.json",
+  "mcpServers": {
+    // Requires separately installed radare2-mcp 1.8.8 and matching radare2.
+    "radare2": {
+      "type": "stdio",
+      "command": "r2mcp",
+      "args": ["-R", "-n", "-N"],
+      "disabled": true
+    }
+  }
+}

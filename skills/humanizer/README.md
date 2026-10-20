@@ -4,7 +4,7 @@ A skill that rewrites text that sounds AI-written so it reads like a person wrot
 
 ## Install
 
-Skills are added alongside what you already have, so this folder can be installed on its own. From the repo root:
+This folder holds the skill and a one-line rule (written for this repo) telling the agent when to use it. The rule goes into your tool's instructions file, which rulesync replaces on every run, so to get it, add `skills/humanizer` to `inputRoots` in your `rulesync.local.jsonc` with your other rule folders, or use an [install group](../../groups/). To add just the skill, from the repo root:
 
 ```bash
 npx rulesync@33.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/humanizer
@@ -18,7 +18,7 @@ Swap `--targets` for your tools. To keep it in your regular install, add `skills
 - "Humanize `README.md`" edits the file in place, changing prose only (code, commands and links stay as they are).
 - Give it a sample of your own writing and it matches your voice.
 
-The [communication rule](../../rules/communication/) tells the agent to use it for anything people will read: READMEs, docs, commit messages and pull requests.
+Its rule tells the agent to use it for anything people will read: READMEs, docs, commit messages and pull requests.
 
 ## Origin
 

@@ -4,13 +4,13 @@ A skill that turns explanations, plans, code reviews and data into a self-contai
 
 ## Install
 
-Skills are added alongside what you already have, so this folder can be installed on its own. From the repo root:
+This folder holds the skill and a one-line rule (written for this repo) telling the agent when to use it. The rule goes into your tool's instructions file, which rulesync replaces on every run, so to get it, add `skills/visual-explainer` to `inputRoots` in your `rulesync.local.jsonc` with your other rule folders, or use an [install group](../../groups/). To add just the skill, from the repo root:
 
 ```bash
 npx rulesync@33.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/visual-explainer
 ```
 
-Swap `--targets` for your tools. To keep it in your regular install, add `skills/visual-explainer` to `inputRoots` in your `rulesync.local.jsonc`. It works best alongside `diagram-design` and `theme-factory`, which the communication rule points it to.
+Swap `--targets` for your tools. To keep it in your regular install, add `skills/visual-explainer` to `inputRoots` in your `rulesync.local.jsonc`. It works best alongside `diagram-design` and `theme-factory`.
 
 ## Use
 

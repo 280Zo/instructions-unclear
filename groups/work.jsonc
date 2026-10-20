@@ -1,0 +1,33 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
+  // Work machine: OpenCode plus GitHub Copilot (VS Code) and Copilot CLI.
+  // Run from the repo root with --global, --dry-run first. Writes MCP settings.
+  "targets": ["opencode", "copilot", "copilotcli"],
+  "features": ["rules", "subagents", "skills", "commands", "mcp"],
+  "delete": false,
+  "inputRoots": [
+    "rules/shell-preamble",
+    "rules/scope-secrets-approvals",
+    "rules/engineering",
+    "rules/secure-coding",
+    "rules/communication",
+    "skills/package-management",
+    "agents/local-model",
+    "agents/second-opinion",
+    "agents/security-compliance",
+    "agents/security-scanning",
+    "mcp-servers/codebase-memory",
+    "mcp-servers/docling",
+    "mcp-servers/exa",
+    "mcp-servers/pmb",
+    "mcp-servers/presenton",
+    "skills/anthropic-design",
+    "skills/diagram-design",
+    "skills/eli5",
+    "skills/frontend-slides",
+    "skills/humanizer",
+    "skills/report",
+    "skills/visual-explainer",
+    "rules/shell-preamble-reminder"
+  ]
+}

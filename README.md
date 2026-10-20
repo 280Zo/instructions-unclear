@@ -21,17 +21,19 @@ Every folder below installs on its own. Open a group to see what's in it; each f
 | [`rules/scope-secrets-approvals`](rules/scope-secrets-approvals/) | Where to work, what never to touch, what to ask before doing        |
 | [`rules/engineering`](rules/engineering/)                         | Small changes, commands, verification                               |
 | [`rules/secure-coding`](rules/secure-coding/)                     | The security mistakes AI-written code makes most often              |
-| [`rules/communication`](rules/communication/)                     | Assumptions, summaries, prose, which skill draws what               |
+| [`rules/communication`](rules/communication/)                     | State assumptions and summarize at the end                          |
 
 </details>
 
 <details>
-<summary>Agents: second opinions and a local-model working mode</summary>
+<summary>Agents: second opinions, local models and security checks</summary>
 
 | Folder                                              | Adds                                                                                                   |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | [`agents/second-opinion`](agents/second-opinion/)   | `second-opinion` reviews how the session is going; `evaluator` and `metacognitive` check answers and reasoning |
 | [`agents/local-model`](agents/local-model/) | Small working turns, scoped delegation and safe pause/resume handoffs for local models or fragile connections |
+| [`agents/security-compliance`](agents/security-compliance/) | A security auditor agent and a compliance-check command; included in the default global install |
+| [`agents/security-scanning`](agents/security-scanning/) | Security auditor and threat-modeling agents, 5 skills and 3 commands; included in the default global install |
 
 </details>
 
@@ -64,7 +66,9 @@ Every folder below installs on its own. Open a group to see what's in it; each f
 | [`skills/humanizer`](skills/humanizer/)               | `humanizer`: rewrites text that sounds AI-written                                                         |
 | [`skills/distilly`](skills/distilly/)                 | `distilly`: turns a public figure, colleague or someone you know into a skill that thinks the way they do |
 | [`skills/geo-sleuth`](skills/geo-sleuth/)             | `geo-sleuth`: works out where and when a photo was taken, with checkable evidence                         |
-| [`skills/careers`](skills/careers/)                   | 22 skills for resumes, cover letters, applications, interviews and offers                                 |
+| [`skills/resume-skills`](skills/resume-skills/)       | 22 skills for resumes, cover letters, applications, interviews and offers. Career group only              |
+| [`skills/interview-coach`](skills/interview-coach/)   | `interview-coach`: interview prep, mock interviews, debriefs and a storybank, with scoring. Career group only |
+| [`skills/career-workspace`](skills/career-workspace/) | 3 skills that file career records in one folder and build a master resume and official work history from them. Career group only |
 
 </details>
 
@@ -78,8 +82,10 @@ A profile installs into one folder instead of your home folder, keeping speciali
 | [`skills/ai-research`](skills/ai-research/) | 98 AI research skills: training, fine-tuning, inference, evaluation, RAG, agents, paper writing      |
 | [`skills/trailofbits`](skills/trailofbits/) | 83 security skills and 30 agents from Trail of Bits: code review, static analysis, fuzzing, auditing |
 | [`mcp-servers/rea`](mcp-servers/rea/)       | REA, an MCP server and skill for reverse engineering apps, websites, APKs and binaries               |
-| [`agents/security-compliance`](agents/security-compliance/) | A security auditor agent and a compliance-check command |
-| [`agents/security-scanning`](agents/security-scanning/) | Security auditor and threat-modeling agents, 5 skills, 3 scanning commands |
+| [`skills/iothackbot`](skills/iothackbot/) | 13 IoT/firmware/console skills, a shared-tool skill and complete helper assets |
+| [`mcp-servers/zap`](mcp-servers/zap/) | Official ZAP MCP connection for web-security workflows; disabled until configured |
+| [`mcp-servers/reva`](mcp-servers/reva/) | Shared Ghidra projects and 6 companion skills; MCP connection disabled |
+| [`mcp-servers/radare2`](mcp-servers/radare2/) | Optional radare2-native MCP connection; disabled, read-only tools |
 | [`agents/reverse-engineering`](agents/reverse-engineering/) | Reverse-engineer, firmware and malware analyst agents, 4 skills |
 
 Each README has its install command.
@@ -93,7 +99,7 @@ Each README has steps for you and steps your agent can follow ("install X by fol
 
 | Folder                                                          | Adds                                                                                                                                                                  |
 | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`plugins/superpowers`](plugins/superpowers/)                   | Superpowers: skills for planning, test-driven development, debugging, code review and finishing work, loaded automatically. Plus a rule fitting it to the rules |
+| [`plugins/superpowers`](plugins/superpowers/)                   | Superpowers: skills for planning, test-driven development, debugging, code review and finishing work, loaded automatically |
 | [`plugins/opencode-quota`](plugins/opencode-quota/)             | Plan quota and token use in OpenCode                                                                                                                                  |
 | [`plugins/opencode-claude-auth`](plugins/opencode-claude-auth/) | Use a Claude Pro or Max subscription in OpenCode 2                                                                                                                    |
 
@@ -119,7 +125,7 @@ npx rulesync@33.0.0 generate --global \
 | Option          | Meaning                                                                                            |
 | --------------- | -------------------------------------------------------------------------------------------------- |
 | `--targets`     | The tools to install into, such as `opencode`, `claudecode`, `codexcli`, `geminicli`, `cursor`     |
-| `--features`    | Which kinds of content to take from those folders: `rules`, `skills`, `subagents`, `mcp`           |
+| `--features`    | Which kinds of content to take: `rules`, `skills`, `subagents`, `commands`, `mcp`                  |
 | `--input-roots` | The folders you picked. Leave it out to install everything in `rulesync.jsonc` except the profiles |
 | `--global`      | Install into your home folder. Always include it; without it, rulesync writes into this repo       |
 
@@ -142,6 +148,28 @@ Back up anything you want to keep. Because rules and MCP servers are replaced, l
 Then the command is just `npx rulesync@33.0.0 generate --global --targets opencode,claudecode --features rules,skills`.
 
 Plugins install differently: through each tool, or by asking your agent to follow the plugin's README. Profiles install into a folder you choose; their READMEs have the command.
+
+### Install groups
+
+Saved selections, so you don't have to list folders. [`groups/README.md`](groups/) has each one's command and what it includes.
+
+| Group | For |
+|---|---|
+| `default` | Everything in `rulesync.jsonc`, into OpenCode |
+| `work` | OpenCode, Copilot and Copilot CLI on a work machine |
+| `writing_reporting` | Writing, reports and visuals, without touching MCP settings |
+| `infosec` | Security context, IoTHackBot and a disabled ZAP connection, in a folder you choose |
+| `ai_research` | AI research skills, in a folder you choose |
+| `career` | Career skills, and a career agent later, in a folder you choose |
+| `reverse_engineering` | REA, RE agents, IoTHackBot and disabled ReVa/radare2 connections, in a folder you choose |
+
+```bash
+npx rulesync@33.0.0 generate --config groups/default.jsonc --global
+```
+
+None of them installs the programs the skills and MCP servers use; each folder's README covers that.
+
+See [reference/](reference/) for published assessments, including the [security and reverse-engineering inventory](reference/security-re-tooling.md) and [persistent agent knowledge investigation](reference/agent-knowledge/README.md). Each integration's README distinguishes installed context from separately required software.
 
 ## Updating
 

@@ -9,7 +9,7 @@ Two of Anthropic's published skills:
 
 ## Install
 
-Skills are added alongside what you already have, so this folder can be installed on its own. From the repo root:
+This folder holds the two skills and a one-line rule (written for this repo) telling the agent to use `theme-factory` for a shared look. The rule goes into your tool's instructions file, which rulesync replaces on every run, so to get it, add `skills/anthropic-design` to `inputRoots` in your `rulesync.local.jsonc` with your other rule folders, or use an [install group](../../groups/). To add just the skills, from the repo root:
 
 ```bash
 npx rulesync@33.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/anthropic-design

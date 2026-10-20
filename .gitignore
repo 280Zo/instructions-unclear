@@ -43,3 +43,6 @@ oauth_creds.json
 /.gemini/
 /.agents/
 /.mcp.json
+
+# Python bytecode from running tests
+__pycache__/

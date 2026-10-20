@@ -2,6 +2,8 @@
 
 [PMB](https://pypi.org/project/pmb-ai/) (`pmb-ai`) is a local, per-project memory for AI agents: decisions, lessons and progress that survive between sessions.
 
+See the [agent-knowledge objectives](../../reference/agent-knowledge/01-objectives-and-requirements.md) and [technology evidence](../../reference/agent-knowledge/03-technology-landscape.md) for the complete-system investigation and PMB's source-checked capabilities and limits. PMB's association graph, optional image features and hybrid search do not establish a fully transactional multimodal evidence store; concurrent sessions and project binding still need validation.
+
 ## What's in this folder
 
 | File | Becomes |
@@ -25,12 +27,15 @@ The detailed usage instructions the AI sees ("read before you write", one `recor
 
 ## Use
 
-In each project you want memory for, run `pmb connect --active` once. After that the rule has the agent read the project's memory before starting work, and save decisions, lessons and progress as it goes. Ask "where were we?", "what did we decide about X?" or "what are the open goals?" to use it directly. Say "remember that…" to pin something important.
+Start the configured server in the intended project and verify its workspace before writes. The rule has the agent read memory before starting work and save decisions, lessons and progress as it goes. Ask "where were we?", "what did we decide about X?" or "what are the open goals?" to use it directly. Say "remember that…" to pin something important.
+
+PMB also offers `pmb connect --active`, but inspect and approve its host-configuration changes first: the source-reviewed release includes shared-daemon connection defaults, which are different from this repo's explicit `pmb-mcp` stdio entry. Do not run it as an automatic prerequisite for an already configured server.
 
 ## Per-project setup
 
-- **Memory location.** `PMB_HOME=.pmb` is a relative path: memory goes into a `.pmb/` folder inside whichever folder PMB starts in. `"cwd": "."` makes PMB start in the current project, so each project gets its own memory. Add `.pmb/` to your global gitignore so it's never committed.
-- **Connecting a project.** Run `pmb connect --active` in a project to set it up.
+- **Memory location.** `PMB_HOME=.pmb` is relative to the server process directory; the host must resolve `"cwd": "."` to the intended workspace. Verify both the physical memory path and PMB's selected workspace, including nested folders/worktrees. An already-running server does not retarget when an agent changes directory. Keep `.pmb/` out of Git through the project's approved ignore setup.
+- **Isolation and concurrency.** Project-local configuration routes calls; it is not an OS sandbox. The inspected release has separate event/vector/cache stores and shared session bookkeeping; multiple sessions/processes need a non-sensitive concurrency test before dependable shared use is claimed.
+- **Offline behavior.** Local embeddings may download an uncached model on startup/prewarming. Provision and verify model artifacts before expecting offline operation. No additional generative-model API is required for the basic explicit-memory route; optional processing can change that.
 
 ## Permissions depend on the server's name
 

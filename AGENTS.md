@@ -21,12 +21,24 @@ rules/<topic>/          a standalone rule
 skills/<name>/          a skill or skill collection, plus its rules and helper files. A skill collection that uses its own agents internally (Trail of Bits) stays here whole
 agents/<set>/           an agent or set of agents, plus their skills, rules and commands
 mcp-servers/<server>/   an MCP server: mcp.jsonc, plus its rules and skills
-plugins/<plugin>/       a plugin rulesync can't install: README with human and agent install steps, plus any rules or skills that go with it
+plugins/<plugin>/       a plugin rulesync can't install: README with human and agent install steps
 ```
 
 Every folder has a README (`rules/` has one README for all its topics), and a `profile.jsonc` if it's a profile. The README's Origin section says where it came from: the upstream for third-party content, or "Written for this repo" for my own.
 
 A profile is a folder meant to load only in one directory the user picks, not the home folder. Its `profile.jsonc` is a rulesync config listing that folder in `inputRoots`; the folder is not listed in `rulesync.jsonc`. Paths in `profile.jsonc` are relative to the repo root, so profile commands run from there.
+
+`groups/*.jsonc` are named install selections, not source trees. Home-folder
+groups (`default`, `work`, `writing_reporting`) run with `--config` and
+`--global`; each carries a complete rule selection with the preamble first and
+the reminder last. Folder groups (`infosec`, `ai_research`,
+`reverse_engineering`) run with `--output-roots` and never `--global`.
+`groups/default.jsonc` mirrors `rulesync.jsonc`: change both together. Each
+group's README section states whether it writes MCP settings. All groups are
+documented in the single `groups/README.md`, with a one-line row in the root
+README; groups don't get their own folders or READMEs.
+
+**Whenever you add, rename, move or remove a folder anywhere in this repo, check `groups/*.jsonc` and `groups/README.md` and update them in the same change.** Decide which groups the folder belongs in (for example, a new security skill goes in `infosec`; anything in `rulesync.jsonc` also goes in `groups/default.jsonc`), keep the preamble first and the reminder last, and update the counts and descriptions in `groups/README.md`. Then generate each changed group into a throwaway folder to check it.
 
 Third-party license texts all live in `THIRD_PARTY_LICENSES.md`, one section per upstream; each folder's README links to its section. Whenever you add, update or remove third-party files (skills, agents, extracted skill text), add, update or remove that upstream's section in the same change, with the full license text copied from upstream's `LICENSE` file, the folder it applies to, and the source link. Never add a third-party folder without it. MIT and Apache 2.0 require shipping the license text with copies, so a link to upstream alone isn't enough. Licenses that sit inside an upstream skill folder (Anthropic's `LICENSE.txt`) stay where they are, because that folder is copied unchanged.
 
@@ -101,9 +113,9 @@ When adding third-party content, record in the folder's README the upstream repo
 
 rulesync installs rules, skills, agents, commands, hooks and MCP servers, not plugins. When adding a plugin:
 
-1. Create `plugins/<plugin>/README.md` with what it does, an **Install** section (the plugin entry or command for each tool it supports), an **Install with an agent** section, a **Use** section, and its origin.
-2. Write the agent section as steps an agent can follow: ask the user which tools and get approval before editing any tool config; check whether the plugin is already installed; edit only the plugin list, keeping comments and other settings; never add both OpenCode's `plugin` and `plugins` keys; never open credential files; and hand the user any step the agent can't run, such as a slash command.
-3. Review every rule in this repo (`rules/`, and rules inside `skills/`, `agents/` and `mcp-servers/` folders) against what the plugin does (what it writes, commits, installs, loads, or which tools and agents it uses). Where they conflict or the plugin needs instructions to be used well, add `plugins/<plugin>/rules/<plugin>.md` (frontmatter as in "Rules"), add the folder to `inputRoots` after the `rules/` folders, and describe it in the README. If no rule is needed, say so in the README.
+1. Create `plugins/<plugin>/README.md` with what it does, an **Install** section (the plugin entry or command for each tool it supports), a **Let your agent do it** section, a **Use** section, and its origin.
+2. Open the agent section with "Skip this if you installed it by hand", then the exact sentence the user says to their agent, then "The agent follows these steps:". Write the steps so an agent can follow them: ask the user which tools and get approval before editing any tool config; check whether the plugin is already installed; edit only the plugin list, keeping comments and other settings; never add both OpenCode's `plugin` and `plugins` keys; never open credential files; and hand the user any step the agent can't run, such as a slash command.
+3. Use the plugin with its defaults. Don't add a rule for it unless the plugin's own documentation tells users to add instructions; if it does, say so in the README and ask the user first. Note any interaction with the rules here (for example, what it commits) in the README's Use section.
 4. Add the plugin to `plugins/README.md` and the root README.
 5. Plugins install from upstream, so nothing goes in `THIRD_PARTY_LICENSES.md` unless you copy their files here.
 
@@ -181,4 +193,4 @@ git ls-files --cached --others --exclude-standard -z -- skills/ \
 
 Expect no output here either. Placeholders like `sk-...` don't match because the patterns need the length of a real token.
 
-`.gitignore` also blocks common credential files (`.claude.json`, `.credentials.json`, `auth.json`, `.env`, keys) and the `.rulesync/` folder that `import` writes, as a backstop. The `skills/careers` skills contain made-up example emails and phone numbers; those are fine. Commits use the author email `1754228+280Zo@users.noreply.github.com`.
+`.gitignore` also blocks common credential files (`.claude.json`, `.credentials.json`, `auth.json`, `.env`, keys) and the `.rulesync/` folder that `import` writes, as a backstop. The `skills/resume-skills` skills contain made-up example emails and phone numbers; those are fine. Commits use the author email `1754228+280Zo@users.noreply.github.com`.

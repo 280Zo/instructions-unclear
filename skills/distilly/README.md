@@ -12,14 +12,41 @@ Its instructions are in English, and it replies in the language you write in.
 
 ## Install
 
-1. Python 3 for its scripts. The basic scripts need `pip install -r requirements.txt` from the skill folder; the Slack, Lark and DingTalk collectors need `requirements-optional.txt` and a browser runtime.
-2. Skills are added alongside what you already have, so this folder can be installed on its own. From the repo root:
+1. Install the skill from the repo root:
 
    ```bash
    npx rulesync@33.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/distilly
    ```
 
-   Swap `--targets` for your tools. To keep it in your regular install, add `skills/distilly` to `inputRoots` in your `rulesync.local.jsonc`.
+    Swap `--targets` for your tools. To keep it in your regular install, add `skills/distilly` to `inputRoots` in your `rulesync.local.jsonc`.
+
+2. Set up Python with uv in the installed skill folder. For OpenCode:
+
+   ```bash
+   cd ~/.config/opencode/skills/distilly
+   uv venv .venv
+   uv pip install --python .venv/bin/python -r requirements.txt
+   source .venv/bin/activate
+   ```
+
+   For another assistant, use its installed Distilly folder instead. Run its
+   Python helpers from the activated environment. Start your coding tool from
+   that shell so child processes inherit it, or invoke helpers explicitly with
+   `.venv/bin/python`; shell activation may not persist between agent tool calls.
+   Distilly ships scripts and
+   requirements files rather than an installable CLI package, so a local venv
+   fits better than `uv tool install`.
+
+3. Only if you need the Slack, Lark or DingTalk collectors, install their extras
+   into the same environment:
+
+   ```bash
+   uv pip install --python .venv/bin/python -r requirements-optional.txt
+   ```
+
+   Browser-based collectors also need their browser runtime set up separately.
+   Recheck requirements after updating the skill. These commands install Python
+   dependencies; rulesync itself only copies the skill and helper files.
 
 ## Use
 

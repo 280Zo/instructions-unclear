@@ -7,7 +7,7 @@
   "targets": ["opencode"],
   // A complete install. If you already have these skills and MCP servers
   // set up by hand, run with --features rules,subagents instead (see README).
-  "features": ["rules", "subagents", "skills", "mcp"],
+  "features": ["rules", "subagents", "skills", "commands", "mcp"],
   // Never delete files rulesync did not create (installed skills, etc.).
   "delete": false,
   // Each folder below is one source tree. Rules from all of them are merged
@@ -20,8 +20,9 @@
     "rules/secure-coding",
     "rules/communication",
     "skills/package-management",
-    "plugins/superpowers",
     "agents/second-opinion",
+    "agents/security-compliance",
+    "agents/security-scanning",
     "mcp-servers/docling",
     "mcp-servers/exa",
     "mcp-servers/pmb",
@@ -30,7 +31,6 @@
     "mcp-servers/codebase-memory",
     "skills/eli5",
     "skills/report",
-    "skills/careers",
     "skills/humanizer",
     "skills/visual-explainer",
     "skills/diagram-design",

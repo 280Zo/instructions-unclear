@@ -6,24 +6,56 @@ Two agents, five skills and three commands from Seth Hobson's agent collection, 
 - Skills: `attack-tree-construction`, `sast-configuration`, `security-requirement-extraction`, `stride-analysis-patterns`, `threat-mitigation-mapping`
 - Commands: `security-sast`, `security-dependencies`, `security-hardening`
 
-From this repo it's a **profile**: it installs into one folder you choose, not your home folder.
+This bundle is included in the default global install. Installing it adds
+instructions and commands; it does not install scanners or run checks.
 
 ## Install
 
 From the repo root:
 
 ```bash
-mkdir -p ~/security
-npx rulesync@33.0.0 generate --config agents/security-scanning/profile.jsonc --output-roots ~/security --targets opencode,claudecode,codexcli
+npx rulesync@33.0.0 generate --global --targets opencode,claudecode,codexcli --features subagents,skills,commands --input-roots agents/security-scanning
 ```
 
-Swap `--targets` for your tools. Never add `--global`. Run the same command again to update. Codex gets the agents and skills but not the commands: rulesync 33.0.0 only writes Codex commands globally.
+Swap `--targets` for your tools. This command does not replace rules or MCP
+settings. The repo's default install includes the bundle too. Run the same
+command again to update. Global output includes commands for all three targets;
+invocation depends on the assistant. Older workspace-profile copies are not
+removed automatically, so review them for duplicate agents and commands.
 
-Scanners such as Semgrep aren't installed by this; each skill and command names what it needs.
+## Tools you need
+
+Threat modeling, attack trees and requirements reviews need no scanner. For
+automated checks, install only the tools appropriate to the project:
+
+| Work | Tools and prerequisites |
+| --- | --- |
+| Multi-language SAST | Semgrep; CodeQL CLI plus its query packs and a supported build toolchain; or SonarQube plus a scanner and running server |
+| Python | Python with Bandit and pip-audit; some upstream examples also use Safety, which may need an account or service access |
+| JavaScript / TypeScript | Node and the project's package manager; project-local ESLint with reviewed security plugins; npm audit for npm projects |
+| Go | Go and gosec |
+| Rust | Rust/Cargo and Clippy; dependency checks may use cargo-audit |
+| Java / Ruby | The project's JDK/build tools with SpotBugs or PMD; Ruby/Bundler with Brakeman, as applicable |
+| Optional hosted checks | Snyk or SonarQube services may need separate setup, accounts and suitable terms |
+
+For standalone Python CLIs, isolated tool installs are an option:
+
+```bash
+uv tool install semgrep
+uv tool install bandit
+uv tool install pip-audit
+```
+
+These are separate, user-run installations, not part of rulesync. Keep project
+dependencies in the project's existing environment. Get CodeQL and other
+non-Python tools through their official distributions; check their license and
+access requirements before use. Review upstream setup snippets rather than
+blindly running global installs or automated fixes. Some scripts and config
+paths in the prompts are examples to create, not files supplied by this bundle.
 
 ## Use
 
-Start your tool in the profile folder and point it at the code by path:
+Start your tool in the project you want reviewed:
 
 - "Have the threat-modeling expert do a STRIDE pass on the design in `~/code/app/docs/architecture.md`"
 - "Build an attack tree for the login flow in `~/code/app`" (`attack-tree-construction`)
