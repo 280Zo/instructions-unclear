@@ -1,6 +1,5 @@
 """Offline packaging checks; these never operate analysis tools or targets."""
 
-import ast
 import json
 from pathlib import Path
 import re
@@ -8,7 +7,7 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-IOT = ROOT / "skills/iothackbot/skills"
+IOT = ROOT / "skills/iothackbot/upstream/skills"
 
 
 def read_jsonc(path):
@@ -22,6 +21,50 @@ def read_jsonc(path):
 
 
 class SecurityReContextTests(unittest.TestCase):
+    def test_upstream_ownership_policy_requires_verified_handoff(self):
+        guide = (ROOT / "AGENTS.md").read_text()
+        self.assertIn("## Upstream installation ownership", guide)
+        for required in [
+            "Prefer the upstream installer",
+            "Remove duplicated extracted-skill maintenance only after",
+            "Test subsequent rulesync generation",
+            "Show the actual conflict",
+        ]:
+            self.assertIn(required, guide)
+        self.assertNotIn("Never run an upstream's own installer", guide)
+
+    def test_reviewed_mcp_launch_versions(self):
+        cases = {
+            "pmb": ["--from", "pmb-ai==1.2.3", "pmb-mcp"],
+            "docling": [
+                "--from",
+                "docling-mcp[local]==3.3.0",
+                "docling-mcp-server",
+                "conversion",
+                "generation",
+                "--transport",
+                "stdio",
+            ],
+        }
+        for name, args in cases.items():
+            server = read_jsonc(ROOT / f"mcp-servers/{name}/mcp.jsonc")["mcpServers"][
+                name
+            ]
+            self.assertEqual(server["command"], "uvx")
+            self.assertEqual(server["args"], args)
+        rea = read_jsonc(ROOT / "mcp-servers/rea/mcp.jsonc")["mcpServers"]["rea"]
+        self.assertIn("rea-agents@6.7.0", rea["args"])
+
+    def test_exa_uses_current_upstream_skill_names(self):
+        root = ROOT / "mcp-servers/exa/skills"
+        self.assertEqual(
+            {p.name for p in root.iterdir() if p.is_dir()}, {"search", "exa-agent"}
+        )
+        self.assertIn("name: search", (root / "search/SKILL.md").read_text())
+        self.assertIn("name: Exa Agent", (root / "exa-agent/SKILL.md").read_text())
+        server = read_jsonc(ROOT / "mcp-servers/exa/mcp.jsonc")["mcpServers"]["exa"]
+        self.assertIn("agent_run", server["url"])
+
     def test_published_assessment_excludes_removed_candidate(self):
         assessment = ROOT / "reference/security-re-tooling.md"
         self.assertTrue(assessment.is_file())
@@ -42,10 +85,9 @@ class SecurityReContextTests(unittest.TestCase):
             "picocom",
             "telnetshell",
             "wsdiscovery",
-            "iothackbot-tools",
         }
         self.assertEqual({p.parent.name for p in IOT.glob("*/SKILL.md")}, expected)
-        runtime = IOT / "iothackbot-tools"
+        runtime = IOT.parent
         for directory in ["bin", "tools", "config", "wordlists"]:
             self.assertTrue((runtime / directory).is_dir(), directory)
         for path in [
@@ -55,21 +97,22 @@ class SecurityReContextTests(unittest.TestCase):
         ]:
             self.assertTrue((IOT / path).is_file(), path)
 
-    def test_iot_portability_and_permission_fixes(self):
-        self.assertTrue(IOT.is_dir())
-        for path in IOT.rglob("*"):
-            if path.is_file() and path.suffix in {".md", ".py"}:
-                text = path.read_text()
-                self.assertNotIn(".claude/skills/", text, str(path))
-                self.assertNotRegex(text, r"chmod\s+(?:-\w+\s+)*777")
-                if path.suffix == ".py":
-                    ast.parse(text, filename=str(path))
-        chipsec = (IOT / "chipsec/SKILL.md").read_text()
-        self.assertIn("-nl", chipsec)
-        self.assertIn("user-writable", chipsec)
-        logic = (IOT / "logicmso/SKILL.md").read_text()
-        self.assertNotIn("pip install saleae-mso-api", logic)
-        self.assertIn("downloads.saleae.com", logic)
+    def test_native_plugin_resources_resolve_without_flattening(self):
+        tob = ROOT / "skills/trailofbits/upstream"
+        for plugin in ["regression-hunt", "patching-bugs", "zeroize-audit"]:
+            path = tob / "plugins" / plugin
+            self.assertTrue((path / ".claude-plugin/plugin.json").is_file())
+        patch = tob / "plugins/patching-bugs/skills/implement-patch"
+        for relative in ["../../scripts/records.py", "../../references/records.md"]:
+            self.assertTrue((patch / relative).is_file(), relative)
+        zeroize = tob / "plugins/zeroize-audit/skills/zeroize-audit"
+        self.assertTrue((zeroize / "../../agents/0-preflight.md").is_file())
+        self.assertTrue((IOT.parent / ".claude-plugin/plugin.json").is_file())
+        self.assertEqual((IOT.parent / ".claude/skills").resolve(), IOT.resolve())
+        # A rulesync extraction would reintroduce competing ownership.
+        native = {"skills/trailofbits", "skills/iothackbot"}
+        for group in (ROOT / "groups").glob("*.jsonc"):
+            self.assertFalse(native & set(read_jsonc(group)["inputRoots"]), group)
 
     def test_new_mcp_templates_are_disabled(self):
         for name in ["zap", "reva", "radare2"]:
@@ -82,9 +125,8 @@ class SecurityReContextTests(unittest.TestCase):
 
     def test_group_roots_and_features(self):
         expected = {
-            "infosec": {"skills/iothackbot", "mcp-servers/zap"},
+            "infosec": {"mcp-servers/zap"},
             "reverse_engineering": {
-                "skills/iothackbot",
                 "mcp-servers/reva",
                 "mcp-servers/radare2",
             },
@@ -244,26 +286,12 @@ class SecurityReContextTests(unittest.TestCase):
         }
         self.assertFalse(specialists & set(default["inputRoots"]))
 
-    def test_bundled_helper_examples_use_installed_paths(self):
-        for path in IOT.rglob("*"):
-            if path.is_file() and path.suffix in {".md", ".py", ".txt"}:
-                unresolved = re.search(
-                    r"python3?\s+(?:skills/logicmso/)?analyze_protocol\.py|"
-                    r"--script\s+enum_(?:system|network|files|security)\.txt",
-                    path.read_text(),
-                )
-                self.assertIsNone(unresolved, str(path))
-
     def test_published_status_and_upstream_deviations_are_current(self):
         path = ROOT / "reference/security-re-tooling.md"
         self.assertTrue(path.is_file())
         assessment = path.read_text()
         self.assertFalse("other candidates are not yet pinned" in assessment)
         self.assertFalse("needs a pinned-version check" in assessment)
-        self.assertIn(
-            "formatting",
-            (ROOT / "skills/iothackbot/README.md").read_text().lower(),
-        )
 
 
 if __name__ == "__main__":

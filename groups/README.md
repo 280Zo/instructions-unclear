@@ -7,10 +7,10 @@ Saved selections, so you don't have to name every folder. Run every command from
 | [`default`](#default) | Your home folder, OpenCode | The repo's default selection |
 | [`work`](#work) | Your home folder, OpenCode, Copilot and Copilot CLI | Rules, agents, MCP servers and writing skills for a work machine |
 | [`writing_reporting`](#writing_reporting) | Your home folder, OpenCode | Rules plus writing, report and visual skills, without touching MCP settings |
-| [`infosec`](#infosec) | A folder you choose | Security rule/agents, Trail of Bits, IoTHackBot and disabled ZAP MCP |
+| [`infosec`](#infosec) | A folder you choose | The security bundle (rule, 2 agents, 4 commands), 11 security and utility skills and disabled ZAP MCP; native security plugins install separately |
 | [`ai_research`](#ai_research) | A folder you choose | 98 AI research skills |
 | [`career`](#career) | A folder you choose | 22 career skills, the interview coach and 3 career-workspace skills; a career agent will be added |
-| [`reverse_engineering`](#reverse_engineering) | A folder you choose | REA, RE agents, IoTHackBot and disabled ReVa/radare2 MCPs |
+| [`reverse_engineering`](#reverse_engineering) | A folder you choose | REA, RE agents and disabled ReVa/radare2 MCPs; IoTHackBot is native-owned |
 
 ## How they behave
 
@@ -20,26 +20,29 @@ Saved selections, so you don't have to name every folder. Run every command from
 - **Folder groups** (`infosec`, `ai_research`, `career`, `reverse_engineering`) install into one folder and load only when you start your tool there. Never add `--global` to them.
 - Add `--dry-run` to any command to list what it would write without writing anything.
 - None of them installs the programs a skill or MCP server uses. See each folder's README for that.
+- Codebase-memory's complete integration belongs to its upstream installer: apply it after rulesync, as its [verified ordering requirement](../mcp-servers/codebase-memory/README.md) explains. The repo ships no extracted skill.
 
 The [security and reverse-engineering tooling assessment](../reference/security-re-tooling.md) lists the complete inventory, selected integrations and deferred alternatives. The [agent-knowledge investigation](../reference/agent-knowledge/README.md) separates objectives, concepts, technologies, experiments and decisions. `reference/`, including its subfolders, holds published material, not install roots; it changes no group selections or counts. Context generation does not install native analysis tools or authorize target operations.
 
 ## default
 
-Everything in [`rulesync.jsonc`](../rulesync.jsonc), into OpenCode: all selected global rules, the second-opinion, local-model and both security agent sets, and the selected global MCP servers/skills. Folder-only integrations below do not change the global default.
+Everything in [`rulesync.jsonc`](../rulesync.jsonc), into OpenCode: all selected global rules (including `routing` and `preferences`), the second-opinion and local-model agents, the repo-owned [`agents/security`](../agents/security/) bundle, and the selected global MCP servers/skills. Folder-only integrations below do not change the global default.
+
+`documents` is included. `security-threat-model` is deliberately excluded from this selection; it remains in `infosec` and `work`. With `delete: false`, generation does not remove an already-installed global copy. Review and separately approve stale-copy cleanup if one exists; no live files were deleted by this repo change.
 
 ```bash
-npx rulesync@33.0.0 generate --config groups/default.jsonc --global
+npx rulesync@38.0.0 generate --config groups/default.jsonc --global
 ```
 
-`npx rulesync@33.0.0 generate --global` does the same thing.
+`npx rulesync@38.0.0 generate --global` does the same thing. Before adopting 38.0.0, isolated generation of the original default selection with 33.0.0 and 38.0.0 produced 604 byte-identical files. The refreshed selections are verified separately.
 
 ## work
 
 Use `--dry-run` first:
 
 ```bash
-npx rulesync@33.0.0 generate --config groups/work.jsonc --global --dry-run
-npx rulesync@33.0.0 generate --config groups/work.jsonc --global
+npx rulesync@38.0.0 generate --config groups/work.jsonc --global --dry-run
+npx rulesync@38.0.0 generate --config groups/work.jsonc --global
 ```
 
 The config installs these folders into OpenCode, GitHub Copilot (VS Code) and Copilot CLI, with rules, skills, agents, commands and MCP servers:
@@ -48,14 +51,22 @@ The config installs these folders into OpenCode, GitHub Copilot (VS Code) and Co
 rules/shell-preamble                 skills/package-management
 rules/scope-secrets-approvals        agents/local-model
 rules/engineering                    agents/second-opinion
-rules/secure-coding                  agents/security-compliance
-rules/communication                  agents/security-scanning
-rules/shell-preamble-reminder        mcp-servers/codebase-memory
-skills/anthropic-design              mcp-servers/docling
-skills/diagram-design                mcp-servers/exa
-skills/eli5                          mcp-servers/pmb
-skills/frontend-slides               mcp-servers/presenton
+agents/security                      mcp-servers/codebase-memory
+rules/communication                  mcp-servers/docling
+rules/routing                        mcp-servers/exa
+rules/preferences                    mcp-servers/pmb
+rules/shell-preamble-reminder        mcp-servers/presenton
+skills/anthropic-design              mcp-servers/zap
+skills/diagram-design
+skills/eli5
+skills/frontend-slides
 skills/humanizer
+skills/documents
+skills/transcribe
+skills/speech
+skills/security-threat-model
+skills/screenshot
+skills/playwright
 skills/report
 skills/visual-explainer
 ```
@@ -64,9 +75,11 @@ What each tool gets:
 
 | Tool | Gets | Skipped |
 |---|---|---|
-| OpenCode | Rules, 7 agents, 17 skills, 4 commands, MCP servers | Nothing |
-| Copilot CLI | Rules, 7 agents, 17 skills, MCP servers (`~/.copilot/`) | Commands: Copilot CLI has none |
+| OpenCode | Rules, 6 agents, 23 skills, 4 commands, MCP servers | Nothing |
+| Copilot CLI | Rules, 6 agents, 23 skills, MCP servers (`~/.copilot/`) | Commands: Copilot CLI has none |
 | Copilot (VS Code) | Rules, agents and skills, written to the same `~/.copilot/` folder | MCP servers and commands: rulesync writes those for VS Code only inside a project, not globally |
+
+Codebase-memory, Presenton and ZAP are written switched off. OpenCode gets `"enabled": false` on each; Copilot CLI gets them listed under `disabledMcpServers` in `~/.copilot/settings.json`. ZAP only becomes usable after you set up a local ZAP with its MCP add-on and turn it on yourself; enabling it still doesn't authorize scanning any target.
 
 ### Plugin installation prompt
 
@@ -76,21 +89,21 @@ What each tool gets:
 
 ## writing_reporting
 
-Rules, `second-opinion`, the Docling, Exa and PMB rules and skills, and `eli5`, `report`, `humanizer`, `visual-explainer`, `diagram-design`, `frontend-slides`, `frontend-design` and `theme-factory`. MCP servers you already have stay as they are.
+Rules (including `routing` and `preferences`), `second-opinion`, the Docling, Exa and PMB rules and skills, and `eli5`, `report`, `humanizer`, `visual-explainer`, `diagram-design`, `frontend-slides`, `frontend-design`, `theme-factory` and Magnus's [`documents`](../skills/documents/). That's 12 skills. MCP servers you already have stay as they are. The document skill adds authoring and smoke validation; it does not replace Docling's OCR/extraction role.
 
 ```bash
-npx rulesync@33.0.0 generate --config groups/writing_reporting.jsonc --global
+npx rulesync@38.0.0 generate --config groups/writing_reporting.jsonc --global
 ```
 
 ## infosec
 
-The [`secure-coding`](../rules/secure-coding/) rule, the [compliance](../agents/security-compliance/) and [scanning](../agents/security-scanning/) agent sets, [Trail of Bits](../skills/trailofbits/), [IoTHackBot](../skills/iothackbot/) and the [official ZAP connection](../mcp-servers/zap/). That's 102 skills, 33 agents, 4 commands and 1 disabled MCP connection. Each README lists separate runtime tools and activation steps.
+The repo-owned [security bundle](../agents/security/) (secure-coding rule, `security-auditor` and `threat-modeling-expert` agents, 6 skills including `security-best-practices`, and 4 commands), [`security-threat-model`](../skills/security-threat-model/), the four audio/capture/browser skills, and the [official ZAP connection](../mcp-servers/zap/). That's 11 skills, 2 agents, 4 commands and 1 disabled MCP connection. `security-threat-model` is excluded from `default`, not from this group. Installing skills authorizes none of their runtime operations. [Trail of Bits](../skills/trailofbits/) and [IoTHackBot](../skills/iothackbot/) use complete native plugins, installed separately rather than flattened by this group. No complete OpenCode equivalent is claimed. Each README lists prerequisites and ownership limits.
 
-The rule lands in the folder's own `AGENTS.md`, which OpenCode reads along with your global one. If you also installed `default` or `work`, the secure-coding rule and the two agent sets are there globally too; the folder copies load only in that folder and are identical. Reverse engineering has its own group below.
+The rule lands in the folder's own `AGENTS.md`, which OpenCode reads along with your global one. If you also installed `default` or `work`, the security bundle is there globally too; the folder copies load only in that folder and are identical. Reverse engineering has its own group below.
 
 ```bash
 mkdir -p ~/AI/infosec
-npx rulesync@33.0.0 generate --config groups/infosec.jsonc --output-roots ~/AI/infosec
+npx rulesync@38.0.0 generate --config groups/infosec.jsonc --output-roots ~/AI/infosec
 ```
 
 ## ai_research
@@ -99,7 +112,7 @@ The 98 skills from [`skills/ai-research`](../skills/ai-research/).
 
 ```bash
 mkdir -p ~/AI/ai_research
-npx rulesync@33.0.0 generate --config groups/ai_research.jsonc --output-roots ~/AI/ai_research
+npx rulesync@38.0.0 generate --config groups/ai_research.jsonc --output-roots ~/AI/ai_research
 ```
 
 ## career
@@ -108,25 +121,25 @@ The 22 skills from [`skills/resume-skills`](../skills/resume-skills/), from [Par
 
 ```bash
 mkdir -p ~/AI/career
-npx rulesync@33.0.0 generate --config groups/career.jsonc --output-roots ~/AI/career
+npx rulesync@38.0.0 generate --config groups/career.jsonc --output-roots ~/AI/career
 ```
 
 ## reverse_engineering
 
-The [REA](../mcp-servers/rea/) MCP/skill, [reverse-engineering agents](../agents/reverse-engineering/), [IoTHackBot](../skills/iothackbot/), and optional [ReVa](../mcp-servers/reva/) and [radare2](../mcp-servers/radare2/) connections. That's 25 skills, 3 agents and 3 MCP definitions: REA retains its existing enabled state; ReVa/radare2 are disabled until explicitly configured. ReVa's 6 companion skills can be discovered before its backend is enabled; they do not start it.
+The [REA](../mcp-servers/rea/) MCP/skill, [reverse-engineering agents](../agents/reverse-engineering/), and optional [ReVa](../mcp-servers/reva/) and [radare2](../mcp-servers/radare2/) connections. That's 11 skills, 3 agents and 3 MCP definitions: REA retains its existing enabled state; ReVa/radare2 are disabled until explicitly configured. ReVa's 6 companion skills can be discovered before its backend is enabled; they do not start it. [IoTHackBot](../skills/iothackbot/) is now installed through its native plugin separately, not generated here.
 
 All component READMEs list prerequisites. Prefer REA for broad analysis; enable ReVa for shared Ghidra projects or radare2 for r2-specific work. Don't install their native skill plugins again alongside these same skills.
 
 ```bash
 mkdir -p ~/AI/reverse_engineering
-npx rulesync@33.0.0 generate --config groups/reverse_engineering.jsonc --output-roots ~/AI/reverse_engineering
+npx rulesync@38.0.0 generate --config groups/reverse_engineering.jsonc --output-roots ~/AI/reverse_engineering
 ```
 
 ## Other tools
 
 Every group targets OpenCode by default (`work` adds the two Copilots). For other tools, add `--targets`, for example `--targets opencode,claudecode,codexcli`.
 
-The two security groups were also generated for Claude Code and Codex CLI. Codex skips infosec's 4 commands in folder scope (rulesync 33.0.0 supports Codex commands only globally); it still receives the skills, agents, rule and MCP config. Do not add `--global` to work around this limitation.
+The security groups can also be generated for Claude Code and Codex CLI. Folder-scoped command support depends on the target; heed generation warnings rather than adding `--global` to work around them. Native plugin ownership is separate from this target override; it does not restore the retired flattened Trail of Bits/IoTHackBot profiles.
 
 ## Origin
 

@@ -13,15 +13,15 @@ The [agent-knowledge concepts](../../reference/agent-knowledge/02-architecture-a
 
 ## Install
 
-1. Install the server once with [uv](https://docs.astral.sh/uv/). The `[local]` extra does conversion on your machine and is a large download:
+1. Have [uv](https://docs.astral.sh/uv/) available. The MCP entry selects the reviewed release; the `[local]` extra does conversion on your machine and is a large download:
 
    ```bash
-   uv tool install 'docling-mcp[local]'
+   uvx --from 'docling-mcp[local]==3.3.0' docling-mcp-server conversion generation --transport stdio
    ```
 
 2. This folder adds a rule and an MCP server, and rulesync installs both by replacing your tool's whole set. So add `mcp-servers/docling` to `inputRoots` in your `rulesync.local.jsonc` (see the [root README](../../README.md#install)) and run your install command with `--features rules,mcp`.
 
-The MCP entry runs the installed `docling-mcp-server`. Update it with `uv tool upgrade --all`.
+That is the launch command, not an extra server to start alongside your assistant's process. Reviewed runtime baseline: `docling-mcp 3.3.0`, checked October 20, 2026. First launch may download dependencies; approve that operation before enabling it. The top-level package is pinned, not the whole transitive dependency graph. Refresh this README and `mcp.jsonc` together when reviewing a new release; do not use a blanket live-tool upgrade as a substitute.
 
 ## Use
 
@@ -38,3 +38,11 @@ Point the agent at a file by path: "read `/path/report.pdf` and summarize sectio
 ## Permissions depend on the server's name
 
 OpenCode names each tool `<server name>_<tool>`, e.g. `docling_convert_...`. Permission rules such as `"docling_*": "allow"` match on that name. If you rename the server here, that rule silently stops matching and every Docling call starts asking for approval. Rename it in your permission rules too.
+
+## For agents: routing and updates
+
+- Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Reading documents** (convert, OCR, extract text or tables, describe images): Docling MCP".
+- It does not own creating or editing Office and PDF files: that is the `documents` skill. Speech to text is `transcribe`.
+- Why: on 2026-10-21 the user replaced the per-skill routing rules with one routing rule because several items claimed the same jobs. Here, the `documents` skill also covers extraction, so the rule keeps reading with Docling and authoring with `documents`.
+- `rules/docling.md` stays in this folder: it covers how to run Docling (one conversion at a time, timeouts, cache), not which tool owns a job. Keep job ownership out of it and in `rules/routing`.
+- When reviewing a new Docling release or tool groups, or refreshing `documents`, check whether either now claims the other's job. If so, update `rules/routing` and this section in the same change and tell the user.

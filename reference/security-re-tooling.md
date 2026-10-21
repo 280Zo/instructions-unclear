@@ -2,7 +2,7 @@
 
 ## Recommendation
 
-Keep REA and the existing specialist agents. ZAP's official MCP serves the web-security role, ReVa supports shared Ghidra projects and radareorg's MCP covers radare2-specific work. The repository now includes their disabled connection templates and the complete IoTHackBot collection with documented safety/portability patches. These are catalog choices for the requested workflows, not instructions to enable every server together.
+Keep REA and the existing specialist agents. ZAP's official MCP serves the web-security role, ReVa supports shared Ghidra projects and radareorg's MCP covers radare2-specific work. The repository includes their disabled connection templates and the complete unchanged IoTHackBot native plugin tree. The former local safety/portability patches and flattened profile were retired in the October 20 refresh. These are catalog choices for the requested workflows, not instructions to enable every server together.
 
 Written for the repository owner to choose context bundles for the `infosec` and `reverse_engineering` profiles. This is a repository-content recommendation, not an instruction to install or operate tools.
 
@@ -10,8 +10,8 @@ Written for the repository owner to choose context bundles for the `infosec` and
 
 - Research date: October 15, 2026. Primary evidence: upstream documentation, source/package files, license texts, release notes and public GitHub repository metadata. Links in the tables identify the reviewed projects or specific documentation.
 - Current metadata was read through GitHub's unauthenticated repository API where available. The shared unauthenticated quota was exhausted; requests stopped rather than using credentials or another route. Missing metrics remain unknown. Some returned push dates were October 16 UTC, beyond the session's October 15 date; those dates are excluded from date-based ranking.
-- No analysis tools were installed or runtime-tested. No samples, devices, capture interfaces, targets, credentials or live configurations were accessed. Pinned rulesync was downloaded only into a temporary verification directory. Packaging tests/generation passed; upstream test presence and release notes do not establish a passing native runtime or a security audit.
-- Public web documentation can change. Included pins are REA `6.5.0`, IoTHackBot commit `d443c408a9fdd83f97d8c354b9c639afa2251974`, ReVa `v7.3.1`, radare2 MCP `1.8.8` and ZAP MCP `0.4.0`. Component READMEs record exact source commits and applicable licenses. Deferred candidates remain unimported; their versions are research observations, not repository pins.
+- The October 15 audit installed or runtime-tested no analysis tools. The October 20 refresh added isolated native plugin packaging/discovery and codebase-memory installer checks; no samples, devices, capture interfaces, targets, credentials or live configurations were accessed. Temporary tooling and fake homes were used for verification. Packaging tests/generation do not establish a passing analysis runtime or a security audit.
+- Public web documentation can change. Refreshed October 20, 2026: included pins are REA `6.7.0`, IoTHackBot commit `d443c408a9fdd83f97d8c354b9c639afa2251974`, ReVa `v7.3.1`, radare2 MCP `1.9.0` and ZAP MCP `0.4.0`. Component READMEs record exact source commits and applicable licenses. Deferred candidates remain unimported; their versions and historical comparison rows below are research observations, not repository pins.
 - Prior handoff claims are superseded where the findings below differ. In particular, MIGINC's fork parent is LaurieWired, not bethington; its installation documentation references bethington. `netwlos` is treated as a likely reference to `netflows`, not as an independently identified tool.
 
 ## Selection criteria
@@ -26,8 +26,8 @@ An AI component means an MCP server, an agent-host plugin, or a usable skill/wor
 
 | Component | Decision | Repository placement / profile | Reason and boundary |
 |---|---|---|---|
-| [REA](https://github.com/morluto/rea/blob/rea-agents-6.5.0/README.md) | Keep existing | `mcp-servers/rea/`; reverse_engineering | Broad analysis MCP plus investigation skill. Reuses external native providers, Rizin, Android tools and bounded artifact readers. It does not install every backend or replace live GUI/device integrations. |
-| [IoTHackBot](https://github.com/BrownFineSecurity/iothackbot) | Imported with documented safety/portability patches; native runtime not installed/tested | `skills/iothackbot/`; both profiles | [MIT license verified](https://github.com/BrownFineSecurity/iothackbot/blob/master/LICENSE). All 13 upstream skills plus one repo-authored shared-tool skill preserving CLI/config/wordlist assets in generated output. Adds device/console/ONVIF/J-Link workflows. Do not also install its native plugin with duplicate skill names. |
+| [REA](https://github.com/morluto/rea/blob/rea-agents-6.7.0/README.md) | Refreshed release-matched MCP/skill | `mcp-servers/rea/`; reverse_engineering | Broad analysis MCP plus investigation skill. Reuses external native providers, Rizin, Android tools and bounded artifact readers. It does not install every backend or replace live GUI/device integrations. |
+| [IoTHackBot](https://github.com/BrownFineSecurity/iothackbot) | Complete faithful native plugin; isolated packaging/discovery verified, device runtimes not tested | `skills/iothackbot/upstream/`; separate native installation | [MIT license verified](https://github.com/BrownFineSecurity/iothackbot/blob/master/LICENSE). All 13 upstream skills and complete original helper/plugin layout. The former local patches and router are retired. No complete OpenCode integration is claimed; do not retain duplicate extracted skill owners. |
 | [Official ZAP MCP add-on](https://www.zaproxy.org/docs/desktop/addons/mcp-integration/) | Disabled template added; host-dependent activation | `mcp-servers/zap/`; infosec | FOSS web-security control: crawling, contexts, alerts, scans and reports. Official in-process add-on, not a generic HTTP proxy wrapper. Requires separately installed ZAP/add-on. |
 | Existing RE/security agent bundles | Keep | `agents/reverse-engineering/`, security bundles and Trail of Bits; current profile boundaries | Existing reverse-engineer, firmware-analyst and malware-analyst plus four skills remove the need for new generic personas. Tool mentions in a prompt are not installed integrations. |
 
@@ -70,7 +70,7 @@ Repeated tools from the user's categories are merged into one row. Named MCP imp
 |---|---|
 | REA / REA MCP | Existing selected MCP, CLI and workflow skill; [pinned README](https://github.com/morluto/rea/blob/rea-agents-6.5.0/README.md). Official name here is Reverse Engineer Anything. |
 | ReVa / ReVa MCP / ReVa workflows | Selected optional Ghidra extension/server/workflows as one bundle; [upstream](https://github.com/cyberkaida/reverse-engineering-assistant). Its PyGhidra skills target ReVa sessions, not arbitrary REA sessions. |
-| IoTHackBot integrations / skills | Imported whole skill/tool collection with documented safety/portability patches; [upstream](https://github.com/BrownFineSecurity/iothackbot). Claude Code plugin packaging does not make the collection an MCP server. |
+| IoTHackBot integrations / skills | Complete unchanged native plugin tree; [upstream](https://github.com/BrownFineSecurity/iothackbot). Claude Code plugin packaging does not make the collection an MCP server; rulesync no longer extracts it. |
 | OpenCode | Existing agent host, not an analysis backend. No new RE bundle follows from the name. |
 | Anthropic Claude | Model/product family; distinguish Claude Code's local tool access from chat-only use. Host/account choice, not a new RE connector. |
 | Exa / Exa MCP / web_fetch_exa | Existing research service/connector/tool in `mcp-servers/exa/`; reuse. Retrieval is not a second MCP server. |
@@ -104,7 +104,7 @@ Repeated tools from the user's categories are merged into one row. Named MCP imp
 
 | Tool | AI interface and decision |
 |---|---|
-| [CHIPSEC](https://github.com/chipsec/chipsec) | Native framework; IoTHackBot adds an offline UEFI skill. Hardware-driver access is separate. Imported setup uses `-nl` and user-writable output capture instead of world-writable package directories. |
+| [CHIPSEC](https://github.com/chipsec/chipsec) | Native framework; IoTHackBot adds an offline UEFI skill. Hardware-driver access is separate. The faithful native tree retains upstream setup examples; do not follow world-writable permission changes automatically. The former local `-nl`/output-capture patch is no longer shipped. |
 | [Binwalk](https://github.com/ReFirmLabs/binwalk) | Native firmware identification/extraction; already callable by REA. No extra MCP needed. |
 | [Unblob](https://github.com/onekey-sec/unblob) | Native recursive extractor; already callable by REA. Format plugins are not AI plugins. |
 | [Firmwalker](https://github.com/craigz28/firmwalker) | Bash searches over extracted firmware, GPL-3.0. No established dedicated AI component; mostly duplicates searchable-file workflows. |
@@ -197,13 +197,13 @@ Stars below are public API observations from this research run where available; 
 | Evidence / reproducibility rules | REA playbook and existing verification guidance cover much. Require hashes, real addresses/offsets, tool versions, retained outputs, observed/inferred labels and serialized database mutations where missing. No new bundle automatically required. |
 | Tool permission rules | Host-specific permissions require explicit approval. Never auto-allow an entire RE server; do not use rulesync's permissions feature. Instructions alone do not enforce tool permissions. |
 
-Local overlap evidence: `agents/reverse-engineering/README.md` lists three agents/four skills; `skills/trailofbits/README.md` lists 83 skills/30 agents. Narrow Trail of Bits DWARF, YARA-X and false-positive verification skills complement rather than replace whole binary/device workflows. `rules/scope-secrets-approvals/`, `rules/engineering/` and the REA playbook supply existing boundaries/evidence practices; `rules/secure-coding/` applies to changed code/config, not every artifact-handling operation.
+Local overlap evidence: `agents/reverse-engineering/README.md` lists three agents/four skills; `skills/trailofbits/README.md` lists the complete native marketplace's 95 skills/30 agents. Narrow Trail of Bits DWARF, YARA-X and false-positive verification skills complement rather than replace whole binary/device workflows, but are no longer flattened into the OpenCode group. `rules/scope-secrets-approvals/`, `rules/engineering/` and the REA playbook supply existing boundaries/evidence practices; the secure-coding rule (now in `agents/security/rules/`) applies to changed code/config, not every artifact-handling operation.
 
-### IoTHackBot fixes owned by the repository maintainer/implementing agent
+### Earlier IoTHackBot packaging approach — superseded October 20, 2026
 
-These are implementing-agent-owned packaging tasks, not prerequisites the user has been asked to solve. The imported bundle documents the applied fixes in its README; separate runtime/device validation remains necessary.
+The table below records the earlier patched-copy approach, not the current payload. It was superseded by the user-approved native ownership boundary after demonstrated flattening/path conflicts. The complete `skills/iothackbot/upstream/` tree is now unchanged, its custom router and local edits are retired, and it is not generated by either rulesync group. The operational concerns remain review points before execution, not authorization to patch upstream or relax permissions. Separate runtime/device validation remains necessary.
 
-| Issue | Required resolution |
+| Earlier issue | Earlier resolution / operational concern |
 |---|---|
 | CHIPSEC log-directory instructions grant world-writable access | Replaced with source-checked `-nl` (no autolog) and shell capture to user-writable output. Explicit `-l` alone still triggers package-directory creation in the reviewed logger. No broad permission changes remain in setup guidance. |
 | LogicMSO dependency source and device permissions | Verify Saleae's package index and supported Python version; keep exported-file analysis independent of live hardware setup. Do not add USB/udev rules for offline parsing. |
@@ -212,7 +212,7 @@ These are implementing-agent-owned packaging tasks, not prerequisites the user h
 | Overlapping JADX/Apktool/packet instructions | Keep the upstream collection intact; document which existing integration is preferred for each workflow instead of registering duplicate plugins/servers. |
 | Active and state-changing defaults | Separate installation from execution permission. Document approval boundaries for scanning, authentication attempts, capture, target halt/memory access and writes. |
 
-Only choices that affect the user's intended deployment need user input, such as hardware ownership, a desired live workflow or approval of a privileged operation. No hardware or privileged operation is needed to prepare the context bundle itself.
+Current maintenance follows the upstream-ownership procedure in `AGENTS.md`: prefer complete native installation, verify in isolation and show actual conflicts before approving adaptations. Hardware operations, privileged changes and any live plugin migration still need specific approval.
 
 ## Interfaces, utilities and suggested directory groups
 
@@ -236,23 +236,23 @@ Only choices that affect the user's intended deployment need user input, such as
 ## Maintenance and operational boundaries
 
 1. The user approved these context imports. That approval does not authorize analysis-tool installation, live target operations, commits or deployment.
-2. For each approved bundle, check upstream updates and compare changes before copying, per `AGENTS.md`; approve network/package operations separately. Record source path and exact commit, preserve assistant-specific metadata, and ship full applicable upstream license/NOTICE text.
-3. Keep IoTHackBot whole. Embedded JADX/Apktool/Nmap/packet skills overlap some REA workflows, but removing their support assets or splitting the collection would violate repository conventions. Use concise routing documentation and do not duplicate the native plugin installation. Review Claude-specific helper paths, executable entry points, all transitive dependencies and included wordlists/config.
-4. Do not follow IoTHackBot CHIPSEC world-writable setup, or add broad USB/udev permissions for offline LogicMSO file parsing. Prefer documented local changes with upstream differences credited, or defer affected content if an unchanged import cannot satisfy policy. IoTHackBot Nmap/ONVIF/J-Link workflows include active/privileged or state-changing steps; never treat skill installation as permission to execute them.
+2. For each approved bundle, check upstream updates and compare changes before copying, per `AGENTS.md`; approve network/package operations separately. Prefer upstream installers for their complete integration and verify coexistence before removing an existing copy. Record exact source path/revision and full applicable license/NOTICE text. Native trees retain upstream metadata unchanged; rulesync-specific metadata stays only in rulesync-owned bundles.
+3. Keep IoTHackBot whole under its native ownership. Embedded JADX/Apktool/Nmap/packet skills overlap some REA workflows, but removing supporting assets or splitting the collection would violate repository conventions. Do not retain duplicate extracted owners. Review Claude-specific helper paths, executable entry points, dependencies and included wordlists/config before use.
+4. Do not follow IoTHackBot CHIPSEC world-writable setup or add broad USB/udev permissions for offline LogicMSO file parsing. Faithful inclusion is not approval to execute upstream examples. Show a demonstrated problem and obtain approval before any adaptation. Nmap/ONVIF/J-Link workflows include active/privileged or state-changing steps; skill installation grants no execution permission.
 5. REA recording readers are not live capture. Separate authorization for arbitrary script execution, debugger attachment, device writes/flashing, capture, credential attempts and target operations. Treat analyzed artifacts as untrusted data.
 6. MCP hosts requiring running applications/devices should be opt-in, loopback-bound and authenticated as appropriate. Never assume plain HTTP, weaken TLS/authentication, or copy broad auto-approval settings. ZAP's help/source discrepancy was resolved against the pinned source: HTTPS and security-key protection remain enabled. Client certificate trust and a live handshake still require separate validation.
 7. Keep the approved source roots intact: IoTHackBot under `skills/`; REA/ReVa/radare2/ZAP and any future approved conditional server as `mcp-servers/` bundles. A native vendor extension is installed separately; rulesync stores its connection template/context and instructions, not a copied proprietary application.
-8. Implemented selections: `reverse_engineering` retains REA/RE agents and adds IoTHackBot plus disabled ReVa/radare2; `infosec` retains its existing security bundles and adds IoTHackBot plus disabled ZAP. No home-global defaults change. The same bundle is referenced by both groups without making two copies.
+8. Current selections: `reverse_engineering` retains REA/RE agents and disabled ReVa/radare2; `infosec` contains the security rule/agent bundles and disabled ZAP. Trail of Bits and IoTHackBot are complete native-plugin-owned trees, installed separately, not referenced as rulesync roots. Their retired flattened copies are not automatically removed from live assistants.
 9. Do not blindly union profile outputs: MCP generation can replace the selected MCP set. If a combined workspace is wanted, generate one combined selection. Do not assume every folder profile independently installs the global safety rules.
 10. Update affected group configs/README/counts and component credits together. Generate each changed group to a throwaway output root, check names/links/transport configuration, run both applicable leak scans and focused formatter/checks. No runtime success claim until the selected supported backend is actually tested with approval.
 
 ## Decision status
 
-The inventory is classified and the selected context/templates are included in the two folder profiles. Exact native runtime compatibility and reliability remain unverified. The absence of a recommended adapter means insufficient evidence or no demonstrated need, not proof that no adapter exists. No analysis tools, live settings, commits or deployments are applied by importing this context.
+The inventory is classified. Rulesync-owned context/templates are included in the two folder profiles; Trail of Bits and IoTHackBot use separate native installation. Packaging/discovery is verified where documented, but analysis-runtime compatibility and reliability remain unverified. The absence of a recommended adapter means insufficient evidence or no demonstrated need, not proof that none exists. Importing context changes no live settings, targets, commits or deployments.
 
 ## Packaging verification
 
-Checked October 15, 2026:
+Historical checks, October 15, 2026 (the patched IoTHackBot layout described here is superseded above):
 
 - All 9 [offline regression tests](../tests/README.md) pass, including installed helper paths, complete shared assets, disabled templates and global-default separation.
 - Pinned rulesync 33.0.0 generated both groups for OpenCode, Claude Code and Codex CLI, plus all four new standalone profiles (10 successful generation runs).
@@ -260,4 +260,4 @@ Checked October 15, 2026:
 - Local links, authored whitespace, focused diff checks and applicable leak scans pass. No separate repository formatter is configured; no formatter was installed for this change.
 - Codex skips infosec's four folder-level commands; the [group README](../groups/README.md) documents this target limitation. New MCP definitions retain disabled flags and environment-based key references in generated output.
 
-These checks prove context packaging and configuration translation. They do not prove a live MCP handshake, certificate trust, hardware compatibility or analysis-tool behavior.
+Refresh checks, October 20, 2026: 14 offline repository tests and 27 Geo Sleuth region tests passed; all seven groups generated with rulesync 38.0.0. Complete imported trees matched their recorded upstream bytes, native plugin installation/discovery survived subsequent rulesync generation in isolation, and codebase-memory's upstream-last ordering was confirmed. The policy leak scan found no matches; Gitleaks retained known documentation examples, including the unchanged previously reviewed Firebase reference. No live MCP handshake, certificate trust, hardware compatibility or analysis-tool behavior is established by these checks.

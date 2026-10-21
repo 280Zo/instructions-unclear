@@ -12,6 +12,8 @@ Add it to `plugins` in `~/.config/opencode/opencode.jsonc` and restart OpenCode:
 "plugins": ["@slkiser/opencode-quota@latest"]
 ```
 
+Current stable release checked October 20, 2026: **5.0.3**. OpenCode 2 requires **2.0.16+**, with Node **22.13+ or 23.4+**. OpenCode 1 must use `@slkiser/opencode-quota@4` under its legacy `plugin` key, not `@latest`. The `next` prerelease tag is not the stable installation target.
+
 Upstream's setup wizard (`npx @slkiser/opencode-quota init`) does the same and also offers a sidebar panel and a status line. Some providers, Anthropic among them, need a setup step; `/quota_status` tells you which.
 
 ### Let your agent do it
@@ -23,7 +25,7 @@ Skip this if you installed it by hand. Otherwise, start your coding tool in this
 The agent follows these steps:
 
 1. Get the user's approval before editing their OpenCode config.
-2. Open `~/.config/opencode/opencode.jsonc`. If `plugins` (OpenCode 2) or `plugin` (OpenCode 1) already lists `@slkiser/opencode-quota`, stop: it's installed. Otherwise add `"@slkiser/opencode-quota@latest"` to that list, creating `plugins` if neither key exists. Edit only that list; keep every comment and other setting.
+2. Confirm the OpenCode version and prerequisites. Open only the approved config. Use `@slkiser/opencode-quota@latest` in V2's `plugins`, or `@slkiser/opencode-quota@4` in V1's `plugin`. If the right entry already exists, do not duplicate it; show an incorrect-version replacement for approval. Never add both keys. Edit only the plugin list; keep every comment and other setting. Do not open credential files.
 3. Don't run the `init` wizard: it's interactive. Tell the user they can run it themselves for the sidebar and status line.
 4. Tell the user to restart OpenCode and run `/quota_status` to see which providers need setup.
 

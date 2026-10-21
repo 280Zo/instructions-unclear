@@ -6,10 +6,10 @@ Static diagrams and motion variants have different runtime requirements: the bun
 
 ## Install
 
-This folder holds the skill and a one-line rule (written for this repo) telling the agent when to use it. The rule goes into your tool's instructions file, which rulesync replaces on every run, so to get it, add `skills/diagram-design` to `inputRoots` in your `rulesync.local.jsonc` with your other rule folders, or use an [install group](../../groups/). To add just the skill, from the repo root:
+This folder holds only the skill. When to use it comes from the repo's routing rule, [`rules/routing`](../../rules/routing/rules/routing.md), which the `default`, `work` and `writing_reporting` [install groups](../../groups/) install. To add just the skill, from the repo root:
 
 ```bash
-npx rulesync@33.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/diagram-design
+npx rulesync@38.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/diagram-design
 ```
 
 Swap `--targets` for your tools. To keep it in your regular install, add `skills/diagram-design` to `inputRoots` in your `rulesync.local.jsonc`.
@@ -21,8 +21,16 @@ Swap `--targets` for your tools. To keep it in your regular install, add `skills
 - "Match the style of https://example.com" (it reads the site to pick colours and fonts)
 - "Redraw this Mermaid diagram properly" (it converts draw.io and Mermaid sources)
 
-Its rule sends diagram requests here, and `report` uses it for the diagrams in reports. Browse every type in [upstream's gallery](https://cathrynlavery.github.io/diagram-design/), or open `skills/diagram-design/assets/index.html` locally.
+The routing rule sends diagram requests here, and `report` uses it for the diagrams in reports. Browse every type in [upstream's gallery](https://cathrynlavery.github.io/diagram-design/), or open `skills/diagram-design/assets/index.html` locally.
+
+## For agents: routing and updates
+
+- Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Diagram** on its own: `diagram-design`". It also draws the figures when `visual-explainer` builds a page around them.
+- It does not own pages (explanations, plans, reviews, comparisons): those go to `visual-explainer`. A shared look across outputs belongs to `theme-factory`, whose theme replaces this skill's default palette and fonts.
+- Why: on 2026-10-21 the user replaced the per-skill rules with one routing rule because several skills' descriptions and rules claimed the same jobs. Here, `diagram-design` and `visual-explainer` both claimed diagrams.
+- On upstream updates, don't edit the upstream skill text to change routing, and don't add a per-skill routing rule back to this folder.
+- After a refresh, re-read the new `description` and triggers. If it now claims a job another item owns, or drops one it owned, update `rules/routing` and this section in the same change and tell the user.
 
 ## Origin
 
-[cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design), path `skills/diagram-design/`, commit `11b08eade8049c441ed3df1895e3b527c26c0fbe`, copied 2026-10-13. Unchanged. [MIT](../../THIRD_PARTY_LICENSES.md#cathrynlaverydiagram-design), © 2025 Cathryn Lavery. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).
+[cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design), path `skills/diagram-design/`, commit `f2f4d49ea8d632f17cf196ba26599277a93f767b`, copied 2026-10-20. Unchanged, including the PNG/SVG exporters and all supporting assets. [MIT](../../THIRD_PARTY_LICENSES.md#cathrynlaverydiagram-design), © 2025 Cathryn Lavery. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).

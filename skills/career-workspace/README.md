@@ -52,7 +52,7 @@ Install them into your career folder with the [`career` group](../../groups/READ
 
 ```bash
 mkdir -p ~/AI/career
-npx rulesync@33.0.0 generate --targets opencode --features skills --input-roots skills/career-workspace --output-roots ~/AI/career
+npx rulesync@38.0.0 generate --targets opencode --features skills --input-roots skills/career-workspace --output-roots ~/AI/career
 ```
 
 Never add `--global`: the skills read paths relative to the folder you start your tool in. The workflow also needs [`resume-skills`](../resume-skills/) and [`interview-coach`](../interview-coach/); the `career` group installs all three folders.

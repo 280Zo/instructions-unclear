@@ -1,6 +1,6 @@
 {
   "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
-  // Folder-scoped: REA, RE agents, IoTHackBot, and disabled ReVa/radare2 opt-ins.
+  // Folder-scoped: REA, RE agents, and disabled ReVa/radare2 opt-ins. IoTHackBot is native-owned.
   // Run from the repo root with --output-roots <folder>. Never --global.
   "targets": ["opencode"],
   "features": ["skills", "subagents", "mcp"],
@@ -8,7 +8,6 @@
   "inputRoots": [
     "agents/reverse-engineering",
     "mcp-servers/rea",
-    "skills/iothackbot",
     "mcp-servers/reva",
     "mcp-servers/radare2"
   ]

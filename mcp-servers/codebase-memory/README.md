@@ -1,34 +1,43 @@
 # codebase-memory
 
-[codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) indexes a codebase into a knowledge graph on your machine (functions, classes, imports, routes and how they connect) so the agent can answer structural questions with a query instead of reading file after file. It covers 160+ languages and needs no API key or external service.
+[codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) maintains a local structural code graph. **Upstream owns its complete integration:** server installation, skill, three agent profiles, instructions and the OpenCode augmentation extension. This repo no longer extracts or maintains its embedded skill separately.
 
-| File | What it is |
+| File | What this repo owns |
 |---|---|
-| `mcp.jsonc` | The `codebase-memory-mcp` MCP server, installed switched off |
-| `skills/codebase-memory/` | When and how to use the graph instead of grep |
+| `mcp.jsonc` | Optional connection template, disabled until explicitly enabled |
+| `README.md` | Installation order and the verified ownership boundary |
 
-## Install
+## Install and update
 
-1. Install the server once. It's on PyPI, so it fits the other uv-installed servers here:
+Reviewed release: **v0.12.1**, commit `a7158ac2f48ca646b4527341b76f930f2aeff87e`, checked October 20, 2026. Follow the [upstream installation instructions](https://github.com/DeusData/codebase-memory-mcp#installation), selecting only the clients you intend to configure. Read and approve installer operations first; do not pipe downloaded scripts directly into a shell.
 
-   ```bash
-   uv tool install codebase-memory-mcp
-   ```
+1. Generate your selected rulesync configuration first, keeping all desired roots in the run. This folder needs the `mcp` feature, not `skills`.
+2. Install/activate the reviewed upstream release following its supported procedure. The native command supports `install --clients=opencode --dry-run` to preview the OpenCode integration; specify other intended clients rather than configuring every detected client accidentally. Follow its prompts only after reviewing the affected paths. Do not use noninteractive overwrite flags on an unreviewed live installation.
+3. Apply the upstream integration **after** rulesync generation. Review any existing-file replacements. The installer supplies its own skill, instructions, agents and extension; there is no copied skill to install from this folder.
+4. If the generated connection remains disabled, enable it only when you want its tools available. Upstream respects an existing disabled setting; installation is not permission to turn on a server automatically.
 
-   Update it with `uv tool upgrade --all`. Don't run `codebase-memory-mcp install`: that edits every coding tool it finds (MCP entries, instructions, hooks), which is what this repo does for you.
+Repeat the final upstream integration step after future rulesync runs that replace instructions or its MCP settings. Runtime updates and context generation are distinct operations. Upstream activation may stop its running sessions; approve that separately in a real environment.
 
-2. This folder adds an MCP server, and rulesync installs those by replacing your tool's whole list. So add `mcp-servers/codebase-memory` to `inputRoots` in your `rulesync.local.jsonc` (see the [root README](../../README.md#install)) and run your install command with `--features skills,mcp` included.
+## Verified rulesync conflict
+
+An isolated v0.12.1 native installation followed by rulesync generation replaced upstream's instruction block, changed its MCP entry to this repo's disabled template, and overwrote the newer skill with the formerly shipped extracted copy. Agents and the extension survived. Removing our extracted copy prevents that skill overwrite, but generation still replaces the shared instructions/configuration it owns.
+
+The approved exception is **rulesync first, upstream integration last**. In an isolated test, the native installer restored the exact release skill and its instruction block while preserving other generated MCP entries and rules. It retained the existing disabled state. This ordering is an observed integration requirement, not a general reason to avoid upstream installers.
+
+The standard Linux amd64 build failed during C++ locale initialization in the test sandbox before installer code ran; the checksum-verified upstream portable build of the same release passed. Use upstream's supported platform/build selection and verify the chosen artifact; do not assume every build works on every distribution.
 
 ## Use
 
-The server is installed switched off, so it doesn't add its tools to every request while you're not using it. To use it, turn it on in your tool (in OpenCode, set `"enabled": true` on `codebase-memory-mcp` in `opencode.jsonc`), then in a project:
+After enabling the intended connection, ask to index a repository, trace callers or inspect change impact. Follow the upstream-installed skill rather than a separately maintained copy. The 0.12.1 release notes describe index/schema changes that can require a full rebuild; this repo refresh does not rebuild or migrate live indexes.
 
-- "Index this repo" (first time per project; later changes are picked up automatically while a session is open)
-- "Who calls `parseConfig`?", "trace the call chain from the HTTP handler to the database"
-- "What would break if I change `UserService`?", "find dead code", "show the architecture"
+## For agents: routing and updates
 
-The index is stored in `~/.cache/codebase-memory-mcp/`.
+- Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Structural code questions** (callers, dependencies, impact): codebase-memory graph tools when enabled; otherwise search the code directly."
+- The connection is disabled by default, so the rule's fallback (plain code search) is the normal case. Don't enable the server to answer a question.
+- Why: on 2026-10-21 the user replaced the per-skill routing rules with one routing rule because several items claimed the same jobs. The upstream-installed skill and instructions describe when to use the graph; the routing rule only decides graph versus direct search.
+- Upstream owns its skill, agents and instructions, so don't edit them and don't add a routing rule to this folder.
+- After applying a new upstream release, re-read the installed skill's description and instructions. If they now claim a job another item owns, update `rules/routing` and this section in the same change and tell the user.
 
 ## Origin
 
-[DeusData/codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp). The skill isn't a file upstream; the program carries it as text and writes it out during `install`. Here it was extracted from `src/cli/cli.c` at tag `v0.11.0` (commit `8972ea69c6ad94b1ef1d4ffbf0a92d78d2db1798`), unchanged, on 2026-10-14. [MIT](../../THIRD_PARTY_LICENSES.md#deusdatacodebase-memory-mcp), © 2025 DeusData. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md); extract the skill again from the new release's `skill_content` in `src/cli/cli.c`.
+Connection and installation guide written for this repo. Upstream: [DeusData/codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp), release [v0.12.1](https://github.com/DeusData/codebase-memory-mcp/releases/tag/v0.12.1), commit `a7158ac2f48ca646b4527341b76f930f2aeff87e`. No upstream skill or executable is now vendored. Upstream [MIT notice](../../THIRD_PARTY_LICENSES.md#deusdatacodebase-memory-mcp), © 2025 DeusData.

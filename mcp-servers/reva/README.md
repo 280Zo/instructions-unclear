@@ -20,7 +20,7 @@
 From the repo root, use the [reverse-engineering group](../../groups/README.md#reverse_engineering), or this component alone:
 
 ```bash
-npx rulesync@33.0.0 generate --config mcp-servers/reva/profile.jsonc --output-roots ~/AI/reva
+npx rulesync@38.0.0 generate --config mcp-servers/reva/profile.jsonc --output-roots ~/AI/reva
 ```
 
 Never add `--global`. This copies context and a **disabled** connection; it does not install Ghidra or the extension. After separately approving/installing the matching extension, start the project, verify its loopback endpoint and explicitly enable `reva` in the generated project configuration. Default assistant endpoint: `http://127.0.0.1:8080/mcp/message`. Resolve any port conflict in Ghidra and the project connection together.
@@ -30,6 +30,8 @@ Do not also install ReVa's native Claude plugin with these same skills. Do not c
 ## Updating
 
 Update the extension version, skill commit and matching Ghidra requirements together, comparing upstream changes before copying. Preserve all `patterns.md`, `examples.md` and scripting references. Re-run the offline tests and throwaway reverse-engineering generation. No runtime compatibility has been tested by merely generating this config.
+
+Checked October 20, 2026: v7.3.1 remains the latest release and all six copied skill payloads match the audited upstream development tree. The verified release baseline below is retained; unrelated later repository commits are not a reason to relabel the copied source.
 
 ## Origin
 

@@ -17,19 +17,19 @@ The detailed usage instructions the AI sees ("read before you write", one `recor
 
 ## Install
 
-1. Install it once with [uv](https://docs.astral.sh/uv/):
+1. Have [uv](https://docs.astral.sh/uv/) available. The MCP entry selects the reviewed package version explicitly:
 
    ```bash
-   uv tool install pmb-ai
+    uvx --from pmb-ai==1.2.3 pmb-mcp
    ```
 
-   That provides `pmb`, `pmb-ai`, `pmb-chat`, `pmb-hook` and `pmb-mcp`. The MCP entry runs the installed `pmb-mcp`. Update it with `uv tool upgrade --all`.
+   This is the launch command, not a command to run alongside your assistant's server. First launch may download dependencies; review that operation before enabling it. The pin selects the top-level package, not a complete transitive dependency lock. Refresh the reviewed pin here and in `mcp.jsonc` together; regenerating the config does not upgrade an already-running process.
 
 2. This folder adds a rule and an MCP server, and rulesync installs both by replacing your tool's whole set. So add `mcp-servers/pmb` to `inputRoots` in your `rulesync.local.jsonc` (see the [root README](../../README.md#install)) and run your install command with `--features rules,mcp`.
 
 ## Use
 
-Start the configured server in the intended project and verify its workspace before writes. The rule has the agent read memory before starting work and save decisions, lessons and progress as it goes. Ask "where were we?", "what did we decide about X?" or "what are the open goals?" to use it directly. Say "remember that…" to pin something important.
+Start the configured server in the intended project and verify its workspace before writes. The rule has the agent read memory before starting work and save decisions, lessons and progress as it goes. Ask "where were we?", "what did we decide about X?" or "what are the open goals?" to use it directly. Say "remember that…" to pin something important. Reviewed runtime baseline: `pmb-ai 1.2.3`, checked October 20, 2026; server-provided instructions remain owned by upstream, not copied into this repo.
 
 PMB also offers `pmb connect --active`, but inspect and approve its host-configuration changes first: the source-reviewed release includes shared-daemon connection defaults, which are different from this repo's explicit `pmb-mcp` stdio entry. Do not run it as an automatic prerequisite for an already configured server.
 

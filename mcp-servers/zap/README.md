@@ -12,13 +12,13 @@ Install ZAP/add-ons through the [official distribution](https://www.zaproxy.org/
 
 ## Install and activate
 
-From the repo root, use the [infosec group](../../groups/README.md#infosec), or:
+From the repo root, use the [infosec group](../../groups/README.md#infosec) (folder-scoped), the [work group](../../groups/README.md#work) (home folder; the connection is still written disabled), or this folder alone:
 
 ```bash
-npx rulesync@33.0.0 generate --config mcp-servers/zap/profile.jsonc --output-roots ~/AI/zap
+npx rulesync@38.0.0 generate --config mcp-servers/zap/profile.jsonc --output-roots ~/AI/zap
 ```
 
-Never add `--global`. The connection is disabled. In ZAP, enable MCP on loopback, retain secure-only and security-key protection, and verify the HTTPS listener/certificate. In your client, use its documented certificate-trust configuration; do not disable TLS verification or switch off server protections to obtain a connection. Then explicitly enable `zap` in the generated project configuration.
+Never add `--global` to this single-folder command; through `work` it reaches your home-folder MCP list instead, still disabled. The connection is disabled either way. In ZAP, enable MCP on loopback, retain secure-only and security-key protection, and verify the HTTPS listener/certificate. In your client, use its documented certificate-trust configuration; do not disable TLS verification or switch off server protections to obtain a connection. Then explicitly enable `zap` in the generated project configuration.
 
 The source-checked endpoint is `https://localhost:8282` with the **raw key** in `Authorization`, not `Bearer <key>`. The pinned handler accepts JSON-RPC POST and GET event-stream requests on its listener; a guessed `/sse` or `/mcp` suffix is unnecessary. Adjust the hostname/port only to match your separately configured listener and trusted certificate.
 

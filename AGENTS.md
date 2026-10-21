@@ -46,6 +46,19 @@ Things are separate folders so people can install only the ones they want with `
 
 Inside a source tree: `rules/*.md`, `skills/<name>/SKILL.md`, `subagents/*.md`, `mcp.jsonc`. `README.md` files are ignored by rulesync.
 
+## Upstream installation ownership
+
+For anything maintained outside this repo, use this order when adding or updating it:
+
+1. **Prefer the upstream installer** for its complete supported integration, including any skills, agents, hooks and other resources it owns. Read the documented options first; do not extract individual installer-generated files merely because this repo can distribute them.
+2. **Remove duplicated extracted-skill maintenance only after** the upstream replacement is verified in an isolated environment. Do not delete a working integration first or change the user's live installation without approval.
+3. **Test subsequent rulesync generation** against the isolated upstream installation. Verify that configuration, instructions, skills, hooks and supporting resources remain usable; check for replacements, duplicate owners and broken paths, not merely successful command exits.
+4. **Show the actual conflict** before choosing an exception. Explain the observed failure and proposed ownership boundary; get approval before introducing a workaround or keeping a separately maintained copy.
+
+Copy upstream content faithfully where this repo distributes files. Follow upstream installation procedures where upstream installs the software. Keep this repo's installation guidance separate and accurate. Preserve supporting upstream files even if some uses are irrelevant here; unused artifacts alone are not a reason to rewrite or omit content. Add adaptations only for demonstrated installation problems, explain them before applying them, and document approved differences in the component README.
+
+An approved repo refresh does not authorize changing live assistant settings, running privileged operations, weakening permissions, publishing, or committing. Test installers in isolated homes/environments with no access to live configurations or daemons. Preserve licenses and record the exact source revision/release actually copied or verified.
+
 ## Adding or updating content
 
 ### Rules
@@ -98,14 +111,18 @@ Files that currently carry tool sections:
 |---|---|
 | `skills/report/skills/report/SKILL.md` | `claudecode: allowed-tools` |
 | `skills/eli5/skills/eli5/SKILL.md` | `claudecode: allowed-tools` |
-| `mcp-servers/exa/skills/code-search/SKILL.md` | `claudecode: context` |
 | `agents/second-opinion/subagents/*.md` | `name`, `targets`, `opencode: mode` and `permissions`, `claudecode: tools` |
 | `agents/local-model/subagents/local-model.md` | `name`, `targets`, `opencode: mode` |
-| `skills/trailofbits/` (38 skills, all 30 agents) | `claudecode:` settings and agent `targets`; listed in its README |
-| `agents/security-*/subagents/*.md`, `agents/reverse-engineering/subagents/*.md` (6 agents) | `targets`, `opencode: mode`, `claudecode: model` |
+| `agents/security/subagents/*.md`, `agents/reverse-engineering/subagents/*.md` (5 agents) | `targets`, `opencode: mode`, `claudecode: model` |
 | `skills/distilly/skills/distilly/SKILL.md` | `claudecode: argument-hint, user-invocable, allowed-tools` |
 
 Third-party skills and agents (in `skills/`, `agents/` and `mcp-servers/`) should stay identical to upstream apart from tool sections. Note any other change in the folder's README.
+
+Exception: `agents/security/` is a **repo-owned merge** of wshobson and OpenAI security content (user decision, October 21, 2026), edited to remove overlaps and rule conflicts. Never overwrite it from upstream; port upstream changes by hand as its README's "For agents: maintaining this bundle" section describes.
+
+**Routing between skills lives in one rule, `rules/routing`** (user decision, October 21, 2026). Don't add per-skill routing rules to skill folders, and don't edit upstream skill text to change which skill owns a job. When a skill is added, removed or refreshed and its description now claims a job another item owns (or drops one it owned), update `rules/routing` and that skill's README "For agents: routing and updates" section in the same change, and tell the user.
+
+`skills/trailofbits/upstream/` and `skills/iothackbot/upstream/` preserve complete, unchanged upstream trees. They are native-plugin-owned resources, not rulesync source roots; do not flatten them, add tool sections, or re-add them to groups. Follow their wrapper READMEs and verify native installation before replacing those trees.
 
 When adding third-party content, record in the folder's README the upstream repo, the path inside it, and the commit you copied from. The update check below depends on that commit.
 
@@ -130,16 +147,15 @@ rulesync installs rules, skills, agents, commands, hooks and MCP servers, not pl
 
 Run this check when the user asks to update, upgrade, sync or refresh anything here, and before adding new content (so new and existing copies match their upstreams). Each step that contacts the network needs the user's approval first.
 
-1. **Third-party skills and agents** (`skills/`, and skills under `mcp-servers/`). For each folder, compare the commit recorded in its README with upstream's latest: `git ls-remote <repo> HEAD`. If they differ, clone upstream into `/tmp/opencode`, diff upstream's folder against the repo copy, and show the user what changed before copying anything. Copy only into the folder's inner `skills/` and `subagents/`; its `README.md` and `profile.jsonc` are this repo's and are never overwritten. If upstream's license text changed, update its section in `THIRD_PARTY_LICENSES.md`. Copying follows "Syncing a changed skill or agent" above: keep the repo's tool sections, then record the new commit. If a README has no commit recorded, clone upstream's latest, diff it the same way, and record that commit.
-   Some skills aren't files upstream. `mcp-servers/codebase-memory` extracts its skill from the `skill_content` string in the program's `src/cli/cli.c` at the release tag; decode the C string exactly and check the frontmatter parses.
-2. **MCP servers installed with uv.** Run `uv tool list --outdated` and report what's behind. Don't upgrade them; give the user `uv tool upgrade --all`.
+1. **Third-party skills and agents** (`skills/`, and skills under `mcp-servers/`). Apply "Upstream installation ownership" first. For copied content, compare the commit recorded in its README with upstream's latest: `git ls-remote <repo> HEAD`. If they differ, clone upstream into `/tmp/opencode`, diff the relevant payload against the repo copy, and show the user what changed before copying anything. Keep complete supporting content and upstream structure where required; do not limit a collection to isolated skill/agent files. Wrapper `README.md` and `profile.jsonc` files are this repo's and are never overwritten wholesale. If upstream's license text changed or new nested notices appeared, update `THIRD_PARTY_LICENSES.md`. Preserve required tool sections, then record the exact new commit and approved adaptations. If no baseline was recorded, compare the current files to upstream and record the verified revision without inventing an older baseline.
+2. **MCP packages.** Compare repository pins with their package registries and release notes. Inspect live versions with `uv tool list --outdated` only if the user includes live installations in scope. Do not upgrade live tools automatically or suggest `uv tool upgrade --all` for integrations whose reviewed versions are pinned; follow the approved package-specific update procedure.
 3. **Container images** (`mcp-servers/*/compose.yaml`). Compare the pinned tag with the project's latest GitHub release. If newer, look up that tag's digest from the registry (for GHCR: get an anonymous pull token from `https://ghcr.io/token?scope=repository:<owner>/<image>:pull`, then read the `docker-content-digest` header of `HEAD https://ghcr.io/v2/<owner>/<image>/manifests/<tag>`), show the user the release notes link, and update tag and digest together.
 4. **rulesync.** Compare the version pinned in the README's commands with `npm view rulesync version`. A new version is an upgrade, not a refresh: generate with both versions into separate throwaway home folders (see "Verify before committing"), diff the output, and show the user the differences before changing the pin.
 5. **Pinned MCP packages** (`uvx` and `npx` pins in `mcp-servers/*/mcp.jsonc`, such as `freecad-mcp@` and `rea-agents@`). Compare each pin with the package's latest release and update it together with any matching skill or addon the README names.
 6. **Plugins** (`plugins/`). Nothing is copied, so there's nothing to diff. Check that each README's install line still matches upstream's install docs.
 7. Summarize what's current, what's behind, and what you changed.
 
-Never run an upstream's own installer (`install.sh`, `npx <package>`, plugin marketplaces) to update; copy files as above.
+Use upstream installers according to "Upstream installation ownership", with explicit approval for downloads/execution and isolation from live settings. Do not run install scripts blindly or pipe network output directly to a shell. Copying source content into this repo and installing software into the user's assistant are separate operations.
 
 ## Keep the credits current
 
@@ -164,7 +180,7 @@ Generate into a throwaway home folder, never the real one:
 
 ```bash
 mkdir -p /tmp/opencode/rulesync-check
-HOME=/tmp/opencode/rulesync-check npx rulesync@33.0.0 generate --global --features rules,subagents,skills,mcp
+HOME=/tmp/opencode/rulesync-check npx rulesync@38.0.0 generate --global --features rules,subagents,skills,commands,mcp
 ```
 
 Leak scan over the files git would commit:

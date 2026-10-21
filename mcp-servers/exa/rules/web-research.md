@@ -20,14 +20,19 @@ instead of inventing a citation or falling back silently to recollection.
 up" means guessing a URL — your most common source of confident wrong answers.
 
 - **Discovery → `exa_web_search_exa`.** Mandatory for any find/research/what-is/
-  which-library question, even when you think you know the answer. Use
-  `exa_web_search_advanced_exa` for category, domain, date or highlight filters.
+  which-library question, even when you think you know the answer. Follow the
+  upstream `search` skill for query patterns and supported filtering; this
+  connection does not enable `web_search_advanced_exa`.
 - **Retrieval from a known URL → `exa_web_fetch_exa`.** Clean markdown, batched
   URLs, `maxCharacters`. Measured on one GitHub page, `webfetch` returned ~7k
   chars of nav chrome and base64 badges before any content.
 - **`webfetch` only for:** localhost/private IPs; `format: html|text` where raw
   markup matters; a URL the user or these instructions gave you; Exa failing.
 - **Never build a doc URL from memory.** No user/file/Exa source → search first.
+- **Multi-step agent research → `agent_run`.** Use the upstream `Exa Agent`
+  skill when that tool is available. Continue a running run by its ID rather
+  than starting duplicates. Provider access and costs remain subject to the
+  user's account and approval; installing context grants neither.
 - Breaking these is allowed. Doing it silently is not.
 
 Built-in `websearch` is unauthenticated Exa and is off here. Don't ask for it.

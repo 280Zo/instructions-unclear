@@ -3,10 +3,10 @@
   "mcpServers": {
     "docling": {
       "type": "stdio",
-      // Installed with `uv tool install 'docling-mcp[local]'`;
-      // update with `uv tool upgrade --all`.
-      "command": "docling-mcp-server",
+    // Reviewed local-conversion package pin; first use may download large dependencies.
+      "command": "uvx",
       "args": [
+        "--from", "docling-mcp[local]==3.3.0", "docling-mcp-server",
         "conversion", "generation",
         "--transport", "stdio"
       ],

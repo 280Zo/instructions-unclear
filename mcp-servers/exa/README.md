@@ -1,54 +1,42 @@
 # Exa
 
-[Exa](https://exa.ai) is a web search API. Its MCP server gives the AI real search and clean page fetching.
+[Exa](https://exa.ai) provides web discovery, page retrieval and multi-step research through its [MCP server](https://github.com/exa-labs/exa-mcp-server).
 
 ## What's in this folder
 
-| File | Becomes | Origin |
-|---|---|---|
-| `mcp.jsonc` | The `exa` entry in your tool's MCP server list | Me |
-| `rules/web-research.md` | The "Web Research" section of `AGENTS.md` | Me |
-| `skills/code-search/` | Skill `code-search-exa` | [exa-labs/exa-mcp-server](https://github.com/exa-labs/exa-mcp-server), unchanged. [MIT](../../THIRD_PARTY_LICENSES.md#exa-labsexa-mcp-server) |
-| `skills/exa-research/` | Skill `exa-research` | Exa's `skills/search` from [exa-labs/exa-mcp-server](https://github.com/exa-labs/exa-mcp-server), which I renamed and changed. [MIT](../../THIRD_PARTY_LICENSES.md#exa-labsexa-mcp-server) |
+| File | Origin / purpose |
+|---|---|
+| `mcp.jsonc` | Repo-authored connection enabling `web_search_exa`, `web_fetch_exa` and `agent_run` |
+| `rules/web-research.md` | Repo-authored source-quality and discovery/retrieval guidance |
+| `skills/search/` | Upstream `search` skill and all its references, unchanged |
+| `skills/exa-agent/` | Upstream `Exa Agent` skill, unchanged |
 
 ## Install
 
-1. Get an Exa API key and export it as `EXA_API_KEY` (below).
-2. This folder adds a rule and an MCP server, and rulesync installs both by replacing your tool's whole set. So add `mcp-servers/exa` to `inputRoots` in your `rulesync.local.jsonc` (see the [root README](../../README.md#install)) and run your install command with `--features rules,skills,mcp`.
+Add `mcp-servers/exa` to your selected `inputRoots` and generate with `--features rules,skills,mcp`, keeping your other roots in the same run because rules and MCP settings are replaced. The hosted endpoint uses the `EXA_API_KEY` environment variable through an `x-api-key` header; this repo never contains the real key. Configure that variable where your assistant starts. No local Exa package or installer is required for this hosted connection.
 
 ## Use
 
-Ask anything that needs the web ("what changed in Node 24?", "find the docs for X"). The web research rule makes the agent use Exa search instead of guessing URLs. For more:
+- Ask for research across multiple sources: the upstream `search` skill plans search/fetch work and selects its topic-specific references, including `patterns-code.md` for programming questions.
+- Ask for multi-step discovery, list-building or enrichment: `Exa Agent` uses `agent_run`. Optional partner-data providers require corresponding account access and may incur costs; they are not enabled or purchased by copying the skill.
 
-- **`code-search-exa`**: "find real examples of using X's API", "how do people configure Y".
-- **`exa-research`**: "research everything about X", "compare the top tools for Y". It plans the work, sends subagents to search in parallel, and returns a sourced summary.
+The skill bodies retain upstream's assistant-specific wording and model recommendations. Their presence is not a guarantee that every host provides those delegation/model facilities. Host permissions and higher-priority instructions still apply. References must resolve from the installed skill folder.
 
-## Notes
+## Updating and existing installations
 
-`code-search`'s folder name doesn't match its skill name (`code-search-exa`). That's how upstream ships it, and OpenCode loads it anyway.
+This is a fresh upstream import, not the former local research adaptation. The old `code-search-exa` and `exa-research` skill names are no longer shipped. Because `delete: false`, regenerating does not remove old live installations; review and approve removal of those stale skill folders separately. No live files were removed by this repo refresh.
 
-`code-search` has a `context: fork` setting, which tells Claude Code to run the skill in a separate sub-conversation. It sits under a `claudecode:` section in the skill's header, so rulesync writes it for Claude Code and leaves it out for OpenCode, which doesn't use it. (Upstream has it at the top level; it was moved here so rulesync keeps it.)
+Refresh `skills/search/` and `skills/exa-agent/` together from the recorded upstream source, preserve the complete references, and review the hosted tool selection. Do not rewrite upstream behavior merely to preserve the old local names. If a target parser or host rejects an upstream name/instruction, show the actual failure before adapting it.
 
-`exa-research` writes reference paths as `<skill-dir>/references/...` and tells the AI to fill in the skill's folder before handing a path to a subagent. Tested: OpenCode reports the folder when the skill loads, and a subagent given the filled-in path could read the file.
+## For agents: routing and updates
 
-## API key
+- Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Web discovery**: Exa `search`. Multi-step list-building or enrichment: `Exa Agent`."
+- `search` does not own multi-step list-building or enrichment (`Exa Agent`), and `Exa Agent` is not the default for ordinary lookups (`search`). Reading local documents is Docling's job.
+- Why: on 2026-10-21 the user replaced the per-skill routing rules with one routing rule because several items claimed the same jobs. Here, the two upstream Exa skills overlap on research requests, and `Exa Agent` can use partner-data providers that may incur costs.
+- `rules/web-research.md` stays in this folder: it covers source quality and search versus fetch, not which skill owns a job. Keep job ownership in `rules/routing`.
+- On upstream updates, don't edit the upstream skill text to change routing, and don't add a per-skill routing rule here.
+- After a refresh, re-read both new `description`s and the hosted tool list. If either skill now claims the other's job or one owned elsewhere, or drops one it owned, update `rules/routing` and this section in the same change and tell the user.
 
-You need an [Exa](https://exa.ai) API key. The MCP entry sends it from the `EXA_API_KEY` environment variable, and the key itself is never written into any file: OpenCode's config gets `{env:EXA_API_KEY}`, Claude Code's gets `${EXA_API_KEY}`, and Codex's gets the variable's name. So rulesync doesn't need the key, but your coding tool does. Set it where the tool starts, for example in your shell profile:
+## Origin
 
-```bash
-export EXA_API_KEY=paste-your-exa-key-here
-```
-
-If it's missing, Exa calls fail authentication.
-
-To read the key from a file instead, change the header in **this folder's** `mcp.jsonc` to `"x-api-key": "{file:/path/to/exa.key}"` and regenerate. Don't edit it in `opencode.jsonc` directly: the next generate with the `mcp` feature overwrites that.
-
-## Why the URL looks the way it does
-
-- **`?tools=` replaces Exa's default tool list; it doesn't add to it.** Leave out a default and it disappears.
-- **`web_search_advanced_exa`** is off by default, and it's what the research-paper, financial-report and personal-site searches need (category filters, domain restrictions, date ranges, highlights).
-- **`agent_run` is deliberately not enabled:** it's billed per run.
-
-## Permissions depend on the server's name
-
-OpenCode names each tool `<server name>_<tool>`, e.g. `exa_web_search_exa`. Permission rules such as `"exa_*": "allow"` match on that name, and so do the rules and skills here, which name `exa_web_search_exa` and friends directly. If you rename the server, update your permission rules, `rules/web-research.md`, and both skills.
+[exa-labs/exa-mcp-server](https://github.com/exa-labs/exa-mcp-server), paths `skills/search/` and `skills/exa-agent/`, commit `0b499f095c4ca145eee07b09137641c037d58449`, copied October 20, 2026. Skill payloads unchanged. [MIT](../../THIRD_PARTY_LICENSES.md#exa-labsexa-mcp-server), © Exa Labs. Connection and rule written for this repo.

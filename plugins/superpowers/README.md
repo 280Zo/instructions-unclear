@@ -13,7 +13,7 @@ Nothing installs through rulesync for this one. The plugin comes straight from u
 | Codex CLI | `/plugins`, search for `superpowers`, choose **Install Plugin** |
 | Others | Upstream's [installation list](https://github.com/obra/superpowers#installation) covers Cursor, Gemini CLI, Copilot CLI and more |
 
-In OpenCode, the git entry follows upstream's latest commit. To stay on one release, add the tag: `superpowers@git+https://github.com/obra/superpowers.git#v7.0.0`.
+For OpenCode, current upstream requires V2 **2.0.4+**. The git entry is unpinned, but dependency caches and lockfiles can retain an older resolved commit; a restart alone does not prove an update. Follow upstream's update procedure rather than deleting user caches or lockfiles automatically. To stay on the reviewed release, use `superpowers@git+https://github.com/obra/superpowers.git#v7.0.0` (latest release checked October 20, 2026).
 
 ### Let your agent do it
 
@@ -24,7 +24,7 @@ Skip this if you installed it by hand. Otherwise, start your coding tool in this
 The agent follows these steps:
 
 1. Ask the user which tools to install it for, and get their approval before editing any tool config.
-2. **OpenCode:** open `~/.config/opencode/opencode.jsonc`. If `plugins` (OpenCode 2) or `plugin` (OpenCode 1) already lists a `superpowers@` entry, stop: it's installed. Otherwise add `"superpowers@git+https://github.com/obra/superpowers.git"` to that list, creating `plugins` if neither key exists and never adding both keys. Edit only that list; keep every comment and other setting.
+2. **OpenCode:** verify V2 2.0.4+ and open only the approved config. If `plugins` already lists a `superpowers@` entry, do not duplicate it; check upstream update guidance if an update was requested. Otherwise add `"superpowers@git+https://github.com/obra/superpowers.git"` to `plugins`. Never add both `plugin` and `plugins`. Edit only the plugin list; keep every comment and other setting. Never open credential files or remove caches/lockfiles automatically.
 3. **Claude Code and Codex:** you can't run their slash commands. Give the user the command from the table above to run themselves.
 4. Tell the user to restart each tool, and that `using-superpowers` should then load at the start of each session.
 

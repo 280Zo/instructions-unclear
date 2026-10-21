@@ -68,6 +68,14 @@ docker compose up -d
 
 Your data stays in the volume. The "Check for updates" steps in [`AGENTS.md`](../../AGENTS.md) look up the newest release and its digest for you.
 
+## For agents: routing and updates
+
+- Role in [`rules/routing`](../../rules/routing/rules/routing.md): "An editable `.pptx` uses the Presenton MCP when it is enabled, otherwise `documents`." Presenton is first choice for editable decks, but use it only when the user has started it and turned the server on; never enable it yourself.
+- It does not own browser decks (`frontend-slides`), slides inside a page (`visual-explainer`) or other Office and PDF files (`documents`).
+- Why: on 2026-10-21 the user replaced the per-skill routing rules with one routing rule because several items claimed the same jobs. Slides were claimed by four: Presenton, `documents`, `frontend-slides` and `visual-explainer`.
+- This folder has no skill or rule, so routing for it lives only in `rules/routing`. Don't add a rule here.
+- When upgrading the pinned image, check the release notes for new output types or MCP tools. If Presenton now covers a job another item owns, update `rules/routing` and this section in the same change and tell the user.
+
 ## Credits
 
 Presenton is by the Presenton team, licensed [Apache 2.0](https://github.com/presenton/presenton/blob/main/LICENSE) (the license file names no copyright holder). This folder contains no Presenton code: only the connection entry, a compose file that runs their published image, and an example settings file using their documented variables.

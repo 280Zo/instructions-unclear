@@ -1,7 +1,0 @@
-{
-  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
-  "targets": ["opencode"],
-  "features": ["skills"],
-  "delete": false,
-  "inputRoots": ["skills/iothackbot"]
-}

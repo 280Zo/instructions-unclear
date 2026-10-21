@@ -1,16 +1,17 @@
 {
   "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
-  // Folder-scoped: every infosec folder in the repo. Run from the repo root
+  // Folder-scoped rulesync selection; native plugins install separately. Run from the repo root
   // with --output-roots <folder>. Never run this with --global.
   "targets": ["opencode"],
   "features": ["rules", "skills", "subagents", "commands", "mcp"],
   "delete": false,
   "inputRoots": [
-    "rules/secure-coding",
-    "agents/security-compliance",
-    "agents/security-scanning",
-    "skills/trailofbits",
-    "skills/iothackbot",
+    "agents/security",
+    "skills/transcribe",
+    "skills/speech",
+    "skills/security-threat-model",
+    "skills/screenshot",
+    "skills/playwright",
     "mcp-servers/zap"
   ]
 }

@@ -11,7 +11,7 @@ Three agents that check the main agent's work.
 Agents are added alongside what you already have, so this folder can be installed on its own. From the repo root:
 
 ```bash
-npx rulesync@33.0.0 generate --global --targets opencode,claudecode --features subagents --input-roots agents/second-opinion
+npx rulesync@38.0.0 generate --global --targets opencode,claudecode --features subagents --input-roots agents/second-opinion
 ```
 
 Swap `--targets` for your tools. To keep it in your regular install, add `agents/second-opinion` to `inputRoots` in your `rulesync.local.jsonc`.

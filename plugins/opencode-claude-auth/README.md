@@ -1,21 +1,18 @@
-# opencode-claude-auth-v2
+# opencode-claude-auth
 
-[opencode-claude-auth-v2](https://github.com/heymaaz/opencode-claude-auth-v2) lets OpenCode 2 use your Claude Pro or Max subscription instead of a pay-per-use Anthropic API key. It reuses the login Claude Code already has, so there's no separate sign-in. OpenCode's own tools and permission prompts keep working as normal.
-
-No rules or skills go with it: it changes how OpenCode connects, not what the agent does.
+[opencode-claude-auth](https://github.com/griffinmartin/opencode-claude-auth) lets OpenCode use an existing Claude subscription. OpenCode 2 support was merged into upstream 3.0.0; the former `heymaaz/opencode-claude-auth-v2` fork is retired. No plugin code, credentials or settings are copied into this repo.
 
 ## Install
 
-1. Have Claude Code installed and signed in (`claude auth login`) with a Pro or Max subscription, and Node.js 22+.
-2. Add it to `plugins` in `~/.config/opencode/opencode.jsonc` and restart OpenCode:
+Follow the [upstream installation instructions](https://github.com/griffinmartin/opencode-claude-auth/blob/main/installation.md). For OpenCode 2, use:
 
-   ```jsonc
-   "plugins": ["opencode-claude-auth-v2@latest"]
-   ```
+```jsonc
+"plugins": ["opencode-claude-auth@latest"]
+```
 
-3. In OpenCode, run `/connect` and choose **Anthropic → Import Claude Code subscription**.
+For OpenCode 1 only, upstream specifies `opencode-claude-auth@2.2.1` under its legacy singular `plugin` key. Never add both keys or load both the retired fork and upstream plugin.
 
-This is for OpenCode 2 only. OpenCode 1 uses the original [opencode-claude-auth](https://github.com/griffinmartin/opencode-claude-auth) under a singular `plugin` key; don't put both keys in one config.
+If the retired fork is already present, replace that one entry rather than adding a second authentication plugin. Preserve all other settings. Restart OpenCode and, if reconnection is needed, run `/connect`, choose **Anthropic**, then **Import Claude Code subscription**. Authentication is handled by the host/plugin; do not paste tokens into this repo.
 
 ### Let your agent do it
 
@@ -25,22 +22,15 @@ Skip this if you installed it by hand. Otherwise, start your coding tool in this
 
 The agent follows these steps:
 
-1. Get the user's approval before editing their OpenCode config.
-2. Check the OpenCode version with `opencode --version`. If it's OpenCode 1, stop and point the user to the original plugin linked above.
-3. Check that Claude Code is signed in by checking that `~/.claude/.credentials.json` exists (macOS may use the Keychain instead). Don't open or print the file: it holds tokens. If it's missing, ask the user to run `claude auth login`.
-4. Open `~/.config/opencode/opencode.jsonc`. If `plugins` already lists `opencode-claude-auth-v2`, stop: it's installed. Otherwise add `"opencode-claude-auth-v2@latest"` to `plugins`. Edit only that list; keep every comment and other setting.
-5. Tell the user to restart OpenCode, run `/connect`, and choose **Anthropic → Import Claude Code subscription**. You can't do that step for them.
+1. Ask which OpenCode version is in use and get approval before editing any tool config. Do not read credential files or Keychain contents.
+2. Inspect only the plugin list in the approved OpenCode config. If the correct upstream entry is already present, do not add another. If the retired fork is present, show the single-entry replacement for approval.
+3. Use `opencode-claude-auth@latest` in V2's `plugins`, or `opencode-claude-auth@2.2.1` in V1's `plugin`. Never add both keys. Keep comments and all unrelated settings. Do not run an unrelated installer or change provider/model settings.
+4. Tell the user to restart and perform the `/connect` step above themselves if required. Never print, copy or manually migrate credentials.
 
 ## Use
 
-Pick any model under **Anthropic** with `/models`. Requests go through your subscription, and the plugin refreshes the login as it expires.
-
-## Notes
-
-- It reads your Claude Code credentials (`~/.claude/.credentials.json`, or the macOS Keychain) and writes refreshed tokens back there. Nothing about them goes into this repo.
-- OpenCode 2's plugin API is still in beta, so an OpenCode update can break this plugin until it catches up.
-- Using a subscription through a tool other than Claude Code is between you and your plan's terms.
+Select an Anthropic model after connecting. Use the plugin defaults and upstream troubleshooting guidance. Subscription use remains subject to the provider's terms. The plugin handles credential discovery and refresh; installation instructions must not expose those credentials.
 
 ## Origin
 
-[heymaaz/opencode-claude-auth-v2](https://github.com/heymaaz/opencode-claude-auth-v2), a fork of [griffinmartin/opencode-claude-auth](https://github.com/griffinmartin/opencode-claude-auth). MIT. Nothing is copied into this repo.
+[griffinmartin/opencode-claude-auth](https://github.com/griffinmartin/opencode-claude-auth), MIT; current upstream release 3.0.0 and [fork retirement notice](https://github.com/heymaaz/opencode-claude-auth-v2/releases/tag/migration-to-upstream) checked October 20, 2026. Nothing is copied into this repo. Future updates come from upstream, not the retired fork.

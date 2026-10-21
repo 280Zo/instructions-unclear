@@ -21,6 +21,7 @@ description: "Scope, secrets and approvals: where to work, what never to touch, 
 
 * Ask before shell commands that install dependencies, access the network, modify large numbers of files, alter Git history, or affect resources outside the repository.
 * Ask before any other irreversible, destructive, externally visible, or security-sensitive action.
+* A skill, command or plugin that includes commit, push, install, deploy or scan steps is not approval for them; these rules win.
 
 ## Never
 

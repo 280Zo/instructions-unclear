@@ -8,7 +8,7 @@ Install it into your career folder with the [`career` group](../../groups/README
 
 ```bash
 mkdir -p ~/AI/career
-npx rulesync@33.0.0 generate --targets opencode --features skills --input-roots skills/interview-coach --output-roots ~/AI/career
+npx rulesync@38.0.0 generate --targets opencode --features skills --input-roots skills/interview-coach --output-roots ~/AI/career
 ```
 
 Swap `--targets` for your tools. It isn't in `default`; never add `--global` to the command above.

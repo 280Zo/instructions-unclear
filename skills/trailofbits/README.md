@@ -1,80 +1,39 @@
-# Trail of Bits security skills
+# Trail of Bits security plugins
 
-83 skills and 30 agents from the security firm Trail of Bits: security-focused code review, static analysis with Semgrep and CodeQL, finding variants of a known bug, fuzzing, property-based and mutation testing, dependency risk, insecure defaults, cryptographic timing leaks, smart-contract auditing, and more.
-
-From this repo it's a **profile**: it lives in one folder you choose, so it loads only when you start your tool there for security work.
+The complete [Trail of Bits marketplace](https://github.com/trailofbits/skills): 46 plugins containing 95 skills, 30 agents, commands, hooks, workflows, tests and supporting resources. `upstream/` preserves the complete upstream tree unchanged. It is **not a rulesync source root**.
 
 ## Install
 
-From the repo root:
+Prefer upstream's native plugin installation, selecting only the plugins you need:
 
-```bash
-mkdir -p ~/AI/security
-npx rulesync@33.0.0 generate --config skills/trailofbits/profile.jsonc --output-roots ~/AI/security --targets claudecode,codexcli,opencode
-```
+- **Claude Code:** `/plugin marketplace add trailofbits/skills`, then `/plugin menu` to select plugins.
+- **Codex:** `codex plugin marketplace add trailofbits/skills`, then `codex plugin list` and `codex plugin add <plugin-name>@trailofbits`.
+- **Local reviewed copy:** upstream supports adding a local marketplace. In Claude Code, use `/plugin marketplace add ./skills/trailofbits/upstream` from this repo, then choose plugins. Keep that tree available; local installation may reference its original folder rather than copy everything into a cache.
 
-Swap `--targets` for your tools. Never add `--global`. Run the same command again to update the folder.
+See [upstream installation and compatibility guidance](upstream/README.md). These are native assistant installations, not folder-scoped rulesync profiles. Get approval before changing a real assistant's plugin list or running installer operations. Do not install the entire marketplace merely to use one scanner.
 
-Optional: for the parts this copy leaves out (slash commands, hooks, workflows, and five skills that need them; see "Changes from upstream"), also install Trail of Bits' own plugins. These install globally in that tool, not just in the profile folder.
+**OpenCode:** upstream does not document an equivalent complete integration. The old flattened profile is retired, not silently advertised as native-compatible. Workflows can depend on host-specific tools such as `Workflow`, namespaced agents, plugin hooks and `${CLAUDE_PLUGIN_ROOT}`. A successful file copy cannot supply them. No new OpenCode adapters or tool-section rewrites are introduced here.
 
-- Claude Code: `/plugin marketplace add trailofbits/skills`, then `/plugin menu` to pick plugins.
-- Codex: `codex plugin marketplace add trailofbits/skills`, then `codex plugin add <plugin-name>@trailofbits`.
+## Why native ownership
 
-## Use
+The new regression-hunt and patching-bugs workflows resolve plugin-level scripts, schemas and records through relative paths. Zeroize-audit resolves agents under its original `agents/`, not rulesync's relocated `subagents/`. Several existing workflows also need plugin roots and registered host facilities. Flattening only skills/agents loses those relationships.
 
-The profile folder is where your tool starts, not where your code has to be. Start the tool there and point it at the code by path:
+Isolated, network-disabled tests with Claude Code 2.1.296 validated the marketplace and installed all 46 plugins. Critical regression/patching scripts and zeroize agent links resolved in the full tree. Subsequent generation of the reduced infosec and reverse-engineering selections preserved all native files and all 47 installed plugins (including IoTHackBot) remained enabled. Codex was not installed in the test environment, so its procedure is documented from upstream, not locally verified. No model-driven audits, external MCP services or scanners were launched.
 
-```bash
-cd ~/AI/security
-opencode        # or claude, codex
-```
+Native plugins can register hooks and MCP servers: for example, zeroize-audit declares a Serena `uvx` server. Some patching workflows require a local commit. Review each selected plugin's resources and runtime effects before enabling it; copying this tree grants no approval to execute them, download packages, commit or modify targets. Higher-priority permission and scope instructions still apply.
 
-- "Do a security review of the changes on branch `feature-x` in `~/code/app`" (`differential-review`)
-- "Find error-prone APIs and dangerous configurations in `~/code/app`" (`sharp-edges`)
-- "Run Semgrep on `~/code/app` and triage the findings" (`semgrep`, `fp-check`)
-- "We fixed this bug; find other places with the same pattern" (`variant-analysis`)
-- "Check the supply-chain risk of this project's dependencies" (`supply-chain-risk-auditor`)
+## Existing installations
 
-## Tools you need
+`delete: false` leaves old extracted skill/agent copies in place. Review and explicitly approve removing stale copies before enabling the same native plugins; do not run duplicate owners. This repo refresh did not change live assistants. The infosec group now installs only its rule, security agent bundles and disabled ZAP connection; native plugins are separate.
 
-This is a collection of instructions, scripts and agents, not an installer for
-all security software. Pick the row for your task; exact requirements live in
-the selected skill. Review scripts and installs before running them.
+## Use and prerequisites
 
-| Task | Tools and prerequisites |
-| --- | --- |
-| Code review and threat analysis | Source files and Git; many review skills need no separate scanner |
-| Static analysis | Semgrep, or CodeQL CLI with query packs and the project's supported build toolchain |
-| Python helpers | Python and an isolated environment; several script folders have their own `pyproject.toml` or lockfile. Follow those rather than installing every helper into one global environment |
-| Native sanitizers | A supported C/C++ compiler and sanitizer runtime, commonly Clang/LLVM or GCC, plus a build you can instrument |
-| Fuzzing | The selected engine: libFuzzer/LLVM, AFL++, libAFL, cargo-fuzz with a supported Rust nightly, or Python engines such as Atheris. Corpora and harnesses are project-specific |
-| Rust review | Rust/Cargo and applicable Clippy, Miri, nightly or mutation tools required by the specific workflow |
-| Blockchain review | Only the relevant ecosystem: for example Slither/solc, Foundry, or the chosen chain's compiler and SDK |
-| Crypto/protocol workflows | Tools such as ProVerif, or compiler/assembly tooling for timing analysis, where named by the skill |
-| Artifact analysis | A YARA-compatible engine for YARA workflows; Burp Suite project files for the Burp parser; debug information for DWARF workflows |
-| External model reviews | The configured external CLI/provider, account and network access; a model-review skill does not install or authenticate them |
+Choose a workflow for code review, vulnerability triage, static analysis, fuzzing, protocol/crypto or smart-contract review. Follow that plugin's README and complete supporting content. Native packaging does not install Semgrep, CodeQL, compiler/fuzzer toolchains, Python environments, ProVerif, accounts or model access. Review and approve those dependencies separately. Upstream tests and unused support files remain included rather than being pruned.
 
-For standalone Python scanners, isolated installs are an option:
+## Updating
 
-```bash
-uv tool install semgrep
-uv tool install slither-analyzer
-```
-
-Other tools come from their official distributions or your OS package manager.
-CodeQL, Burp and hosted services have their own license/access requirements.
-Do not install this entire table just to load the skills. The upstream plugin
-resources omitted from this copy are a separate limitation described below.
-
-## Changes from upstream
-
-- Claude Code-only settings moved under a `claudecode:` section so rulesync keeps them: `allowed-tools`, `argument-hint`, `effort` and `disable-model-invocation` in 38 skills, and `tools`, `model` and `color` in all 30 agents. The values are unchanged.
-- Every agent gained `targets: ["*"]`, which rulesync needs.
-- `firebase-apk-scanner`: its `argument-hint` value `[apk-file-or-directory]` is quoted. Unquoted, YAML reads it as a list and rulesync rejects the skill.
-- Only the skill and agent folders are copied. Upstream's slash commands, hooks, and the `workflows/`, `prompts/` and `scripts/` folders outside the skill folders aren't. That leaves out two plugins that are only commands and workflows: `insecure-defaults` and `git-cleanup`. Five skills look for those through `${CLAUDE_PLUGIN_ROOT}` and fall back when it isn't set, so they work only partly: `code-improver`, `pr-improver`, `skill-improver`, `rust-review` and `c-review`. The optional install step above covers them.
-
-Reapply these after each update.
+Review upstream changes, refresh the complete `upstream/` tree without modifying bodies, metadata or directory layout, and validate native installation followed by rulesync generation in isolation. Show any actual host conflict before choosing an adaptation. Keep this wrapper, catalog, groups and license notice consistent.
 
 ## Origin
 
-[trailofbits/skills](https://github.com/trailofbits/skills), every `plugins/*/skills/*` and `plugins/*/agents/*`, commit `4a48f7fa49c991be70cf2cbcecd9bad20cb2c544`, copied 2026-10-14. [CC BY-SA 4.0](../../THIRD_PARTY_LICENSES.md#trailofbitsskills), by Trail of Bits; the files here, changes included, stay under the same license. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).
+[trailofbits/skills](https://github.com/trailofbits/skills), complete tree at commit `a3131740a39291e42fd15b9eac07e0b393ad71b1`, copied October 20, 2026. [CC BY-SA 4.0](../../THIRD_PARTY_LICENSES.md#trailofbitsskills), by Trail of Bits; full text also retained in `upstream/LICENSE`. No local tool sections or body adaptations. Wrapper written for this repo by 280Zo.

@@ -10,6 +10,8 @@
     "rules/scope-secrets-approvals",
     "rules/engineering",
     "rules/communication",
+    "rules/routing",
+    "rules/preferences",
     "skills/package-management",
     "agents/second-opinion",
     "mcp-servers/docling",
@@ -22,6 +24,7 @@
     "skills/diagram-design",
     "skills/frontend-slides",
     "skills/anthropic-design",
+    "skills/documents",
     "rules/shell-preamble-reminder"
   ]
 }

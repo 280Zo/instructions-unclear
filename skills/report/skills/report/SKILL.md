@@ -1,7 +1,7 @@
 ---
 name: report
 description: >-
-  Turn material that has already been gathered into an evidence-backed report someone else can read without you in the room, on any subject whatsoever: a data analysis, a conference talk, a policy review, a site visit, an incident, a set of interviews, a literature scan, a security assessment. Every claim anchored to its source, an explicit statement of who the report is for, rendered as a page, slide deck or PowerPoint by the visual-explainer, diagram-design, frontend-slides and Presenton tools. Use when the user runs /report, or asks to write up, document, summarise or produce a report on material that has already been gathered. Do NOT use this to build understanding of something unfamiliar or to answer "how does X work" — that is /eli5.
+  Turn material that has already been gathered into an evidence-backed report someone else can read without you in the room, on any subject whatsoever: a data analysis, a conference talk, a policy review, a site visit, an incident, a set of interviews, a literature scan, a security assessment. Every claim anchored to its source, an explicit statement of who the report is for, rendered as a page, slide deck or PowerPoint by the visual-explainer, diagram-design, frontend-slides, Presenton and documents tools. Use when the user runs /report, or asks to write up, document, summarise or produce a report on material that has already been gathered. Do NOT use this to build understanding of something unfamiliar or to answer "how does X work" — that is /eli5.
 claudecode:
   allowed-tools: [Read, Grep, Glob, Bash, Write, WebSearch, WebFetch]
 ---
@@ -100,7 +100,7 @@ Load the skills below and follow them. **Do not write HTML or slides from memory
 | A report page (the default) | `visual-explainer` |
 | Diagrams inside the report | `diagram-design`, embedded in the page or deck |
 | A slide deck to present from a browser | `frontend-slides` |
-| Editable PowerPoint or Google Slides | Presenton's MCP tools (Google Slides imports the `.pptx`). If those tools aren't available, say so and offer `frontend-slides` instead |
+| Editable PowerPoint or Google Slides | Presenton's MCP tools when they're enabled (Google Slides imports the `.pptx`); otherwise the `documents` skill. This follows `rules/routing` |
 
 **One theme for everything.** Pick a theme with the `theme-factory` skill (or use one the user names), and tell each renderer to use that theme's colours and fonts in place of its own defaults, so the page, diagrams and deck match. The theme wins over a renderer's own palette and font advice, including visual-explainer's list of colours and fonts to avoid. Theme fonts are desktop fonts (DejaVu, FreeSans), so give each a fallback stack ending in a generic family (`"DejaVu Sans", "Helvetica Neue", Arial, sans-serif`).
 

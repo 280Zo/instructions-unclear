@@ -10,7 +10,7 @@ From the repo root:
 
 ```bash
 mkdir -p ~/research
-npx rulesync@33.0.0 generate --config skills/ai-research/profile.jsonc --output-roots ~/research --targets claudecode,codexcli,opencode
+npx rulesync@38.0.0 generate --config skills/ai-research/profile.jsonc --output-roots ~/research --targets claudecode,codexcli,opencode
 ```
 
 Swap `--targets` for your tools. Never add `--global`: that would load all 98 in every session. Run the same command again to update the folder.

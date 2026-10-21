@@ -6,7 +6,7 @@
     "rea": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "rea-agents@6.5.0", "mcp"],
+      "args": ["-y", "rea-agents@6.7.0", "mcp"],
       // The first start downloads the package.
       "timeout": 60000
     }

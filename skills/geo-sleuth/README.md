@@ -9,7 +9,7 @@ A skill that works out where (and when) a photo was taken, and shows its work: e
 3. Skills are added alongside what you already have, so this folder can be installed on its own. From the repo root:
 
    ```bash
-   npx rulesync@33.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/geo-sleuth
+   npx rulesync@38.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/geo-sleuth
    ```
 
    Swap `--targets` for your tools. To keep it in your regular install, add `skills/geo-sleuth` to `inputRoots` in your `rulesync.local.jsonc`.
@@ -28,4 +28,4 @@ Use it on your own photos or ones you have permission to analyze, never to find 
 
 ## Origin
 
-[Oldcircle/geo-sleuth](https://github.com/Oldcircle/geo-sleuth), path `skills/geo-sleuth/`, commit `836d70eea196b194391017e6e018e04ccc85aaa4`, copied 2026-10-14. Unchanged. [MIT](../../THIRD_PARTY_LICENSES.md#oldcirclegeo-sleuth), © 2026 Oldcircle. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).
+[Oldcircle/geo-sleuth](https://github.com/Oldcircle/geo-sleuth), path `skills/geo-sleuth/`, commit `16e9429416e1151562836a613acefe74f3b8f0d5`, copied 2026-10-20. Unchanged, including the New Zealand region pack and upstream tests. [MIT](../../THIRD_PARTY_LICENSES.md#oldcirclegeo-sleuth), © 2026 Oldcircle. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).
