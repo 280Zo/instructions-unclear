@@ -152,12 +152,15 @@ class SecurityReContextTests(unittest.TestCase):
         workspace = ROOT / "skills/career-workspace/skills"
         self.assertEqual(
             {p.parent.name for p in workspace.glob("*/SKILL.md")},
-            {"career-intake", "career-master-resume", "career-work-history"},
+            {
+                "career-intake",
+                "career-master-resume",
+                "career-start-application",
+                "career-work-history",
+            },
         )
         master = (workspace / "career-master-resume/SKILL.md").read_text()
         self.assertRegex(master, r"(?m)^name: career-master-resume$")
-        self.assertIn("Hand-off prompt", master)
-        self.assertIn("<WORKSPACE>/resumes/master-resume.md", master)
         intake = (workspace / "career-intake/SKILL.md").read_text()
         self.assertIn("## Setup", intake)
         self.assertIn("`inbox/`", intake)
@@ -183,13 +186,14 @@ class SecurityReContextTests(unittest.TestCase):
         for doc in ["groups/README.md", "README.md"]:
             self.assertIn("career", (ROOT / doc).read_text())
 
-    def test_career_handoff_required_sequence_and_ownership(self):
+    def test_career_workflow_dependencies_are_discoverable(self):
         workspace = ROOT / "skills/career-workspace"
-        master = (workspace / "skills/career-master-resume/SKILL.md").read_text()
-        prompt = master.split("````text\n", 1)[1].split("````", 1)[0]
-        steps = re.findall(r"^\d+\. (.+)$", prompt, re.MULTILINE)
-        expected = [
+        # Catch missing/misnamed packaged dependencies, not changes to prose.
+        required = {
+            "career-start-application",
             "career-intake",
+            "career-master-resume",
+            "career-work-history",
             "resume-version-manager",
             "job-description-analyzer",
             "resume-tailor",
@@ -197,29 +201,26 @@ class SecurityReContextTests(unittest.TestCase):
             "resume-bullet-writer",
             "resume-section-builder",
             "tech-resume-optimizer",
+            "executive-resume-writer",
             "resume-ats-optimizer",
-            "resume-tailor",
             "resume-formatter",
-            "resume-version-manager",
-        ]
-        self.assertEqual(len(steps), len(expected))
-        for step, skill in zip(steps, expected):
-            self.assertIn(skill, step)
-            self.assertNotIn("optional", step.lower())
-        self.assertIn("executive-resume-writer", steps[7])
-        self.assertIn("confirmation", steps[4])
-        self.assertIn("Optional", prompt)
-        self.assertIn("cover-letter-generator", prompt)
-        self.assertIn("application-form-filler", prompt)
-        self.assertIn("skills actually loaded", prompt)
-        self.assertIn("do not override", prompt)
-        self.assertIn("stop and tell me", prompt)
-        self.assertIn("stopping after each one", prompt)
-        self.assertIn("including one derived from existing numbers", steps[4])
-        self.assertIn("required for every submission", steps[8])
-        self.assertIn("never edit it", prompt)
-        self.assertIn("<RESUME>", prompt)
-        self.assertNotIn("versions.md", prompt)
+            "cover-letter-generator",
+            "application-form-filler",
+            "interview-coach",
+        }
+        available = {}
+        config = read_jsonc(ROOT / "groups/career.jsonc")
+        for root in config["inputRoots"]:
+            for path in (ROOT / root / "skills").glob("*/SKILL.md"):
+                name = re.search(r"^name:\s*(.+)$", path.read_text(), re.MULTILINE)
+                self.assertIsNotNone(name, str(path))
+                available[name[1].strip().strip("\"'")] = path
+        self.assertFalse(required - available.keys(), required - available.keys())
+        for name in required:
+            self.assertEqual(available[name].parent.name, name)
+
+    def test_career_intake_retains_single_tracker_ownership(self):
+        workspace = ROOT / "skills/career-workspace"
         intake = (workspace / "skills/career-intake/SKILL.md").read_text()
         self.assertIn("resume-version-manager", intake)
         self.assertNotIn("resumes/versions.md", intake)
@@ -232,8 +233,6 @@ class SecurityReContextTests(unittest.TestCase):
         self.assertNotIn("## Timeline", template)
         readme = (workspace / "README.md").read_text()
         self.assertNotIn("versions.md", readme)
-        for skill in set(expected):
-            self.assertIn(f"`{skill}`", readme)
 
     def test_publication_docs_match_payload_and_nested_licenses(self):
         diagram = ROOT / "skills/diagram-design/skills/diagram-design"

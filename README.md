@@ -76,7 +76,7 @@ The secure-coding rule now ships inside [`agents/security`](agents/security/).
 | [`skills/geo-sleuth`](skills/geo-sleuth/)             | `geo-sleuth`: works out where and when a photo was taken, with checkable evidence                         |
 | [`skills/resume-skills`](skills/resume-skills/)       | 22 skills for resumes, cover letters, applications, interviews and offers. Career group only              |
 | [`skills/interview-coach`](skills/interview-coach/)   | `interview-coach`: interview prep, mock interviews, debriefs and a storybank, with scoring. Career group only |
-| [`skills/career-workspace`](skills/career-workspace/) | 3 skills that file career records in one folder and build a master resume and official work history from them. Career group only |
+| [`skills/career-workspace`](skills/career-workspace/) | 4 skills that file career records, build a master resume and official work history, and start a reviewed application with `career-start-application`. Career group only |
 
 </details>
 

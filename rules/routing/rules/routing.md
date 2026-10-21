@@ -22,4 +22,5 @@ Several installed skills can do the same job. Use the owner below. If the owner 
 * **Browser automation**: `playwright`. Desktop or window screenshots: `screenshot`.
 * **Audio**: speech to text → `transcribe`; text to speech → `speech`.
 * **Packages and tools**: `package-management`.
+* **Career applications**: `career-start-application` starts an application from an existing master; `career-master-resume` builds or refreshes that master. `resume-version-manager` owns resume versions, archives and submission tracking; `career-intake` files source records and interview notes; `career-work-history` supplies official employment fields. If a required career skill is missing, report the blocker rather than silently substituting another workflow.
 * **Structural code questions** (callers, dependencies, impact): codebase-memory graph tools when enabled; otherwise search the code directly.

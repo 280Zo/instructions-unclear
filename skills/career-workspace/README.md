@@ -1,11 +1,12 @@
 # career-workspace
 
-Three skills that keep a personal career record in one folder and build from it: file new career data, build a master resume, and produce an official work history for forms.
+Four skills that keep a personal career record in one folder: file new career data, build a master resume, start a job application, and produce an official work history for forms.
 
 | Skill | What it does |
 |---|---|
 | `career-intake` | Files wins, numbers, skills, reviews, people, applications, offers and documents into the right workspace file, in your words |
-| `career-master-resume` | Builds `resumes/master-resume.md`, the bullet bank the [`resume-skills`](../resume-skills/) choose from, and hands you a prompt for the next step |
+| `career-master-resume` | Builds `resumes/master-resume.md`, the bullet bank the [`resume-skills`](../resume-skills/) choose from |
+| `career-start-application` | Starts the application workflow from the existing master; asks for a job link, coordinates required passes and stops at eight review stages |
 | `career-work-history` | Lists every employer with official titles, dates, locations and managers for applications and background checks |
 
 ## Workflow
@@ -19,28 +20,32 @@ Three skills that keep a personal career record in one folder and build from it:
 
 **For each job:**
 
-1. Give `career-intake` the posting. It creates an application folder and saves the posting in it.
-2. Use `resume-version-manager` to establish the application-specific resume copy, naming, archive and application tracker. Report the actual paths and link them from the intake application record; use those paths throughout.
-3. Run `job-description-analyzer` on the posting and `resumes/master-resume.md` to get the match, the gaps and the keywords.
-4. Run `resume-tailor` using that analysis to create a custom fit for the posting. Save to the working resume path chosen above; never edit the master.
-5. Run `resume-quantifier`. New estimates, including calculated ones, require your explicit confirmation before inclusion. Otherwise report missing metrics without inserting invented numbers.
-6. Run `resume-bullet-writer` to strengthen the selected bullets while preserving facts and confirmed metrics.
-7. Run `resume-section-builder` to assemble and refine targeted sections.
-8. Run **`tech-resume-optimizer` or `executive-resume-writer`** for the target role. One is required on every submission; the agent explains its choice and asks if the role is ambiguous.
-9. Run **`resume-ats-optimizer`** against the posting. Required on every submission; no unsupported claims or skills for keyword matching.
-10. Run `resume-tailor` again for a final custom-fit check after the content passes.
-11. Run `resume-formatter` after the content is settled, checking that formatting preserves it.
-12. Use `resume-version-manager` to record the reviewed version. Once you confirm it was sent, it handles archiving and submission tracking too. Nothing is submitted on your behalf.
+Say **“Use career-start-application.”** It loads the kickoff instructions and asks for the job-posting link if you haven't supplied one. You can paste the posting instead. Start your tool in the career workspace, or identify its path if it isn't clear. No copied prompt or master rebuild is needed.
 
-**Optional:** ask for `cover-letter-generator` to write a cover letter, or `application-form-filler` for form answers with `career-work-history` for official employment details. Version-manager organizes and tracks any resulting cover letter. For interviews, use [`interview-coach`](../interview-coach/), then file your interview notes with `career-intake`.
+The starter coordinates these eight review stages:
 
-You don't have to type the per-job steps yourself. Each time `career-master-resume` finishes, it ends its reply with a **hand-off prompt** that has your workspace paths filled in. Paste it into a new session with the posting. It instructs the agent to load each required skill, report the skills actually loaded and files used, and stop after each stage for your review. If a required skill is missing, the agent must stop rather than skip it. These are instructions to the agent, not an automated execution guarantee.
+| Stage | Skills and result |
+|---|---|
+| 1. Posting and destinations | `career-intake` preserves the posting/source/date; `resume-version-manager` establishes working files and tracker, linked from the application record |
+| 2. Evidence analysis | `job-description-analyzer` maps responsibilities and minimum qualifications to demonstrated, related or unknown evidence |
+| 3. Tailored draft | `resume-tailor` → `resume-quantifier` → `resume-bullet-writer` → `resume-section-builder`; select, merge and rewrite supported facts within a two-page budget |
+| 4. Reviewed submission files | Required `tech-resume-optimizer` or `executive-resume-writer` → required `resume-ats-optimizer` → `resume-tailor` final fit → `resume-formatter`; document skills export DOCX/PDF and verify rendering; `resume-version-manager` records the reviewed version, not a submission |
+| 5. Cover letter, if wanted | `cover-letter-generator`, organized/tracked by version-manager |
+| 6. Actual form, if wanted | `application-form-filler` and `career-work-history` after you have the resume and can see the form; official titles for employment fields |
+| 7. Sent confirmation | Only after you say it was sent, `resume-version-manager` archives the exact sent files and records the submission |
+| 8. Interviews, when needed | [`interview-coach`](../interview-coach/) prepares/practices; `career-intake` files your notes |
+
+The agent stops after each stage for review, not after every routine editing pass. It reports the skills actually loaded, files used and any blockers. A missing required skill stops the workflow rather than being silently skipped. These are agent instructions, not a deterministic automation guarantee or a registered slash command.
+
+Selection and evidence notes stay in the application folder, outside submitted files. The workflow preserves uncertainty, pilot versus production status, target versus measured results, and component versus program-wide scope. Keyword coverage is not an ATS test or proof of eligibility. Document checks cover actual rendered page count, readability, embedded PDF fonts and text extraction; missing tools/checks must be disclosed, not passed off as successful validation.
 
 ### Ownership and precedence
 
 The resume-skills take precedence where responsibilities overlap. `resume-version-manager` owns resume organization, naming, archiving, versions and application tracking; intake does not maintain a competing tracker or dictate those output paths. Its application record stores the posting and interview notes, with links to version-manager's outputs and tracker.
 
-Your workflow-wide requirements stay binding across every skill: supported facts, confirmation before new estimates, an untouched master during applications, review stops, and explicit confirmation before recording a submission as sent.
+Your workflow-wide requirements stay binding across every skill: supported facts, confirmation before new estimates (including calculated ones), an untouched master during applications, review stops, and explicit confirmation before recording a submission as sent. New facts are filed through intake and incorporated only after a separately approved master update.
+
+Later passes read the reviewed draft and selection notes, inherit evidence decisions and agreed length/summary budgets, and check for drift before handing off. Specialist defaults and keyword scores do not justify restoring weaker excluded material or replacing stronger evidence. Factual corrections and better-supported role fit remain allowed, with material changes explained in the notes and at the existing review stop—not extra approval rounds. Only you can change the agreed length budget.
 
 `career-master-resume` assembles source records into the master structure defined by `resume-version-manager`. Its three-full-job limit and existing older-accomplishment placement rules remain explicit exceptions to resume-skills precedence. The application workflow reads the master without editing it or creating another master.
 
@@ -87,10 +92,27 @@ The seven record templates ship in [`skills/career-intake/templates/`](skills/ca
 
 - "Log this: cut deploy time from 40 to 12 minutes at Acme" or "ingest the inbox" → `career-intake`
 - "Rebuild my master resume" → `career-master-resume`
+- "Use career-start-application" → asks for the job link and starts the reviewed application workflow
 - "Give me my full work history for this background check" → `career-work-history`
 
 Intake reads documents with Docling when it's available. If an interview or offer turns up a new win or number, file it with `career-intake` and rebuild the master resume so the next application has it.
 
+## For agents: routing and updates
+
+`career-start-application` owns starting an application, not building the master.
+`career-master-resume` owns the bullet bank; `career-work-history` owns official
+employment fields. Central cross-skill routing lives in
+[`rules/routing`](../../rules/routing/rules/routing.md); do not add a routing rule
+inside this collection. The starter includes its own required-skill contract
+because the folder-only career group installs skills, not global rules.
+
+When updating this workflow, reconcile the starter, builder hand-off and README
+together. Preserve required resume passes, version-manager ownership and factual
+gates; do not edit upstream resume-skills to adapt routing. Check career group
+counts and generate the changed group into an isolated folder. Interview study,
+negotiation and further document-recording connections are future extensions,
+not additional branches implemented by this change.
+
 ## Origin
 
-Written for this repo. [MIT](../../LICENSE).
+Written for this repo by 280Zo. [MIT](../../LICENSE), © 2026 280Zo.

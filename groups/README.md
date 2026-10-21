@@ -9,7 +9,7 @@ Saved selections, so you don't have to name every folder. Run every command from
 | [`writing_reporting`](#writing_reporting) | Your home folder, OpenCode | Rules plus writing, report and visual skills, without touching MCP settings |
 | [`infosec`](#infosec) | A folder you choose | The security bundle (rule, 2 agents, 4 commands), 11 security and utility skills and disabled ZAP MCP; native security plugins install separately |
 | [`ai_research`](#ai_research) | A folder you choose | 98 AI research skills |
-| [`career`](#career) | A folder you choose | 22 career skills, the interview coach and 3 career-workspace skills; a career agent will be added |
+| [`career`](#career) | A folder you choose | 22 career skills, the interview coach and 4 career-workspace skills, including the application starter; a career agent will be added |
 | [`reverse_engineering`](#reverse_engineering) | A folder you choose | REA, RE agents and disabled ReVa/radare2 MCPs; IoTHackBot is native-owned |
 
 ## How they behave
@@ -117,7 +117,7 @@ npx rulesync@38.0.0 generate --config groups/ai_research.jsonc --output-roots ~/
 
 ## career
 
-The 22 skills from [`skills/resume-skills`](../skills/resume-skills/), from [Paramchoudhary/ResumeSkills](https://github.com/Paramchoudhary/ResumeSkills), and [`interview-coach`](../skills/interview-coach/), from [noamseg/interview-coach-skill](https://github.com/noamseg/interview-coach-skill), and the 3 [`career-workspace`](../skills/career-workspace/) skills, written for this repo, that keep career records in the folder and build a master resume and official work history from them. The [career-workspace README](../skills/career-workspace/README.md#workflow) shows how all of these fit together for an application. That's 26 skills. The group also takes agents, so a career agent can be added to it later. None of these skills are in `default`; they install only into the folder you choose.
+The 22 skills from [`skills/resume-skills`](../skills/resume-skills/), from [Paramchoudhary/ResumeSkills](https://github.com/Paramchoudhary/ResumeSkills), and [`interview-coach`](../skills/interview-coach/), from [noamseg/interview-coach-skill](https://github.com/noamseg/interview-coach-skill), and the 4 [`career-workspace`](../skills/career-workspace/) skills, written for this repo, that keep career records, build a master resume and official work history, and start a reviewed application. Say “Use career-start-application” to load the workflow and supply a job link when asked; no copied kickoff prompt is needed. The [career-workspace README](../skills/career-workspace/README.md#workflow) shows how all of these fit together. That's 27 skills. The group also takes agents, so a career agent can be added to it later. None of these skills are in `default`; they install only into the folder you choose. Document export also needs an installed document-authoring skill and its tools; the career group does not install them.
 
 ```bash
 mkdir -p ~/AI/career
