@@ -117,6 +117,8 @@ class SecurityReContextTests(unittest.TestCase):
         self.assertIn("Hand-off prompt", master)
         self.assertIn("<WORKSPACE>/resumes/master-resume.md", master)
         intake = (workspace / "career-intake/SKILL.md").read_text()
+        self.assertIn("## Setup", intake)
+        self.assertIn("`inbox/`", intake)
         for template in re.findall(r"`templates/([a-z-]+\.md)`", intake):
             self.assertTrue(
                 (workspace / "career-intake/templates" / template).is_file()
@@ -138,6 +140,85 @@ class SecurityReContextTests(unittest.TestCase):
             self.assertTrue((coach / f"references/commands/{command}.md").is_file())
         for doc in ["groups/README.md", "README.md"]:
             self.assertIn("career", (ROOT / doc).read_text())
+
+    def test_career_handoff_required_sequence_and_ownership(self):
+        workspace = ROOT / "skills/career-workspace"
+        master = (workspace / "skills/career-master-resume/SKILL.md").read_text()
+        prompt = master.split("````text\n", 1)[1].split("````", 1)[0]
+        steps = re.findall(r"^\d+\. (.+)$", prompt, re.MULTILINE)
+        expected = [
+            "career-intake",
+            "resume-version-manager",
+            "job-description-analyzer",
+            "resume-tailor",
+            "resume-quantifier",
+            "resume-bullet-writer",
+            "resume-section-builder",
+            "tech-resume-optimizer",
+            "resume-ats-optimizer",
+            "resume-tailor",
+            "resume-formatter",
+            "resume-version-manager",
+        ]
+        self.assertEqual(len(steps), len(expected))
+        for step, skill in zip(steps, expected):
+            self.assertIn(skill, step)
+            self.assertNotIn("optional", step.lower())
+        self.assertIn("executive-resume-writer", steps[7])
+        self.assertIn("confirmation", steps[4])
+        self.assertIn("Optional", prompt)
+        self.assertIn("cover-letter-generator", prompt)
+        self.assertIn("application-form-filler", prompt)
+        self.assertIn("skills actually loaded", prompt)
+        self.assertIn("do not override", prompt)
+        self.assertIn("stop and tell me", prompt)
+        self.assertIn("stopping after each one", prompt)
+        self.assertIn("including one derived from existing numbers", steps[4])
+        self.assertIn("required for every submission", steps[8])
+        self.assertIn("never edit it", prompt)
+        self.assertIn("<RESUME>", prompt)
+        self.assertNotIn("versions.md", prompt)
+        intake = (workspace / "skills/career-intake/SKILL.md").read_text()
+        self.assertIn("resume-version-manager", intake)
+        self.assertNotIn("resumes/versions.md", intake)
+        self.assertNotIn("resumes/archive/", intake)
+        template = (
+            workspace / "skills/career-intake/templates/application.md"
+        ).read_text()
+        self.assertNotIn("resumes/archive/", template)
+        self.assertNotIn("**Status:**", template)
+        self.assertNotIn("## Timeline", template)
+        readme = (workspace / "README.md").read_text()
+        self.assertNotIn("versions.md", readme)
+        for skill in set(expected):
+            self.assertIn(f"`{skill}`", readme)
+
+    def test_publication_docs_match_payload_and_nested_licenses(self):
+        diagram = ROOT / "skills/diagram-design/skills/diagram-design"
+        count = len(list((diagram / "references").glob("type-*.md")))
+        self.assertEqual(count, 45)
+        for doc in [ROOT / "README.md", ROOT / "skills/diagram-design/README.md"]:
+            self.assertIn(f"{count} types", doc.read_text())
+        diagram_readme = (ROOT / "skills/diagram-design/README.md").read_text()
+        self.assertIn("Google Fonts", diagram_readme)
+        self.assertIn("JavaScript", diagram_readme)
+        self.assertIn(
+            "https://github.com/oleksiijko/pmb",
+            (ROOT / "mcp-servers/pmb/README.md").read_text(),
+        )
+        licenses = (ROOT / "THIRD_PARTY_LICENSES.md").read_text()
+        nested = licenses.split("### Nested ML paper-writing template assets", 1)[
+            1
+        ].split("## trailofbits/skills", 1)[0]
+        templates = ROOT / "skills/ai-research/skills/ml-paper-writing/templates"
+        for asset in templates.rglob("*"):
+            if asset.is_file():
+                self.assertIn(f"`{asset.relative_to(templates)}`", nested)
+        self.assertIn("LPPL Version 1.3c 2008-05-04", nested)
+        self.assertIn("not established", nested)
+        self.assertIn(
+            "not a blanket license", (ROOT / "skills/ai-research/README.md").read_text()
+        )
 
     def test_skill_names_are_unique_in_each_group(self):
         for group in ["infosec", "reverse_engineering", "career"]:

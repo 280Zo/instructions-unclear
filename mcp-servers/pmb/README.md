@@ -2,6 +2,8 @@
 
 [PMB](https://pypi.org/project/pmb-ai/) (`pmb-ai`) is a local, per-project memory for AI agents: decisions, lessons and progress that survive between sessions.
 
+Upstream source and update notes: [oleksiijko/pmb](https://github.com/oleksiijko/pmb). The server supplies its own context instructions; updating `pmb-ai` updates those, while this repo's connection template and rule are maintained here.
+
 See the [agent-knowledge objectives](../../reference/agent-knowledge/01-objectives-and-requirements.md) and [technology evidence](../../reference/agent-knowledge/03-technology-landscape.md) for the complete-system investigation and PMB's source-checked capabilities and limits. PMB's association graph, optional image features and hybrid search do not establish a fully transactional multimodal evidence store; concurrent sessions and project binding still need validation.
 
 ## What's in this folder

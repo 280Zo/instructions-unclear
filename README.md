@@ -60,7 +60,7 @@ Every folder below installs on its own. Open a group to see what's in it; each f
 | [`skills/report`](skills/report/)                     | `report`: evidence-backed write-ups of material you've gathered                                           |
 | [`skills/package-management`](skills/package-management/) | `package-management`, and a rule to load it: installing and running packages safely                   |
 | [`skills/visual-explainer`](skills/visual-explainer/) | `visual-explainer`: HTML pages and decks for explanations, plans and reviews                              |
-| [`skills/diagram-design`](skills/diagram-design/)     | `diagram-design`: 39 kinds of diagram as static HTML and SVG                                              |
+| [`skills/diagram-design`](skills/diagram-design/)     | `diagram-design`: 45 types of diagram, with static and motion HTML/SVG templates                          |
 | [`skills/frontend-slides`](skills/frontend-slides/)   | `frontend-slides`: HTML slide decks, with style previews to pick from                                     |
 | [`skills/anthropic-design`](skills/anthropic-design/) | `frontend-design` for UI work, `theme-factory` for one shared look across outputs                         |
 | [`skills/humanizer`](skills/humanizer/)               | `humanizer`: rewrites text that sounds AI-written                                                         |
@@ -174,6 +174,8 @@ See [reference/](reference/) for published assessments, including the [security 
 ## Updating
 
 Run `git pull`, then the same install command again. Tools a folder depends on, such as the uv-installed MCP servers, update as its README describes.
+
+To refresh copied third-party context, use the upstream repository linked in the component README's Origin section, following the update procedure in [`AGENTS.md`](AGENTS.md#check-for-updates). Runtime/package upgrades and regenerating context are separate operations; neither automatically refreshes the copied source files here.
 
 ## Customizing
 

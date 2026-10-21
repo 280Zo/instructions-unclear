@@ -1,6 +1,8 @@
 # diagram-design
 
-A skill for clean, editorial diagrams: 39 types, from architecture and flowcharts to sequence diagrams, timelines, Sankey charts and database schemas. Each is a static HTML and SVG file with no JavaScript and nothing loaded from the internet, in a light, dark or full-editorial style.
+A skill for clean, editorial diagrams: 45 types, from architecture and flowcharts to sequence diagrams, timelines, Sankey charts and database schemas, with HTML/SVG templates in light, dark or full-editorial styles.
+
+Static diagrams and motion variants have different runtime requirements: the bundled templates load Google Fonts from the internet, and motion variants use JavaScript for animation controls. They are not all offline or JavaScript-free. For strictly offline output, ask for system fonts and no external assets; for JavaScript-free output, choose a static diagram rather than a motion variant.
 
 ## Install
 

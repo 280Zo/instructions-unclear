@@ -1,19 +1,13 @@
 # <Company> — <Role>
 
-- **Applied:** YYYY-MM-DD
 - **Source:** <job board / referral / recruiter — link to people/ if a person>
-- **Posting:** see `posting.md` (full text saved on the day of applying)
-- **Resume sent:** `resumes/archive/<file>`
-- **Cover letter:** <file or "none">
+- **Posting:** see `posting.md` (full text saved at intake)
+- **Resume version:** <link to the file organized by resume-version-manager>
+- **Cover letter:** <link to the file organized by resume-version-manager, or "none">
+- **Application tracker:** <link to resume-version-manager's tracking record>
 - **Salary range (posted / discussed):**
-- **Status:** applied | screening | interviewing | offer | accepted | declined | rejected | ghosted
-- **Outcome notes:** <why it ended the way it did>
 
-## Timeline
-
-| Date | Event | Notes |
-| --- | --- | --- |
-| YYYY-MM-DD | Applied | |
+Submission dates, status, outcomes and version history belong in the linked application tracker, not a second tracker here.
 
 ## Interviews
 
