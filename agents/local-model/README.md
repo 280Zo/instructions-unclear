@@ -52,6 +52,10 @@ without switching the primary agent.
 - "Resume from the local-model handoff." Rechecks the actual working state
   before continuing, including any job that might have survived disconnection.
 
+These pause/resume notes belong to this agent's own loop. For a general handoff
+document that any agent or session can pick up, use the separate
+[`handoff`](../../skills/handoff/) skill (`rules/routing` names both).
+
  Origin
 
 Written for this repo. [MIT](../../LICENSE).

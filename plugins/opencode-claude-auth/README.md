@@ -12,6 +12,8 @@ Follow the [upstream installation instructions](https://github.com/griffinmartin
 
 For OpenCode 1 only, upstream specifies `opencode-claude-auth@2.2.1` under its legacy singular `plugin` key. Never add both keys or load both the retired fork and upstream plugin.
 
+OpenCode keeps loading its cached copy of an `@latest` entry until you update it. A machine that used OpenCode 1 may still have the V1-only 2.2.1 release cached under the same `opencode-claude-auth@latest` entry, and a fresh V2 config will load it. After installing or rolling out a new config, run `opencode plugin check` and `opencode plugin update`, then confirm 3.0.0 or newer with `opencode plugin list` (see [Updating](../README.md#updating-opencode-keeps-cached-versions)).
+
 If the retired fork is already present, replace that one entry rather than adding a second authentication plugin. Preserve all other settings. Restart OpenCode and, if reconnection is needed, run `/connect`, choose **Anthropic**, then **Import Claude Code subscription**. Authentication is handled by the host/plugin; do not paste tokens into this repo.
 
 ### Let your agent do it

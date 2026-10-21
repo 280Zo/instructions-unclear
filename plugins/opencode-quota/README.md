@@ -14,6 +14,8 @@ Add it to `plugins` in `~/.config/opencode/opencode.jsonc` and restart OpenCode:
 
 Current stable release checked October 20, 2026: **5.0.3**. OpenCode 2 requires **2.0.16+**, with Node **22.13+ or 23.4+**. OpenCode 1 must use `@slkiser/opencode-quota@4` under its legacy `plugin` key, not `@latest`. The `next` prerelease tag is not the stable installation target.
 
+OpenCode keeps loading its cached copy of an `@latest` entry until you update it. After installing or rolling out a new config, run `opencode plugin check` and `opencode plugin update`, then confirm the version with `opencode plugin list` (see [Updating](../README.md#updating-opencode-keeps-cached-versions)).
+
 Upstream's setup wizard (`npx @slkiser/opencode-quota init`) does the same and also offers a sidebar panel and a status line. Some providers, Anthropic among them, need a setup step; `/quota_status` tells you which.
 
 ### Let your agent do it

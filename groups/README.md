@@ -28,7 +28,7 @@ The [security and reverse-engineering tooling assessment](../reference/security-
 
 Everything in [`rulesync.jsonc`](../rulesync.jsonc), into OpenCode: all selected global rules (including `routing` and `preferences`), the second-opinion and local-model agents, the repo-owned [`agents/security`](../agents/security/) bundle, and the selected global MCP servers/skills. Folder-only integrations below do not change the global default.
 
-`documents` is included. `security-threat-model` is deliberately excluded from this selection; it remains in `infosec` and `work`. With `delete: false`, generation does not remove an already-installed global copy. Review and separately approve stale-copy cleanup if one exists; no live files were deleted by this repo change.
+`documents` is included, and so are `handoff`, `teach` and `wait-what` (user-invoked only). `security-threat-model` is deliberately excluded from this selection; it remains in `infosec` and `work`. With `delete: false`, generation does not remove an already-installed global copy. Review and separately approve stale-copy cleanup if one exists; no live files were deleted by this repo change.
 
 ```bash
 npx rulesync@38.0.0 generate --config groups/default.jsonc --global
@@ -69,14 +69,17 @@ skills/screenshot
 skills/playwright
 skills/report
 skills/visual-explainer
+skills/handoff
+skills/teach
+skills/wait-what
 ```
 
 What each tool gets:
 
 | Tool | Gets | Skipped |
 |---|---|---|
-| OpenCode | Rules, 6 agents, 23 skills, 4 commands, MCP servers | Nothing |
-| Copilot CLI | Rules, 6 agents, 23 skills, MCP servers (`~/.copilot/`) | Commands: Copilot CLI has none |
+| OpenCode | Rules, 6 agents, 26 skills, 4 commands, MCP servers | Nothing |
+| Copilot CLI | Rules, 6 agents, 26 skills, MCP servers (`~/.copilot/`) | Commands: Copilot CLI has none |
 | Copilot (VS Code) | Rules, agents and skills, written to the same `~/.copilot/` folder | MCP servers and commands: rulesync writes those for VS Code only inside a project, not globally |
 
 Codebase-memory, Presenton and ZAP are written switched off. OpenCode gets `"enabled": false` on each; Copilot CLI gets them listed under `disabledMcpServers` in `~/.copilot/settings.json`. ZAP only becomes usable after you set up a local ZAP with its MCP add-on and turn it on yourself; enabling it still doesn't authorize scanning any target.
@@ -89,7 +92,7 @@ Codebase-memory, Presenton and ZAP are written switched off. OpenCode gets `"ena
 
 ## writing_reporting
 
-Rules (including `routing` and `preferences`), `second-opinion`, the Docling, Exa and PMB rules and skills, and `eli5`, `report`, `humanizer`, `visual-explainer`, `diagram-design`, `frontend-slides`, `frontend-design`, `theme-factory` and Magnus's [`documents`](../skills/documents/). That's 12 skills. MCP servers you already have stay as they are. The document skill adds authoring and smoke validation; it does not replace Docling's OCR/extraction role.
+Rules (including `routing` and `preferences`), `second-opinion`, the Docling, Exa and PMB rules and skills, and `eli5`, `report`, `humanizer`, `visual-explainer`, `diagram-design`, `frontend-slides`, `frontend-design`, `theme-factory`, Magnus's [`documents`](../skills/documents/), and Matt Pocock's [`handoff`](../skills/handoff/), [`teach`](../skills/teach/) and [`wait-what`](../skills/wait-what/). That's 15 skills. MCP servers you already have stay as they are. The document skill adds authoring and smoke validation; it does not replace Docling's OCR/extraction role.
 
 ```bash
 npx rulesync@38.0.0 generate --config groups/writing_reporting.jsonc --global

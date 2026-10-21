@@ -29,6 +29,7 @@ up" means guessing a URL — your most common source of confident wrong answers.
 - **`webfetch` only for:** localhost/private IPs; `format: html|text` where raw
   markup matters; a URL the user or these instructions gave you; Exa failing.
 - **Never build a doc URL from memory.** No user/file/Exa source → search first.
+- **Current GitHub state → `gh` CLI.** Use it for exact live facts such as whether a pull request is merged or an issue is open. Exa is useful for discovery, but its search index may be stale. If `gh` or the required access is unavailable, say so; do not install tools or change authentication without approval.
 - **Multi-step agent research → `agent_run`.** Use the upstream `Exa Agent`
   skill when that tool is available. Continue a running run by its ID rather
   than starting duplicates. Provider access and costs remain subject to the

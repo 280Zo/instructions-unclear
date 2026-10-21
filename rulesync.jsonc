@@ -43,6 +43,9 @@
     "skills/documents",
     "skills/geo-sleuth",
     "skills/distilly",
+    "skills/handoff",
+    "skills/teach",
+    "skills/wait-what",
     "agents/local-model",
     "rules/shell-preamble-reminder"
   ]

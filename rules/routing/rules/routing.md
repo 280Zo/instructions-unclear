@@ -15,7 +15,9 @@ Several installed skills can do the same job. Use the owner below. If the owner 
 * **Reading documents** (convert, OCR, extract text or tables, describe images): Docling MCP.
 * **One shared look** across several visual outputs: `theme-factory`. Its theme replaces each renderer's default palette and fonts.
 * **UI and frontend design**: `frontend-design`.
-* **Write-up** of material already gathered: `report`. **Teaching** one unfamiliar thing: `eli5`.
+* **Write-up** of material already gathered: `report`. **Teaching** one unfamiliar thing in one sitting: `eli5`. An ongoing course over several sessions, in its own workspace: `teach` (its lessons are its own pages, not `visual-explainer`'s).
+* **Handoff** to a fresh session or another agent: `handoff`. The `local-model` agent keeps its own pause/resume notes when it is running.
+* **Re-pitch** a message that didn't land: `wait-what`.
 * **Prose people will read** (READMEs, docs, commit messages, pull requests): `humanizer`.
 * **Web discovery**: Exa `search`. Multi-step list-building or enrichment: `Exa Agent`.
 * **Security**: threat model → `security-threat-model`. Security review or secure-by-default help → `security-best-practices`. Scanner setup and SAST runs → `/security-sast` and `sast-configuration`. Dependency risk → `/security-dependencies`. Compliance frameworks → `/compliance-check`. Multi-phase hardening → `/security-hardening`, only when asked for by name.

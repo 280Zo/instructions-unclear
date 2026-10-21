@@ -115,6 +115,8 @@ Files that currently carry tool sections:
 | `agents/local-model/subagents/local-model.md` | `name`, `targets`, `opencode: mode` |
 | `agents/security/subagents/*.md`, `agents/reverse-engineering/subagents/*.md` (5 agents) | `targets`, `opencode: mode`, `claudecode: model` |
 | `skills/distilly/skills/distilly/SKILL.md` | `claudecode: argument-hint, user-invocable, allowed-tools` |
+| `skills/handoff/skills/handoff/SKILL.md`, `skills/teach/skills/teach/SKILL.md` | `claudecode: argument-hint, disable-model-invocation`, `opencode: disable-model-invocation` |
+| `skills/wait-what/skills/wait-what/SKILL.md` | `claudecode: disable-model-invocation`, `opencode: disable-model-invocation` |
 
 Third-party skills and agents (in `skills/`, `agents/` and `mcp-servers/`) should stay identical to upstream apart from tool sections. Note any other change in the folder's README.
 

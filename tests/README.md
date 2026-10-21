@@ -10,6 +10,8 @@ These stdlib tests check collection completeness, native plugin resource paths, 
 
 `test_openai_skills.py` checks that the seven pinned OpenAI skills retain their runtime references/scripts, licenses and interface metadata, and that the selected groups discover them without name collisions.
 
+`test_user_invoked_skills.py` checks that `handoff`, `teach` and `wait-what` are separate folders with all their supporting files, keep their invocation fields in tool sections, and are selected, routed and licensed.
+
 `test_documents_skill.py` runs the packaged `documents` validator on its four bundled fixtures (PDF, DOCX, XLSX, PPTX) and checks that the complete family skill and its references are present in the groups that select it. It does not render documents or need Python libraries beyond the standard library.
 
 Changes to source roots must also be generated with pinned rulesync into throwaway output folders. Compare installed support assets and translated configuration against the source; unit tests alone do not prove generation or native runtime compatibility.

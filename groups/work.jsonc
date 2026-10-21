@@ -35,6 +35,9 @@
     "skills/humanizer",
     "skills/report",
     "skills/visual-explainer",
+    "skills/handoff",
+    "skills/teach",
+    "skills/wait-what",
     "rules/shell-preamble-reminder"
   ]
 }
