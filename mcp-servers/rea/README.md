@@ -23,13 +23,31 @@ From this repo, REA is a **profile**: it lives in one folder you choose. Start y
 
    Swap `--targets` for the tools you use. Never add `--global`: that would put REA in every session.
 
-That's enough for JavaScript, Electron, .NET and websites. Other targets need extra tools installed separately:
+Additional requirements depend on the selected workflow; the npm package is not a complete backend installation:
 
 | Target                             | Needs                                                                             |
 | ---------------------------------- | --------------------------------------------------------------------------------- |
 | Native binaries                    | Ghidra 12.1.x (set `GHIDRA_INSTALL_DIR` before starting your tool), IDA or Hopper |
 | Android, firmware, packet captures | The tools in [REA's list](https://github.com/morluto/rea#what-you-can-analyze)    |
 | JavaScript and Electron, on Linux  | A procps-compatible `ps` on your `PATH` (most distributions have it)              |
+| Browser-backed website work | The selected release's browser prerequisites and approval for any browser download or page visit |
+
+## For agents: install and verify
+
+Start in this repo and ask:
+
+> Follow `mcp-servers/rea/README.md` to install the backend I choose and test the folder-scoped REA connection with a harmless local fixture. Show the plan and ask before installation or configuration changes.
+
+Follow the [shared backend installation procedure](../../agents/reverse-engineering/README.md#for-agents-installing-and-verifying-backends), including its approvals, verification and rollback requirements. Use the reviewed REA **6.7.0** baseline above; setup examples from upstream main or the copied skill may describe a newer release. Inspect the installed release's documented options before using them. Do not upgrade REA, Node or a backend as an incidental repair.
+
+1. Select the workflow before installing anything. Check Node/npm and, on Linux where required, procps-compatible `ps`. Separate missing MCP registration, client permission, process startup and missing native backend failures. Static JavaScript or managed-code work does not justify installing Ghidra. Website/browser work has its own browser prerequisites; do not assume native analysis setup supplies them.
+2. Read [upstream installation and readiness guidance](https://github.com/morluto/rea/blob/main/docs/installation.md), checking it against the recorded release. Check the [native provider guide](https://github.com/morluto/rea/blob/main/docs/native-investigation.md) or the target-specific guide linked from upstream's [requirements table](https://github.com/morluto/rea#what-you-can-analyze). Show the exact package/backend installation and registration changes for approval; a diagnostics command using `npx` can itself download software.
+3. Reuse the profile's pinned MCP registration and complete skill. Do not run the upstream global `setup` merely to install a missing backend: it can register another MCP server and replace workflow instructions. If setup is genuinely required, review its supported dry run, clients, paths and skill replacements first and obtain approval for that scope. Do not use global registration for this folder profile.
+4. Install only the selected backend and prerequisites using its official supported procedure. For Ghidra, use the reviewed **12.1.x** compatibility baseline and its required full JDK; do not guess the Java major version or substitute another Ghidra release. Verify installation and the release's documented headless launcher. For the test, set `GHIDRA_INSTALL_DIR` only to the approved Ghidra installation root in the assistant launch environment; `JAVA_HOME` or persistent shell/service changes need review too. For IDA/Hopper, have the user supply and activate the correct licensed edition; verify REA supports that edition/platform and do not bypass activation or install a trial automatically.
+5. For Android, firmware or recorded-network work, choose only the bring-your-own tools in the release's corresponding guide (for example JADX plus its JDK, an approved firmware unpacker, or TShark). Check their OS/version requirements and use the shared workflow's isolated install and fixture tests. A native decompiler is not a substitute for those tools. REA's optional Rizin backend and the separate radare2 MCP are different integrations; do not install one to fix the other.
+6. Generate context into the agreed folder from this repo using the command above or the combined reverse-engineering group. Inspect any pre-existing project config before overwriting it. Restart/reconnect only with approval, from that folder, after prerequisites and environment are ready. Startup can acquire the pinned npm package; approval to copy skills is not approval to download it.
+7. Smoke test in stages: confirm `rea` connects and the intended skill/tools appear; then, with fixture approval, use static inspection on a tiny self-authored JavaScript tree. For a requested native backend, separately inspect a benign compiled fixture without executing it, and verify the known symbol/string through REA. Use the connected server's actual tool schema; do not assume a tool described on main exists in 6.7.0. Test outside the profile in a fresh session to confirm REA is absent unless another approved global integration supplies it.
+8. Report registration, catalog discovery and each selected backend's fixture result separately. List skipped backends as not installed/not tested, not failures requiring automatic installation. Retain the commands, versions, sources, created files and rollback plan from the shared procedure. Do not proceed from the smoke test to a user target without its own scope approval.
 
 ## Use
 

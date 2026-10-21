@@ -7,6 +7,8 @@
 
 Rules, agents, skills, MCP servers, and plugins for AI coding tools. Pick the pieces you want and [rulesync](https://github.com/dyoshikawa/rulesync) installs them into Claude Code, Codex, OpenCode and about 40 other tools, each in its own format.
 
+> **Before installing or updating:** [generate a local preview and compare it with your live files](#preview-before-installing). Generation can replace instructions and MCP settings. A preview does not change your live assistant installation.
+
 ## What's included
 
 Every folder below installs on its own. Open a group to see what's in it; each folder's README covers its setup.
@@ -121,6 +123,36 @@ You need [Node.js](https://nodejs.org) 22 or newer; `npx` runs rulesync. Clone t
 git clone https://github.com/280Zo/instructions-unclear.git && cd instructions-unclear
 ```
 
+### Preview before installing
+
+Run from the repository root. This fish example generates the `default` group into a fresh temporary home instead of your real one. It redirects the XDG configuration, data, state and cache directories too. `npx` may download and execute the pinned rulesync package; prefer an existing local copy of that version when available. Redirecting these paths is not a security sandbox.
+
+```fish
+mkdir -p /tmp/opencode
+set preview (mktemp -d /tmp/opencode/rulesync-preview.XXXXXX)
+env HOME="$preview" \
+    XDG_CONFIG_HOME="$preview/.config" \
+    XDG_DATA_HOME="$preview/.local/share" \
+    XDG_STATE_HOME="$preview/.local/state" \
+    XDG_CACHE_HOME="$preview/.cache" \
+    npx rulesync@38.0.0 generate --config groups/default.jsonc --global
+
+vim "$preview/.config/opencode/AGENTS.md"
+diff -u ~/.config/opencode/AGENTS.md "$preview/.config/opencode/AGENTS.md"
+diff -rq ~/.config/opencode/agents "$preview/.config/opencode/agents"
+diff -rq ~/.config/opencode/skills "$preview/.config/opencode/skills"
+```
+
+`diff` exits with 1 when files differ; that is expected. A missing live directory is reported separately, not as a successful comparison. Inspect the generated `commands/` directory too; it may not exist in your live installation yet. To preview another home-folder group, change `--config` to that group's file. Folder-scoped groups instead use `--output-roots "$preview/project"`, without `--global`; see [install groups](groups/README.md).
+
+Inspect the generated `opencode.jsonc` locally as well. **Do not copy live settings or credentials into the preview, commit them, or paste raw configuration diffs.** To test an update to an existing config, create a synthetic config in a separate temporary home with the same setting names and structure, replacing private values with placeholders, then generate into that home. Test both `opencode.json` and `opencode.jsonc` if you use both.
+
+A fresh preview checks which files rulesync generates. It does not prove that updating existing settings preserves everything, that plugins load, that MCP servers connect, or that their required programs are installed. Native plugins and codebase-memory's upstream integration have separate installation steps; apply and verify those in isolation too, in the order their READMEs specify.
+
+Review differences before approving a live run. Install and verify replacements before removing obsolete live skills or agents. With `delete: false`, an old name remains even when its replacement has a new name. Keep files owned by upstream installers, such as codebase-memory's skill.
+
+### Install into your home folder
+
 Then name the folders you want, the tools you use, and the kinds of content to install:
 
 ```bash
@@ -139,11 +171,24 @@ npx rulesync@38.0.0 generate --global \
 
 Follow each folder's setup order. In particular, generate rulesync output **before** applying codebase-memory's native integration; future generation replaces its shared instructions/configuration, so reapply the upstream integration afterward. See its [verified ownership boundary](mcp-servers/codebase-memory/README.md). Other runtimes and native plugins have their own separately approved setup steps.
 
-Before you run it, know what gets replaced:
+### What generation changes
 
-- `rules` replaces your tool's global instructions file (such as `~/.config/opencode/AGENTS.md` or `~/.claude/CLAUDE.md`) with only the rules from this run.
-- `mcp` replaces your tool's MCP server list with only the servers from this run.
-- Skills and agents are added. One with the same name as an existing one overwrites it; nothing else is deleted.
+The table below is verified for **OpenCode with rulesync 38.0.0**, using this repo's selections (`delete: false`, no `permissions` feature). Other assistants have different config writers; do not assume identical merge or deletion behavior without a preview for that target. OpenCode's own loading and merging of configuration layers is separate from rulesync editing files on disk.
+
+| File or setting | What rulesync does | What it leaves behind |
+|---|---|---|
+| Global `AGENTS.md` (`rules`) | Replaces it with the selected rules | Live-only instructions are not automatically preserved |
+| `opencode.json` / `opencode.jsonc` | Updates an existing `.jsonc` preferentially, otherwise `.json`; creates `.jsonc` if neither exists | Does not reconcile both files when both exist |
+| MCP server list (`mcp`) | Replaces the chosen config file's entire `mcp` section | Servers absent from the selection are removed from that section, even with `delete: false`; another file's entries remain |
+| Native V2 MCP settings | Writes the older flat MCP layout | Shared V2 options such as `mcp.timeout` can be lost |
+| Plugin list, model, permissions | Preserves these unrelated settings during MCP generation | Does not clean obsolete plugin entries or uninstall plugin packages |
+| Skills, agents and commands | Adds selected entries and overwrites matching names | Obsolete names remain with `delete: false`; inspect support files in updated skill folders too |
+| Native installer resources | Does not run their installers | Codebase-memory and native plugins still need their documented setup and verification |
+| MCP programs and other software | Writes connection definitions, not a full software installation | Required commands, containers, applications, credentials and services may still be missing |
+
+**Using OpenCode V2 does not prevent settings loss.** V2 supports existing V1 configuration, but it cannot recover a custom setting that rulesync removed from the file. In a synthetic-config test, generation preserved unrelated plugins/model/permissions, removed an obsolete MCP entry and dropped a shared V2 MCP timeout. Review the result before relying on a live update. See OpenCode's [migration guidance](https://opencode.ai/v2/docs/migrate-v1) and [MCP settings](https://opencode.ai/v2/docs/mcp-servers).
+
+**Updating existing settings is different from starting fresh.** If you delete the live config first, its comments and local settings disappear too. This repo does not reproduce OpenCode's `provider` / native V2 `providers` settings, local model selections, plugin list, or machine-specific permissions. Provider configuration is assistant-specific; it belongs in your private settings or a separately maintained, sanitized personal template, not a copy of your live config committed here. Empty provider declarations are not credentials or custom model definitions. Keep your private backup until the new setup is verified.
 
 Back up anything you want to keep. Because rules and MCP servers are replaced, list every folder you want each time you install. To save your picks, put them in `rulesync.local.jsonc` (git ignores it), and rulesync uses that list instead of `rulesync.jsonc`'s:
 
@@ -188,6 +233,13 @@ To refresh copied third-party context, use the upstream repository linked in the
 ## Customizing
 
 Fork the repo and make it yours: add your own rules under `rules/`, swap skills and agents in and out, and point `inputRoots` at what you keep. [`AGENTS.md`](AGENTS.md) is the guide for that, written so an AI agent can follow it too: the layout, keeping tool-specific settings portable, adding plugins, keeping secrets out, checking upstreams for updates, and verifying changes.
+
+## For agents: private configuration and comments
+
+- Treat rulesync generation, native plugin setup and native V2 conversion as separate operations with separate approval. Apply any approved V2 conversion after the installers that rewrite the same settings; a later rulesync run can rewrite the MCP layout again.
+- Preserve existing provider/model settings, permissions and explanatory comments during approved edits. Do not infer that a fresh generation reconstructs them. Do not copy live settings, credentials, personal paths or machine-specific permission patterns into this public repo.
+- Keep permission rationale beside the matching rules in the private config: ordering, credential and transcript access, instruction-file edits, and the distinction between shell permissions and read-tool permissions. Comments explain policy; they do not enforce it. Recheck claims against the installed OpenCode version rather than blindly restoring historical comments or changing policy to match them.
+- For component-specific rationale, use the copyable comments and maintenance guidance in the [Docling](mcp-servers/docling/README.md#for-agents-routing-and-updates) and [Exa](mcp-servers/exa/README.md#for-agents-routing-and-updates) READMEs. During an approved setup or migration, place relevant comments beside the settings they describe; reuse equivalent existing comments instead of duplicating them. This is a manual maintenance step, not a rulesync feature.
 
 ## License
 

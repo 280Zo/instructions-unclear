@@ -27,6 +27,16 @@ Never add `--global`. This copies context and a **disabled** connection; it does
 
 Do not also install ReVa's native Claude plugin with these same skills. Do not copy upstream's blanket auto-approval suggestion. Keep the server loopback-only; scripting can execute code and annotation tools mutate project state. Restrict scripting or configure supported authentication before any shared-host deployment; this template does not authorize one. Ordinary tool calls should precede arbitrary scripting, and changes need retained evidence/appropriate approval.
 
+## For agents: install and verify
+
+Follow the [shared backend installation procedure](../../agents/reverse-engineering/README.md#for-agents-installing-and-verifying-backends). Ask whether ordinary project access or PyGhidra scripting is required; do not install the scripting stack for an ordinary read-only check.
+
+1. Inspect the existing Ghidra/JDK installation and extension versions. Select the exact Ghidra build, **ReVa v7.3.1** matching asset and, if requested, PyGhidra requirements from the tagged instructions above. If there is no matching asset, stop. Show official download/build commands, installation paths and required runtime changes for approval; verify published checksums/signatures when available.
+2. Back up approved plugin settings. Install the extension through Ghidra's supported mechanism, then enable the Project and Code Browser plugins as documented. Hand interactive GUI/license steps to the user when automation is unavailable. Do not remove working extensions or install duplicate companion skills.
+3. With approval, create a disposable project containing a benign fixture, start the loopback-only server and check the intended port is free. Explicitly approve enabling the assistant connection; preserve other MCP entries and permissions. Do not bind it to a public interface to work around a connection problem.
+4. Smoke test the MCP catalog and a read-only operation on the fixture using the installed server's schema. Record the Ghidra and extension versions and observed result. Scripting remains untested unless separately requested; if it is requested, test only a reviewed harmless script in the disposable PyGhidra project. Do not modify a real project or run arbitrary scripts as an installation check.
+5. Follow the shared handoff/rollback checklist. Remove or stop only this test's approved resources; keep the connection disabled if setup is incomplete. Generation, connection, ordinary project access and scripting are separate verification results.
+
 ## Updating
 
 Update the extension version, skill commit and matching Ghidra requirements together, comparing upstream changes before copying. Preserve all `patterns.md`, `examples.md` and scripting references. Re-run the offline tests and throwaway reverse-engineering generation. No runtime compatibility has been tested by merely generating this config.

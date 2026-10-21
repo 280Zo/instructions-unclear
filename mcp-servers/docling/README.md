@@ -46,3 +46,11 @@ OpenCode names each tool `<server name>_<tool>`, e.g. `docling_convert_...`. Per
 - Why: on 2026-10-21 the user replaced the per-skill routing rules with one routing rule because several items claimed the same jobs. Here, the `documents` skill also covers extraction, so the rule keeps reading with Docling and authoring with `documents`.
 - `rules/docling.md` stays in this folder: it covers how to run Docling (one conversion at a time, timeouts, cache), not which tool owns a job. Keep job ownership out of it and in `rules/routing`.
 - When reviewing a new Docling release or tool groups, or refreshing `documents`, check whether either now claims the other's job. If so, update `rules/routing` and this section in the same change and tell the user.
+- During an approved manual configuration setup or migration, retain the rationale above as comments beside the matching settings. The comments below describe this template, not every upstream release; recheck them when changing the settings. Rulesync does not automatically insert README comments into the live config. Do not restore historical fixed tool counts.
+
+```jsonc
+// conversion + generation keep document import and export; manipulation is omitted.
+// CACHE_DIR is intentionally unprefixed and points to temporary filesystem output.
+// Retain page images for thumbnails; this does not enable VLM descriptions.
+// Allow five minutes for large conversion requests.
+```

@@ -20,6 +20,16 @@ Never add `--global`. The connection is disabled until you explicitly enable it 
 
 Read-only mode is not an isolation guarantee. Work with approved artifacts and retain normal host permissions. Raw command/script tools, debugger access and write workflows are not enabled by this template; changing that requires a separate decision. No HTTP listener, unrestricted execution or automatic file opening is configured.
 
+## For agents: install and verify
+
+Follow the [shared backend installation procedure](../../agents/reverse-engineering/README.md#for-agents-installing-and-verifying-backends). This is optional; do not install it just because a REA native backend is missing.
+
+1. Inspect existing radare2 and `r2mcp` installations and their provenance. Resolve the native dependency/API requirements against **radare2 MCP 1.9.0** and the tagged **radare2 6.2.4** baseline above. Use the official tagged build instructions, checking OS/architecture and compiler dependencies. Do not replace Rizin or silently upgrade an existing radare2 installation.
+2. Propose exact pinned download/build/install commands, checksum/signature checks, output paths, dependencies and PATH changes. Obtain approval before executing them. Prefer an isolated install prefix when upstream supports it. Do not substitute an updating `r2pm` recipe for a reviewed tag or run build/install steps with elevated privileges without explicit approval.
+3. Verify the installed versions and the pinned release's supported `r2mcp` options. Inspect the generated connection and preserve `-R`, `-n`, `-N`, stdio and its disabled state until activation is approved. Do not enable script/debug/write capabilities or relax host permissions to make tests pass.
+4. Smoke test catalog discovery, then a read-only inspection of a benign local fixture using the exposed tool schema; verify an expected string or symbol without executing the fixture. Include package acquisition and connection startup in the approved test scope. A catalog alone does not verify native analysis.
+5. Use the shared handoff/rollback checklist. Record the executable actually used by the assistant, both versions, fixture evidence and any remaining limitations. Stop only test-owned processes and keep disabled if compatibility or verification fails.
+
 ## Updating
 
 Compare stable tags and their supported flags/native API requirements before changing the pin. Update this README and config comment together; generate the folder group to a throwaway output root. Generation verifies syntax/translation, not the installed native runtime.

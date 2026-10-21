@@ -21,6 +21,33 @@ def read_jsonc(path):
 
 
 class SecurityReContextTests(unittest.TestCase):
+    def test_backend_install_guides_require_approval_and_evidence(self):
+        common = (ROOT / "agents/reverse-engineering/README.md").read_text()
+        for heading in [
+            "## For agents: installing and verifying backends",
+            "### Approval before installation",
+            "### Verification without operating a target",
+            "### Handoff and rollback",
+        ]:
+            self.assertIn(heading, common)
+        for component in ["rea", "reva", "radare2"]:
+            text = (ROOT / f"mcp-servers/{component}/README.md").read_text()
+            self.assertIn("## For agents: install and verify", text, component)
+            self.assertIn(
+                "../../agents/reverse-engineering/README.md#for-agents-installing-and-verifying-backends",
+                text,
+                component,
+            )
+            self.assertIn("smoke test", text.lower(), component)
+
+    def test_exa_auth_guide_distinguishes_secrets_from_client_configuration(self):
+        text = (ROOT / "mcp-servers/exa/README.md").read_text()
+        self.assertIn("### Authentication after generation", text)
+        self.assertIn('"oauth": false', text)
+        self.assertIn("{env:EXA_API_KEY}", text)
+        self.assertIn("never print", text.lower())
+        self.assertIn("nested", text.lower())
+
     def test_upstream_ownership_policy_requires_verified_handoff(self):
         guide = (ROOT / "AGENTS.md").read_text()
         self.assertIn("## Upstream installation ownership", guide)
