@@ -45,7 +45,7 @@ An MCP definition is an instruction for starting or contacting software. It does
 | --------------- | -------------------------------------------------------------- |
 | Docling         | `uv`; startup can download its pinned package and dependencies |
 | PMB             | `uv`; startup can download packages and embedding models       |
-| Exa             | Its existing environment variable and account access           |
+| Exa             | No key for anonymous search; OAuth or API key for Exa Agent    |
 | Presenton       | Separate container/service setup; disabled initially           |
 | FreeCAD         | Application, addon and server setup; disabled initially        |
 | codebase-memory | Its upstream integration; disabled initially                   |
@@ -153,7 +153,7 @@ The secure-coding rule now ships inside [`agents/security`](agents/security/).
 
 | Folder                                                        | Adds                                                                                                          | Needs            |
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------- |
-| [`mcp-servers/exa`](mcp-servers/exa/)                         | Exa search, retrieval and agent research, a web research rule, upstream skills `search` and `Exa Agent`       | An Exa API key   |
+| [`mcp-servers/exa`](mcp-servers/exa/)                         | Exa search, retrieval and agent research, a web research rule, upstream skills `search` and `Exa Agent`       | Optional key; see setup |
 | [`mcp-servers/docling`](mcp-servers/docling/)                 | Docling, which reads PDFs, Office files and scans, and a rule for using it                                    | uv               |
 | [`mcp-servers/pmb`](mcp-servers/pmb/)                         | PMB, project memory that survives between sessions, and a rule for using it                                   | uv               |
 | [`mcp-servers/codebase-memory`](mcp-servers/codebase-memory/) | Code graph connection, switched off; upstream installer supplies its skill/agents/instructions after rulesync | Upstream install |

@@ -19,21 +19,36 @@ instead of inventing a citation or falling back silently to recollection.
 `webfetch` is a raw HTTP GET, not a search engine. Using it to "look something
 up" means guessing a URL — your most common source of confident wrong answers.
 
-- **Discovery → `exa_web_search_exa`.** Mandatory for any find/research/what-is/
-  which-library question, even when you think you know the answer. Follow the
-  upstream `search` skill for query patterns and supported filtering; this
+- **Discovery → `exa_web_search_exa`.** Use first for any find/research/what-is/
+  which-library question, even when you think you know the answer. If Exa is
+  unavailable, use the fallback below. Follow the upstream `search` skill for
+  query patterns and supported filtering; this
   connection does not enable `web_search_advanced_exa`.
 - **Retrieval from a known URL → `exa_web_fetch_exa`.** Clean markdown, batched
   URLs, `maxCharacters`. Measured on one GitHub page, `webfetch` returned ~7k
   chars of nav chrome and base64 badges before any content.
 - **`webfetch` only for:** localhost/private IPs; `format: html|text` where raw
   markup matters; a URL the user or these instructions gave you; Exa failing.
-- **Never build a doc URL from memory.** No user/file/Exa source → search first.
+- **Search fallback:** if Exa is rate-limited, fails authentication, is missing
+  or otherwise unavailable, say so and use the host's built-in search tool
+  (such as `websearch`) when available and permitted. This repo rule overrides
+  the upstream `search` skill's instruction not to fall back on auth/rate-limit
+  errors. Keep the same source-quality checks and read sources before citing.
+  Built-in search may use Exa too; do not assume independent availability or
+  keep retrying a shared limit. If no search tool works, report the limitation
+  and ask for source URLs or continue only from verified sources already held.
+  Do not install tools, change authentication or permissions, or start a paid
+  service merely to restore search.
+- **Never build a doc URL from memory.** No user/file/search source → search first.
 - **Current GitHub state → `gh` CLI.** Use it for exact live facts such as whether a pull request is merged or an issue is open. Exa is useful for discovery, but its search index may be stale. If `gh` or the required access is unavailable, say so; do not install tools or change authentication without approval.
 - **Multi-step agent research → `agent_run`.** Use the upstream `Exa Agent`
   skill when that tool is available. Continue a running run by its ID rather
   than starting duplicates. Provider access and costs remain subject to the
   user's account and approval; installing context grants neither.
+  Ordinary search fallback does not replace structured runs, enrichment or
+  partner-data access. If `agent_run` is unavailable, explain the missing
+  capability and ask before substituting a reduced-scope manual workflow.
 - Breaking these is allowed. Doing it silently is not.
 
-Built-in `websearch` is unauthenticated Exa and is off here. Don't ask for it.
+Built-in search is a fallback, not the default. Its availability and provider
+depend on the host; this rule does not enable a tool or override a denial.
