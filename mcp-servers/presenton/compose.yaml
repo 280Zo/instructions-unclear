@@ -1,0 +1,32 @@
+# Presenton, run on demand. From this folder:
+#   cp .env.example .env    # then fill it in
+#   docker compose up -d    # first start; afterwards docker start/stop presenton
+# See README.md.
+
+# A fixed project name keeps the data volume's name (presenton_presenton_data)
+# the same no matter where this repo is cloned.
+name: presenton
+
+services:
+  presenton:
+    # v0.9.11-beta, pinned by digest so the image can't change underneath you.
+    # To upgrade, replace both the tag and the digest (README, "Upgrading").
+    image: ghcr.io/presenton/presenton:v0.9.11-beta@sha256:ddf0d1f26397764856acdf94489dbbae5a2c0644a280723fd80bc7a80de338ba
+    container_name: presenton
+    # Only started when you want it.
+    restart: "no"
+    ports:
+      # Listens on this machine only. The web app, REST API and MCP server
+      # (/mcp) all use this port.
+      - "127.0.0.1:${PRESENTON_HTTP_HOST_PORT:-5001}:80"
+      # Uncomment only to sign in with a ChatGPT account instead of an API key.
+      # - "127.0.0.1:1455:1455"
+    env_file:
+      - path: .env
+        required: true
+    volumes:
+      # Presentations, uploads, settings, the admin account and the database.
+      - presenton_data:/app_data
+
+volumes:
+  presenton_data:

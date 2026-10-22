@@ -1,0 +1,13 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/mcp-schema.json",
+  "mcpServers": {
+    // Pinned so the server can't change underneath you (README, "Updating").
+    // Off by default: it only works while FreeCAD is open with its RPC server on.
+    "freecad": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["freecad-mcp@0.1.27"],
+      "disabled": true
+    }
+  }
+}

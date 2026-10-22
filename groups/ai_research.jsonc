@@ -1,0 +1,9 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
+  // Folder-scoped: the 98 AI research skills. Run from the repo root with
+  // --output-roots <folder>. Never run this with --global.
+  "targets": ["opencode"],
+  "features": ["skills"],
+  "delete": false,
+  "inputRoots": ["skills/ai-research"]
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/mcp-schema.json",
+  "mcpServers": {
+    // Off by default: the Presenton container only runs when you start it.
+    // Turn the server on in your tool's MCP settings after `docker start presenton`.
+    "presenton": {
+      "type": "http",
+      "url": "http://localhost:5001/mcp",
+      "headers": {
+        "Authorization": "Bearer ${PRESENTON_API_KEY}"
+      },
+      "disabled": true
+    }
+  }
+}

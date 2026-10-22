@@ -1,0 +1,14 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/mcp-schema.json",
+  "mcpServers": {
+    "pmb": {
+      "type": "stdio",
+    // Reviewed package pin; uvx resolves it in an isolated cached environment.
+      "command": "uvx",
+      "args": ["--from", "pmb-ai==1.2.3", "pmb-mcp"],
+      // Start PMB in the current project, so PMB_HOME=.pmb lands in that project.
+      "cwd": ".",
+      "env": { "PMB_HOME": ".pmb" }
+    }
+  }
+}

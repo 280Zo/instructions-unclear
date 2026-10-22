@@ -1,0 +1,78 @@
+"""Checks for the repo-owned security bundle that replaced four folders."""
+
+import re
+import unittest
+
+from test_security_re_context import ROOT, read_jsonc
+
+BUNDLE = ROOT / "agents/security"
+OLD_ROOTS = [
+    "agents/security-compliance",
+    "agents/security-scanning",
+    "rules/secure-coding",
+    "skills/security-best-practices",
+]
+
+
+class SecurityBundleTests(unittest.TestCase):
+    def test_bundle_holds_one_auditor_and_excludes_threat_model(self):
+        agents = sorted(p.stem for p in (BUNDLE / "subagents").glob("*.md"))
+        self.assertEqual(agents, ["security-auditor", "threat-modeling-expert"])
+        commands = sorted(p.stem for p in (BUNDLE / "commands").glob("*.md"))
+        self.assertEqual(
+            commands,
+            [
+                "compliance-check",
+                "security-dependencies",
+                "security-hardening",
+                "security-sast",
+            ],
+        )
+        skills = sorted(p.parent.name for p in (BUNDLE / "skills").glob("*/SKILL.md"))
+        self.assertEqual(
+            skills,
+            [
+                "attack-tree-construction",
+                "sast-configuration",
+                "security-best-practices",
+                "security-requirement-extraction",
+                "stride-analysis-patterns",
+                "threat-mitigation-mapping",
+            ],
+        )
+        self.assertTrue((BUNDLE / "rules/secure-coding.md").is_file())
+
+    def test_old_security_folders_are_gone_and_unselected(self):
+        configs = [ROOT / "rulesync.jsonc", *(ROOT / "groups").glob("*.jsonc")]
+        for old in OLD_ROOTS:
+            self.assertFalse((ROOT / old).exists(), old)
+            for config in configs:
+                self.assertNotIn(old, read_jsonc(config)["inputRoots"], config)
+
+    def test_bundle_has_no_global_unpinned_or_automatic_installs(self):
+        unsafe = re.compile(
+            r"^\s*(?:npm install -g|go install \S+@latest|cargo install|"
+            r"gh extension install|npm audit fix && npm update)",
+            re.MULTILINE,
+        )
+        # pip installs must pin `==`; the one exception is the pip self-upgrade
+        # inside the approval-gated automated-update script.
+        unpinned_pip = re.compile(
+            r"^\s*pip install (?!--upgrade pip$)(?!.*==).*$", re.MULTILINE
+        )
+        for path in BUNDLE.rglob("*.md"):
+            text = path.read_text()
+            for pattern in (unsafe, unpinned_pip):
+                match = pattern.search(text)
+                self.assertIsNone(match, f"{path}: {match and match.group(0)}")
+
+    def test_modified_openai_skill_carries_change_notice(self):
+        text = (BUNDLE / "skills/security-best-practices/SKILL.md").read_text()
+        self.assertIn("Modified for instructions-unclear", text)
+        self.assertTrue(
+            (BUNDLE / "skills/security-best-practices/LICENSE.txt").is_file()
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
