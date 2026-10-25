@@ -20,7 +20,7 @@ Upstream examples assume `$CODEX_HOME/skills/playwright`, normally under `~/.cod
 
 ## For agents: routing and updates
 
-- Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Browser automation**: `playwright`". That includes screenshots of a web page it is driving.
+- Not in [`rules/routing`](../../rules/routing/rules/routing.md): `screenshot`'s description already defers to tool-specific capture, so browser automation and page screenshots stay with `playwright` without a routing line (removed 2026-10-24 to save tokens).
 - It does not own desktop or window screenshots: those go to `screenshot`. Installing or running the Playwright CLI follows `package-management`, not the wrapper's `npx --yes` line.
 - Why: on 2026-10-21 the user replaced the per-skill rules with one routing rule because several skills' descriptions and rules claimed the same jobs. Here, `playwright` and `screenshot` both claimed capturing screenshots.
 - On upstream updates, don't edit the upstream skill text to change routing, and don't add a per-skill routing rule to this folder.

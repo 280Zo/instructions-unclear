@@ -92,10 +92,10 @@ Refresh `skills/search/` and `skills/exa-agent/` together from the recorded upst
 
 ## For agents: routing and updates
 
-- Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Web discovery**: Exa `search`. Multi-step list-building or enrichment: `Exa Agent`."
+- Not in [`rules/routing`](../../rules/routing/rules/routing.md): this folder's `rules/web-research.md` already sends discovery to Exa search and multi-step research to `Exa Agent`, so a routing line would repeat it (removed 2026-10-24 to save tokens).
 - `search` does not own multi-step list-building or enrichment (`Exa Agent`), and `Exa Agent` is not the default for ordinary lookups (`search`). Reading local documents is Docling's job.
 - Why: on 2026-10-21 the user replaced the per-skill routing rules with one routing rule because several items claimed the same jobs. Here, the two upstream Exa skills overlap on research requests, and `Exa Agent` can use partner-data providers that may incur costs.
-- `rules/web-research.md` stays in this folder: it covers source quality and search versus fetch, not which skill owns a job. Keep job ownership in `rules/routing`.
+- `rules/web-research.md` stays in this folder: it covers source quality, search versus fetch, and which Exa tool to use. Because it already assigns those jobs, `rules/routing` doesn't repeat them; if another installed skill starts competing for web research, add a line there.
 - The rule's `gh` CLI line (current GitHub state) is repo-owned guidance in that rule, not a change to the upstream Exa skills. It needs no GitHub MCP server and does not authorize installing `gh` or changing its authentication.
 - The rule's search-fallback policy is a repo-owned override of the upstream `search` skill's instruction not to fall back on authentication/rate-limit errors (user approved 2026-10-22). Keep upstream skill text unchanged. Exa remains preferred; disclose fallback use, retain source-quality checks, and do not present ordinary search as an equivalent to `agent_run`.
 - On upstream updates, don't edit the upstream skill text to change routing, and don't add a per-skill routing rule here.

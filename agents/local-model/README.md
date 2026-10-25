@@ -54,7 +54,7 @@ without switching the primary agent.
 
 These pause/resume notes belong to this agent's own loop. For a general handoff
 document that any agent or session can pick up, use the separate
-[`handoff`](../../skills/handoff/) skill (`rules/routing` names both).
+[`handoff`](../../skills/handoff/) skill, which you start with `/handoff`.
 
  Origin
 

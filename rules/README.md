@@ -8,7 +8,7 @@ How I want all AI agents to behave, split into topics you can install separately
 | `scope-secrets-approvals/` | Where to work, what never to touch, what to ask before doing                                 |
 | `engineering/`             | Inspect first, keep changes small, use `sd` for replacements, verify before claiming success |
 | `communication/`           | State assumptions and summarize at the end                                                   |
-| `routing/`                 | Which skill, command or tool owns each job when several could do it                          |
+| `routing/`                 | Which skill owns each job when several installed skills could do it                          |
 | `preferences/`             | Your preferences: vim, fish, pnpm/uv, zellij, firefox, ISO dates, US spelling                |
 | `shell-preamble-reminder/` | Repeat the preamble check at the end of the installed rules. Installed last                  |
 
@@ -32,6 +32,6 @@ Every rule installs into the same file (`~/.config/opencode/AGENTS.md`, `~/.clau
 
 ## For agents: maintaining these rules
 
-- **Routing** (`routing/`): the single source for which skill owns which job, chosen by the user on October 21, 2026. Don't add per-skill routing rules back, and don't edit upstream skills to change routing. When a skill is added, removed or refreshed and its description now overlaps another owner's job, update this rule and the skill's README "For agents: routing and updates" section together, and tell the user.
+- **Routing** (`routing/`): which globally installed skill owns which job, chosen by the user on October 21, 2026. It loads on every request, so it lists only real conflicts between installed skills; duplicates of other rules, skills that don't compete and user-invoked skills were removed on October 24, 2026. Folder-only collections keep their routing in their own folder (`skills/designskills`, `skills/career-workspace`). Don't edit upstream skills to change routing. When a skill is added, removed or refreshed and its description now overlaps another owner's job, update this rule and the skill's README "For agents: routing and updates" section together, and tell the user.
 - **Preferences** (`preferences/`): the user's stated preferences. Add to it only what the user asks for.
 - **Order**: `shell-preamble` first and `shell-preamble-reminder` last in every group; the other rules sit between them in the order listed in `rulesync.jsonc`.

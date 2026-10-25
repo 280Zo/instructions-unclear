@@ -101,10 +101,12 @@ Intake reads documents with Docling when it's available. If an interview or offe
 
 `career-start-application` owns starting an application, not building the master.
 `career-master-resume` owns the bullet bank; `career-work-history` owns official
-employment fields. Central cross-skill routing lives in
-[`rules/routing`](../../rules/routing/rules/routing.md); do not add a routing rule
-inside this collection. The starter includes its own required-skill contract
-because the folder-only career group installs skills, not global rules.
+employment fields. That routing lives in this folder's
+[`rules/career-routing.md`](rules/career-routing.md), which the career group
+installs into the career folder's own `AGENTS.md`; it moved out of the global
+`rules/routing` on 2026-10-24 because these skills exist only in that folder.
+The starter also keeps its own required-skill contract, so it still works when
+the skills are installed without the rule.
 
 When updating this workflow, reconcile the starter, builder hand-off and README
 together. Preserve required resume passes, version-manager ownership and factual

@@ -23,7 +23,7 @@ Then start the new session and point it at the file it saved.
 
 ## For agents: routing and updates
 
-- Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Handoff** to a fresh session or another agent: `handoff`."
+- Not in [`rules/routing`](../../rules/routing/rules/routing.md): it's user-invoked only (`disable-model-invocation`), so the model never chooses it and a routing line would only cost tokens (removed 2026-10-24). The `local-model` agent's own pause/resume notes are separate and need no routing.
 - It does not own the `local-model` agent's pause/resume notes. That agent writes its own `local-model-handoff.md` as part of its working style; leave that alone when the user is running it.
 - Why: added on 2026-10-21 after an overlap check against the existing skills and agents. The only neighbor was `local-model`'s built-in handoff, which serves one agent's loop, so the user approved `handoff` as the general one.
 - The skill is user-invoked only (`disable-model-invocation: true`, kept under the `claudecode:` and `opencode:` sections so rulesync passes it to both). Don't remove it to make the skill load automatically.

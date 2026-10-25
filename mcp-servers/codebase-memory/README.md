@@ -32,7 +32,7 @@ After enabling the intended connection, ask to index a repository, trace callers
 
 ## For agents: routing and updates
 
-- Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Structural code questions** (callers, dependencies, impact): codebase-memory graph tools when enabled; otherwise search the code directly."
+- Not in [`rules/routing`](../../rules/routing/rules/routing.md): it's switched off by default, and when enabled its upstream integration supplies its own instructions for structural code questions (line removed 2026-10-24 to save tokens). If you enable it and the agent ignores the graph tools, add a line back.
 - The connection is disabled by default, so the rule's fallback (plain code search) is the normal case. Don't enable the server to answer a question.
 - Why: on 2026-10-21 the user replaced the per-skill routing rules with one routing rule because several items claimed the same jobs. The upstream-installed skill and instructions describe when to use the graph; the routing rule only decides graph versus direct search.
 - Upstream owns its skill, agents and instructions, so don't edit them and don't add a routing rule to this folder.

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/mcp-schema.json",
+  "mcpServers": {
+    // Off by default: it can run, remove and push containers and images.
+    // Turn it on in your tool's MCP settings when you want it (README).
+    // Pinned; update the README together with this version.
+    "podman": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "podman-mcp-server@0.0.15"],
+      // The first start downloads the package.
+      "timeout": 60000,
+      "disabled": true
+    }
+  }
+}

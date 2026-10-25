@@ -18,7 +18,7 @@ Approve the screen/window, sensitive content exposure and output path before cap
 
 ## For agents: routing and updates
 
-- Role in [`rules/routing`](../../rules/routing/rules/routing.md): "Desktop or window screenshots: `screenshot`".
+- Not in [`rules/routing`](../../rules/routing/rules/routing.md): its description already limits it to desktop or window capture when tool-specific capture isn't available, so it doesn't compete with `playwright` (line removed 2026-10-24 to save tokens).
 - It does not own browser automation, including screenshots of a page being driven in a browser: those go to `playwright`.
 - Why: on 2026-10-21 the user replaced the per-skill rules with one routing rule because several skills' descriptions and rules claimed the same jobs. Here, `screenshot` and `playwright` both claimed capturing screenshots.
 - On upstream updates, don't edit the upstream skill text to change routing, and don't add a per-skill routing rule to this folder.

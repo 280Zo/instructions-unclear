@@ -27,7 +27,7 @@ Supply `OPENAI_API_KEY` through an approved process environment/secret mechanism
 
 ## For agents: routing and updates
 
-- Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Audio**: speech to text → `transcribe`".
+- Not in [`rules/routing`](../../rules/routing/rules/routing.md): no other installed skill does speech to text, so its description is enough (line removed 2026-10-24 to save tokens).
 - It does not own text to speech (`speech`) or reading text from documents and images (Docling MCP). Installing its Python client follows `package-management`.
 - Why: on 2026-10-21 the user replaced the per-skill rules with one routing rule because several skills' descriptions and rules claimed the same jobs. Here, the audio jobs overlapped with `visual-explainer`'s narration features, so the rule gives audio to `transcribe` and `speech`.
 - On upstream updates, don't edit the upstream skill text to change routing, and don't add a per-skill routing rule to this folder.

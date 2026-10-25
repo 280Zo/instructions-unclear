@@ -2,6 +2,8 @@
 
 This repo stores AI context files (rules, skills, agents, MCP server definitions) and installs them into a user's home folder with [rulesync](https://github.com/dyoshikawa/rulesync). It is public and meant to work with every assistant rulesync supports. Read `README.md` for the human-facing overview.
 
+This file has two parts. [Installing on a machine](#installing-on-a-machine) is for setting up the user's computer from this repo. [Maintaining this repo](#maintaining-this-repo) is for changing what the repo contains. The "Never" list below applies to both.
+
 ## Never
 
 - **Never run `rulesync generate` without `--global`**, except for a profile with `--output-roots` pointing outside this repo (see that folder's README). Without either, rulesync writes project-scope output into this repo and **overwrites this file**. If that happens, restore it with `git checkout -- AGENTS.md` and delete the other generated files (they're listed in `.gitignore`).
@@ -9,6 +11,82 @@ This repo stores AI context files (rules, skills, agents, MCP server definitions
 - **Never run `rulesync import`.** It copies live config word for word, including tokens in MCP server `env` values and headers (tested with a fake token). Copy changes back by hand instead, replacing secret values with `${VAR}` placeholders.
 - **Never commit secrets or personal data.** See "Secrets and personal data" below.
 - **Never copy auth or settings files** into the repo: `~/.claude.json`, `~/.claude/.credentials.json`, `~/.codex/auth.json`, `~/.codex/config.toml`, `~/.gemini/settings.json`, OAuth files, `opencode.json(c)`, `.pmb/`. Only context files belong here.
+
+# Installing on a machine
+
+Use this part when the user wants these context files installed on their computer. Work through the steps in order and ask one question at a time. Nothing here is approval by itself: ask before every step that writes outside `/tmp/opencode`, downloads or runs software, or edits an assistant's config. Your own rules (shell preambles, ask-first, secrets) still apply.
+
+## 1. Check the starting point
+
+- Confirm you're at the repo root (`rulesync.jsonc` and `groups/` are here) and that Node.js 22 or newer is installed, since `npx` runs rulesync. If something is missing, stop and tell the user.
+- Run `git status` and report any local changes before going further.
+- Ask which assistants they use and turn the answer into rulesync `--targets` names (`opencode`, `claudecode`, `codexcli`, `geminicli`, `cursor`, and others). Without `--targets`, every group installs into OpenCode only (`work` adds the two Copilots).
+
+## 2. Ask what to install
+
+Read every `groups/*.jsonc` file and `groups/README.md` now. Don't work from memory or from a list in this file, because groups change. In one message, present every group: its name, whether it installs into the home folder or into a folder the user picks, and one line on what it contains. Add one more choice, **Everything**, and ask which they want. They may pick more than one group.
+
+- Home-folder groups run with `--config groups/<name>.jsonc --global`. Each one replaces the whole rules file, and some replace the MCP server list, so they don't stack. If the user picks two, explain that and ask which one to install.
+- Folder groups run with `--config groups/<name>.jsonc --output-roots <folder>`, never with `--global`. Ask where each folder should go and suggest `~/AI/<name>`. Folder groups that write MCP settings into the same folder replace each other's MCP set, so use separate folders or one combined run (see "How they behave" in `groups/README.md`).
+- Everything uses no group. Go to step 3.
+
+## 3. If they chose Everything
+
+Go folder by folder through `rules/`, `agents/`, `skills/` and `mcp-servers/` and list every component folder: one with its own README and rulesync sources (`rules/*.md`, `skills/*/SKILL.md`, `subagents/*.md` or `mcp.jsonc`). Show the user the whole list, grouped by top-level folder, with one line each from its README. Point out:
+
+- Folders meant to load only in one folder (they have a `profile.jsonc`, or appear only in folder groups). Installed globally, they load in every session and cost context; `skills/ai-research` alone is 98 skills. Ask whether to install them globally anyway or into a folder of their own.
+- `skills/trailofbits` and `skills/iothackbot`. They're native plugins, not rulesync sources, so they're offered in step 6.
+- Anything a README says not to install alongside something else.
+
+Install the selection in one global run, because every run replaces the rules file and the MCP list. Write the folder list to `rulesync.local.jsonc` (git ignores it, and rulesync uses its `inputRoots` instead of the ones in `rulesync.jsonc`). Put `rules/shell-preamble` first, `rules/shell-preamble-reminder` last, and the other rule folders in the order `rulesync.jsonc` uses. The command is then `npx rulesync@38.0.0 generate --global --features rules,subagents,skills,commands,mcp`, plus `--targets`. Tell the user the file exists: any later plain `generate` in this repo will use it.
+
+## 4. Read the README of every selected folder
+
+Before generating anything, read the top-level `README.md` of every folder in the selection: each entry in the chosen groups' `inputRoots`, or the Everything list. Use `rules/README.md` for rule folders. Read only that one README per folder. READMEs nested inside upstream trees, such as `skills/trailofbits/upstream/`, belong to upstream and aren't install steps here.
+
+From each README, collect:
+
+- Agent install steps: sections such as "For agents: install and verify", "For agents: installing and verifying backends", "Let your agent do it", and any Setup or Install section.
+- Prerequisites: programs, containers, accounts, and environment variables (the `${VAR}` names). Never ask for a secret's value; tell the user which variable to set themselves.
+- Ordering: steps that must run before or after rulesync. Codebase-memory's upstream integration, for example, runs after.
+- What installs switched off, and how to switch it on.
+
+Give the user a short summary: what each folder needs that rulesync won't install, which steps you'll do after generation, and which steps only they can do. Ask before any install, download or config edit a README lists.
+
+## 5. Preview, then install
+
+1. Generate into a throwaway home first. For a home-folder group (bash):
+
+   ```bash
+   preview=$(mktemp -d /tmp/opencode/rulesync-preview.XXXXXX)
+   env HOME="$preview" XDG_CONFIG_HOME="$preview/.config" XDG_DATA_HOME="$preview/.local/share" \
+     XDG_STATE_HOME="$preview/.local/state" XDG_CACHE_HOME="$preview/.cache" \
+     npx rulesync@38.0.0 generate --config groups/<name>.jsonc --global
+   ```
+
+   For a folder group, use `--output-roots "$preview/project"` without `--global`. For Everything, drop `--config` and add `--features rules,subagents,skills,commands,mcp`.
+2. Compare the preview with the live files, as "Preview before installing" in `README.md` describes. Summarize what changes: the rules file replaced, MCP servers added or removed, skills and agents added or overwritten, and settings lost (see "What generation changes" in `README.md`). Don't paste raw config diffs or private values.
+3. Ask for approval of the live run, and suggest the user back up their config first. If their OpenCode config is native V2 or has customized MCP entries, leave `mcp` out of `--features` (see "Keeping a native V2 OpenCode config" in `README.md`).
+4. Run the live command. For a folder group, create the folder first.
+5. Do the approved post-generation steps from step 4, in the order the READMEs give.
+
+## 6. Ask about plugins
+
+rulesync doesn't install plugins. Once the context files are installed, always ask the user whether they want any plugins, even if they never mentioned them. List:
+
+- every folder in `plugins/`, with its line from `plugins/README.md` and the tools it supports;
+- the native plugins in `skills/trailofbits` and `skills/iothackbot`, described from their wrapper READMEs.
+
+Install only the ones they pick, one at a time, following the "Let your agent do it" section (or the equivalent install section) of that plugin's README. Afterward, follow "Updating: OpenCode keeps cached versions" in `plugins/README.md`: run `opencode plugin check`, show the result, run `opencode plugin update` only with approval, and confirm with `opencode plugin list`.
+
+## 7. Verify and finish
+
+- Ask the user to start their assistant in a new session (inside the folder, for folder groups) and walk them through the checks in the README's Quick Start and each folder's verify steps: skills, MCP servers and plugins load, and a harmless test of each MCP server works.
+- Summarize what was installed and where, what is installed but switched off, which prerequisites are still missing, the steps left for the user, and whether `rulesync.local.jsonc` was created.
+
+# Maintaining this repo
+
+Use this part when adding, updating, moving or removing anything in the repo.
 
 ## Layout
 
@@ -31,8 +109,8 @@ A profile is a folder meant to load only in one directory the user picks, not th
 `groups/*.jsonc` are named install selections, not source trees. Home-folder
 groups (`default`, `work`, `writing_reporting`) run with `--config` and
 `--global`; each carries a complete rule selection with the preamble first and
-the reminder last. Folder groups (`infosec`, `ai_research`,
-`reverse_engineering`) run with `--output-roots` and never `--global`.
+the reminder last. Folder groups (`infosec`, `ai_research`, `career`,
+`reverse_engineering`, `design`) run with `--output-roots` and never `--global`.
 `groups/default.jsonc` mirrors `rulesync.jsonc`: change both together. Each
 group's README section states whether it writes MCP settings. All groups are
 documented in the single `groups/README.md`, with a one-line row in the root
@@ -122,7 +200,9 @@ Third-party skills and agents (in `skills/`, `agents/` and `mcp-servers/`) shoul
 
 Exception: `agents/security/` is a **repo-owned merge** of wshobson and OpenAI security content (user decision, October 21, 2026), edited to remove overlaps and rule conflicts. Never overwrite it from upstream; port upstream changes by hand as its README's "For agents: maintaining this bundle" section describes.
 
-**Routing between skills lives in one rule, `rules/routing`** (user decision, October 21, 2026). Don't add per-skill routing rules to skill folders, and don't edit upstream skill text to change which skill owns a job. When a skill is added, removed or refreshed and its description now claims a job another item owns (or drops one it owned), update `rules/routing` and that skill's README "For agents: routing and updates" section in the same change, and tell the user.
+**Routing between globally installed skills lives in one rule, `rules/routing`** (user decision, October 21, 2026). Routing for a folder-only collection lives in that collection's own `rules/` and installs with its folder group, so it loads only where those skills exist (user decision, October 24, 2026; `skills/designskills`, `skills/career-workspace`). Don't add per-skill routing rules otherwise, and don't edit upstream skill text to change which skill owns a job.
+
+`rules/routing` is loaded on every request, so a line belongs there only when two installed skills compete for the same job. Leave out jobs another rule already assigns (Docling, Exa, package-management), skills that don't compete, and user-invoked skills (`disable-model-invocation`), which the model never picks. When a skill is added, removed or refreshed and its description now claims a job another item owns (or drops one it owned), update the routing rule and that skill's README "For agents: routing and updates" section in the same change, and tell the user.
 
 `skills/trailofbits/upstream/` and `skills/iothackbot/upstream/` preserve complete, unchanged upstream trees. They are native-plugin-owned resources, not rulesync source roots; do not flatten them, add tool sections, or re-add them to groups. Follow their wrapper READMEs and verify native installation before replacing those trees.
 

@@ -35,7 +35,7 @@ It writes into the current folder, so don't start it in a project you don't want
 
 ## For agents: routing and updates
 
-- Role in [`rules/routing`](../../rules/routing/rules/routing.md): "An ongoing course over several sessions, in its own workspace: `teach`."
+- Not in [`rules/routing`](../../rules/routing/rules/routing.md): it's user-invoked only (`disable-model-invocation`), so the model never chooses it and a routing line would only cost tokens (removed 2026-10-24). Its lessons are its own pages, not `visual-explainer`'s; the skill's text says so once invoked.
 - It does not own one-off teaching: explaining one unfamiliar thing in a single sitting is `eli5`. Its lesson and reference pages are its own output; don't hand them to `visual-explainer`.
 - Why: added on 2026-10-21 after an overlap check. `eli5` was the only neighbor; it teaches one subject in one conversation or page, while `teach` keeps state across sessions, so the user approved both.
 - Its research follows the web-research rule (Exa `search` for discovery). Opening a lesson follows the preferences rule.

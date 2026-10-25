@@ -20,7 +20,7 @@ Type `/wait-what` right after a reply you couldn't follow.
 
 ## For agents: routing and updates
 
-- Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Re-pitch** a message that didn't land: `wait-what`."
+- Not in [`rules/routing`](../../rules/routing/rules/routing.md): it's user-invoked only (`disable-model-invocation`), so the model never chooses it and a routing line would only cost tokens (removed 2026-10-24).
 - It does not own polishing prose for readers (`humanizer`) or teaching a new subject (`eli5`, `teach`). It only restates the agent's own last message.
 - Why: added on 2026-10-21 after an overlap check found no existing skill that does this.
 - `GLOSSARY.md` and `GLOSSARY-MAP.md` are a convention from Matt Pocock's other skills (`grill-with-docs`, `setup-matt-pocock-skills`), which this repo doesn't include. Don't add them just to support this skill; it works without the files.

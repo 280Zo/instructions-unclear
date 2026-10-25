@@ -9,6 +9,18 @@ Rules, agents, skills, MCP servers, and plugins for AI coding tools. Pick the pi
 
 > **Before installing or updating:** [generate a local preview and compare it with your live files](#preview-before-installing). Generation can replace instructions and MCP settings. A preview does not change your live assistant installation.
 
+## Let your agent install it
+
+Clone the repo, start your coding agent in its root folder, and paste this:
+
+```text
+Read AGENTS.md in this repo and follow its "Installing on a machine" section from step 1.
+Ask me your questions one at a time, show me what will change before each install,
+and don't stop after the context files: ask me about plugins too.
+```
+
+The agent asks which assistants you use and which group you want (or everything). It reads the README of every folder you picked and previews the install in a throwaway folder. It asks before changing anything live, then offers the plugins, which rulesync doesn't install. The manual steps below do the same by hand.
+
 ## Quick Start
 
 ### Generate Files
@@ -49,6 +61,7 @@ An MCP definition is an instruction for starting or contacting software. It does
 | Presenton       | Separate container/service setup; disabled initially           |
 | FreeCAD         | Application, addon and server setup; disabled initially        |
 | codebase-memory | Its upstream integration; disabled initially                   |
+| Podman          | `npx`, and Podman or Docker; disabled initially                |
 
 ### Start OpenCode and verify the default profile
 
@@ -77,14 +90,14 @@ Then test functionality individually:
 - PMB: use a disposable project to test project binding and a harmless operation.
 - Permissions: verify expected prompts using dummy files, never real credentials.
 
-### Generate the four folder profiles
+### Generate the five folder profiles
 
 In addition to the default profile, the repo contains other groups with scoped use cases. These are installed into a folder to use when needed. When opencode is used outside of the folder the context files won't be available unless you decide to install them globally.
 
 From the repo root, generate each profile:
 
 ```sh
-for profile in infosec ai_research career reverse_engineering
+for profile in infosec ai_research career reverse_engineering design
     mkdir -p "$HOME/AI/$profile"
     or break
 
@@ -130,7 +143,7 @@ Every folder below installs on its own. Open a group to see what's in it; each f
 | [`rules/scope-secrets-approvals`](rules/scope-secrets-approvals/) | Where to work, what never to touch, what to ask before doing                  |
 | [`rules/engineering`](rules/engineering/)                         | Small changes, commands, verification                                         |
 | [`rules/communication`](rules/communication/)                     | State assumptions and summarize at the end                                    |
-| [`rules/routing`](rules/routing/)                                 | Which skill or tool owns each job when several could do it                    |
+| [`rules/routing`](rules/routing/)                                 | Which skill owns each job when several installed skills could do it           |
 | [`rules/preferences`](rules/preferences/)                         | Your preferences: vim, fish, pnpm/uv, zellij, firefox, ISO dates, US spelling |
 
 The secure-coding rule now ships inside [`agents/security`](agents/security/).
@@ -159,6 +172,7 @@ The secure-coding rule now ships inside [`agents/security`](agents/security/).
 | [`mcp-servers/codebase-memory`](mcp-servers/codebase-memory/) | Code graph connection, switched off; upstream installer supplies its skill/agents/instructions after rulesync | Upstream install |
 | [`mcp-servers/presenton`](mcp-servers/presenton/)             | Presenton, for decks you can edit in PowerPoint or Google Slides. Installed switched off                      | Docker           |
 | [`mcp-servers/freecad`](mcp-servers/freecad/)                 | FreeCAD control: build and edit 3D models, run analyses. Installed switched off                               | FreeCAD, uv      |
+| [`mcp-servers/podman`](mcp-servers/podman/)                   | Local container and image control for Podman or Docker (community server). Installed switched off             | Podman or Docker |
 
 </details>
 
@@ -180,6 +194,8 @@ The secure-coding rule now ships inside [`agents/security`](agents/security/).
 | [`skills/security-threat-model`](skills/security-threat-model/) | Repository-grounded threat modeling; infosec/work, not default                                                                                                          |
 | [`skills/screenshot`](skills/screenshot/)                       | Desktop/window screenshot capture                                                                                                                                       |
 | [`skills/playwright`](skills/playwright/)                       | Terminal browser automation through Playwright CLI                                                                                                                      |
+| [`skills/docker`](skills/docker/)                               | Docker's 4 core skills: Dockerizing projects, Dockerfiles, Compose, and confirming destructive commands                                                                 |
+| [`skills/docker-sandboxes-agent`](skills/docker-sandboxes-agent/) | Docker's 7 skills for `sbx` sandboxes and Docker Agent. Work group only                                                                                               |
 | [`skills/humanizer`](skills/humanizer/)                         | `humanizer`: rewrites text that sounds AI-written                                                                                                                       |
 | [`skills/distilly`](skills/distilly/)                           | `distilly`: turns a public figure, colleague or someone you know into a skill that thinks the way they do                                                               |
 | [`skills/geo-sleuth`](skills/geo-sleuth/)                       | `geo-sleuth`: works out where and when a photo was taken, with checkable evidence                                                                                       |
@@ -200,6 +216,7 @@ A profile installs into one folder instead of your home folder, keeping speciali
 | Folder                                                      | Adds                                                                                            |
 | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | [`skills/ai-research`](skills/ai-research/)                 | 98 AI research skills: training, fine-tuning, inference, evaluation, RAG, agents, paper writing |
+| [`skills/designskills`](skills/designskills/)               | 28 design skills: graphics, UI, color palettes, typography, brand identity and design critique  |
 | [`mcp-servers/rea`](mcp-servers/rea/)                       | REA, an MCP server and skill for reverse engineering apps, websites, APKs and binaries          |
 | [`mcp-servers/zap`](mcp-servers/zap/)                       | Official ZAP MCP connection for web-security workflows; disabled until configured               |
 | [`mcp-servers/reva`](mcp-servers/reva/)                     | Shared Ghidra projects and 6 companion skills; MCP connection disabled                          |
@@ -333,6 +350,7 @@ Saved selections, so you don't have to list folders. [`groups/README.md`](groups
 | `ai_research`         | AI research skills, in a folder you choose                                                                                                    |
 | `career`              | Career skills, and a career agent later, in a folder you choose                                                                               |
 | `reverse_engineering` | REA, RE agents and disabled ReVa/radare2 connections, in a folder you choose; IoTHackBot is native-owned                                      |
+| `design`              | Design skills for graphics, UI, palettes and brand, in a folder you choose                                                                    |
 
 ```bash
 npx rulesync@38.0.0 generate --config groups/default.jsonc --global
