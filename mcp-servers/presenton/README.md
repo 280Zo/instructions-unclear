@@ -56,7 +56,7 @@ The MCP server is installed switched off, so your coding tool doesn't report a f
 4. The deck appears in Presenton's dashboard at `http://localhost:5001`, where you can edit it and export PowerPoint or PDF. For Google Slides, import the `.pptx` (File → Import slides).
 5. When you're done, turn the server off again and run `docker stop presenton`.
 
-rulesync writes the switch in each tool's own form: `"enabled": false` for OpenCode and `enabled = false` for Codex. For Claude Code it passes `"disabled": true` through as written. I haven't confirmed Claude Code honors that key, so it may show Presenton as a failed server while the container is stopped. Tools that have no per-server on/off switch don't get this server at all; rulesync skips it for them with a warning.
+rulesync writes the switch in each tool's own form: `"disabled": true` for OpenCode V2 and `enabled = false` for Codex. For Claude Code it passes `"disabled": true` through as written. I haven't confirmed Claude Code honors that key, so it may show Presenton as a failed server while the container is stopped. Tools that have no per-server on/off switch don't get this server at all; rulesync skips it for them with a warning.
 
 ## Upgrading
 
@@ -67,6 +67,28 @@ docker compose up -d
 ```
 
 Your data stays in the volume. The "Check for updates" steps in [`AGENTS.md`](../../AGENTS.md) look up the newest release and its digest for you.
+
+## For agents: install, remove and update
+
+### Install
+
+- It's in the `default` and `work` [install groups](../../groups/README.md), written switched off. Follow [Setup](#setup) above. In `default`, the OpenCode `build`, `plan`, `general` and [`design`](../../agents/design/) agents may use its tools.
+- It needs Docker with the Compose plugin. The user fills in `.env` (admin login, text provider and key) and sets `PRESENTON_API_KEY` where their tool starts. Never ask for, read or print those values. The first `docker compose up -d` downloads the pinned image, so get approval first.
+- Leave the connection off unless the user asks for it. They turn it on as [Use](#use) describes, after `docker start presenton`.
+- To verify, once it's on, check that `presenton` connects and its tools are listed. A test deck is the user's step in Setup; don't generate decks as a smoke test without approval, because generation calls the user's paid provider.
+
+### Remove
+
+- Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). Regenerating without this folder removes the `presenton` MCP entry, because each run replaces the whole MCP list.
+- This folder ships no skills, agents or commands, so `delete: false` leaves nothing of this repo's behind.
+- If the user syncs a native V2 config without the `mcp` feature, remove the `presenton` entry from `mcp.servers` by hand, keeping every other setting.
+- The `presenton` container, its image and the `presenton_presenton_data` volume (all the user's decks, settings and admin account) stay. Never stop, remove or prune them without the user's explicit approval. The user's `.env` stays too.
+- The Presenton API key and provider keys are the user's to revoke, in Presenton's **Admin → API keys** and at each provider.
+
+### Update
+
+- Follow [Check for updates](../../AGENTS.md#check-for-updates) and [Upgrading](#upgrading). The pin is the image tag and `sha256:` digest in `compose.yaml`; change both together, along with the version in this README.
+- Then follow the update bullets in [For agents: routing and updates](#for-agents-routing-and-updates).
 
 ## For agents: routing and updates
 

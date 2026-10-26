@@ -38,3 +38,11 @@ Use `opencode plugin check` and `opencode plugin update` exactly as written. Ope
 - Run `opencode plugin check` first and show the user what would change. Run `opencode plugin update` only after they approve, then verify the versions with `opencode plugin list` and ask the user to restart.
 - Don't delete `~/.cache/opencode` or lockfiles to force an update; use the commands above.
 - When a plugin fails to load, find the config entry that lists it before touching the cache. Don't remove entries from a config outside the current repo without approval.
+
+## For agents: install, remove and update
+
+To install, follow step 6 of [Installing on a machine](../AGENTS.md#6-ask-about-plugins): offer every plugin in the table above, then follow the "Let your agent do it" steps in each chosen plugin's README, one plugin at a time. No group installs a plugin. To verify in OpenCode, run `opencode plugin list` and check each plugin in a new session as its README says.
+
+To remove, get approval, then delete only that plugin's entry from the tool's plugin list (OpenCode's `plugins`, or `plugin` in V1), keeping comments and every other setting, and ask the user to restart. The cache in `~/.cache/opencode/npm/` can stay. Never open credential files. For tools where the plugin was installed with a slash command, the user removes it through that tool's plugin manager. Each plugin's README lists what else stays behind, and [Removing or replacing a component](../AGENTS.md#removing-or-replacing-a-component) has the general procedure.
+
+To update, follow [Updating: OpenCode keeps cached versions](#updating-opencode-keeps-cached-versions) and the plugin updates notes above. Nothing is copied into this repo, so [Check for updates](../AGENTS.md#check-for-updates) only checks that each README's install line still matches upstream.

@@ -9,7 +9,7 @@ It only runs when you call it.
 From the repo root:
 
 ```bash
-npx rulesync@38.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/wait-what
+npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/wait-what
 ```
 
 Swap `--targets` for your tools. The `default`, `work` and `writing_reporting` groups include it.
@@ -17,6 +17,14 @@ Swap `--targets` for your tools. The `default`, `work` and `writing_reporting` g
 ## Use
 
 Type `/wait-what` right after a reply you couldn't follow.
+
+## For agents: install, remove and update
+
+To install, use the `default`, `work` or `writing_reporting` group, or the single-folder command above. It needs no other software and no `GLOSSARY.md`. To verify, start a new session and check that `wait-what` is listed among the skills.
+
+To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `wait-what` skill folder behind; delete it with approval. It writes no files of its own, and any project `GLOSSARY.md` stays.
+
+To update, follow [Check for updates](../../AGENTS.md#check-for-updates). The copied commit is in [Origin](#origin); the update bullets in the next section say what to keep.
 
 ## For agents: routing and updates
 

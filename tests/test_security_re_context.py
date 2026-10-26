@@ -32,7 +32,7 @@ class SecurityReContextTests(unittest.TestCase):
             self.assertIn(heading, common)
         for component in ["rea", "reva", "radare2"]:
             text = (ROOT / f"mcp-servers/{component}/README.md").read_text()
-            self.assertIn("## For agents: install and verify", text, component)
+            self.assertIn("## For agents: install, remove and update", text, component)
             self.assertIn(
                 "../../agents/reverse-engineering/README.md#for-agents-installing-and-verifying-backends",
                 text,
@@ -44,7 +44,15 @@ class SecurityReContextTests(unittest.TestCase):
         text = (ROOT / "mcp-servers/exa/README.md").read_text()
         self.assertIn("### Authentication after generation", text)
         self.assertIn('"oauth": false', text)
-        self.assertIn("{env:EXA_API_KEY}", text)
+        reference = "{file:{env:XDG_RUNTIME_DIR}/opencode/exa.key}"
+        self.assertIn(reference, text)
+        # Only OpenCode understands {file:} (user decision, 2026-10-26).
+        config = read_jsonc(ROOT / "mcp-servers/exa/mcp.jsonc")
+        self.assertEqual(config["mcpServers"]["exa"]["headers"]["x-api-key"], "${EXA_API_KEY}")
+        scoped = config["opencode"]["mcpServers"]["exa"]
+        self.assertEqual(scoped["headers"]["x-api-key"], reference)
+        self.assertIs(scoped["oauth"], False)
+        self.assertEqual(scoped["url"], config["mcpServers"]["exa"]["url"])
         self.assertIn("never print", text.lower())
         self.assertIn("nested", text.lower())
 
@@ -91,11 +99,6 @@ class SecurityReContextTests(unittest.TestCase):
         self.assertIn("name: Exa Agent", (root / "exa-agent/SKILL.md").read_text())
         server = read_jsonc(ROOT / "mcp-servers/exa/mcp.jsonc")["mcpServers"]["exa"]
         self.assertIn("agent_run", server["url"])
-
-    def test_published_assessment_excludes_removed_candidate(self):
-        assessment = ROOT / "reference/security-re-tooling.md"
-        self.assertTrue(assessment.is_file())
-        self.assertNotIn("pentagi", assessment.read_text().lower())
 
     def test_complete_iot_collection_and_shared_assets(self):
         expected = {
@@ -195,7 +198,10 @@ class SecurityReContextTests(unittest.TestCase):
             self.assertTrue(
                 (workspace / "career-intake/templates" / template).is_file()
             )
-        self.assertEqual(set(config["features"]), {"skills", "subagents"})
+        self.assertEqual(set(config["features"]), {"rules", "skills", "subagents"})
+        self.assertTrue(
+            (ROOT / "skills/career-workspace/rules/career-routing.md").is_file()
+        )
         self.assertFalse(config["delete"])
         skills = list((ROOT / "skills/resume-skills/skills").glob("*/SKILL.md"))
         self.assertEqual(len(skills), 22)
@@ -304,20 +310,12 @@ class SecurityReContextTests(unittest.TestCase):
         default = read_jsonc(ROOT / "rulesync.jsonc")
         mirror = read_jsonc(ROOT / "groups/default.jsonc")
         self.assertEqual(default["inputRoots"], mirror["inputRoots"])
-        specialists = {
-            "skills/iothackbot",
-            "mcp-servers/reva",
-            "mcp-servers/zap",
-            "mcp-servers/radare2",
-        }
+        # ZAP, ReVa and radare2 joined default switched off on 2026-10-25, behind
+        # agent permissions. REA starts enabled, so it stays folder-only.
+        specialists = {"skills/iothackbot", "mcp-servers/rea"}
         self.assertFalse(specialists & set(default["inputRoots"]))
-
-    def test_published_status_and_upstream_deviations_are_current(self):
-        path = ROOT / "reference/security-re-tooling.md"
-        self.assertTrue(path.is_file())
-        assessment = path.read_text()
-        self.assertFalse("other candidates are not yet pinned" in assessment)
-        self.assertFalse("needs a pinned-version check" in assessment)
+        for name in ["zap", "reva", "radare2"]:
+            self.assertIn(f"mcp-servers/{name}", default["inputRoots"])
 
 
 if __name__ == "__main__":

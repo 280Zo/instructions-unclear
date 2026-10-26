@@ -30,6 +30,28 @@ The standard Linux amd64 build failed during C++ locale initialization in the te
 
 After enabling the intended connection, ask to index a repository, trace callers or inspect change impact. Follow the upstream-installed skill rather than a separately maintained copy. The 0.12.1 release notes describe index/schema changes that can require a full rebuild; this repo refresh does not rebuild or migrate live indexes.
 
+## For agents: install, remove and update
+
+### Install
+
+- It's in the `default` and `work` [install groups](../../groups/README.md), written switched off. This folder only supplies the `codebase-memory-mcp` connection, so it needs the `mcp` feature.
+- Follow [Install and update](#install-and-update) above. The `codebase-memory-mcp` program comes from the upstream release, not from rulesync. Run rulesync first and the upstream integration last, with the user's approval for each step.
+- Leave the connection off unless the user asks for it. In OpenCode they turn it on with `"enabled": true` on `codebase-memory-mcp`, or from `/mcps`.
+- To verify, once it's on, check in a new session that `codebase-memory-mcp` connects and its tools are listed. Don't index a repository as a smoke test unless the user approves it, because indexing writes data.
+
+### Remove
+
+- Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). Regenerating without this folder removes its MCP entry, because each run replaces the whole MCP list. As the [verified conflict](#verified-rulesync-conflict) shows, a run also replaces the instruction block upstream wrote into the shared rules file.
+- This folder ships no skills, agents or commands, so `delete: false` leaves nothing of this repo's behind.
+- The upstream skill, three agents, instructions and OpenCode extension belong to the upstream installer. This README doesn't name an uninstall command. Use upstream's documented uninstall procedure, show the user what it will change and get approval first. Don't delete its files by guesswork.
+- If the user syncs a native V2 config without the `mcp` feature, remove the `codebase-memory-mcp` entry from `mcp.servers` by hand, keeping every other setting.
+- The installed program and any code indexes it built stay. Never delete them without the user's explicit approval.
+
+### Update
+
+- Follow [Check for updates](../../AGENTS.md#check-for-updates). The reviewed release and commit live in [Install and update](#install-and-update) and [Origin](#origin); `mcp.jsonc` has no version pin. Change those together, plus the [license section](../../THIRD_PARTY_LICENSES.md#deusdatacodebase-memory-mcp) if upstream's license changed.
+- After any rulesync run, reapply the upstream integration. Then follow the update bullets in [For agents: routing and updates](#for-agents-routing-and-updates).
+
 ## For agents: routing and updates
 
 - Not in [`rules/routing`](../../rules/routing/rules/routing.md): it's switched off by default, and when enabled its upstream integration supplies its own instructions for structural code questions (line removed 2026-10-24 to save tokens). If you enable it and the agent ignores the graph tools, add a line back.

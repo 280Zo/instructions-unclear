@@ -7,7 +7,7 @@ OpenAI audio transcription with optional speaker identification. Included in `de
 From the repo root:
 
 ```bash
-npx rulesync@38.0.0 generate --global --features skills --input-roots skills/transcribe
+npx rulesync@41.0.0 generate --global --features skills --input-roots skills/transcribe
 ```
 
 The complete upstream helper, references and interface assets accompany the skill. This installs no Python packages and starts no API calls.
@@ -24,6 +24,14 @@ uv pip install --python .venv/bin/python openai
 On Windows select `.venv\Scripts\python.exe`. These commands create an environment and download a dependency; do not automatically run them in this context repo. Invoke the bundled `scripts/transcribe_diarize.py` with that environment's Python, resolving its actual installed directory. Upstream examples assume `$CODEX_HOME/skills` (normally `~/.codex/skills`); rulesync 38's Codex output is `~/.agents/skills`, and other hosts differ. Do not globally change `CODEX_HOME` or rewrite upstream files to hide a path mismatch. Use one install owner per destination.
 
 Supply `OPENAI_API_KEY` through an approved process environment/secret mechanism, never a value in this repo or chat. Audio and any known-speaker samples are uploaded to OpenAI and can incur costs: get data-sharing and paid-operation approval first. No live API behavior is established by context-generation tests. The skill pin does not lock the client library or API model availability.
+
+## For agents: install, remove and update
+
+To install, use the `default`, `work` or `infosec` group, or the single-folder command above. rulesync doesn't install the `openai` Python package (see [Runtime setup](#runtime-setup--prefer-uv)) or supply `OPENAI_API_KEY`; the user sets that variable themselves. To verify, start a new session and check that `transcribe` is listed among the skills. Don't transcribe audio as a test, because it uploads audio to OpenAI and can cost money.
+
+To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `transcribe` skill folder behind; delete it with approval. Task environments with the `openai` package, transcripts already written and the user's OpenAI account and key stay unless the user asks.
+
+To update, follow [Check for updates](../../AGENTS.md#check-for-updates). The pinned commit is in [Updating and origin](#updating-and-origin); the update bullets in the next section say what to recheck.
 
 ## For agents: routing and updates
 

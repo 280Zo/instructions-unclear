@@ -1,6 +1,6 @@
 # security-threat-model
 
-Repository-grounded AppSec threat modeling: trust boundaries, assets, attacker capabilities, abuse paths and mitigations. Included in `infosec` and `work`, **not `default`**.
+Repository-grounded AppSec threat modeling: trust boundaries, assets, attacker capabilities, abuse paths and mitigations. Included in `infosec`, `work` and `default`. In OpenCode's `default` install, only the [`security` agent](../../agents/security/) can load it.
 
 ## Install
 
@@ -8,16 +8,24 @@ Use the [infosec group](../../groups/README.md#infosec), or install this skill a
 
 ```bash
 mkdir -p ~/AI/threat-model
-npx rulesync@38.0.0 generate --features skills --input-roots skills/security-threat-model --output-roots ~/AI/threat-model
+npx rulesync@41.0.0 generate --features skills --input-roots skills/security-threat-model --output-roots ~/AI/threat-model
 ```
 
-Never add `--global` to that folder-scoped command. The full references and interface assets are included. No scanner, dependencies or MCP services are installed. Omitting this skill from default generation does not delete an existing live copy because `delete: false`; review and separately approve any cleanup.
+Never add `--global` to that folder-scoped command. The full references and interface assets are included. No scanner, dependencies or MCP services are installed.
 
 ## Use and boundaries
 
 Use when explicitly asking for repository/path threat modeling or abuse-path enumeration. It is not a generic architecture-review trigger. The skill asks for material service assumptions to be confirmed before its final report and grounds claims in source evidence. It writes a Markdown threat model; source access or installation alone does not authorize probing, target operations or remediation. Context packaging tests do not establish a completed security assessment.
 
 Use one installation owner per destination. The legacy upstream installer defaults to `~/.codex/skills`, whereas rulesync 38's global Codex output uses `~/.agents/skills`; choose an explicit matching destination where needed and review duplicate owners rather than automatically removing live files.
+
+## For agents: install, remove and update
+
+To install, use the `infosec` group (folder), the `default` or `work` group (home folder), or the folder command above. It needs no other software. To verify, start a new session in the install location and check that `security-threat-model` is listed among the skills. Don't run a threat model as a test.
+
+To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `security-threat-model` skill folder behind; delete it with approval. Threat model reports it already wrote are the user's files and stay unless the user asks. If the user keeps `rules/routing`, its line still names this skill, so tell them.
+
+To update, follow [Check for updates](../../AGENTS.md#check-for-updates). The pinned commit is in [Updating and origin](#updating-and-origin); the update bullets in the next section say what to recheck.
 
 ## For agents: routing and updates
 

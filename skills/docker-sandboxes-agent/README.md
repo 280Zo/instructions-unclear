@@ -19,10 +19,30 @@ They only help if you use `sbx` or Docker Agent, and their descriptions add abou
 From the repo root, through the `work` [install group](../../groups/), or with the core folder (these skills point to its `docker-destructive-guardrails`):
 
 ```bash
-npx rulesync@38.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/docker skills/docker-sandboxes-agent
+npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/docker skills/docker-sandboxes-agent
 ```
 
 The skills need the standalone `sbx` CLI or the `docker agent` CLI plugin (Docker Desktop 4.63+); rulesync installs neither.
+
+## For agents: install, remove and update
+
+### Install
+
+- The [`work` group](../../groups/README.md#work) installs it globally, together with [`skills/docker`](../docker/). For these folders alone, use the command under [Install](#install) above, which installs both.
+- rulesync doesn't install the `sbx` CLI or the `docker agent` plugin (Docker Desktop 4.63+). Install them only with approval, following the `package-management` skill.
+- To verify, start a new session and confirm the skills list includes `docker-sandboxes-lifecycle`, `docker-agent-run` and `docker-destructive-guardrails`. Don't create a sandbox or run an agent as a test.
+
+### Remove
+
+Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves `docker-sandboxes-lifecycle`, `docker-sandboxes-network-credentials`, `docker-sandboxes-env`, `docker-sandboxes-kits`, `docker-agent-config`, `docker-agent-run` and `docker-agent-deploy` in each tool's global skills folder; delete them only with approval.
+
+- Removing this folder alone is fine; keep `skills/docker` if the user still wants the core skills. Don't delete `docker-destructive-guardrails` as part of this folder, since it belongs to `skills/docker`.
+- If Docker's native plugin or `npx skills add docker/skills` also installed these names, find out which copy belongs to which installer before deleting.
+- `sbx`, Docker Agent, sandboxes, kits, `sbxenv.yaml` and `agent.yaml` files stay.
+
+### Update
+
+Follow [Check for updates](../../AGENTS.md#check-for-updates). The release tag and commit are under [Origin](#origin). Update this folder and `skills/docker` from the same release, and record the same tag and commit in both READMEs.
 
 ## For agents: routing and updates
 

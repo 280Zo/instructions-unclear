@@ -7,7 +7,7 @@ A skill that writes up material you've already gathered (files, notes, a talk, s
 Skills are added alongside what you already have, so this folder can be installed on its own. From the repo root:
 
 ```bash
-npx rulesync@38.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/report
+npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/report
 ```
 
 Swap `--targets` for your tools. To keep it in your regular install, add `skills/report` to `inputRoots` in your `rulesync.local.jsonc`.
@@ -21,6 +21,14 @@ To learn something new rather than write it up, use [`eli5`](../eli5/).
 ## Notes
 
 Claude Code's `allowed-tools` sits under a `claudecode:` section so other tools ignore it.
+
+## For agents: install, remove and update
+
+To install, use the `default`, `work` or `writing_reporting` group, or the single-folder command above. Rendering needs the skills or Presenton server listed in [Use](#use); without them it only gathers and checks evidence. To verify, start a new session and check that `report` is listed among the skills.
+
+To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `report` skill folder behind; delete it with approval. Reports already saved under `Clanker_Crayon_Box/reports/` are the user's files and stay unless the user asks. If the user keeps `rules/routing`, its line still names `report`, so tell them.
+
+To update, there is no upstream: the skill is written for this repo and changes in place. The next section says what to keep in step with `rules/routing`.
 
 ## For agents: routing and updates
 

@@ -34,11 +34,11 @@ Read every `groups/*.jsonc` file and `groups/README.md` now. Don't work from mem
 
 Go folder by folder through `rules/`, `agents/`, `skills/` and `mcp-servers/` and list every component folder: one with its own README and rulesync sources (`rules/*.md`, `skills/*/SKILL.md`, `subagents/*.md` or `mcp.jsonc`). Show the user the whole list, grouped by top-level folder, with one line each from its README. Point out:
 
-- Folders meant to load only in one folder (they have a `profile.jsonc`, or appear only in folder groups). Installed globally, they load in every session and cost context; `skills/ai-research` alone is 98 skills. Ask whether to install them globally anyway or into a folder of their own.
+- Folders meant to load only in one folder (they have a `profile.jsonc`, or appear only in folder groups). Installed globally without filtering, they load in every session and cost context; `skills/ai-research` alone is 98 skills. For OpenCode, include every agent folder that `default` lists (`agents/build`, `agents/plan`, `agents/general`, `agents/explore`, `agents/design` and the rest) so each agent loads only its own skills. For other tools, ask whether to install them globally anyway or into a folder of their own.
 - `skills/trailofbits` and `skills/iothackbot`. They're native plugins, not rulesync sources, so they're offered in step 6.
 - Anything a README says not to install alongside something else.
 
-Install the selection in one global run, because every run replaces the rules file and the MCP list. Write the folder list to `rulesync.local.jsonc` (git ignores it, and rulesync uses its `inputRoots` instead of the ones in `rulesync.jsonc`). Put `rules/shell-preamble` first, `rules/shell-preamble-reminder` last, and the other rule folders in the order `rulesync.jsonc` uses. The command is then `npx rulesync@38.0.0 generate --global --features rules,subagents,skills,commands,mcp`, plus `--targets`. Tell the user the file exists: any later plain `generate` in this repo will use it.
+Install the selection in one global run, because every run replaces the rules file and the MCP list. Write the folder list to `rulesync.local.jsonc` (git ignores it, and rulesync uses its `inputRoots` instead of the ones in `rulesync.jsonc`). Put `rules/shell-preamble` first, `rules/shell-preamble-reminder` last, and the other rule folders in the order `rulesync.jsonc` uses. The command is then `npx rulesync@41.0.0 generate --global --features rules,subagents,skills,commands,mcp`, plus `--targets`. Tell the user the file exists: any later plain `generate` in this repo will use it.
 
 ## 4. Read the README of every selected folder
 
@@ -61,12 +61,12 @@ Give the user a short summary: what each folder needs that rulesync won't instal
    preview=$(mktemp -d /tmp/opencode/rulesync-preview.XXXXXX)
    env HOME="$preview" XDG_CONFIG_HOME="$preview/.config" XDG_DATA_HOME="$preview/.local/share" \
      XDG_STATE_HOME="$preview/.local/state" XDG_CACHE_HOME="$preview/.cache" \
-     npx rulesync@38.0.0 generate --config groups/<name>.jsonc --global
+     npx rulesync@41.0.0 generate --config groups/<name>.jsonc --global
    ```
 
    For a folder group, use `--output-roots "$preview/project"` without `--global`. For Everything, drop `--config` and add `--features rules,subagents,skills,commands,mcp`.
 2. Compare the preview with the live files, as "Preview before installing" in `README.md` describes. Summarize what changes: the rules file replaced, MCP servers added or removed, skills and agents added or overwritten, and settings lost (see "What generation changes" in `README.md`). Don't paste raw config diffs or private values.
-3. Ask for approval of the live run, and suggest the user back up their config first. If their OpenCode config is native V2 or has customized MCP entries, leave `mcp` out of `--features` (see "Keeping a native V2 OpenCode config" in `README.md`).
+3. Ask for approval of the live run, and suggest the user back up their config first. If their OpenCode config has customized MCP entries, leave `mcp` out of `--features` (see "Keeping customized MCP entries" in `README.md`). rulesync 41 writes native V2 MCP layout but still replaces selected server definitions.
 4. Run the live command. For a folder group, create the folder first.
 5. Do the approved post-generation steps from step 4, in the order the READMEs give.
 
@@ -83,6 +83,27 @@ Install only the ones they pick, one at a time, following the "Let your agent do
 
 - Ask the user to start their assistant in a new session (inside the folder, for folder groups) and walk them through the checks in the README's Quick Start and each folder's verify steps: skills, MCP servers and plugins load, and a harmless test of each MCP server works.
 - Summarize what was installed and where, what is installed but switched off, which prerequisites are still missing, the steps left for the user, and whether `rulesync.local.jsonc` was created.
+
+## Removing or replacing a component
+
+Use this when the user wants a folder's content gone, or a folder was renamed or replaced. Each component README's "For agents: install, remove and update" section lists the exact names and anything special.
+
+1. **Take it out of the selection.** Remove the folder from the user's `rulesync.local.jsonc`, or pick a group that doesn't include it, then preview and regenerate as in step 5. Rules and MCP servers then disappear on their own, because every run replaces the rules file and the MCP list.
+2. **Delete what regeneration leaves behind.** All configs use `delete: false`, so skills, agents and commands stay installed. With approval, delete each name the README lists from every tool the user installed into:
+
+   | Tool | Skills | Agents | Commands |
+   |---|---|---|---|
+   | OpenCode | `~/.config/opencode/skills/<name>/` | `~/.config/opencode/agents/<name>.md` | `~/.config/opencode/commands/<name>.md` |
+   | Claude Code | `~/.claude/skills/<name>/` | `~/.claude/agents/<name>.md` | `~/.claude/commands/<name>.md` |
+   | Codex CLI | `~/.agents/skills/<name>/` | `~/.codex/agents/<name>.toml` | `~/.codex/prompts/<name>.md` |
+   | Copilot and Copilot CLI | `~/.copilot/skills/<name>/` | `~/.copilot/agents/<name>.agent.md` | |
+
+   Paths were checked with rulesync 38.0.0 on 2026-10-24; other tools differ, so check the generation output for them.
+
+   Folder groups write the same layout inside the chosen folder (`.opencode/skills/`, `.claude/skills/` and so on) plus the folder's own `AGENTS.md` and config; removing the folder group means deleting those generated files, or the whole folder if nothing else lives there. Check each path exists before deleting it, list exactly what will go, and never delete a name another installed folder also provides.
+3. **Leave software alone unless asked.** Programs, packages, containers, browser downloads and caches a component used (for example a `uv tool`, an npm package, a Docker image) stay installed. Offer to remove them separately, following the `package-management` skill, and only with approval.
+4. **Plugins** are removed by deleting their entry from the tool's plugin list (OpenCode's `plugins` in `opencode.jsonc`), keeping other settings and comments, then restarting. Their cache in `~/.cache/opencode/npm/` can stay.
+5. Verify in a new session that the skills, agents, MCP servers or plugins are gone, and summarize what was removed and what was left on purpose.
 
 # Maintaining this repo
 
@@ -104,7 +125,11 @@ plugins/<plugin>/       a plugin rulesync can't install: README with human and a
 
 Every folder has a README (`rules/` has one README for all its topics), and a `profile.jsonc` if it's a profile. The README's Origin section says where it came from: the upstream for third-party content, or "Written for this repo" for my own.
 
-A profile is a folder meant to load only in one directory the user picks, not the home folder. Its `profile.jsonc` is a rulesync config listing that folder in `inputRoots`; the folder is not listed in `rulesync.jsonc`. Paths in `profile.jsonc` are relative to the repo root, so profile commands run from there.
+A profile is a folder meant to load only in one directory the user picks, not the home folder. Its `profile.jsonc` is a rulesync config listing that folder in `inputRoots`. A profile folder is listed in `rulesync.jsonc` only when an [agent](agents/README.md) filters it, so other OpenCode agents never load it (other tools don't filter skills) (user decision, October 25, 2026; the design, career, AI research, threat-model and reverse-engineering folders). A profile that starts a server switched on, such as REA, stays out. Paths in `profile.jsonc` are relative to the repo root, so profile commands run from there.
+
+Adding, removing or renaming a skill folder, an MCP server or an agent, or changing `groups/default.jsonc`, may change the agents' OpenCode permissions, the README hero image (`docs/hero-*.svg`) and the agent map: run `python3 agents/generate.py` in the same change and follow [`agents/README.md`](agents/README.md#update). Never edit the generated SVGs or `docs/agents-map.html` by hand.
+
+Each agent has one folder, `agents/<name>/subagents/<name>.md`, except agents that belong to a set (`second-opinion` with its two reviewers; `security` and `reverse-engineering` with their bundles). rulesync merges source trees by file path: when two trees in one selection hold the same relative path, the later one replaces the earlier one even if their `targets` differ, so agent file names must be unique within a group.
 
 `groups/*.jsonc` are named install selections, not source trees. Home-folder
 groups (`default`, `work`, `writing_reporting`) run with `--config` and
@@ -165,7 +190,7 @@ An approved repo refresh does not authorize changing live assistant settings, ru
 
 ### Agents
 
-`subagents/*.md` need `name`, `targets: ["*"]`, and a **quoted** `description` (strict YAML). OpenCode-only settings go under `opencode:` (e.g. `mode: subagent`).
+`subagents/*.md` need `name`, `targets: ["*"]`, and a **quoted** `description` (strict YAML). OpenCode-only settings go under `opencode:` (e.g. `mode: subagent`). Exception: the generated `build`, `plan`, `general` and `explore` files use `targets: ["opencode"]` and no description, because they only restrict OpenCode's own agents.
 
 Keep an agent's filename, `name`, title and README examples consistent. A rename
 does not remove an old live installation when `delete: false`; document stale
@@ -189,18 +214,22 @@ Files that currently carry tool sections:
 |---|---|
 | `skills/report/skills/report/SKILL.md` | `claudecode: allowed-tools` |
 | `skills/eli5/skills/eli5/SKILL.md` | `claudecode: allowed-tools` |
-| `agents/second-opinion/subagents/*.md` | `name`, `targets`, `opencode: mode` and `permissions`, `claudecode: tools` |
-| `agents/local-model/subagents/local-model.md` | `name`, `targets`, `opencode: mode` |
-| `agents/security/subagents/*.md`, `agents/reverse-engineering/subagents/*.md` (5 agents) | `targets`, `opencode: mode`, `claudecode: model` |
+| `agents/second-opinion/subagents/*.md` | `name`, `targets`, `opencode: mode` and `permissions` (part generated, see below), `claudecode: tools` |
+| `agents/local-model/subagents/local-model.md` | `name`, `targets`, `opencode: mode` and generated `permissions` |
+| The `design`, `career`, `ai-research`, `3d-modeling`, `security`, `reverse-engineering`, `build`, `plan`, `general` and `explore` agent files | Whole files generated by `agents/generate.py`; never edit or sync them by hand |
+| The other `agents/security/subagents/*.md` and `agents/reverse-engineering/subagents/*.md` files (5 agents) | `targets`, `opencode: mode`, `claudecode: model` |
 | `skills/distilly/skills/distilly/SKILL.md` | `claudecode: argument-hint, user-invocable, allowed-tools` |
 | `skills/handoff/skills/handoff/SKILL.md`, `skills/teach/skills/teach/SKILL.md` | `claudecode: argument-hint, disable-model-invocation`, `opencode: disable-model-invocation` |
 | `skills/wait-what/skills/wait-what/SKILL.md` | `claudecode: disable-model-invocation`, `opencode: disable-model-invocation` |
+| `skills/playwright-cli/skills/playwright-cli/SKILL.md` | `claudecode: allowed-tools` (moved from upstream's top level) |
+
+Lines between `BEGIN generated` and `END generated` markers come from `agents/generate.py`; regenerate them instead of copying them from a live install.
 
 Third-party skills and agents (in `skills/`, `agents/` and `mcp-servers/`) should stay identical to upstream apart from tool sections. Note any other change in the folder's README.
 
 Exception: `agents/security/` is a **repo-owned merge** of wshobson and OpenAI security content (user decision, October 21, 2026), edited to remove overlaps and rule conflicts. Never overwrite it from upstream; port upstream changes by hand as its README's "For agents: maintaining this bundle" section describes.
 
-**Routing between globally installed skills lives in one rule, `rules/routing`** (user decision, October 21, 2026). Routing for a folder-only collection lives in that collection's own `rules/` and installs with its folder group, so it loads only where those skills exist (user decision, October 24, 2026; `skills/designskills`, `skills/career-workspace`). Don't add per-skill routing rules otherwise, and don't edit upstream skill text to change which skill owns a job.
+**Routing between globally installed skills lives in one rule, `rules/routing`** (user decision, October 21, 2026). Routing for a folder-only collection lives in that collection's own `rules/` and installs with its folder group (user decision, October 24, 2026; currently `skills/career-workspace`; the design rule was removed on October 25, 2026 with the overlapping design skills). Since `default` installs `skills/career-workspace` for the OpenCode `career` agent (October 25, 2026), its routing rule is in the global rules file too. Don't add per-skill routing rules otherwise, and don't edit upstream skill text to change which skill owns a job.
 
 `rules/routing` is loaded on every request, so a line belongs there only when two installed skills compete for the same job. Leave out jobs another rule already assigns (Docling, Exa, package-management), skills that don't compete, and user-invoked skills (`disable-model-invocation`), which the model never picks. When a skill is added, removed or refreshed and its description now claims a job another item owns (or drops one it owned), update the routing rule and that skill's README "For agents: routing and updates" section in the same change, and tell the user.
 
@@ -222,7 +251,7 @@ rulesync installs rules, skills, agents, commands, hooks and MCP servers, not pl
 
 - One `mcp.jsonc` per tool folder; rulesync merges them all.
 - Commands are installed programs run by name (e.g. `pmb-mcp`, installed with `uv tool install pmb-ai`). Never use an absolute path.
-- Supported per-server fields that carry over to OpenCode, Claude Code and Codex: `command`, `args`, `env`, `cwd`, `timeout`, `url`, `headers`, and `disabled` (written as `enabled: false` for OpenCode and Codex, passed through as `disabled: true` for Claude Code).
+- Supported per-server fields that carry over to OpenCode, Claude Code and Codex: `command`, `args`, `env`, `cwd`, `timeout`, `url`, `headers`, and `disabled` (native `disabled: true` for OpenCode V2 with rulesync 41, `enabled: false` for Codex, passed through as `disabled: true` for Claude Code).
 - If the MCP server's name changes, warn the user: their OpenCode permission rules match tools by `<server name>_*`.
 
 ## Check for updates
@@ -252,7 +281,7 @@ For each item, record the author, a link to the upstream repo, a link to its lic
 ## Secrets and personal data
 
 - **Keys and tokens are placeholders, never values.** Write `"x-api-key": "${EXA_API_KEY}"` in `mcp.jsonc`. rulesync turns that into OpenCode's `{env:EXA_API_KEY}`, so the real key is never written to any file. Document the variable in the tool's README.
-- When copying from a live config, **never copy a header, env value, or `{file:...}` reference that holds or points to a secret.** Replace it with a `${VAR}` placeholder.
+- When copying from a live config, **never copy a header, env value, or `{file:...}` reference that holds or points to a secret.** Replace it with a `${VAR}` placeholder. One approved exception (user decision, October 26, 2026): `mcp-servers/exa/mcp.jsonc` gives OpenCode `{file:{env:XDG_RUNTIME_DIR}/opencode/exa.key}` in a tool-scoped `opencode.mcpServers` block. It names no user or personal path, and other tools keep `${EXA_API_KEY}`. Add no others without approval.
 - **No personal paths or names:** no `/home/<user>`, `/run/user/<uid>`, usernames or real emails. Use installed command names, `~`, or environment variables.
 - Identity values: copyright and author are `280Zo`. Anything unknown uses the placeholder `ILL_CHANGE_THIS_LATER`.
 
@@ -262,7 +291,7 @@ Generate into a throwaway home folder, never the real one:
 
 ```bash
 mkdir -p /tmp/opencode/rulesync-check
-HOME=/tmp/opencode/rulesync-check npx rulesync@38.0.0 generate --global --features rules,subagents,skills,commands,mcp
+HOME=/tmp/opencode/rulesync-check npx rulesync@41.0.0 generate --global --features rules,subagents,skills,commands,mcp
 ```
 
 Leak scan over the files git would commit:

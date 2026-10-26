@@ -4,7 +4,7 @@
 
 Upstream source and update notes: [oleksiijko/pmb](https://github.com/oleksiijko/pmb). The server supplies its own context instructions; updating `pmb-ai` updates those, while this repo's connection template and rule are maintained here.
 
-See the [agent-knowledge objectives](../../reference/agent-knowledge/01-objectives-and-requirements.md) and [technology evidence](../../reference/agent-knowledge/03-technology-landscape.md) for the complete-system investigation and PMB's source-checked capabilities and limits. PMB's association graph, optional image features and hybrid search do not establish a fully transactional multimodal evidence store; concurrent sessions and project binding still need validation.
+PMB's association graph, optional image features and hybrid search do not establish a fully transactional multimodal evidence store; concurrent sessions and project binding still need validation.
 
 ## What's in this folder
 
@@ -42,3 +42,22 @@ PMB also offers `pmb connect --active`, but inspect and approve its host-configu
 ## Permissions depend on the server's name
 
 OpenCode names each tool `<server name>_<tool>`, e.g. `pmb_prepare`. Any permission rule written as `"pmb_*": ...` matches on that name. If you rename the server, update those rules too.
+
+## For agents: install, remove and update
+
+### Install
+
+- It's in the `default` and `work` [install groups](../../groups/README.md), and `writing_reporting` installs its rule but leaves MCP settings alone. Follow [Install](#install) above.
+- It needs [uv](https://docs.astral.sh/uv/). The first launch downloads `pmb-ai==1.2.3` and may download an embedding model, so get the user's approval first.
+- The connection is written switched on. To verify, start a new session in the intended project, check that `pmb` connects, and call a read-only tool such as `session_brief`. Confirm the memory path and selected workspace as [Per-project setup](#per-project-setup) describes before anything writes to it.
+
+### Remove
+
+- Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). Regenerating without this folder removes the `pmb` MCP entry and the "PMB Memory" rule section, because each run replaces both.
+- This folder ships no skills, agents or commands, so `delete: false` leaves nothing of this repo's behind.
+- If the user syncs a native V2 config without the `mcp` feature, remove the `pmb` entry from `mcp.servers` by hand, keeping every other setting.
+- The `.pmb/` folder in each project holds the user's memories. Removing the connection must leave it in place. Never delete, move or overwrite it without the user's explicit approval for that specific folder. The uv cache and downloaded models also stay unless the user asks.
+
+### Update
+
+- Follow [Check for updates](../../AGENTS.md#check-for-updates). The pin is `pmb-ai==1.2.3` in `mcp.jsonc`. Change it together with the version and reviewed baseline in [Install](#install) and [Use](#use), and read upstream's update notes for changes to stored data first. Regenerating doesn't restart a running server.

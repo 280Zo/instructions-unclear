@@ -11,7 +11,7 @@
     "skills/speech",
     "skills/security-threat-model",
     "skills/screenshot",
-    "skills/playwright",
+    "skills/playwright-cli",
     "mcp-servers/zap"
   ]
 }

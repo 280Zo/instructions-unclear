@@ -16,10 +16,30 @@ The four descriptions add about 380 tokens to every request, so they're in `defa
 From the repo root, through the `default` or `work` [install group](../../groups/), or just these skills:
 
 ```bash
-npx rulesync@38.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/docker
+npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/docker
 ```
 
 The skills' `scripts/verify-*.sh` helpers run `docker` and `docker compose` to check your work; `verify-build.sh` builds and tags an image. rulesync installs neither Docker nor Compose. Most guidance also applies to Podman, but Docker wrote and tested it for Docker.
+
+## For agents: install, remove and update
+
+### Install
+
+- The [`default`](../../groups/README.md#default) and [`work`](../../groups/README.md#work) groups install it globally. For this folder alone, use the command under [Install](#install) above.
+- rulesync doesn't install Docker or Compose; the `scripts/verify-*.sh` helpers need them. Install them only with approval, following the `package-management` skill.
+- To verify, start a new session and confirm the skills list includes all four skill names. Don't run `verify-build.sh` as a test; it builds and tags an image.
+
+### Remove
+
+Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves `docker-project-foundations`, `docker-build-strategies`, `docker-compose-patterns` and `docker-destructive-guardrails` in each tool's global skills folder; delete them only with approval.
+
+- The seven [`skills/docker-sandboxes-agent`](../docker-sandboxes-agent/) skills point to `docker-destructive-guardrails`. If those are installed, remove both folders together or keep this one.
+- If Docker's native plugin or `npx skills add docker/skills` also installed these names, find out which copy belongs to which installer before deleting.
+- Docker, Compose, and images or containers the skills helped create stay.
+
+### Update
+
+Follow [Check for updates](../../AGENTS.md#check-for-updates). The release tag and commit are under [Origin](#origin). Update this folder and `skills/docker-sandboxes-agent` from the same release, and record the same tag and commit in both READMEs. See the routing bullets below for native plugins and `docker-docs`.
 
 ## For agents: routing and updates
 

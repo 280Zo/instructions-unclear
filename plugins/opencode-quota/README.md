@@ -31,6 +31,14 @@ The agent follows these steps:
 3. Don't run the `init` wizard: it's interactive. Tell the user they can run it themselves for the sidebar and status line.
 4. Tell the user to restart OpenCode and run `/quota_status` to see which providers need setup.
 
+## For agents: install, remove and update
+
+To install, follow the steps in [Let your agent do it](#let-your-agent-do-it). No group includes it; rulesync can't install plugins. To verify, run `opencode plugin list` and check the version, then have the user run `/quota_status` in a new session.
+
+To remove, get approval, then delete only the `@slkiser/opencode-quota` entry from the plugin list (`plugins` in V2, `plugin` in V1), keeping comments and every other setting, and ask the user to restart OpenCode. The cache in `~/.cache/opencode/npm/` can stay. Never open credential files. If the user ran the `init` wizard, the sidebar panel and status line it set up are theirs to undo; don't guess which settings it changed. See also [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component).
+
+To update, follow [Updating: OpenCode keeps cached versions](../README.md#updating-opencode-keeps-cached-versions). The last checked stable release is in [Install](#install).
+
 ## Use
 
 | Command | Shows |

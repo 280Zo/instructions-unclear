@@ -29,6 +29,14 @@ The agent follows these steps:
 3. Use `opencode-claude-auth@latest` in V2's `plugins`, or `opencode-claude-auth@2.2.1` in V1's `plugin`. Never add both keys. Keep comments and all unrelated settings. Do not run an unrelated installer or change provider/model settings.
 4. Tell the user to restart and perform the `/connect` step above themselves if required. Never print, copy or manually migrate credentials.
 
+## For agents: install, remove and update
+
+To install, follow the steps in [Let your agent do it](#let-your-agent-do-it). No group includes it; rulesync can't install plugins. To verify, run `opencode plugin list`, confirm 3.0.0 or newer, and have the user select an Anthropic model in a new session.
+
+To remove, get approval, then delete only the `opencode-claude-auth` entry from the plugin list (`plugins` in V2, `plugin` in V1), keeping comments and every other setting, and ask the user to restart OpenCode. The cache in `~/.cache/opencode/npm/` can stay. Never open credential files or Keychain contents. The imported login and the Claude subscription aren't touched by removing the plugin: the user signs out or revokes access through OpenCode and Anthropic themselves. See also [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component).
+
+To update, follow [Updating: OpenCode keeps cached versions](../README.md#updating-opencode-keeps-cached-versions). The `@latest` entry isn't pinned, so the last checked release is in [Origin](#origin).
+
 ## Use
 
 Select an Anthropic model after connecting. Use the plugin defaults and upstream troubleshooting guidance. Subscription use remains subject to the provider's terms. The plugin handles credential discovery and refresh; installation instructions must not expose those credentials.

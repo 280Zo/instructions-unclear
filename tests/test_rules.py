@@ -30,11 +30,34 @@ class RuleTests(unittest.TestCase):
             "humanizer",
             "security-threat-model",
             "security-best-practices",
-            "Docling",
         ]:
             self.assertIn(skill, text)
         for path in OLD_ROUTING_RULES:
             self.assertFalse((ROOT / path).exists(), path)
+
+    def test_folder_only_routing_lives_with_its_collection(self):
+        # Since 2026-10-24, routing for folder-only collections installs with
+        # its folder group, and jobs another rule already assigns are not
+        # repeated in the every-request routing rule.
+        text = rule_text("routing")
+        for name in ["career-start-application", "color-palette", "Docling", "Exa"]:
+            self.assertNotIn(name, text)
+        rule = (ROOT / "skills/career-workspace/rules/career-routing.md").read_text()
+        self.assertIn("root: true", rule)
+        self.assertIn("interview-coach", rule)
+        self.assertIn("rules", read_jsonc(ROOT / "groups/career.jsonc")["features"])
+        # The design overlaps were removed on 2026-10-25, so the design
+        # folder no longer needs a routing rule.
+        self.assertFalse((ROOT / "skills/designskills/rules").exists())
+        design = ROOT / "skills/designskills/skills"
+        for name in ["ui-design", "landing-page-design", "hero-section", "dashboard-design",
+                     "card-design", "mobile-ui-design", "layout-composition",
+                     "presentation-design", "infographic"]:
+            self.assertFalse((design / name).exists(), name)
+        self.assertEqual(len(list(design.glob("*/SKILL.md"))), 19)
+        self.assertTrue((design / "typography/SKILL.md").is_file())
+        docling = (ROOT / "mcp-servers/docling/rules/docling.md").read_text()
+        self.assertIn("Docling", docling)
 
     def test_preferences_rule_sets_editor_and_shell(self):
         text = rule_text("preferences").lower()

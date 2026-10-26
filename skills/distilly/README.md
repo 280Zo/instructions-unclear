@@ -15,7 +15,7 @@ Its instructions are in English, and it replies in the language you write in.
 1. Install the skill from the repo root:
 
    ```bash
-   npx rulesync@38.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/distilly
+   npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/distilly
    ```
 
     Swap `--targets` for your tools. To keep it in your regular install, add `skills/distilly` to `inputRoots` in your `rulesync.local.jsonc`.
@@ -60,6 +60,25 @@ New skills are saved under `./skills/<kind>/<name>/` in the folder you're workin
 Credentials for the message collectors never go through the conversation: you run each collector's `--setup` or `--login` in your own terminal.
 
 "Set up my profile" interviews you so a personal agent knows who it works for. That only supports Claude Code, and it writes a short summary between markers into `~/.claude/CLAUDE.md`. Installing rules from this repo for Claude Code replaces that file, so set the profile up after installing, and again after each reinstall.
+
+## For agents: install, remove and update
+
+### Install
+
+- The [`default` group](../../groups/README.md#default) installs it globally. For this folder alone, use step 1 under [Install](#install) above.
+- rulesync doesn't install the Python environment. Do steps 2 and 3 only with approval, following the `package-management` skill. Never handle collector credentials; the user runs `--setup` or `--login` in their own terminal.
+- To verify, start a new session and confirm the skills list includes `distilly`. Don't run a collector or a web-research distill as a test.
+
+### Remove
+
+Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves `distilly` in each tool's global skills folder; delete it only with approval. No other folder in this repo provides that name.
+
+- The `.venv` from step 2 lives inside the installed skill folder, so deleting the folder deletes it too. Tell the user before deleting.
+- Person skills it generated under `./skills/<kind>/<name>/` in the user's working folders, collector logins, and the profile block between markers in `~/.claude/CLAUDE.md` stay unless the user explicitly asks to remove them.
+
+### Update
+
+Follow [Check for updates](../../AGENTS.md#check-for-updates). The upstream commit is under [Origin](#origin). Keep the `claudecode:` section when copying (see the tool-sections table in `AGENTS.md`), and recheck both requirements files after a refresh, since the venv may need reinstalling.
 
 ## Origin
 

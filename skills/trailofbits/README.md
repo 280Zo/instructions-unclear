@@ -34,6 +34,14 @@ Choose a workflow for code review, vulnerability triage, static analysis, fuzzin
 
 Review upstream changes, refresh the complete `upstream/` tree without modifying bodies, metadata or directory layout, and validate native installation followed by rulesync generation in isolation. Show any actual host conflict before choosing an adaptation. Keep this wrapper, catalog, groups and license notice consistent.
 
+## For agents: install, remove and update
+
+To install, use the native plugin procedure in [Install](#install), choosing only the plugins the user needs. No group includes it, and rulesync never installs it. Claude Code and Codex users run the slash commands themselves; get approval before any plugin list change. Scanners, toolchains and accounts in [Use and prerequisites](#use-and-prerequisites) are separate installs. To verify, check that the chosen plugins appear in the tool's plugin list (`/plugin` in Claude Code, `codex plugin list` in Codex). Don't run an audit or scanner as a test.
+
+To remove, use the same tool's plugin manager that installed the plugin or marketplace, with approval, and restart the tool. Never delete files in this repo's `upstream/` to uninstall it; a local marketplace may still point there. Old extracted skill and agent copies from the retired flattened profile are removed as [Existing installations](#existing-installations) and [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component) describe. Their names weren't recorded here, so list what's actually installed and confirm each one with the user. Scanners, toolchains and Python environments stay unless the user asks.
+
+To update, follow [Check for updates](../../AGENTS.md#check-for-updates) and [Updating](#updating). The copied commit is in [Origin](#origin).
+
 ## Origin
 
 [trailofbits/skills](https://github.com/trailofbits/skills), complete tree at commit `a3131740a39291e42fd15b9eac07e0b393ad71b1`, copied October 20, 2026. [CC BY-SA 4.0](../../THIRD_PARTY_LICENSES.md#trailofbitsskills), by Trail of Bits; full text also retained in `upstream/LICENSE`. No local tool sections or body adaptations. Wrapper written for this repo by 280Zo.

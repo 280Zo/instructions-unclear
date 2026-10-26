@@ -7,7 +7,7 @@ A skill that turns explanations, plans, code reviews and data into a self-contai
 This folder holds only the skill. When to use it comes from the repo's routing rule, [`rules/routing`](../../rules/routing/rules/routing.md), which the `default`, `work` and `writing_reporting` [install groups](../../groups/) install. To add just the skill, from the repo root:
 
 ```bash
-npx rulesync@38.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/visual-explainer
+npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/visual-explainer
 ```
 
 Swap `--targets` for your tools. To keep it in your regular install, add `skills/visual-explainer` to `inputRoots` in your `rulesync.local.jsonc`. It works best alongside `diagram-design` and `theme-factory`.
@@ -28,10 +28,18 @@ Pages load Mermaid and Chart.js from `cdn.jsdelivr.net` and fonts from Google Fo
 
 The folder also holds upstream's slash commands (`/diff-review`, `/plan-review` and others), Pi extension, MCP server and PowerPoint exporter. rulesync installs the folder but doesn't register the commands, so in this setup you ask in plain words instead.
 
+## For agents: install, remove and update
+
+To install, use the `default`, `work` or `writing_reporting` group, or the single-folder command above. rulesync installs no other software; rendering through `kit/render.mjs` needs Node.js, and pages need an internet connection for their CDN scripts and fonts. To verify, start a new session, check that `visual-explainer` is listed among the skills, and ask for a small test page.
+
+To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `visual-explainer` skill folder behind; delete it with approval. Pages already written to `~/.agent/diagrams/` or `Clanker_Crayon_Box/` are the user's files and stay unless the user asks. If the user keeps `rules/routing`, its line still names this skill, and `report` and `eli5` render through it, so tell them.
+
+To update, follow [Check for updates](../../AGENTS.md#check-for-updates). The version and commit are in [Origin](#origin); the update bullets in the next section say what to recheck.
+
 ## For agents: routing and updates
 
 - Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Page** (explanation, plan, review or comparison shown as a page): `visual-explainer`", including a page built around figures, with the figures drawn by `diagram-design`.
-- It does not own standalone diagrams (`diagram-design`), browser decks (`frontend-slides`), editable `.pptx` (`documents` or Presenton), a shared theme (`theme-factory`) or audio. Its slides are used "only as part of a page it is already making".
+- It does not own standalone diagrams (`diagram-design`), browser decks (`frontend-slides`), editable `.pptx` (`documents` or Presenton), a shared theme (`theme-factory`), an explanation drawn as an invented physical machine (`anatomy`, added 2026-10-25) or audio. Its slides are used "only as part of a page it is already making".
 - Why: on 2026-10-21 the user replaced the per-skill rules with one routing rule because several skills' descriptions and rules claimed the same jobs. This skill overlapped the most: diagrams with `diagram-design`, slides with `frontend-slides`, `documents` and Presenton, and its narration features with `speech`/`transcribe`.
 - `report` and `eli5` delegate page rendering here, so changes to its workflow (such as the 0.14.0 `kit/render.mjs` step) can affect them.
 - When a `theme-factory` theme is in use, it replaces this skill's default palette and fonts.

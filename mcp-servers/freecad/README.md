@@ -25,6 +25,26 @@ It has two halves: an addon inside FreeCAD that listens for commands, and the MC
 
 Change `freecad-mcp@0.1.27` in `mcp.jsonc` to the new version from [PyPI](https://pypi.org/project/freecad-mcp/), and copy the addon from the matching tag. "Check for updates" in [`AGENTS.md`](../../AGENTS.md) finds new versions.
 
+## For agents: install, remove and update
+
+### Install
+
+- It's in the `default` [install group](../../groups/README.md), written switched off. Follow [Install](#install) above. In OpenCode, only the [`3d-modeling` agent](../../agents/3d-modeling/) may use its tools.
+- It needs FreeCAD, [uv](https://docs.astral.sh/uv/) and the FreeCADMCP addon from tag `v0.1.27` in FreeCAD's `Mod` folder. rulesync installs none of them. Get the user's approval before downloading or copying the addon. The first start downloads `freecad-mcp@0.1.27`.
+- Leave the connection off unless the user asks for it. They turn it on as [Use](#use) describes, after starting the RPC server in FreeCAD.
+- To verify, once it's on and FreeCAD's RPC server is running, check that `freecad` connects and its tools are listed. Then, with approval, make a small test object in a new, unsaved document. Don't touch the user's existing models.
+
+### Remove
+
+- Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). Regenerating without this folder removes the `freecad` MCP entry, because each run replaces the whole MCP list.
+- This folder ships no skills, agents or commands, so `delete: false` leaves nothing of this repo's behind.
+- If the user syncs a native V2 config without the `mcp` feature, remove the `freecad` entry from `mcp.servers` by hand, keeping every other setting.
+- FreeCAD, the `Mod/FreeCADMCP` addon and the uv cache stay. Never delete them without the user's explicit approval.
+
+### Update
+
+- Follow [Check for updates](../../AGENTS.md#check-for-updates) and [Updating](#updating). The pin is `freecad-mcp@0.1.27` in `mcp.jsonc`. Change it together with the addon tag and the versions in this README.
+
 ## Origin
 
 [neka-nat/freecad-mcp](https://github.com/neka-nat/freecad-mcp), MIT. This folder holds only the connection entry; no FreeCAD MCP code is copied here.

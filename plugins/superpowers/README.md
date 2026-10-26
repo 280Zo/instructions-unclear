@@ -28,6 +28,14 @@ The agent follows these steps:
 3. **Claude Code and Codex:** you can't run their slash commands. Give the user the command from the table above to run themselves.
 4. Tell the user to restart each tool, and that `using-superpowers` should then load at the start of each session.
 
+## For agents: install, remove and update
+
+To install, follow the steps in [Let your agent do it](#let-your-agent-do-it). No group includes it; rulesync can't install plugins. To verify in OpenCode, run `opencode plugin list`, then check in a new session that `using-superpowers` loads. In other tools, the user checks their plugin list.
+
+To remove from OpenCode, get approval, then delete only the `superpowers@` entry from `plugins`, keeping comments and every other setting, and ask the user to restart. The cache in `~/.cache/opencode/npm/` can stay. Never open credential files. For Claude Code and Codex, the user removes it through that tool's own plugin manager. Specs and plans it saved under `docs/superpowers/` are the user's files and stay unless the user asks. See also [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component).
+
+To update, follow [Updating: OpenCode keeps cached versions](../README.md#updating-opencode-keeps-cached-versions). The entry isn't pinned; the last resolved version and reviewed tag are in [Install](#install).
+
 ## Use
 
 Nothing to call. At the start of every session the plugin adds the `using-superpowers` instructions, which tell the agent to load a matching skill before acting: "let's build X" starts with brainstorming, "fix this bug" starts with systematic debugging, "it's done" triggers verification first. You can also name a skill: "use the writing-plans skill for this".

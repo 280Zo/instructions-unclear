@@ -7,7 +7,7 @@ A skill that teaches one unfamiliar thing in plain English: a concept, an event,
 Skills are added alongside what you already have, so this folder can be installed on its own. From the repo root:
 
 ```bash
-npx rulesync@38.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/eli5
+npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/eli5
 ```
 
 Swap `--targets` for your tools. To keep it in your regular install, add `skills/eli5` to `inputRoots` in your `rulesync.local.jsonc`.
@@ -21,6 +21,22 @@ To write up material you've already gathered, use [`report`](../report/) instead
 ## Notes
 
 Claude Code's `allowed-tools` sits under a `claudecode:` section so other tools ignore it.
+
+## For agents: install, remove and update
+
+### Install
+
+- The [`default`](../../groups/README.md#default), [`work`](../../groups/README.md#work) and [`writing_reporting`](../../groups/README.md#writing_reporting) groups install it globally. For this folder alone, use the command under [Install](#install) above; it skips `rules/routing`.
+- The saved explainer needs `visual-explainer` and `diagram-design`, and research uses Exa `search` when it's installed. The groups above include them; the single-folder command doesn't.
+- To verify, start a new session and confirm the skills list includes `eli5`, or that `/eli5` is offered.
+
+### Remove
+
+Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves `eli5` in each tool's global skills folder; delete it only with approval. No other folder in this repo provides that name. Explainer pages it already saved stay.
+
+### Update
+
+The skill is written for this repo, so there is no upstream commit to check. Keep the `claudecode: allowed-tools` section when syncing a live copy back (see the tool-sections table in `AGENTS.md`), and follow the routing bullets below when a renderer it uses changes.
 
 ## For agents: routing and updates
 

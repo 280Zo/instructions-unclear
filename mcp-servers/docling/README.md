@@ -2,7 +2,7 @@
 
 [Docling MCP](https://github.com/docling-project/docling-mcp) converts documents and images (PDF, Office files, scans) into text the AI can read, including OCR and tables.
 
-The [agent-knowledge concepts](../../reference/agent-knowledge/02-architecture-and-concepts.md) and [technology evidence](../../reference/agent-knowledge/03-technology-landscape.md) distinguish extraction, picture descriptions and durable knowledge. Retained pixels and OCR do not enable captions, visual search or automatic PMB ingestion. Current upstream has opt-in picture-description settings, but the installed version must be checked before changing this setup.
+Extraction, picture descriptions and durable knowledge are separate things. Retained pixels and OCR do not enable captions, visual search or automatic PMB ingestion. Current upstream has opt-in picture-description settings, but the installed version must be checked before changing this setup.
 
 ## What's in this folder
 
@@ -38,6 +38,27 @@ Point the agent at a file by path: "read `/path/report.pdf` and summarize sectio
 ## Permissions depend on the server's name
 
 OpenCode names each tool `<server name>_<tool>`, e.g. `docling_convert_...`. Permission rules such as `"docling_*": "allow"` match on that name. If you rename the server here, that rule silently stops matching and every Docling call starts asking for approval. Rename it in your permission rules too.
+
+## For agents: install, remove and update
+
+### Install
+
+- It's in the `default` and `work` [install groups](../../groups/README.md), and `writing_reporting` installs its rule but leaves MCP settings alone. Follow [Install](#install) above.
+- It needs [uv](https://docs.astral.sh/uv/). The first launch downloads `docling-mcp[local]==3.3.0` and its large dependencies, so get the user's approval first.
+- The connection is written switched on.
+- To verify, check in a new session that `docling` connects, then convert one small harmless document. Convert one file at a time, as `rules/docling.md` says.
+
+### Remove
+
+- Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). Regenerating without this folder removes the `docling` MCP entry and the "Docling MCP" rule section, because each run replaces both.
+- This folder ships no skills, agents or commands, so `delete: false` leaves nothing of this repo's behind.
+- If the user syncs a native V2 config without the `mcp` feature, remove the `docling` entry from `mcp.servers` by hand, keeping every other setting.
+- The uv cache, downloaded models and the scratch output in `/tmp/opencode/docling` stay. Never delete them without the user's explicit approval. Permission rules such as `"docling_*"` are the user's to keep or remove.
+
+### Update
+
+- Follow [Check for updates](../../AGENTS.md#check-for-updates). The pin is `docling-mcp[local]==3.3.0` in `mcp.jsonc`. Change it together with the version and baseline text in [Install](#install).
+- Then follow the update bullets in [For agents: routing and updates](#for-agents-routing-and-updates).
 
 ## For agents: routing and updates
 

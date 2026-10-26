@@ -9,7 +9,7 @@ It's a community server, not part of the Podman project. Neither Podman nor Dock
 It's in the `default` and `work` [install groups](../../groups/), **switched off**. To add just this server, from the repo root:
 
 ```bash
-npx rulesync@38.0.0 generate --global --features mcp --input-roots mcp-servers/podman
+npx rulesync@41.0.0 generate --global --features mcp --input-roots mcp-servers/podman
 ```
 
 That replaces your tool's whole MCP list with this one server, so normally use a group or your `rulesync.local.jsonc` list instead.
@@ -31,12 +31,27 @@ In OpenCode, set `"enabled": true` on the `podman` entry in `opencode.jsonc` (or
 
 `container_remove`, `image_remove` and `image_push` change state. Your permission settings decide whether those calls are asked about; the server itself doesn't ask.
 
-## For agents: install and verify
+## For agents: install, remove and update
+
+### Install
+
+It's in the `default` and `work` groups, written switched off. See [Install](#install) for the single-folder command and [What it needs](#what-it-needs) for prerequisites rulesync doesn't install.
 
 1. Keep it disabled unless the user asks to turn it on. Never enable it to make a test pass.
 2. Before enabling, check that `podman` or `docker` is installed and which one the user wants. Don't start the Podman socket or change services without approval.
 3. To verify, enable it in a new session and call `container_list` and `image_list` only. Don't run, remove or push anything as a smoke test.
 4. Not in [`rules/routing`](../../rules/routing/rules/routing.md): no other installed tool competes for local container control. Writing Dockerfiles and Compose files is the `docker` skills' job; destructive commands follow `docker-destructive-guardrails`.
+
+### Remove
+
+- Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). Regenerating without this folder removes the `podman` MCP entry, because each run replaces the whole MCP list.
+- This folder ships no skills, agents or commands, so `delete: false` leaves nothing of this repo's behind.
+- If the user syncs a native V2 config without the `mcp` feature, remove the `podman` entry from `mcp.servers` by hand, keeping every other setting.
+- Podman or Docker, the Podman socket service, the cached `podman-mcp-server` npm package, and every container and image stay. Never remove or stop them without the user's explicit approval.
+
+### Update
+
+Follow [Check for updates](../../AGENTS.md#check-for-updates) and [Updating](#updating). The pin is `podman-mcp-server@0.0.15` in `mcp.jsonc`; change it together with the versions in this README.
 
 ## Updating
 

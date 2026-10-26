@@ -51,9 +51,11 @@ class UserInvokedSkillTests(unittest.TestCase):
             roots = read_jsonc(ROOT / f"groups/{group}.jsonc")["inputRoots"]
             for name in SKILLS:
                 self.assertIn(f"skills/{name}", roots, group)
+        # User-invoked skills are never chosen by the model, so the
+        # every-request routing rule leaves them out (2026-10-24).
         routing = (ROOT / "rules/routing/rules/routing.md").read_text()
         for name in SKILLS:
-            self.assertIn(f"`{name}`", routing)
+            self.assertNotIn(f"`{name}`", routing)
         licenses = (ROOT / "THIRD_PARTY_LICENSES.md").read_text()
         self.assertIn("## mattpocock/skills", licenses)
         self.assertIn("Copyright (c) 2026 Matt Pocock", licenses)

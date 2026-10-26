@@ -9,7 +9,7 @@ It only runs when you call it. It is never loaded automatically.
 From the repo root:
 
 ```bash
-npx rulesync@38.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/handoff
+npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/handoff
 ```
 
 Swap `--targets` for your tools. The `default`, `work` and `writing_reporting` groups include it.
@@ -20,6 +20,14 @@ Swap `--targets` for your tools. The `default`, `work` and `writing_reporting` g
 - `/handoff next session reviews the PR` tailors the document to what comes next.
 
 Then start the new session and point it at the file it saved.
+
+## For agents: install, remove and update
+
+To install, use the `default`, `work` or `writing_reporting` group, or the single-folder command above. It needs no other software. To verify, start a new session and check that `handoff` is listed among the skills. Don't run `/handoff` as a test unless the user wants a handoff document.
+
+To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `handoff` skill folder behind; delete it with approval. Handoff documents it already saved in the OS temp folder are the user's files and stay unless the user asks.
+
+To update, follow [Check for updates](../../AGENTS.md#check-for-updates). The copied commit is in [Origin](#origin); the update bullets in the next section say what to keep.
 
 ## For agents: routing and updates
 

@@ -57,10 +57,12 @@ Install them into your career folder with the [`career` group](../../groups/READ
 
 ```bash
 mkdir -p ~/AI/career
-npx rulesync@38.0.0 generate --targets opencode --features skills --input-roots skills/career-workspace --output-roots ~/AI/career
+npx rulesync@41.0.0 generate --targets opencode --features skills --input-roots skills/career-workspace --output-roots ~/AI/career
 ```
 
-Never add `--global`: the skills read paths relative to the folder you start your tool in. The workflow also needs [`resume-skills`](../resume-skills/) and [`interview-coach`](../interview-coach/); the `career` group installs all three folders.
+Never add `--global` to this command: the skills read paths relative to the folder you start your tool in. The workflow also needs [`resume-skills`](../resume-skills/) and [`interview-coach`](../interview-coach/); the `career` group installs all three folders.
+
+In OpenCode, the `default` group installs all three folders and the career routing rule globally for the [`career` agent](../../agents/career/), the only agent that loads these skills. Start OpenCode in your career folder so records land there.
 
 ## Workspace layout
 
@@ -96,6 +98,27 @@ The seven record templates ship in [`skills/career-intake/templates/`](skills/ca
 - "Give me my full work history for this background check" → `career-work-history`
 
 Intake reads documents with Docling when it's available. If an interview or offer turns up a new win or number, file it with `career-intake` and rebuild the master resume so the next application has it.
+
+## For agents: install, remove and update
+
+### Install
+
+- For tools other than OpenCode, this folder installs into a career folder, never the home folder. The [`career` group](../../groups/README.md#career) installs it with `resume-skills` and `interview-coach`, run with `--output-roots` into a folder the user picks (suggest `~/AI/career`). Never add `--global` to that command. OpenCode's `default` group installs it globally behind the `career` agent's permissions; the user still starts OpenCode in the career folder.
+- The single-folder command under [Install](#install) uses `--features skills`, so it skips `rules/career-routing.md`. The workflow still needs `resume-skills` and `interview-coach`, so prefer the group.
+- Docling is optional; intake uses it for documents when it's available. Document export in stage 4 relies on document skills and their own runtimes, which rulesync doesn't install.
+- To verify, start the tool in the career folder and confirm the skills list includes `career-intake` and `career-start-application`, and that the folder's `AGENTS.md` contains the career routing rule. Don't run intake as a test unless the user wants the workspace folders created.
+
+### Remove
+
+Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component), working inside the career folder (`.opencode/skills/` and so on), not the home folder.
+
+- `delete: false` leaves `career-intake`, `career-master-resume`, `career-start-application` and `career-work-history` behind; delete them only with approval. Leave the `resume-skills` and `interview-coach` skills alone unless the user is removing those too.
+- The career routing rule goes away when the folder's `AGENTS.md` is regenerated without this folder. This is the only folder in the `career` group with rules, so regeneration may leave the old file in place. Check it, and if it holds only the career routing rule, delete it with approval.
+- Never delete the career folder itself or anything the skills created: `profile/`, `accomplishments/`, `reviews/`, `people/`, `references/`, `applications/`, `offers/`, `projects/`, `study/`, `resumes/`, `inbox/`, `archive/`, `templates/` and the files `resume-version-manager` keeps. They are the user's career records and stay unless the user explicitly asks.
+
+### Update
+
+This folder is written for this repo, so there is no upstream to check. When changing it, follow the reconciliation steps in the routing section below, then regenerate the `career` group into the career folder. For `resume-skills` and `interview-coach`, follow [Check for updates](../../AGENTS.md#check-for-updates) and their own READMEs.
 
 ## For agents: routing and updates
 

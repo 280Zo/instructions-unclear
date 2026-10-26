@@ -19,7 +19,7 @@ It researches before it teaches, uses retrieval practice and spacing, and points
 From the repo root:
 
 ```bash
-npx rulesync@38.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/teach
+npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/teach
 ```
 
 Swap `--targets` for your tools. The `default`, `work` and `writing_reporting` groups include it. The skill's `*-FORMAT.md` files must stay beside `SKILL.md`; rulesync copies them.
@@ -32,6 +32,14 @@ Make a folder for the topic, start your coding tool there, and run:
 - `/teach` with no topic to continue the course already in the folder
 
 It writes into the current folder, so don't start it in a project you don't want lesson files in. It opens lessons in a browser when it can; your [preferences rule](../../rules/preferences/) says Firefox.
+
+## For agents: install, remove and update
+
+To install, use the `default`, `work` or `writing_reporting` group, or the single-folder command above. It needs no other software; its research uses whatever web search is installed. To verify, start a new session and check that `teach` is listed among the skills. Don't run `/teach` as a test, because it writes lesson files into the current folder.
+
+To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `teach` skill folder behind; delete it with approval. Teaching workspaces it created (`MISSION.md`, `lessons/`, `learning-records/` and the rest) are the user's files and stay unless the user asks.
+
+To update, follow [Check for updates](../../AGENTS.md#check-for-updates). The copied commit is in [Origin](#origin); the update bullets in the next section say what to keep, including every `*-FORMAT.md` file.
 
 ## For agents: routing and updates
 

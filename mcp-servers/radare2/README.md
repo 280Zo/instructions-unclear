@@ -13,14 +13,18 @@ Use the [tagged upstream instructions](https://github.com/radareorg/radare2-mcp/
 From the repo root, use the [reverse-engineering group](../../groups/README.md#reverse_engineering), or:
 
 ```bash
-npx rulesync@38.0.0 generate --config mcp-servers/radare2/profile.jsonc --output-roots ~/AI/radare2
+npx rulesync@41.0.0 generate --config mcp-servers/radare2/profile.jsonc --output-roots ~/AI/radare2
 ```
 
 Never add `--global`. The connection is disabled until you explicitly enable it in the generated project configuration after checking `r2mcp` is the intended version. It uses stdio, `-R` (read-only exposed tools), `-n` (no plugins/radare2rc) and `-N` (no prompts), verified against `src/main.c` at the recorded commit.
 
 Read-only mode is not an isolation guarantee. Work with approved artifacts and retain normal host permissions. Raw command/script tools, debugger access and write workflows are not enabled by this template; changing that requires a separate decision. No HTTP listener, unrestricted execution or automatic file opening is configured.
 
-## For agents: install and verify
+## For agents: install, remove and update
+
+### Install
+
+This is a folder profile, also in the [reverse-engineering group](../../groups/README.md#reverse_engineering); use the command in [Install and activate](#install-and-activate) and never `--global`. OpenCode's `default` group also installs it, switched off, where only the [`reverse-engineering` agent](../../agents/reverse-engineering/) may use its tools. It's written switched off, and needs a separately installed `r2mcp` and radare2 (see [Tools you need](#tools-you-need)).
 
 Follow the [shared backend installation procedure](../../agents/reverse-engineering/README.md#for-agents-installing-and-verifying-backends). This is optional; do not install it just because a REA native backend is missing.
 
@@ -30,10 +34,20 @@ Follow the [shared backend installation procedure](../../agents/reverse-engineer
 4. Smoke test catalog discovery, then a read-only inspection of a benign local fixture using the exposed tool schema; verify an expected string or symbol without executing the fixture. Include package acquisition and connection startup in the approved test scope. A catalog alone does not verify native analysis.
 5. Use the shared handoff/rollback checklist. Record the executable actually used by the assistant, both versions, fixture evidence and any remaining limitations. Stop only test-owned processes and keep disabled if compatibility or verification fails.
 
+### Remove
+
+- Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component), including its note on folder groups. Regenerating the folder without this one removes the `radare2` entry from that folder's MCP list, because each run replaces it. Otherwise, with approval, delete the generated files in the folder, or the whole folder if nothing else lives there.
+- This folder ships no skills, agents or commands, so `delete: false` leaves nothing of this repo's behind.
+- radare2, `r2mcp`, any install prefix and PATH changes stay. Never remove them without the user's explicit approval, and use the shared handoff/rollback checklist if they ask.
+
+### Update
+
+Follow [Check for updates](../../AGENTS.md#check-for-updates) and [Updating](#updating). The pin is the release recorded in this README and [Origin](#origin) (radare2 MCP 1.9.0, radare2 6.2.4); `mcp.jsonc` has only a comment naming the version; change it together with this README.
+
 ## Updating
 
 Compare stable tags and their supported flags/native API requirements before changing the pin. Update this README and config comment together; generate the folder group to a throwaway output root. Generation verifies syntax/translation, not the installed native runtime.
 
 ## Origin
 
-Connection template and documentation written for this repo by 280Zo, based on [radareorg/radare2-mcp](https://github.com/radareorg/radare2-mcp), tag `1.9.0`, commit `562c0cf23c42b65b3052f0b294d8778c20facbde`, verified October 20, 2026. No upstream executable is vendored or runtime upgrade performed. Upstream MIT, copyright 2024 dnakov; [license](https://github.com/radareorg/radare2-mcp/blob/1.9.0/LICENSE), [full text](../../THIRD_PARTY_LICENSES.md#radareorgradare2-mcp). See the [assessment](../../reference/security-re-tooling.md).
+Connection template and documentation written for this repo by 280Zo, based on [radareorg/radare2-mcp](https://github.com/radareorg/radare2-mcp), tag `1.9.0`, commit `562c0cf23c42b65b3052f0b294d8778c20facbde`, verified October 20, 2026. No upstream executable is vendored or runtime upgrade performed. Upstream MIT, copyright 2024 dnakov; [license](https://github.com/radareorg/radare2-mcp/blob/1.9.0/LICENSE), [full text](../../THIRD_PARTY_LICENSES.md#radareorgradare2-mcp).

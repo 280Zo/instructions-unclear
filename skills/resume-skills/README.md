@@ -8,10 +8,10 @@ Install them into your career folder with the [`career` group](../../groups/READ
 
 ```bash
 mkdir -p ~/AI/career
-npx rulesync@33.0.0 generate --targets opencode --features skills --input-roots skills/resume-skills --output-roots ~/AI/career
+npx rulesync@41.0.0 generate --targets opencode --features skills --input-roots skills/resume-skills --output-roots ~/AI/career
 ```
 
-Swap `--targets` for your tools. They aren't in `default`; never add `--global` to the command above.
+Swap `--targets` for your tools. Never add `--global` to the command above. In OpenCode, `default` installs them globally for the [`career` agent](../../agents/career/), the only agent that loads them.
 
 ## Use
 
@@ -21,7 +21,7 @@ Give the agent your resume (a file path or pasted text) and, where it applies, t
 - "Rewrite these bullets with measurable results" (`resume-bullet-writer`, `resume-quantifier`)
 - "Write a cover letter for this role" (`cover-letter-generator`)
 - "How well do I match this posting, and what's missing?" (`job-description-analyzer`)
-- "Prepare me for an interview at X" (`interview-prep-generator`)
+- "Give me a one-page prep sheet for an interview at X" (`interview-prep-generator`). Coached prep, practice and mock interviews go to [`interview-coach`](../interview-coach/), as set in `skills/career-workspace/rules/career-routing.md`.
 - "Compare these two offers" and "help me counter" (`offer-comparison-analyzer`, `salary-negotiation-prep`)
 
 All 22 are in [`skills/`](skills/), one folder each.
@@ -29,6 +29,14 @@ All 22 are in [`skills/`](skills/), one folder each.
 ## Notes
 
 Upstream's README lists 20 skills; its installer also delivers `application-form-filler` and `cold-email-writer`, which are included here. The email addresses and phone numbers inside the skills (`john@email.com`, `(555) 123-4567`) are upstream's made-up examples.
+
+## For agents: install, remove and update
+
+To install, use the [`career` group](../../groups/README.md#career) or the folder command above, into a folder the user picks; never with `--global`. They need no other software. To verify, start the tool in that folder and check that the 22 skills, such as `resume-tailor`, are listed.
+
+To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves all 22 skill folders inside the career folder (for example `.opencode/skills/`), one per directory name in [`skills/`](skills/); delete them with approval, and keep any name another installed folder also provides. Resumes, cover letters and other files the skills wrote are the user's and stay unless the user asks.
+
+To update, follow [Check for updates](../../AGENTS.md#check-for-updates). No commit was recorded yet (see [Origin](#origin)); the first check records one.
 
 ## Origin
 
