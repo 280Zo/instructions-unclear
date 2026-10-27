@@ -26,6 +26,7 @@ SANS = "'Geist', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
 MONO = "'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
 
 WIDTH, HEIGHT = 1200, 600
+RADIUS = 16  # rounded image corners; the README background shows outside them
 LEFT, CARD_W, CARD_GAP, CARD_Y, CARD_H = 28, 120, 8, 276, 160
 BUS_Y = 252
 TOOLS = ["OpenCode", "Claude Code", "Codex", "Copilot", "Cursor"]
@@ -63,8 +64,8 @@ def render(theme, agents, total_skills, mcp_count, shared):
         f'<pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="0.9" fill="{t["dots"]}"/></pattern>',
         f'<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="{t["muted"]}"/></marker>',
         "</defs>",
-        f'<rect width="{WIDTH}" height="{HEIGHT}" fill="{t["paper"]}"/>',
-        f'<rect width="{WIDTH}" height="{HEIGHT}" fill="url(#dots)" opacity="0.6"/>',
+        f'<rect width="{WIDTH}" height="{HEIGHT}" rx="{RADIUS}" fill="{t["paper"]}"/>',
+        f'<rect width="{WIDTH}" height="{HEIGHT}" rx="{RADIUS}" fill="url(#dots)" opacity="0.6"/>',
         text(LEFT, 44, "INSTRUCTIONS-UNCLEAR · CONTEXT FILES FOR AI CODING TOOLS", 11, t["soft"], MONO, 500, spacing="0.18em"),
         text(LEFT, 96, "Install once. Each agent sees only its own skills.", 44, t["ink"], SERIF),
         text(LEFT, 132, "Rules, agents, skills and MCP servers for every assistant. Specialist agents keep everything else "

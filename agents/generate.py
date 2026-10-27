@@ -341,8 +341,8 @@ def hero_svgs():
 
 
 def readme_block():
-    alt = ("Install once. Each agent sees only its own skills: one shared install feeds nine agents, "
-           "each loading only the skills and tools it needs.")
+    alt = ("Diagram: one shared install of skills and MCP servers feeds nine agents, "
+           "and each agent sees only its own skills.")
     return "\n".join([
         MAP_BEGIN,
         "",
@@ -356,8 +356,7 @@ def readme_block():
         "</p>",
         "",
         f'<p align="center"><a href="{PAGES_URL}">Interactive agent map</a> · '
-        '<a href="agents/README.md">How agents filter skills</a> · '
-        '<a href="docs/agents-map.html">Map source</a></p>',
+        '<a href="agents/README.md">How agents filter skills</a></p>',
         "",
         MAP_END,
     ])
