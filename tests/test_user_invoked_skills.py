@@ -52,7 +52,7 @@ class UserInvokedSkillTests(unittest.TestCase):
             for name in SKILLS:
                 self.assertIn(f"skills/{name}", roots, group)
         # User-invoked skills are never chosen by the model, so the
-        # every-request routing rule leaves them out (2026-10-24).
+        # every-request routing rule leaves them out.
         routing = (ROOT / "rules/routing/rules/routing.md").read_text()
         for name in SKILLS:
             self.assertNotIn(f"`{name}`", routing)

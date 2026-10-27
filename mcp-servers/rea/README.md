@@ -93,7 +93,7 @@ REA releases often. Update the skill and the server version together:
 
 "Check for updates" in [`AGENTS.md`](../../AGENTS.md) does the comparison for you. To remove REA, delete the folder you installed it into; the only other trace is the cached package in `~/.npm/_npx`.
 
-Release 6.7.0 includes result-contract changes introduced in 6.6/6.7. Saved Evidence and snapshots from older releases may need regeneration; Android version codes are now strings. Review the [release notes](https://github.com/morluto/rea/releases/tag/rea-agents-6.7.0) before changing a working environment. This repo refresh does not migrate evidence or upgrade a live server.
+Release 6.7.0 includes result-contract changes introduced in 6.6/6.7. Saved Evidence and snapshots from older releases may need regeneration; Android version codes are now strings. Review the [release notes](https://github.com/morluto/rea/releases/tag/rea-agents-6.7.0) before changing a working environment. Nothing here migrates evidence or upgrades a live server.
 
 ## Responsible use
 

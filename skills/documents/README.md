@@ -72,7 +72,7 @@ Follow [Check for updates](../../AGENTS.md#check-for-updates) and [Updating and 
 
 - Roles in [`rules/routing`](../../rules/routing/rules/routing.md): "**Office and PDF files** to create or edit (Word, Excel, PowerPoint, PDF): `documents`", and editable `.pptx` decks ("An editable `.pptx` uses the Presenton MCP when it is enabled, otherwise `documents`"). Presenton wins only when the user has it running and enabled.
 - It does not own reading documents (convert, OCR, extract text or tables, describe images): that is the Docling MCP. Browser decks go to `frontend-slides`; slides inside a page stay with `visual-explainer`.
-- Why: on 2026-10-21 the user replaced the per-skill rules with one routing rule because several skills' descriptions and rules claimed the same jobs. Here, `documents` and Docling both covered extraction, and slides were claimed by `documents`, `frontend-slides`, `visual-explainer` and Presenton.
+- Why: `documents` and Docling both covered extraction, and slides were claimed by `documents`, `frontend-slides`, `visual-explainer` and Presenton.
 - When a `theme-factory` theme is in use, it replaces this skill's default palette and fonts.
 - On upstream updates, don't edit the upstream skill text to change routing, and don't add a per-skill routing rule to this folder.
 - After a refresh, re-read the new `description` and triggers. If it now claims a job another item owns (for example OCR or extraction), or drops one it owned, update `rules/routing` and this section in the same change and tell the user.

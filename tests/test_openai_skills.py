@@ -42,7 +42,7 @@ class OpenAISkillsTests(unittest.TestCase):
                 self.assertTrue((root / relative).is_file(), f"{path}/{relative}")
 
     def test_groups_select_skills_without_default_threat_model(self):
-        # Since 2026-10-25 default installs security-threat-model too: only the
+        # default installs security-threat-model too: only the
         # OpenCode security agent may load it (agents/generate.py).
         for group in ["default", "work", "infosec"]:
             roots = read_jsonc(ROOT / f"groups/{group}.jsonc")["inputRoots"]
@@ -63,7 +63,6 @@ class OpenAISkillsTests(unittest.TestCase):
         )
 
     def test_microsoft_playwright_cli_replaces_openai_copy(self):
-        # OpenAI's deprecated playwright copy was replaced on 2026-10-24.
         self.assertFalse((ROOT / "skills/playwright").exists())
         skill = ROOT / "skills/playwright-cli/skills/playwright-cli"
         self.assertTrue((skill / "SKILL.md").is_file())

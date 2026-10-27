@@ -36,8 +36,8 @@ To install, use the [`career` group](../../groups/README.md#career) or the folde
 
 To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves all 22 skill folders inside the career folder (for example `.opencode/skills/`), one per directory name in [`skills/`](skills/); delete them with approval, and keep any name another installed folder also provides. Resumes, cover letters and other files the skills wrote are the user's and stay unless the user asks.
 
-To update, follow [Check for updates](../../AGENTS.md#check-for-updates). No commit was recorded yet (see [Origin](#origin)); the first check records one.
+To update, follow [Check for updates](../../AGENTS.md#check-for-updates).
 
 ## Origin
 
-[Paramchoudhary/ResumeSkills](https://github.com/Paramchoudhary/ResumeSkills), unchanged, copied 2026-10-09 from an install dated 2026-08-10. No commit was recorded; the first update check records one. [MIT](../../THIRD_PARTY_LICENSES.md#paramchoudharyresumeskills), © 2026 Resume Skills. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).
+[Paramchoudhary/ResumeSkills](https://github.com/Paramchoudhary/ResumeSkills), unchanged, copied 2026-10-09 from an install dated 2026-08-10. [MIT](../../THIRD_PARTY_LICENSES.md#paramchoudharyresumeskills), © 2026 Resume Skills. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).

@@ -49,7 +49,7 @@ Follow [Check for updates](../../AGENTS.md#check-for-updates). The pinned commit
 ## For agents: routing and updates
 
 - Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Explanation as a physical object**: `anatomy`". Its description is broad and also claims explanatory diagrams and SVGs that show how a system works, so the routing line keeps diagrams of the system itself with `diagram-design` and explanation pages with `visual-explainer`. Use `anatomy` when the user wants the idea shown as an invented machine, or asks for an isometric, interactive or "premium" technical figure.
-- Added on 2026-10-25 at the user's request, with that routing line. Don't edit the upstream text to change routing.
+- Don't edit the upstream text to change routing.
 - After a refresh, re-read the description. If it claims more jobs another item owns, update `rules/routing` and this section in the same change and tell the user.
 
 ## Origin

@@ -1,7 +1,7 @@
 """Render the README hero image (light and dark SVG) for agents/generate.py.
 
 Style: the diagram-design skill's default editorial tokens, except the accent,
-which is deep teal (user choice, 2026-10-26; orange and blue were rejected).
+which is deep teal.
 In light mode the small label uses a darker teal so it passes WCAG AA. Text
 uses the skill's "system" font stacks, because GitHub shows README SVGs as
 images that can't load web fonts. Coordinates sit on a 4 px grid.

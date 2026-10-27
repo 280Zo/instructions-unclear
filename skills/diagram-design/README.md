@@ -42,8 +42,8 @@ Follow [Check for updates](../../AGENTS.md#check-for-updates). The upstream comm
 ## For agents: routing and updates
 
 - Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Diagram** on its own: `diagram-design`". It also draws the figures when `visual-explainer` builds a page around them.
-- It does not own pages (explanations, plans, reviews, comparisons): those go to `visual-explainer`. A shared look across outputs belongs to `theme-factory`, whose theme replaces this skill's default palette and fonts. An explanation drawn as an invented physical machine (an interactive isometric figure) belongs to `anatomy`, added 2026-10-25; diagrams of the system itself stay here.
-- Why: on 2026-10-21 the user replaced the per-skill rules with one routing rule because several skills' descriptions and rules claimed the same jobs. Here, `diagram-design` and `visual-explainer` both claimed diagrams.
+- It does not own pages (explanations, plans, reviews, comparisons): those go to `visual-explainer`. A shared look across outputs belongs to `theme-factory`, whose theme replaces this skill's default palette and fonts. An explanation drawn as an invented physical machine (an interactive isometric figure) belongs to `anatomy`; diagrams of the system itself stay here.
+- Why: `diagram-design` and `visual-explainer` both claimed diagrams.
 - On upstream updates, don't edit the upstream skill text to change routing, and don't add a per-skill routing rule back to this folder.
 - After a refresh, re-read the new `description` and triggers. If it now claims a job another item owns, or drops one it owned, update `rules/routing` and this section in the same change and tell the user.
 

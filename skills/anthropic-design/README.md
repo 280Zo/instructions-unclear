@@ -49,7 +49,7 @@ Follow [Check for updates](../../AGENTS.md#check-for-updates). The upstream comm
 - Roles in [`rules/routing`](../../rules/routing/rules/routing.md): "**One shared look** across several visual outputs: `theme-factory`. Its theme replaces each renderer's default palette and fonts." and "**UI and frontend design**: `frontend-design`."
 - Neither skill renders pages, diagrams or decks: those stay with `visual-explainer`, `diagram-design`, `frontend-slides`, `documents` or Presenton. `theme-factory` only supplies the look they use.
 - The routing rule settles one conflict here: when a theme and a renderer's own style advice disagree on colours or fonts, the theme wins.
-- Why: on 2026-10-21 the user replaced the per-skill rules (including this folder's `theme-factory` rule) with one routing rule because several skills' descriptions and rules claimed the same jobs. `theme-factory` lists slides, documents, reports and pages, which other skills also claim, so the rule limits it to the theme.
+- Why: `theme-factory` lists slides, documents, reports and pages, which other skills also claim, so the rule limits it to the theme.
 - On upstream updates, don't edit Anthropic's skill text to change routing, and don't add a per-skill routing rule back to this folder.
 - After a refresh, re-read both new `description`s. If either now claims a job another item owns, or drops one it owned, update `rules/routing` and this section in the same change and tell the user.
 

@@ -6,7 +6,7 @@ From the repository root:
 PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s tests -v
 ```
 
-These stdlib tests check collection completeness, native plugin resource paths, reviewed MCP launch definitions, disabled templates, group roots, unique skill names, global-default separation and published status. They do not import helper dependencies, contact targets, access devices or start native MCP backends. The former IoTHackBot patch assertions were retired with the patched packaging; its complete upstream layout is checked instead.
+These stdlib tests check collection completeness, native plugin resource paths, reviewed MCP launch definitions, disabled templates, group roots, unique skill names, global-default separation and published status. They do not import helper dependencies, contact targets, access devices or start native MCP backends. IoTHackBot's complete upstream layout is checked.
 
 `test_openai_skills.py` checks that the pinned OpenAI skills retain their runtime references/scripts, licenses and interface metadata, that the selected groups discover them without name collisions, and that Microsoft's `playwright-cli` replaced OpenAI's deprecated `playwright` copy everywhere.
 
@@ -20,7 +20,7 @@ These stdlib tests check collection completeness, native plugin resource paths, 
 
 Changes to source roots must also be generated with pinned rulesync into throwaway output folders. Compare installed support assets and translated configuration against the source; unit tests alone do not prove generation or native runtime compatibility.
 
-Native-owned collections require a separate isolated installation/discovery check followed by rulesync generation. The October 20, 2026 refresh validated Claude Code plugin packaging and preservation, not model-driven security workflows or Codex execution. Do not run native hooks, scanners, hardware workflows or dependency installers merely to run this suite.
+Native-owned collections require a separate isolated installation/discovery check followed by rulesync generation. These checks cover Claude Code plugin packaging and preservation, not model-driven security workflows or Codex execution. Do not run native hooks, scanners, hardware workflows or dependency installers merely to run this suite.
 
 ## OpenCode permission regression
 
@@ -37,7 +37,7 @@ python3 tests/check_opencode_permissions.py "$cli41"
 python3 tests/check_opencode_permissions.py "$cli38" --legacy
 ```
 
-Verified on 2026-10-25 with OpenCode 2.1.3:
+Checked with OpenCode 2.1.3:
 
 | Native skill call | rulesync 38.0.0 | rulesync 41.0.0 |
 |---|---|---|
@@ -53,7 +53,7 @@ This checks real native tool enforcement with dummy skills, not a model's claime
 python3 tests/check_opencode_agents.py "$cli41"
 ```
 
-Verified on 2026-10-25 and again on 2026-10-26 after agents moved to one folder each, with OpenCode 2.1.3. Every list matched exactly; counts are repo skills the model sees. Superpowers isn't installed in the test home, and user-invoked skills never reach the model:
+Checked with OpenCode 2.1.3. Every list matched exactly; counts are repo skills the model sees. Superpowers isn't installed in the test home, and user-invoked skills never reach the model:
 
 | Agent | Skills | Agent | Skills |
 |---|---|---|---|

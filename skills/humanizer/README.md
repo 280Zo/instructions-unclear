@@ -26,16 +26,16 @@ To install, use the `default`, `work` or `writing_reporting` group, or the singl
 
 To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `humanizer` skill folder behind; delete it with approval. If the user keeps `rules/routing`, its line still names `humanizer`, so tell them.
 
-To update, follow [Check for updates](../../AGENTS.md#check-for-updates). No commit was recorded yet (see [Origin](#origin)); the first check records one. The update bullets in the next section say what to recheck.
+To update, follow [Check for updates](../../AGENTS.md#check-for-updates). The update bullets in the next section say what to recheck.
 
 ## For agents: routing and updates
 
 - Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Prose people will read** (READMEs, docs, commit messages, pull requests): `humanizer`".
 - It edits wording only. It does not own write-ups (`report`), teaching (`eli5`) or any rendering; it can polish their prose afterwards.
-- Why: on 2026-10-21 the user replaced the per-skill rules (including this folder's own rule) with one routing rule, so every "which skill owns this" decision is in one place instead of spread across skill folders and descriptions that claimed the same jobs.
+- Why: one routing rule keeps every "which skill owns this" decision in one place.
 - On upstream updates, don't edit the upstream skill text to change routing, and don't add a per-skill routing rule back to this folder.
 - After a refresh, re-read the new `description` and triggers. If it now claims a job another item owns, or drops one it owned, update `rules/routing` and this section in the same change and tell the user.
 
 ## Origin
 
-[blader/humanizer](https://github.com/blader/humanizer), unchanged, copied 2026-10-01. No commit was recorded; the first update check records one. [MIT](../../THIRD_PARTY_LICENSES.md#bladerhumanizer), © 2025 Siqi Chen. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).
+[blader/humanizer](https://github.com/blader/humanizer), unchanged, copied 2026-10-01. [MIT](../../THIRD_PARTY_LICENSES.md#bladerhumanizer), © 2025 Siqi Chen. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).

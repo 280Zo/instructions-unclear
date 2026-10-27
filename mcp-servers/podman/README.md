@@ -2,7 +2,7 @@
 
 [manusa/podman-mcp-server](https://github.com/manusa/podman-mcp-server) lets an assistant list, inspect, run, stop and remove containers, and list, pull, build, push and remove images, on **Podman or Docker**. It also lists networks and volumes. It talks to the Podman socket API when one is available and otherwise falls back to the `podman` or `docker` CLI.
 
-It's a community server, not part of the Podman project. Neither Podman nor Docker publishes an official MCP server for local containers; Docker's official servers cover Docker Hub, its docs and its MCP Gateway. This one was chosen on 2026-10-24 over [ckreiling/mcp-server-docker](https://github.com/ckreiling/mcp-server-docker), which is more popular but Docker-only and hasn't had owner activity since 2025-06.
+It's a community server, not part of the Podman project. Neither Podman nor Docker publishes an official MCP server for local containers; Docker's official servers cover Docker Hub, its docs and its MCP Gateway. It's used instead of [ckreiling/mcp-server-docker](https://github.com/ckreiling/mcp-server-docker), which is more popular but Docker-only and hasn't had owner activity since 2025-06.
 
 ## Install
 

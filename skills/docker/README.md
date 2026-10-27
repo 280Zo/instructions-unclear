@@ -44,9 +44,9 @@ Follow [Check for updates](../../AGENTS.md#check-for-updates). The release tag a
 ## For agents: routing and updates
 
 - Not in [`rules/routing`](../../rules/routing/rules/routing.md): no other installed skill writes Dockerfiles or Compose files. `docker-destructive-guardrails` applies to destructive Docker commands however they're run, including through the [Podman MCP](../../mcp-servers/podman/).
-- These four and the seven in `skills/docker-sandboxes-agent` are one upstream collection, split by Docker's own product grouping in `catalog.yaml` (user decision, 2026-10-24) so `default` doesn't carry the product-specific descriptions. The other seven point to `docker-destructive-guardrails`, so this folder must be installed wherever that one is. Update both folders from the same release.
+- These four and the seven in `skills/docker-sandboxes-agent` are one upstream collection, split by Docker's own product grouping in `catalog.yaml` so `default` doesn't carry the product-specific descriptions. The other seven point to `docker-destructive-guardrails`, so this folder must be installed wherever that one is. Update both folders from the same release.
 - Upstream also ships native plugins for Claude Code, Codex, Cursor, Copilot CLI and Gemini CLI and a `npx skills add docker/skills` installer. Use one installer per tool; don't install the native plugin on top of these copies.
-- Upstream's unreleased `docker-docs` skill pairs with Docker's official docs MCP server (`https://ai-backend-service.docker.com/mcp`). It isn't copied because it wasn't in a release on 2026-10-24; consider it at the next update.
+- Upstream's unreleased `docker-docs` skill pairs with Docker's official docs MCP server (`https://ai-backend-service.docker.com/mcp`). It isn't copied because it isn't in a release.
 - After a refresh, re-read the descriptions. If one now claims a job another item owns, update `rules/routing` and this section in the same change and tell the user.
 
 ## Origin

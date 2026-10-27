@@ -126,17 +126,15 @@ This folder is written for this repo, so there is no upstream to check. When cha
 `career-master-resume` owns the bullet bank; `career-work-history` owns official
 employment fields. That routing lives in this folder's
 [`rules/career-routing.md`](rules/career-routing.md), which the career group
-installs into the career folder's own `AGENTS.md`; it moved out of the global
-`rules/routing` on 2026-10-24 because these skills exist only in that folder.
+installs into the career folder's own `AGENTS.md`. It lives here rather than in
+the global `rules/routing`, so it installs only where these skills do.
 The starter also keeps its own required-skill contract, so it still works when
 the skills are installed without the rule.
 
 When updating this workflow, reconcile the starter, builder hand-off and README
 together. Preserve required resume passes, version-manager ownership and factual
 gates; do not edit upstream resume-skills to adapt routing. Check career group
-counts and generate the changed group into an isolated folder. Interview study,
-negotiation and further document-recording connections are future extensions,
-not additional branches implemented by this change.
+counts and generate the changed group into an isolated folder.
 
 ## Origin
 

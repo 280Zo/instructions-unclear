@@ -13,7 +13,7 @@ Nothing installs through rulesync for this one. The plugin comes straight from u
 | Codex CLI | `/plugins`, search for `superpowers`, choose **Install Plugin** |
 | Others | Upstream's [installation list](https://github.com/obra/superpowers#installation) covers Cursor, Gemini CLI, Copilot CLI and more |
 
-For OpenCode, current upstream requires V2 **2.0.4+**. The git entry is unpinned, but OpenCode keeps loading its cached install until you update it; a restart alone does not install a newer release. After installing or rolling out a new config, run `opencode plugin check` and `opencode plugin update`, then confirm the version with `opencode plugin list` (see [Updating](../README.md#updating-opencode-keeps-cached-versions)). Don't delete caches or lockfiles to force an update. To stay on a reviewed release instead, pin a full commit hash. On October 21, 2026 the unpinned entry resolved to package version 7.0.1; the last reviewed release tag was `v7.0.0` (checked October 20, 2026).
+For OpenCode, current upstream requires V2 **2.0.4+**. The git entry is unpinned, but OpenCode keeps loading its cached install until you update it; a restart alone does not install a newer release. After installing or rolling out a new config, run `opencode plugin check` and `opencode plugin update`, then confirm the version with `opencode plugin list` (see [Updating](../README.md#updating-opencode-keeps-cached-versions)). Don't delete caches or lockfiles to force an update. To stay on a reviewed release instead, pin a full commit hash. The last reviewed release tag is `v7.0.0`.
 
 ### Let your agent do it
 

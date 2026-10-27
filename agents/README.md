@@ -105,13 +105,11 @@ The tests fail when the image is out of date, so forgetting shows up there. To p
 
 ### Install
 
-Use the `default` group as above. Don't add the per-agent folders (`build`, `plan`, `general`, `explore`, `design`, `career`, `ai-research`, `3d-modeling`) to other groups (user decision, 2026-10-25): `work` also targets Copilot, which can't filter skills. To verify in OpenCode, ask the user to open `/agents` in a new session and check that the six specialists, `build`, `plan`, `second-opinion` and `local-model` appear, then run [the runtime check](../tests/README.md#opencode-permission-regression) instead of asking a model which skills it has. For other tools, the runtime check only confirms the generated files.
+Use the `default` group as above. Don't add the per-agent folders (`build`, `plan`, `general`, `explore`, `design`, `career`, `ai-research`, `3d-modeling`) to other groups: `work` also targets Copilot, which can't filter skills. To verify in OpenCode, ask the user to open `/agents` in a new session and check that the six specialists, `build`, `plan`, `second-opinion` and `local-model` appear, then run [the runtime check](../tests/README.md#opencode-permission-regression) instead of asking a model which skills it has. For other tools, the runtime check only confirms the generated files.
 
 ### Remove
 
 Follow [Removing or replacing a component](../AGENTS.md#removing-or-replacing-a-component). Each agent's files are `~/.config/opencode/agents/<name>.md`, `~/.claude/agents/<name>.md`, `~/.codex/agents/<name>.toml` and `~/.copilot/agents/<name>.agent.md`; Cursor's is `<name>.md` in its agents folder. Deleting the OpenCode `build`, `plan`, `general` or `explore` file restores the unrestricted built-in agent. Skill folders installed by `default` stay until removed separately.
-
-Earlier versions of this repo used `agents/specialists/` and `agents/opencode-overrides/`; a live install from them may hold `<name>.portable.md` files for other tools. Delete those with approval after installing this layout.
 
 ### Update
 

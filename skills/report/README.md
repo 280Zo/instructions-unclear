@@ -34,7 +34,7 @@ To update, there is no upstream: the skill is written for this repo and changes 
 
 - Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Write-up** of material already gathered: `report`". Teaching something unfamiliar is `eli5`'s job.
 - It gathers and checks evidence but doesn't own rendering: pages go to `visual-explainer`, diagrams to `diagram-design`, browser decks to `frontend-slides`, editable `.pptx` to `documents` or Presenton, and the shared look to `theme-factory`.
-- Why: on 2026-10-21 the user replaced the per-skill rules with one routing rule because several skills' descriptions and rules claimed the same jobs. `report` delegates rendering to those skills, so it has to follow the same owners as everything else.
+- Why: `report` delegates rendering to those skills, so it has to follow the same owners as everything else.
 - The skill is written for this repo, so its own text can be adjusted to match routing, but `rules/routing` stays the single source: change the rule first and keep this skill consistent with it.
 - Don't add a per-skill routing rule to this folder. When a renderer it uses is added, removed or refreshed and its job changes, update `rules/routing`, this skill's references to that renderer and this section in the same change, and tell the user.
 

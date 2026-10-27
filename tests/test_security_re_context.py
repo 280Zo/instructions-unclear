@@ -46,7 +46,7 @@ class SecurityReContextTests(unittest.TestCase):
         self.assertIn('"oauth": false', text)
         reference = "{file:{env:XDG_RUNTIME_DIR}/opencode/exa.key}"
         self.assertIn(reference, text)
-        # Only OpenCode understands {file:} (user decision, 2026-10-26).
+        # Only OpenCode understands {file:}.
         config = read_jsonc(ROOT / "mcp-servers/exa/mcp.jsonc")
         self.assertEqual(config["mcpServers"]["exa"]["headers"]["x-api-key"], "${EXA_API_KEY}")
         scoped = config["opencode"]["mcpServers"]["exa"]
@@ -310,8 +310,8 @@ class SecurityReContextTests(unittest.TestCase):
         default = read_jsonc(ROOT / "rulesync.jsonc")
         mirror = read_jsonc(ROOT / "groups/default.jsonc")
         self.assertEqual(default["inputRoots"], mirror["inputRoots"])
-        # ZAP, ReVa and radare2 joined default switched off on 2026-10-25, behind
-        # agent permissions. REA starts enabled, so it stays folder-only.
+        # ZAP, ReVa and radare2 are in default, switched off, behind agent
+        # permissions. REA starts enabled, so it stays folder-only.
         specialists = {"skills/iothackbot", "mcp-servers/rea"}
         self.assertFalse(specialists & set(default["inputRoots"]))
         for name in ["zap", "reva", "radare2"]:

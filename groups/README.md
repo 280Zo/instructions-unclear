@@ -29,7 +29,7 @@ Context generation does not install native analysis tools or authorize target op
 
 Everything in [`rulesync.jsonc`](../rulesync.jsonc), into OpenCode: all selected global rules (including `routing`, the career routing rule and `preferences`), every [agent folder](../agents/README.md) (`design`, `career`, `ai-research`, `3d-modeling`, `second-opinion`, `local-model`, the `security` and `reverse-engineering` sets, and restrictions for OpenCode's `build`, `plan`, `general` and `explore`), the repo-owned [`agents/security`](../agents/security/) bundle, and the selected global MCP servers/skills.
 
-Since 2026-10-25 `default` also installs the design, career, AI research, threat-model and reverse-engineering skills, plus switched-off ZAP, ReVa and radare2 connections. Each OpenCode agent loads only its own skills and tools, so these add nothing to the other agents' requests. REA stays in the `reverse_engineering` folder group because it starts switched on. The folder groups below still work for other tools and workspaces.
+`default` also installs the design, career, AI research, threat-model and reverse-engineering skills, plus switched-off ZAP, ReVa and radare2 connections. Each OpenCode agent loads only its own skills and tools, so these add nothing to the other agents' requests. REA stays in the `reverse_engineering` folder group because it starts switched on. The folder groups below still work for other tools and workspaces.
 
 `documents` is included, and so are `handoff`, `teach` and `wait-what` (user-invoked only), Docker's 4 core skills ([`skills/docker`](../skills/docker/)) and the [Podman MCP](../mcp-servers/podman/), switched off. Docker's Sandboxes and Docker Agent skills are in `work` only. `security-threat-model` is included, and only the `security` agent can load it.
 
@@ -88,7 +88,7 @@ What each tool gets:
 | Copilot CLI | Rules, 7 agents, 38 skills, MCP servers (`~/.copilot/`) | Commands: Copilot CLI has none |
 | Copilot (VS Code) | Rules, agents and skills, written to the same `~/.copilot/` folder | MCP servers and commands: rulesync writes those for VS Code only inside a project, not globally |
 
-The seventh agent, `security`, comes with `agents/security` (added 2026-10-26). In OpenCode it loads only its own skills; Copilot gets its instructions without that filter. The other specialist agents aren't in `work`.
+The seventh agent, `security`, comes with `agents/security`. In OpenCode it loads only its own skills; Copilot gets its instructions without that filter. The other specialist agents aren't in `work`.
 
 Codebase-memory, Presenton, ZAP and Podman are written switched off. OpenCode V2 gets `"disabled": true` on each; Copilot CLI gets them listed under `disabledMcpServers` in `~/.copilot/settings.json`. ZAP only becomes usable after you set up a local ZAP with its MCP add-on and turn it on yourself; enabling it still doesn't authorize scanning any target.
 
@@ -148,7 +148,7 @@ npx rulesync@41.0.0 generate --config groups/reverse_engineering.jsonc --output-
 
 ## design
 
-The 19 skills from [`skills/designskills`](../skills/designskills/), including `color-palette` and `design-context`, which the others read brand settings from. Nine upstream skills that overlapped `frontend-design`, `frontend-slides` and `diagram-design` were removed on 2026-10-25, so the folder needs no routing rule. `default` installs them for the OpenCode [`design` agent](../agents/design/); `work` doesn't include them. The group also installs [`anatomy`](../skills/anatomy/), the isometric explainer, which `default` and `work` include too. Image generation needs a Gemini key and Python packages, and the render and critique scripts need Playwright; the [folder README](../skills/designskills/README.md#what-the-skills-need) lists them. Writes no MCP settings.
+The 19 skills from [`skills/designskills`](../skills/designskills/), including `color-palette` and `design-context`, which the others read brand settings from. Nine upstream skills that overlapped `frontend-design`, `frontend-slides` and `diagram-design` aren't included, so the folder needs no routing rule. `default` installs them for the OpenCode [`design` agent](../agents/design/); `work` doesn't include them. The group also installs [`anatomy`](../skills/anatomy/), the isometric explainer, which `default` and `work` include too. Image generation needs a Gemini key and Python packages, and the render and critique scripts need Playwright; the [folder README](../skills/designskills/README.md#what-the-skills-need) lists them. Writes no MCP settings.
 
 ```bash
 mkdir -p ~/AI/design

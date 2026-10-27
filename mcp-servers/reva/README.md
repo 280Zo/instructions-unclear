@@ -55,8 +55,6 @@ Follow [Check for updates](../../AGENTS.md#check-for-updates) and [Updating](#up
 
 Update the extension version, skill commit and matching Ghidra requirements together, comparing upstream changes before copying. Preserve all `patterns.md`, `examples.md` and scripting references. Re-run the offline tests and throwaway reverse-engineering generation. No runtime compatibility has been tested by merely generating this config.
 
-Checked October 20, 2026: v7.3.1 remains the latest release and all six copied skill payloads match the audited upstream development tree. The verified release baseline below is retained; unrelated later repository commits are not a reason to relabel the copied source.
-
 ## Origin
 
 Skills copied unchanged from [cyberkaida/reverse-engineering-assistant](https://github.com/cyberkaida/reverse-engineering-assistant), `ReVa/skills/`, tag `v7.3.1`, commit `3cb3e65f354cda8d6125ecff654063436a3ab5ab`, October 15, 2026. Apache-2.0, copyright 2023 サイバーカイダ; [upstream license](https://github.com/cyberkaida/reverse-engineering-assistant/blob/v7.3.1/LICENSE), [shipped full text](../../THIRD_PARTY_LICENSES.md#cyberkaidareverse-engineering-assistant). Connection template and README written for this repo by 280Zo.

@@ -1,6 +1,6 @@
 # codebase-memory
 
-[codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) maintains a local structural code graph. **Upstream owns its complete integration:** server installation, skill, three agent profiles, instructions and the OpenCode augmentation extension. This repo no longer extracts or maintains its embedded skill separately.
+[codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) maintains a local structural code graph. **Upstream owns its complete integration:** server installation, skill, three agent profiles, instructions and the OpenCode augmentation extension. This repo doesn't copy its skill.
 
 | File | What this repo owns |
 |---|---|
@@ -20,7 +20,7 @@ Repeat the final upstream integration step after future rulesync runs that repla
 
 ## Verified rulesync conflict
 
-An isolated v0.12.1 native installation followed by rulesync generation replaced upstream's instruction block, changed its MCP entry to this repo's disabled template, and overwrote the newer skill with the formerly shipped extracted copy. Agents and the extension survived. Removing our extracted copy prevents that skill overwrite, but generation still replaces the shared instructions/configuration it owns.
+Running rulesync after upstream's installer replaces upstream's instruction block and sets its MCP entry to this repo's disabled template; its agents and extension survive.
 
 The approved exception is **rulesync first, upstream integration last**. In an isolated test, the native installer restored the exact release skill and its instruction block while preserving other generated MCP entries and rules. It retained the existing disabled state. This ordering is an observed integration requirement, not a general reason to avoid upstream installers.
 
@@ -28,7 +28,7 @@ The standard Linux amd64 build failed during C++ locale initialization in the te
 
 ## Use
 
-After enabling the intended connection, ask to index a repository, trace callers or inspect change impact. Follow the upstream-installed skill rather than a separately maintained copy. The 0.12.1 release notes describe index/schema changes that can require a full rebuild; this repo refresh does not rebuild or migrate live indexes.
+After enabling the intended connection, ask to index a repository, trace callers or inspect change impact. Follow the upstream-installed skill rather than a separately maintained copy. The 0.12.1 release notes describe index/schema changes that can require a full rebuild; nothing here rebuilds or migrates live indexes.
 
 ## For agents: install, remove and update
 
@@ -54,9 +54,9 @@ After enabling the intended connection, ask to index a repository, trace callers
 
 ## For agents: routing and updates
 
-- Not in [`rules/routing`](../../rules/routing/rules/routing.md): it's switched off by default, and when enabled its upstream integration supplies its own instructions for structural code questions (line removed 2026-10-24 to save tokens). If you enable it and the agent ignores the graph tools, add a line back.
+- Not in [`rules/routing`](../../rules/routing/rules/routing.md): it's switched off by default, and when enabled its upstream integration supplies its own instructions for structural code questions. If you enable it and the agent ignores the graph tools, add a line back.
 - The connection is disabled by default, so the rule's fallback (plain code search) is the normal case. Don't enable the server to answer a question.
-- Why: on 2026-10-21 the user replaced the per-skill routing rules with one routing rule because several items claimed the same jobs. The upstream-installed skill and instructions describe when to use the graph; the routing rule only decides graph versus direct search.
+- Why: The upstream-installed skill and instructions describe when to use the graph; the routing rule only decides graph versus direct search.
 - Upstream owns its skill, agents and instructions, so don't edit them and don't add a routing rule to this folder.
 - After applying a new upstream release, re-read the installed skill's description and instructions. If they now claim a job another item owns, update `rules/routing` and this section in the same change and tell the user.
 

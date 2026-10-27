@@ -26,9 +26,9 @@ To update, follow [Check for updates](../../AGENTS.md#check-for-updates). The pi
 
 ## For agents: routing and updates
 
-- Not in [`rules/routing`](../../rules/routing/rules/routing.md): its description already limits it to desktop or window capture when tool-specific capture isn't available, so it doesn't compete with `playwright-cli` (line removed 2026-10-24 to save tokens).
+- Not in [`rules/routing`](../../rules/routing/rules/routing.md): its description already limits it to desktop or window capture when tool-specific capture isn't available, so it doesn't compete with `playwright-cli`.
 - It does not own browser automation, including screenshots of a page being driven in a browser: those go to `playwright-cli`.
-- Why: on 2026-10-21 the user replaced the per-skill rules with one routing rule because several skills' descriptions and rules claimed the same jobs. Here, `screenshot` and `playwright` both claimed capturing screenshots.
+- Why: `screenshot` and `playwright` both claimed capturing screenshots.
 - On upstream updates, don't edit the upstream skill text to change routing, and don't add a per-skill routing rule to this folder.
 - After a refresh, re-read the new `description` and triggers. If it now claims a job another item owns, or drops one it owned, update `rules/routing` and this section in the same change and tell the user.
 

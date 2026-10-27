@@ -44,7 +44,6 @@ The [`design` group](../../groups/README.md#design) installs this folder profile
 Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component), working inside the design folder (`.opencode/skills/` and so on), not the home folder.
 
 - `delete: false` leaves all 19 skills behind: every directory under `skills/designskills/skills/`. Delete them only with approval.
-- An install made before 2026-10-25 may also hold the 9 removed skills and a design routing rule in the folder's `AGENTS.md`. Regeneration doesn't delete them. With approval, delete the 9 skill folders listed under [Changes from upstream](#changes-from-upstream), and delete the folder's generated `AGENTS.md` if nothing else is in it.
 - Don't delete the whole folder without asking. `.agents/design-context.md` and the graphics, pages and exports the skills made are the user's work and stay unless the user explicitly asks.
 - Python packages, Playwright and Chromium, and the `GEMINI_API_KEY` setting stay installed. Offer to remove packages separately, following the `package-management` skill.
 
@@ -68,7 +67,7 @@ Start with `design-context` to record your brand, then ask for the work:
 
 ## For agents: routing and updates
 
-- Not in [`rules/routing`](../../rules/routing/rules/routing.md), and the folder has no routing rule of its own. After the 9 overlapping skills were removed, none of the 19 claims a job another installed skill owns.
+- Not in [`rules/routing`](../../rules/routing/rules/routing.md), and the folder has no routing rule of its own. Without the 9 overlapping skills, none of the 19 claims a job another installed skill owns.
 - The skills depend on each other (shared `design-context`, shared token names, handoffs between skills), so the 19 stay together in this one folder.
 - A few kept skills still name removed ones in passing (for example `banner-design` says to use `hero-section` for a hero, and `email-design` names `landing-page-design`). Treat those as pointers to the current owner: `frontend-design` for UI and pages, `frontend-slides` for decks, `diagram-design` for infographics. Don't edit the upstream text to change them.
 - After a refresh, re-read the descriptions. If one now claims a job another item owns, or drops one, tell the user and update this section in the same change.
@@ -76,9 +75,9 @@ Start with `design-context` to record your brand, then ask for the work:
 
 ## Changes from upstream
 
-On 2026-10-25 the user approved removing 9 skills that overlapped more popular skills already in this repo. The 19 that remain are unchanged.
+Nine upstream skills that overlap more popular skills in this repo aren't copied. The 19 that are copied are unchanged.
 
-| Removed | Overlapped with |
+| Not copied | Overlapped with |
 |---|---|
 | `ui-design`, `landing-page-design`, `hero-section`, `dashboard-design`, `card-design`, `mobile-ui-design`, `layout-composition` | `frontend-design` (anthropics/skills) |
 | `presentation-design` | `frontend-slides` |

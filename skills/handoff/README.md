@@ -31,9 +31,9 @@ To update, follow [Check for updates](../../AGENTS.md#check-for-updates). The co
 
 ## For agents: routing and updates
 
-- Not in [`rules/routing`](../../rules/routing/rules/routing.md): it's user-invoked only (`disable-model-invocation`), so the model never chooses it and a routing line would only cost tokens (removed 2026-10-24). The `local-model` agent's own pause/resume notes are separate and need no routing.
+- Not in [`rules/routing`](../../rules/routing/rules/routing.md): it's user-invoked only (`disable-model-invocation`), so the model never chooses it and a routing line would only cost tokens. The `local-model` agent's own pause/resume notes are separate and need no routing.
 - It does not own the `local-model` agent's pause/resume notes. That agent writes its own `local-model-handoff.md` as part of its working style; leave that alone when the user is running it.
-- Why: added on 2026-10-21 after an overlap check against the existing skills and agents. The only neighbor was `local-model`'s built-in handoff, which serves one agent's loop, so the user approved `handoff` as the general one.
+- Why: the only neighbor is `local-model`'s built-in handoff, which serves one agent's loop; `handoff` is the general one.
 - The skill is user-invoked only (`disable-model-invocation: true`, kept under the `claudecode:` and `opencode:` sections so rulesync passes it to both). Don't remove it to make the skill load automatically.
 - On upstream updates, copy the new folder unchanged, keep the tool sections, and record the new commit below. Don't edit the upstream text to change routing. If the new description claims a job another skill owns, update `rules/routing` and this section in the same change and tell the user.
 

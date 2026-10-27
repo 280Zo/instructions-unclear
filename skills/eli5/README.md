@@ -42,7 +42,7 @@ The skill is written for this repo, so there is no upstream commit to check. Kee
 
 - Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Teaching** one unfamiliar thing: `eli5`". Writing up material already gathered is `report`'s job. A course spread over several sessions is `teach`'s, which the user starts with `/teach`, so it has no routing line.
 - It doesn't own rendering: the saved explainer page goes to `visual-explainer`, with its diagram drawn by `diagram-design`. Web discovery during research goes to Exa `search`.
-- Why: on 2026-10-21 the user replaced the per-skill rules with one routing rule because several skills' descriptions and rules claimed the same jobs. `eli5` delegates its page to `visual-explainer`, so it has to follow the same owners as everything else.
+- Why: `eli5` delegates its page to `visual-explainer`, so it has to follow the same owners as everything else.
 - The skill is written for this repo, so its own text can be adjusted to match routing, but `rules/routing` stays the single source: change the rule first and keep this skill consistent with it.
 - Don't add a per-skill routing rule to this folder. When a renderer it uses is added, removed or refreshed and its job changes, update `rules/routing`, this skill's references to it and this section in the same change, and tell the user.
 

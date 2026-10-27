@@ -6,7 +6,7 @@ Anthropic's `frontend-design` and `theme-factory` (`skills/anthropic-design/`) a
 
 ## openai/skills
 
-Applies to the complete upstream payloads at `skills/<name>/skills/<name>/`, where `<name>` is `transcribe`, `speech`, `security-threat-model` or `screenshot`, and to `agents/security/skills/security-best-practices/`. The first four are unchanged, independently selectable source roots. (OpenAI's `playwright` copy was replaced by Microsoft's own skill on 2026-10-24; see [microsoft/playwright-cli](#microsoftplaywright-cli).) `security-best-practices` is modified inside the repo-owned security bundle: its `SKILL.md` carries a change notice at the end, and every change is listed in [`agents/security/README.md`](agents/security/README.md#changes-from-upstream). Source: https://github.com/openai/skills, revision `49f948faa9258a0c61caceaf225e179651397431`. Each upstream `LICENSE.txt` remains unchanged in its original folder. The full shared Apache-2.0 terms follow, copied from `transcribe/LICENSE.txt` (identical to the other licenses); those skills retain its unfilled example copyright boilerplate. OpenAI is recorded as source publisher, not an invented copyright statement.
+Applies to the complete upstream payloads at `skills/<name>/skills/<name>/`, where `<name>` is `transcribe`, `speech`, `security-threat-model` or `screenshot`, and to `agents/security/skills/security-best-practices/`. The first four are unchanged, independently selectable source roots. `security-best-practices` is modified inside the repo-owned security bundle: its `SKILL.md` carries a change notice at the end, and every change is listed in [`agents/security/README.md`](agents/security/README.md#changes-from-upstream). Source: https://github.com/openai/skills, revision `49f948faa9258a0c61caceaf225e179651397431`. Each upstream `LICENSE.txt` remains unchanged in its original folder. The full shared Apache-2.0 terms follow, copied from `transcribe/LICENSE.txt` (identical to the other licenses); those skills retain its unfilled example copyright boilerplate. OpenAI is recorded as source publisher, not an invented copyright statement.
 
 ```text
 Apache License
@@ -242,7 +242,7 @@ SOFTWARE.
 
 ## BrownFineSecurity/iothackbot
 
-Applies to the complete, unchanged `skills/iothackbot/upstream/` tree. Source: https://github.com/BrownFineSecurity/iothackbot, commit d443c408a9fdd83f97d8c354b9c639afa2251974. Installation guidance outside that tree is written for this repo; the former local patches and routing skill are no longer shipped.
+Applies to the complete, unchanged `skills/iothackbot/upstream/` tree. Source: https://github.com/BrownFineSecurity/iothackbot, commit d443c408a9fdd83f97d8c354b9c639afa2251974. Installation guidance outside that tree is written for this repo.
 
 ```text
 MIT License

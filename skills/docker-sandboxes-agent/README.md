@@ -47,7 +47,7 @@ Follow [Check for updates](../../AGENTS.md#check-for-updates). The release tag a
 ## For agents: routing and updates
 
 - Not in [`rules/routing`](../../rules/routing/rules/routing.md): no other installed skill covers `sbx` or Docker Agent.
-- This folder and [`skills/docker`](../docker/) are one upstream collection, split by Docker's product grouping (user decision, 2026-10-24). Always install it with `skills/docker`, and update both from the same release. See that README for the native-plugin and `docker-docs` notes.
+- This folder and [`skills/docker`](../docker/) are one upstream collection, split by Docker's product grouping. Always install it with `skills/docker`, and update both from the same release. See that README for the native-plugin and `docker-docs` notes.
 - After a refresh, re-read the descriptions. If one now claims a job another item owns, update `rules/routing` and this section in the same change and tell the user.
 
 ## Origin

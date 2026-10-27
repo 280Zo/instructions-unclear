@@ -36,7 +36,7 @@ class RuleTests(unittest.TestCase):
             self.assertFalse((ROOT / path).exists(), path)
 
     def test_folder_only_routing_lives_with_its_collection(self):
-        # Since 2026-10-24, routing for folder-only collections installs with
+        # Routing for folder-only collections installs with
         # its folder group, and jobs another rule already assigns are not
         # repeated in the every-request routing rule.
         text = rule_text("routing")
@@ -46,8 +46,8 @@ class RuleTests(unittest.TestCase):
         self.assertIn("root: true", rule)
         self.assertIn("interview-coach", rule)
         self.assertIn("rules", read_jsonc(ROOT / "groups/career.jsonc")["features"])
-        # The design overlaps were removed on 2026-10-25, so the design
-        # folder no longer needs a routing rule.
+        # The design folder has no overlapping skills, so it needs no
+        # routing rule.
         self.assertFalse((ROOT / "skills/designskills/rules").exists())
         design = ROOT / "skills/designskills/skills"
         for name in ["ui-design", "landing-page-design", "hero-section", "dashboard-design",

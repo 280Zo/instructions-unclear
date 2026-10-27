@@ -68,9 +68,9 @@ Start your tool in the project you want reviewed:
 
 The commands report findings first. Fixes, dependency updates, installs, CI changes, commits, deployments and active testing all wait for your approval. Your installed rules still apply.
 
-## Why this bundle exists
+## Overlaps it resolves
 
-On October 21, 2026 the user decided to merge the overlapping security folders into one bundle owned by this repo. It removed:
+Merging the upstream security folders into one bundle removes:
 
 - **Duplicate auditors:** `security-scanning-security-auditor` and `security-compliance-security-auditor` had the same prompt. Now there is one `security-auditor`.
 - **Two threat-model workflows:** the `threat-modeling-expert` agent's own steps and the `security-threat-model` skill. The agent now uses the skill as its primary repo-grounded workflow and the four technique skills inside it.

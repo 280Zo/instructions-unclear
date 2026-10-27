@@ -68,7 +68,6 @@ class AgentTests(unittest.TestCase):
         for name in ["security", "reverse-engineering"]:
             self.assertTrue(agent_file(name).is_file(), name)
         self.assertEqual(list(ROOT.glob("agents/**/*.portable.md")), [])
-        # Replaced on 2026-10-26 by the per-agent folders.
         for old in ["agents/specialists", "agents/opencode-overrides"]:
             self.assertFalse((ROOT / old).exists(), f"delete {old}")
 
@@ -120,7 +119,7 @@ class AgentTests(unittest.TestCase):
 
     def test_specialist_skills_exist(self):
         available = set(default_skill_ids()) | set(generate.SHARED)
-        # REA stays folder-only (user decision, 2026-10-25), so its skill may be absent.
+        # REA is folder-only, so its skill may be absent.
         available.add("reverse-engineer-anything")
         for spec in generate.agent_specs().values():
             for bundle in spec.get("bundles", []):
@@ -166,7 +165,7 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(duplicates, {})
 
     def test_other_groups_keep_their_agents(self):
-        # Only default gets the per-agent folders (user decision, 2026-10-25).
+        # Only default gets the per-agent folders.
         # The security and reverse-engineering agents travel with their sets.
         for group in ROOT.glob("groups/*.jsonc"):
             if group.stem == "default":

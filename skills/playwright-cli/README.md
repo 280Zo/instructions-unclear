@@ -2,7 +2,7 @@
 
 Microsoft's own skill for driving a real browser from the terminal with `playwright-cli`: open pages, click, type and fill, take accessibility snapshots and screenshots, mock requests, save storage state, trace, record video, and run or generate Playwright tests. Microsoft recommends this CLI-and-skill pair over the Playwright MCP server for coding agents, because it keeps tool schemas and page trees out of the context. Its description is about 10 words.
 
-It replaced OpenAI's deprecated `playwright` copy on 2026-10-24. It's in `default`, `work` and `infosec`.
+It's in `default`, `work` and `infosec`.
 
 ## Install
 

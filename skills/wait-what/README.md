@@ -28,9 +28,9 @@ To update, follow [Check for updates](../../AGENTS.md#check-for-updates). The co
 
 ## For agents: routing and updates
 
-- Not in [`rules/routing`](../../rules/routing/rules/routing.md): it's user-invoked only (`disable-model-invocation`), so the model never chooses it and a routing line would only cost tokens (removed 2026-10-24).
+- Not in [`rules/routing`](../../rules/routing/rules/routing.md): it's user-invoked only (`disable-model-invocation`), so the model never chooses it and a routing line would only cost tokens.
 - It does not own polishing prose for readers (`humanizer`) or teaching a new subject (`eli5`, `teach`). It only restates the agent's own last message.
-- Why: added on 2026-10-21 after an overlap check found no existing skill that does this.
+- Why: no other installed skill does this.
 - `GLOSSARY.md` and `GLOSSARY-MAP.md` are a convention from Matt Pocock's other skills (`grill-with-docs`, `setup-matt-pocock-skills`), which this repo doesn't include. Don't add them just to support this skill; it works without the files.
 - The skill is user-invoked only (`disable-model-invocation: true`, kept under the `claudecode:` and `opencode:` sections). Don't remove it.
 - On upstream updates, copy the folder unchanged, keep the tool sections, and record the new commit below. If the new description claims a job another skill owns, update `rules/routing` and this section in the same change and tell the user.

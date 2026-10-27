@@ -98,7 +98,7 @@ Use this when the user wants a folder's content gone, or a folder was renamed or
    | Codex CLI | `~/.agents/skills/<name>/` | `~/.codex/agents/<name>.toml` | `~/.codex/prompts/<name>.md` |
    | Copilot and Copilot CLI | `~/.copilot/skills/<name>/` | `~/.copilot/agents/<name>.agent.md` | |
 
-   Paths were checked with rulesync 38.0.0 on 2026-10-24; other tools differ, so check the generation output for them.
+   Other tools differ, so check the generation output for them.
 
    Folder groups write the same layout inside the chosen folder (`.opencode/skills/`, `.claude/skills/` and so on) plus the folder's own `AGENTS.md` and config; removing the folder group means deleting those generated files, or the whole folder if nothing else lives there. Check each path exists before deleting it, list exactly what will go, and never delete a name another installed folder also provides.
 3. **Leave software alone unless asked.** Programs, packages, containers, browser downloads and caches a component used (for example a `uv tool`, an npm package, a Docker image) stay installed. Offer to remove them separately, following the `package-management` skill, and only with approval.
@@ -125,7 +125,7 @@ plugins/<plugin>/       a plugin rulesync can't install: README with human and a
 
 Every folder has a README (`rules/` has one README for all its topics), and a `profile.jsonc` if it's a profile. The README's Origin section says where it came from: the upstream for third-party content, or "Written for this repo" for my own.
 
-A profile is a folder meant to load only in one directory the user picks, not the home folder. Its `profile.jsonc` is a rulesync config listing that folder in `inputRoots`. A profile folder is listed in `rulesync.jsonc` only when an [agent](agents/README.md) filters it, so other OpenCode agents never load it (other tools don't filter skills) (user decision, October 25, 2026; the design, career, AI research, threat-model and reverse-engineering folders). A profile that starts a server switched on, such as REA, stays out. Paths in `profile.jsonc` are relative to the repo root, so profile commands run from there.
+A profile is a folder meant to load only in one directory the user picks, not the home folder. Its `profile.jsonc` is a rulesync config listing that folder in `inputRoots`. A profile folder is listed in `rulesync.jsonc` only when an [agent](agents/README.md) filters it, so other OpenCode agents never load it; other tools don't filter skills. These are the design, career, AI research, threat-model and reverse-engineering folders. A profile that starts a server switched on, such as REA, stays out. Paths in `profile.jsonc` are relative to the repo root, so profile commands run from there.
 
 Adding, removing or renaming a skill folder, an MCP server or an agent, or changing `groups/default.jsonc`, may change the agents' OpenCode permissions, the README hero image (`docs/hero-*.svg`) and the agent map: run `python3 agents/generate.py` in the same change and follow [`agents/README.md`](agents/README.md#update). Never edit the generated SVGs or `docs/agents-map.html` by hand.
 
@@ -146,6 +146,8 @@ README; groups don't get their own folders or READMEs.
 Third-party license texts all live in `THIRD_PARTY_LICENSES.md`, one section per upstream; each folder's README links to its section. Whenever you add, update or remove third-party files (skills, agents, extracted skill text), add, update or remove that upstream's section in the same change, with the full license text copied from upstream's `LICENSE` file, the folder it applies to, and the source link. Never add a third-party folder without it. MIT and Apache 2.0 require shipping the license text with copies, so a link to upstream alone isn't enough. Licenses that sit inside an upstream skill folder (Anthropic's `LICENSE.txt`) stay where they are, because that folder is copied unchanged.
 
 Things are separate folders so people can install only the ones they want with `--input-roots`.
+
+This repo holds context files and the docs and tooling for installing them, nothing else. Never commit plans, specs, backlogs, to-do lists or work-in-progress notes (Superpowers output stays in the ignored `docs/superpowers/`). Don't write dated decision logs or change history into READMEs, rules or code comments: describe the current state and the reason for it. Origin sections keep the upstream source, commit and license.
 
 Inside a source tree: `rules/*.md`, `skills/<name>/SKILL.md`, `subagents/*.md`, `mcp.jsonc`. `README.md` files are ignored by rulesync.
 
@@ -227,9 +229,9 @@ Lines between `BEGIN generated` and `END generated` markers come from `agents/ge
 
 Third-party skills and agents (in `skills/`, `agents/` and `mcp-servers/`) should stay identical to upstream apart from tool sections. Note any other change in the folder's README.
 
-Exception: `agents/security/` is a **repo-owned merge** of wshobson and OpenAI security content (user decision, October 21, 2026), edited to remove overlaps and rule conflicts. Never overwrite it from upstream; port upstream changes by hand as its README's "For agents: maintaining this bundle" section describes.
+Exception: `agents/security/` is a **repo-owned merge** of wshobson and OpenAI security content, edited to remove overlaps and rule conflicts. Never overwrite it from upstream; port upstream changes by hand as its README's "For agents: maintaining this bundle" section describes.
 
-**Routing between globally installed skills lives in one rule, `rules/routing`** (user decision, October 21, 2026). Routing for a folder-only collection lives in that collection's own `rules/` and installs with its folder group (user decision, October 24, 2026; currently `skills/career-workspace`; the design rule was removed on October 25, 2026 with the overlapping design skills). Since `default` installs `skills/career-workspace` for the OpenCode `career` agent (October 25, 2026), its routing rule is in the global rules file too. Don't add per-skill routing rules otherwise, and don't edit upstream skill text to change which skill owns a job.
+**Routing between globally installed skills lives in one rule, `rules/routing`.** Routing for a folder-only collection lives in that collection's own `rules/` and installs with its folder group (currently `skills/career-workspace`). Since `default` installs `skills/career-workspace` for the OpenCode `career` agent, its routing rule is in the global rules file too. Don't add per-skill routing rules otherwise, and don't edit upstream skill text to change which skill owns a job.
 
 `rules/routing` is loaded on every request, so a line belongs there only when two installed skills compete for the same job. Leave out jobs another rule already assigns (Docling, Exa, package-management), skills that don't compete, and user-invoked skills (`disable-model-invocation`), which the model never picks. When a skill is added, removed or refreshed and its description now claims a job another item owns (or drops one it owned), update the routing rule and that skill's README "For agents: routing and updates" section in the same change, and tell the user.
 
@@ -281,7 +283,7 @@ For each item, record the author, a link to the upstream repo, a link to its lic
 ## Secrets and personal data
 
 - **Keys and tokens are placeholders, never values.** Write `"x-api-key": "${EXA_API_KEY}"` in `mcp.jsonc`. rulesync turns that into OpenCode's `{env:EXA_API_KEY}`, so the real key is never written to any file. Document the variable in the tool's README.
-- When copying from a live config, **never copy a header, env value, or `{file:...}` reference that holds or points to a secret.** Replace it with a `${VAR}` placeholder. One approved exception (user decision, October 26, 2026): `mcp-servers/exa/mcp.jsonc` gives OpenCode `{file:{env:XDG_RUNTIME_DIR}/opencode/exa.key}` in a tool-scoped `opencode.mcpServers` block. It names no user or personal path, and other tools keep `${EXA_API_KEY}`. Add no others without approval.
+- When copying from a live config, **never copy a header, env value, or `{file:...}` reference that holds or points to a secret.** Replace it with a `${VAR}` placeholder. One approved exception: `mcp-servers/exa/mcp.jsonc` gives OpenCode `{file:{env:XDG_RUNTIME_DIR}/opencode/exa.key}` in a tool-scoped `opencode.mcpServers` block. It names no user or personal path, and other tools keep `${EXA_API_KEY}`. Add no others without approval.
 - **No personal paths or names:** no `/home/<user>`, `/run/user/<uid>`, usernames or real emails. Use installed command names, `~`, or environment variables.
 - Identity values: copyright and author are `280Zo`. Anything unknown uses the placeholder `ILL_CHANGE_THIS_LATER`.
 

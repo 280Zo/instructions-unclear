@@ -40,7 +40,7 @@ Follow [Check for updates](../../AGENTS.md#check-for-updates). The upstream comm
 
 - Role in [`rules/routing`](../../rules/routing/rules/routing.md): "a deck that runs in a browser uses `frontend-slides`".
 - It does not own editable `.pptx` decks: those go to `documents`, or to the Presenton MCP when it is enabled. `visual-explainer` makes slides only as part of a page it is already building.
-- Why: on 2026-10-21 the user replaced the per-skill rules with one routing rule because several skills' descriptions and rules claimed the same jobs. Slides were claimed by four: `frontend-slides`, `visual-explainer`, `documents` and Presenton.
+- Why: Slides were claimed by four: `frontend-slides`, `visual-explainer`, `documents` and Presenton.
 - A `theme-factory` theme, when one is asked for, replaces the palette and fonts of the style this skill would otherwise pick.
 - On upstream updates, don't edit the upstream skill text to change routing, and don't add a per-skill routing rule back to this folder.
 - After a refresh, re-read the new `description` and triggers. If it now claims a job another item owns (for example editable PowerPoint output), or drops one it owned, update `rules/routing` and this section in the same change and tell the user.

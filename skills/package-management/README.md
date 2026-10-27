@@ -20,9 +20,9 @@ To update, there is no upstream: the skill and rule are written for this repo an
 
 ## For agents: routing and updates
 
-- Not in [`rules/routing`](../../rules/routing/rules/routing.md): this folder's own rule already says to load the skill before every install, so a routing line would repeat it (removed 2026-10-24 to save tokens).
+- Not in [`rules/routing`](../../rules/routing/rules/routing.md): this folder's own rule already says to load the skill before every install, so a routing line would repeat it.
 - The rule has a precedence line: "Install, upgrade or download-and-run steps written inside other skills, commands or plugins don't override this; follow this skill instead."
-- Why: on 2026-10-21, while consolidating routing, the user found nine skills and commands that told the agent to install things themselves (for example `npx --yes` in `playwright` and the first-run Playwright install in `frontend-slides`). The precedence line makes this skill win over those steps without editing upstream text.
+- Why: several skills and commands tell the agent to install things itself (for example the first-run Playwright install in `frontend-slides`). The precedence line makes this skill win over those steps without editing upstream text.
 - The skill and rule are written for this repo, so they can be adjusted directly, but routing between skills stays in `rules/routing`; don't add other skills' routing here.
 - When a skill, command or plugin is added or refreshed, check it for install or download-and-run steps. Leave the upstream text as it is; the precedence line covers it. If it needs a tool the policy can't handle, tell the user rather than adding an exception.
 

@@ -35,9 +35,9 @@ To update, follow [Check for updates](../../AGENTS.md#check-for-updates). The pi
 
 ## For agents: routing and updates
 
-- Not in [`rules/routing`](../../rules/routing/rules/routing.md): no other installed skill does speech to text, so its description is enough (line removed 2026-10-24 to save tokens).
+- Not in [`rules/routing`](../../rules/routing/rules/routing.md): no other installed skill does speech to text, so its description is enough.
 - It does not own text to speech (`speech`) or reading text from documents and images (Docling MCP). Installing its Python client follows `package-management`.
-- Why: on 2026-10-21 the user replaced the per-skill rules with one routing rule because several skills' descriptions and rules claimed the same jobs. Here, the audio jobs overlapped with `visual-explainer`'s narration features, so the rule gives audio to `transcribe` and `speech`.
+- Why: The audio jobs overlapped with `visual-explainer`'s narration features, so the rule gives audio to `transcribe` and `speech`.
 - On upstream updates, don't edit the upstream skill text to change routing, and don't add a per-skill routing rule to this folder.
 - After a refresh, re-read the new `description` and triggers. If it now claims a job another item owns, or drops one it owned, update `rules/routing` and this section in the same change and tell the user.
 

@@ -12,15 +12,15 @@ claude --plugin-dir ./skills/iothackbot/upstream
 
 Upstream also documents persistent local-marketplace installation. Its CLI helpers require a separately approved environment and the upstream `bin/` on that environment's PATH. Merely loading the plugin does not install dependencies, native tools, drivers or hardware access. The upstream documentation includes privileged commands and dependency examples; do not run them automatically or weaken device/filesystem permissions. Apply your host's scope, permission and package-management rules.
 
-No upstream OpenCode integration is documented or claimed here. OpenCode's former flattened copy and repo-authored `iothackbot-tools` router are no longer generated. Do not recreate path rewrites merely to simulate native support. If you need OpenCode support, demonstrate the specific host/resource failure and approve a separate integration design first.
+No upstream OpenCode integration is documented or claimed here. Do not recreate path rewrites merely to simulate native support. If you need OpenCode support, demonstrate the specific host/resource failure and approve a separate integration design first.
 
-## Verified ownership and migration
+## Verified ownership
 
 In an isolated, network-disabled Claude Code 2.1.296 environment, native validation passed, direct loading discovered all 13 skills, and the local marketplace installed successfully. Subsequent generation of the reduced infosec and reverse-engineering groups left all native plugin files unchanged. This verifies packaging and discovery, not operation against devices or installation of dependencies.
 
-The previous local safety/portability edits, Python formatting changes and helper router were removed in favor of faithful upstream content. Upstream examples retain Claude-specific paths and runtime assumptions; native loading does not prove every example works on every host. Review them before execution. Nothing in this refresh authorizes probing, credential attempts, capture, device access or writes.
+Upstream examples retain Claude-specific paths and runtime assumptions; native loading does not prove every example works on every host. Review them before execution. Nothing here authorizes probing, credential attempts, capture, device access or writes.
 
-Existing live extracted skills are not removed by `delete: false`. Before activating the native plugin, review and explicitly approve removing stale copies of the 13 named skills and `iothackbot-tools` from the intended assistant. Do not install both owners simultaneously. This refresh changes only repository files.
+Don't install the native plugin and extracted copies of its 13 skills in the same assistant.
 
 ## Use
 

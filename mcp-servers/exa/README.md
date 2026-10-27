@@ -86,9 +86,7 @@ The skill bodies retain upstream's assistant-specific wording and model recommen
 
 ## Updating and existing installations
 
-This is a fresh upstream import, not the former local research adaptation. The old `code-search-exa` and `exa-research` skill names are no longer shipped. Because `delete: false`, regenerating does not remove old live installations; review and approve removal of those stale skill folders separately. No live files were removed by this repo refresh.
-
-Refresh `skills/search/` and `skills/exa-agent/` together from the recorded upstream source, preserve the complete references, and review the hosted tool selection. Do not rewrite upstream behavior merely to preserve the old local names. If a target parser or host rejects an upstream name/instruction, show the actual failure before adapting it.
+Refresh `skills/search/` and `skills/exa-agent/` together from the recorded upstream source, preserve the complete references, and review the hosted tool selection. If a target parser or host rejects an upstream name/instruction, show the actual failure before adapting it.
 
 ## For agents: install, remove and update
 
@@ -112,12 +110,12 @@ Refresh `skills/search/` and `skills/exa-agent/` together from the recorded upst
 
 ## For agents: routing and updates
 
-- Not in [`rules/routing`](../../rules/routing/rules/routing.md): this folder's `rules/web-research.md` already sends discovery to Exa search and multi-step research to `Exa Agent`, so a routing line would repeat it (removed 2026-10-24 to save tokens).
+- Not in [`rules/routing`](../../rules/routing/rules/routing.md): this folder's `rules/web-research.md` already sends discovery to Exa search and multi-step research to `Exa Agent`, so a routing line would repeat it.
 - `search` does not own multi-step list-building or enrichment (`Exa Agent`), and `Exa Agent` is not the default for ordinary lookups (`search`). Reading local documents is Docling's job.
-- Why: on 2026-10-21 the user replaced the per-skill routing rules with one routing rule because several items claimed the same jobs. Here, the two upstream Exa skills overlap on research requests, and `Exa Agent` can use partner-data providers that may incur costs.
+- Why: The two upstream Exa skills overlap on research requests, and `Exa Agent` can use partner-data providers that may incur costs.
 - `rules/web-research.md` stays in this folder: it covers source quality, search versus fetch, and which Exa tool to use. Because it already assigns those jobs, `rules/routing` doesn't repeat them; if another installed skill starts competing for web research, add a line there.
 - The rule's `gh` CLI line (current GitHub state) is repo-owned guidance in that rule, not a change to the upstream Exa skills. It needs no GitHub MCP server and does not authorize installing `gh` or changing its authentication.
-- The rule's search-fallback policy is a repo-owned override of the upstream `search` skill's instruction not to fall back on authentication/rate-limit errors (user approved 2026-10-22). Keep upstream skill text unchanged. Exa remains preferred; disclose fallback use, retain source-quality checks, and do not present ordinary search as an equivalent to `agent_run`.
+- The rule's search-fallback policy is a repo-owned override of the upstream `search` skill's instruction not to fall back on authentication/rate-limit errors. Keep upstream skill text unchanged. Exa remains preferred; disclose fallback use, retain source-quality checks, and do not present ordinary search as an equivalent to `agent_run`.
 - On upstream updates, don't edit the upstream skill text to change routing, and don't add a per-skill routing rule here.
 - After a refresh, re-read both new `description`s and the hosted tool list. If either skill now claims the other's job or one owned elsewhere, or drops one it owned, update `rules/routing` and this section in the same change and tell the user.
 - When an approved manual setup or migration adds comments to the live connection, put the following beside its URL. Recheck the selected tools first: an old comment saying `agent_run` is disabled is wrong for this template. Never change the connection to make a stale comment true. Rulesync does not automatically insert these README comments, and upstream skill files remain unchanged.

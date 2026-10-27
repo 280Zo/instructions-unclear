@@ -1,6 +1,6 @@
 # opencode-claude-auth
 
-[opencode-claude-auth](https://github.com/griffinmartin/opencode-claude-auth) lets OpenCode use an existing Claude subscription. OpenCode 2 support was merged into upstream 3.0.0; the former `heymaaz/opencode-claude-auth-v2` fork is retired. No plugin code, credentials or settings are copied into this repo.
+[opencode-claude-auth](https://github.com/griffinmartin/opencode-claude-auth) lets OpenCode use an existing Claude subscription. OpenCode 2 support is in upstream 3.0.0 and later. No plugin code, credentials or settings are copied into this repo.
 
 ## Install
 

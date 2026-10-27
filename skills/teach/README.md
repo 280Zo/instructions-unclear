@@ -43,9 +43,9 @@ To update, follow [Check for updates](../../AGENTS.md#check-for-updates). The co
 
 ## For agents: routing and updates
 
-- Not in [`rules/routing`](../../rules/routing/rules/routing.md): it's user-invoked only (`disable-model-invocation`), so the model never chooses it and a routing line would only cost tokens (removed 2026-10-24). Its lessons are its own pages, not `visual-explainer`'s; the skill's text says so once invoked.
+- Not in [`rules/routing`](../../rules/routing/rules/routing.md): it's user-invoked only (`disable-model-invocation`), so the model never chooses it and a routing line would only cost tokens. Its lessons are its own pages, not `visual-explainer`'s; the skill's text says so once invoked.
 - It does not own one-off teaching: explaining one unfamiliar thing in a single sitting is `eli5`. Its lesson and reference pages are its own output; don't hand them to `visual-explainer`.
-- Why: added on 2026-10-21 after an overlap check. `eli5` was the only neighbor; it teaches one subject in one conversation or page, while `teach` keeps state across sessions, so the user approved both.
+- Why: `eli5` is the only neighbor; it teaches one subject in one conversation or page, while `teach` keeps state across sessions.
 - Its research follows the web-research rule (Exa `search` for discovery). Opening a lesson follows the preferences rule.
 - The skill is user-invoked only (`disable-model-invocation: true`, kept under the `claudecode:` and `opencode:` sections). Don't remove it.
 - On upstream updates, copy the whole folder unchanged, including every `*-FORMAT.md` file, keep the tool sections, and record the new commit below. Don't edit the upstream text to change routing. If the new description claims a job another skill owns, update `rules/routing` and this section in the same change and tell the user.

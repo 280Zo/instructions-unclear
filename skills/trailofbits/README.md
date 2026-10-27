@@ -24,7 +24,7 @@ Native plugins can register hooks and MCP servers: for example, zeroize-audit de
 
 ## Existing installations
 
-`delete: false` leaves old extracted skill/agent copies in place. Review and explicitly approve removing stale copies before enabling the same native plugins; do not run duplicate owners. This repo refresh did not change live assistants. The infosec group now installs only its rule, security agent bundles and disabled ZAP connection; native plugins are separate.
+`delete: false` leaves old extracted skill/agent copies in place. Review and explicitly approve removing stale copies before enabling the same native plugins; do not run duplicate owners. The infosec group installs only its rule, security agent bundles and disabled ZAP connection; native plugins are separate.
 
 ## Use and prerequisites
 
