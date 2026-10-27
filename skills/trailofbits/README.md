@@ -14,6 +14,10 @@ See [upstream installation and compatibility guidance](upstream/README.md). Thes
 
 **OpenCode:** upstream does not document an equivalent complete integration. The old flattened profile is retired, not silently advertised as native-compatible. Workflows can depend on host-specific tools such as `Workflow`, namespaced agents, plugin hooks and `${CLAUDE_PLUGIN_ROOT}`. A successful file copy cannot supply them. No new OpenCode adapters or tool-section rewrites are introduced here.
 
+## Which agent uses it
+
+The skills belong to the [`security` agent](../../agents/security/). Where an assistant filters skills per agent (OpenCode), only `security` may load them and every other agent denies them, so they never add to everyday requests. The [agent map](../../agents/README.md) lists them as installed separately. The skill IDs are read from `upstream/` by [`agents/generate.py`](../../agents/generate.py) (`NATIVE_PLUGINS`), so regenerate after updating this tree.
+
 ## Why native ownership
 
 The new regression-hunt and patching-bugs workflows resolve plugin-level scripts, schemas and records through relative paths. Zeroize-audit resolves agents under its original `agents/`, not rulesync's relocated `subagents/`. Several existing workflows also need plugin roots and registered host facilities. Flattening only skills/agents loses those relationships.
@@ -40,7 +44,7 @@ To install, use the native plugin procedure in [Install](#install), choosing onl
 
 To remove, use the same tool's plugin manager that installed the plugin or marketplace, with approval, and restart the tool. Never delete files in this repo's `upstream/` to uninstall it; a local marketplace may still point there. Old extracted skill and agent copies from the retired flattened profile are removed as [Existing installations](#existing-installations) and [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component) describe. Their names weren't recorded here, so list what's actually installed and confirm each one with the user. Scanners, toolchains and Python environments stay unless the user asks.
 
-To update, follow [Check for updates](../../AGENTS.md#check-for-updates) and [Updating](#updating). The copied commit is in [Origin](#origin).
+To update, follow [Check for updates](../../AGENTS.md#check-for-updates) and [Updating](#updating). The copied commit is in [Origin](#origin). Then run `python3 agents/generate.py` and the tests, so added or renamed skills get the `security` agent's permissions; see [Adding a plugin that brings skills](../../agents/README.md#adding-a-plugin-that-brings-skills).
 
 ## Origin
 

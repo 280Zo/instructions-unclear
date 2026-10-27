@@ -14,6 +14,10 @@ Upstream also documents persistent local-marketplace installation. Its CLI helpe
 
 No upstream OpenCode integration is documented or claimed here. Do not recreate path rewrites merely to simulate native support. If you need OpenCode support, demonstrate the specific host/resource failure and approve a separate integration design first.
 
+## Which agent uses it
+
+The skills belong to the [`reverse-engineering` agent](../../agents/reverse-engineering/). Where an assistant filters skills per agent (OpenCode), only `reverse-engineering` may load them and every other agent denies them. The [agent map](../../agents/README.md) lists them as installed separately. The skill IDs are read from `upstream/` by [`agents/generate.py`](../../agents/generate.py) (`NATIVE_PLUGINS`), so regenerate after updating this tree.
+
 ## Verified ownership
 
 In an isolated, network-disabled Claude Code 2.1.296 environment, native validation passed, direct loading discovered all 13 skills, and the local marketplace installed successfully. Subsequent generation of the reduced infosec and reverse-engineering groups left all native plugin files unchanged. This verifies packaging and discovery, not operation against devices or installation of dependencies.
@@ -36,7 +40,7 @@ To install, use the native plugin procedure in [Install](#install). No group inc
 
 To remove, use the same mechanism that installed it. For `--plugin-dir`, stop passing the flag. For the local marketplace, with approval remove the `iothackbot` entry under `enabledPlugins` and the `iothackbot-local` entry under `extraKnownMarketplaces` that upstream's option 2 added, keep every other setting, and restart Claude Code. Never delete files in this repo's `upstream/` to uninstall it. Old extracted copies from before the native plugin (`apktool`, `chipsec`, `ffind`, `iotnet`, `jadx`, `jtagprobe`, `logicmso`, `netflows`, `nmap`, `onvifscan`, `picocom`, `telnetshell`, `wsdiscovery` and `iothackbot-tools`) are removed as [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component) describes, with approval. Python environments, native tools, drivers and vendor software stay unless the user asks.
 
-To update, follow [Check for updates](../../AGENTS.md#check-for-updates) and [Updating](#updating). The copied commit is in [Origin](#origin).
+To update, follow [Check for updates](../../AGENTS.md#check-for-updates) and [Updating](#updating). The copied commit is in [Origin](#origin). Then run `python3 agents/generate.py` and the tests, so added or renamed skills get the `reverse-engineering` agent's permissions; see [Adding a plugin that brings skills](../../agents/README.md#adding-a-plugin-that-brings-skills).
 
 ## Origin
 

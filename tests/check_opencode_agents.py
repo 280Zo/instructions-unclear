@@ -43,9 +43,14 @@ MODES = {"build": "primary", "plan": "primary", "general": "subagent", "explore"
          "local-model": "all"}
 STUB_SERVERS = ["zap", "codebase-memory-mcp", "freecad"]
 LISTED_SUBAGENTS = ["security-auditor", "reverse-engineer", "evaluator", "career"]
+# One skill from each native plugin is planted in the test home, as if the plugin were installed.
+PLUGIN_SKILLS = {key: generate.BUNDLES[key][0] for key in generate.NATIVE_PLUGINS}
 SKILL_CALLS = [("design", "resume-tailor", False), ("career", "resume-tailor", True),
                ("build", "typography", False), ("ai-research", "humanizer", True),
-               ("security", "binary-triage", False), ("reverse-engineering", "binary-triage", True)]
+               ("security", "binary-triage", False), ("reverse-engineering", "binary-triage", True),
+               ("security", PLUGIN_SKILLS["trailofbits"], True), ("build", PLUGIN_SKILLS["trailofbits"], False),
+               ("reverse-engineering", PLUGIN_SKILLS["iothackbot"], True),
+               ("security", PLUGIN_SKILLS["iothackbot"], False)]
 MCP_CALLS = [("security", "zap", True), ("design", "zap", False),
              ("build", "codebase-memory-mcp", True), ("design", "codebase-memory-mcp", False),
              ("3d-modeling", "freecad", True), ("build", "freecad", False)]
@@ -218,6 +223,12 @@ def check(cli):
     for name, spec in generate.SPECIALISTS.items():
         body = (configdir / "agents" / f"{name}.md").read_text().split("---", 2)[2]
         assert body.strip() == generate.agent_body(spec), name
+    for key, skill in PLUGIN_SKILLS.items():
+        base = REPO / generate.NATIVE_PLUGINS[key]["root"]
+        source = next(p for p in base.rglob(f"{skill}/SKILL.md")
+                      if not generate.FIXTURE_DIRS & set(p.relative_to(base).parts))
+        (configdir / "skills" / skill).mkdir()
+        (configdir / "skills" / skill / "SKILL.md").write_text(source.read_text())
     skills = model_visible_skills(configdir / "skills")
     stub = ThreadingHTTPServer(("127.0.0.1", 0), Stub)
     threading.Thread(target=stub.serve_forever, daemon=True).start()

@@ -57,6 +57,28 @@ def skill_ids(*roots):
     return sorted(ids)
 
 
+FIXTURE_DIRS = {"tests", "evals", "evals-extra", "fixtures"}
+
+
+def plugin_skill_ids(root):
+    """Skill IDs a native plugin tree adds; SKILL.md files in test and eval fixtures aren't skills."""
+    base = ROOT / root
+    ids = {p.parent.name for p in base.rglob("SKILL.md") if not FIXTURE_DIRS & set(p.relative_to(base).parts)}
+    if not ids:
+        raise SystemExit(f"No skills found under {root}")
+    return sorted(ids)
+
+
+# Plugins that install through each tool's own plugin manager, not rulesync, so the
+# default group never contains their skills. Each still gets a bundle: its owning
+# agent lists it in SPECIALISTS, and every other agent denies it. Superpowers is the
+# exception: every agent gets it (SHARED).
+NATIVE_PLUGINS = {
+    "trailofbits": {"title": "Trail of Bits", "root": "skills/trailofbits/upstream"},
+    "iothackbot": {"title": "IoTHackBot", "root": "skills/iothackbot/upstream"},
+}
+
+
 # Superpowers is a plugin, so its skill IDs are listed here, not read from the repo.
 SUPERPOWERS = [
     "brainstorming", "diagnosing-superpowers", "dispatching-parallel-agents",
@@ -86,6 +108,7 @@ BUNDLES = {
     "reverse-engineering": skill_ids(
         "agents/reverse-engineering", "mcp-servers/rea", "mcp-servers/reva"
     ),
+    **{key: plugin_skill_ids(plugin["root"]) for key, plugin in NATIVE_PLUGINS.items()},
 }
 BUNDLE_TITLES = {
     "humanizer": "Prose editing", "report": "Write-ups", "documents": "Office and PDF files",
@@ -94,9 +117,10 @@ BUNDLE_TITLES = {
     "threat": "Threat modeling and photo geolocation", "design": "Design skills",
     "career": "Career skills", "ai-research": "AI research skills",
     "reverse-engineering": "Reverse-engineering skills",
+    **{key: f"{plugin['title']} (native plugin, installed separately)" for key, plugin in NATIVE_PLUGINS.items()},
 }
 # Only build-family agents see everything else; these stay with their specialist.
-SPECIALIST_BUNDLES = ["design", "career", "ai-research", "threat", "reverse-engineering"]
+SPECIALIST_BUNDLES = ["design", "career", "ai-research", "threat", "reverse-engineering", *NATIVE_PLUGINS]
 
 # Configured MCP server name -> OpenCode permission action (<server>_<tool>).
 # "?" also matches a hyphen that OpenCode turns into "_".
@@ -132,17 +156,17 @@ SPECIALISTS = {
     },
     "security": {
         "description": "Defensive security work: secure-code review, SAST setup, threat modeling (STRIDE, attack trees, mitigations, security requirements), photo geolocation, and authorized web scanning with ZAP when it is switched on. Delegates audits to security-auditor and threat models to threat-modeling-expert.",
-        "bundles": ["humanizer", "report", "documents", "browser", "secure-coding", "threat"],
+        "bundles": ["humanizer", "report", "documents", "browser", "secure-coding", "threat", "trailofbits"],
         "mcp": BASE_MCP + ["zap"],
         "subagents": ["general", "explore", "security-auditor", "threat-modeling-expert"],
-        "instructions": "You are the security agent. Handle defensive security work: secure-code review, SAST setup, threat modeling (STRIDE, attack trees, mitigations, security requirements) and photo geolocation. Scan or probe only targets the user has authorized, and use ZAP only when it is switched on. Delegate full audits to `security-auditor` and threat models to `threat-modeling-expert`. Hand work outside security back to the main agent.",
+        "instructions": "You are the security agent. Handle defensive security work: secure-code review, SAST setup, threat modeling (STRIDE, attack trees, mitigations, security requirements) and photo geolocation. Scan or probe only targets the user has authorized, and use ZAP only when it is switched on. Use the Trail of Bits plugin skills when they're installed. Delegate full audits to `security-auditor` and threat models to `threat-modeling-expert`. Hand work outside security back to the main agent.",
     },
     "reverse-engineering": {
         "description": "Authorized reverse engineering and binary analysis: triage, CTF challenges, malware, firmware, protocols, anti-reversing and memory forensics, using ReVa (Ghidra) or radare2 when switched on, and REA inside the reverse_engineering folder. Delegates to reverse-engineer, malware-analyst and firmware-analyst.",
-        "bundles": ["humanizer", "report", "reverse-engineering"],
+        "bundles": ["humanizer", "report", "reverse-engineering", "iothackbot"],
         "mcp": BASE_MCP + ["rea", "reva", "radare2"],
         "subagents": ["general", "explore", "reverse-engineer", "malware-analyst", "firmware-analyst"],
-        "instructions": "You are the reverse-engineering agent. Handle authorized reverse engineering and binary analysis: triage, CTF challenges, malware, firmware, protocols, anti-reversing and memory forensics. Work only on artifacts the user is authorized to examine, and don't execute samples outside an isolated environment. Use ReVa or radare2 when switched on, and REA inside the reverse_engineering folder. Delegate to `reverse-engineer`, `malware-analyst` or `firmware-analyst`. Hand other work back to the main agent.",
+        "instructions": "You are the reverse-engineering agent. Handle authorized reverse engineering and binary analysis: triage, CTF challenges, malware, firmware, protocols, anti-reversing and memory forensics. Work only on artifacts the user is authorized to examine, and don't execute samples outside an isolated environment. Use ReVa or radare2 when switched on, REA inside the reverse_engineering folder, and the IoTHackBot plugin skills when they're installed. Delegate to `reverse-engineer`, `malware-analyst` or `firmware-analyst`. Hand other work back to the main agent.",
     },
     "3d-modeling": {
         "description": "3D CAD modeling in FreeCAD through its MCP server, once FreeCAD and its addon are set up and the connection is switched on: parts, sketches, assemblies, measurements and exports. Use anatomy instead for isometric explainer drawings.",
@@ -283,6 +307,9 @@ def map_data():
               ("Started by you with /, never shown to the model", USER_INVOKED)]
     for key, members in BUNDLES.items():
         title = BUNDLE_TITLES[key]
+        if key in NATIVE_PLUGINS:
+            groups.append((title, members))
+            continue
         absent = [s for s in members if s not in installed]
         if absent:
             title += f"; {', '.join(absent)} installs with its folder group, not default"
@@ -336,7 +363,11 @@ def hero_svgs():
     agents = [(name, kind, len(allowed_skills(spec_of(name), installed) & visible), tag)
               for name, kind, tag in HERO_AGENTS]
     shared = "Superpowers, search, package-management · Exa, PMB"
-    return {path: hero.render(theme, agents, len(visible), len(MCP), shared)
+    owners = {key: name for name, spec in SPECIALISTS.items() for key in spec["bundles"] if key in NATIVE_PLUGINS}
+    plugins = ", ".join(f"{plugin['title']} ({len(BUNDLES[key])} skills, {owners[key]} agent)"
+                        for key, plugin in NATIVE_PLUGINS.items())
+    note = f"Counts cover the default group. Installed separately as native plugins: {plugins}."
+    return {path: hero.render(theme, agents, len(visible), len(MCP), shared, note)
             for theme, path in HERO_FILES.items()}
 
 
@@ -389,7 +420,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid 
 </head>
 <body><main>
 <h1>Which skills, MCP servers and subagents each agent gets</h1>
-<p class="lead">Hover, focus or click an agent to highlight what it can use. Every group also names its agents in words.</p>
+<p class="lead">Hover, focus or click an agent to highlight what it can use. Every group also names its agents in words. Plugins installed separately, outside rulesync, are listed with the agent that may use them.</p>
 <p class="meta">instructions-unclear · generated by __SCRIPT__ from the agent manifest · OpenCode filtering verified on 2.1.3</p>
 <div class="map" id="map"><svg class="wires" id="wires" aria-hidden="true"></svg>
 <div class="agents" role="group" aria-label="Agents" id="agents"></div><div class="res" id="res"></div></div>

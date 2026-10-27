@@ -11,10 +11,20 @@ opencode:
     - {action: "skill", resource: "academic-plotting", effect: deny}
     - {action: "skill", resource: "accelerate", effect: deny}
     - {action: "skill", resource: "ad-creative-design", effect: deny}
+    - {action: "skill", resource: "address-sanitizer", effect: deny}
+    - {action: "skill", resource: "adjudicate-regression", effect: deny}
+    - {action: "skill", resource: "aflpp", effect: deny}
+    - {action: "skill", resource: "agentic-actions-auditor", effect: deny}
+    - {action: "skill", resource: "algorand-vulnerability-scanner", effect: deny}
     - {action: "skill", resource: "anti-reversing-techniques", effect: deny}
+    - {action: "skill", resource: "apktool", effect: deny}
     - {action: "skill", resource: "application-form-filler", effect: deny}
+    - {action: "skill", resource: "atheris", effect: deny}
     - {action: "skill", resource: "attack-tree-construction", effect: deny}
     - {action: "skill", resource: "audiocraft", effect: deny}
+    - {action: "skill", resource: "audit-augmentation", effect: deny}
+    - {action: "skill", resource: "audit-context-building", effect: deny}
+    - {action: "skill", resource: "audit-prep-assistant", effect: deny}
     - {action: "skill", resource: "autogpt", effect: deny}
     - {action: "skill", resource: "awq", effect: deny}
     - {action: "skill", resource: "axolotl", effect: deny}
@@ -26,22 +36,36 @@ opencode:
     - {action: "skill", resource: "blip-2", effect: deny}
     - {action: "skill", resource: "brainstorming-research-ideas", effect: deny}
     - {action: "skill", resource: "brand-identity", effect: deny}
+    - {action: "skill", resource: "burpsuite-project-parser", effect: deny}
+    - {action: "skill", resource: "c-review", effect: deny}
+    - {action: "skill", resource: "cairo-vulnerability-scanner", effect: deny}
     - {action: "skill", resource: "career-changer-translator", effect: deny}
     - {action: "skill", resource: "career-intake", effect: deny}
     - {action: "skill", resource: "career-master-resume", effect: deny}
     - {action: "skill", resource: "career-start-application", effect: deny}
     - {action: "skill", resource: "career-work-history", effect: deny}
+    - {action: "skill", resource: "cargo-fuzz", effect: deny}
+    - {action: "skill", resource: "chipsec", effect: deny}
     - {action: "skill", resource: "chroma", effect: deny}
+    - {action: "skill", resource: "chrome-mcp-troubleshooting", effect: deny}
     - {action: "skill", resource: "clip", effect: deny}
+    - {action: "skill", resource: "code-improver", effect: deny}
+    - {action: "skill", resource: "code-maturity-assessor", effect: deny}
+    - {action: "skill", resource: "codeql", effect: deny}
     - {action: "skill", resource: "cold-email-writer", effect: deny}
     - {action: "skill", resource: "color-palette", effect: deny}
     - {action: "skill", resource: "compiler", effect: deny}
+    - {action: "skill", resource: "constant-time-analysis", effect: deny}
+    - {action: "skill", resource: "constant-time-testing", effect: deny}
     - {action: "skill", resource: "constitutional-ai", effect: deny}
     - {action: "skill", resource: "cosmos-policy", effect: deny}
+    - {action: "skill", resource: "cosmos-vulnerability-scanner", effect: deny}
     - {action: "skill", resource: "cover-letter-generator", effect: deny}
+    - {action: "skill", resource: "coverage-analysis", effect: deny}
     - {action: "skill", resource: "creative-portfolio-resume", effect: deny}
     - {action: "skill", resource: "creative-thinking-for-research", effect: deny}
     - {action: "skill", resource: "crewai", effect: deny}
+    - {action: "skill", resource: "crypto-protocol-diagram", effect: deny}
     - {action: "skill", resource: "ctf-crypto", effect: deny}
     - {action: "skill", resource: "ctf-pwn", effect: deny}
     - {action: "skill", resource: "ctf-rev", effect: deny}
@@ -51,30 +75,57 @@ opencode:
     - {action: "skill", resource: "design-context", effect: deny}
     - {action: "skill", resource: "design-critique", effect: deny}
     - {action: "skill", resource: "design-system", effect: deny}
+    - {action: "skill", resource: "devcontainer-setup", effect: deny}
+    - {action: "skill", resource: "diagramming-code", effect: deny}
+    - {action: "skill", resource: "differential-review", effect: deny}
+    - {action: "skill", resource: "dimensional-analysis", effect: deny}
     - {action: "skill", resource: "dspy", effect: deny}
+    - {action: "skill", resource: "dwarf-expert", effect: deny}
     - {action: "skill", resource: "email-design", effect: deny}
+    - {action: "skill", resource: "entry-point-analyzer", effect: deny}
     - {action: "skill", resource: "executive-resume-writer", effect: deny}
     - {action: "skill", resource: "faiss", effect: deny}
+    - {action: "skill", resource: "ffind", effect: deny}
+    - {action: "skill", resource: "firebase-apk-scanner", effect: deny}
     - {action: "skill", resource: "flash-attention", effect: deny}
+    - {action: "skill", resource: "fp-check", effect: deny}
+    - {action: "skill", resource: "fuzzing-dictionary", effect: deny}
+    - {action: "skill", resource: "fuzzing-obstacles", effect: deny}
+    - {action: "skill", resource: "genotoxic", effect: deny}
     - {action: "skill", resource: "geo-sleuth", effect: deny}
     - {action: "skill", resource: "gguf", effect: deny}
+    - {action: "skill", resource: "gh-cli", effect: deny}
+    - {action: "skill", resource: "github-triage", effect: deny}
+    - {action: "skill", resource: "goal-prompt", effect: deny}
     - {action: "skill", resource: "gptq", effect: deny}
+    - {action: "skill", resource: "graph-evolution", effect: deny}
     - {action: "skill", resource: "graphic-design", effect: deny}
     - {action: "skill", resource: "grpo-rl-training", effect: deny}
     - {action: "skill", resource: "guidance", effect: deny}
+    - {action: "skill", resource: "guidelines-advisor", effect: deny}
+    - {action: "skill", resource: "harness-writing", effect: deny}
     - {action: "skill", resource: "hqq", effect: deny}
     - {action: "skill", resource: "huggingface-tokenizers", effect: deny}
+    - {action: "skill", resource: "hunt-regressions", effect: deny}
     - {action: "skill", resource: "icon-design", effect: deny}
     - {action: "skill", resource: "image-generation", effect: deny}
     - {action: "skill", resource: "image-treatment", effect: deny}
+    - {action: "skill", resource: "implement-patch", effect: deny}
     - {action: "skill", resource: "instructor", effect: deny}
+    - {action: "skill", resource: "interpreting-culture-index", effect: deny}
     - {action: "skill", resource: "interview-coach", effect: deny}
     - {action: "skill", resource: "interview-prep-generator", effect: deny}
+    - {action: "skill", resource: "iotnet", effect: deny}
+    - {action: "skill", resource: "jadx", effect: deny}
     - {action: "skill", resource: "job-description-analyzer", effect: deny}
+    - {action: "skill", resource: "jtagprobe", effect: deny}
     - {action: "skill", resource: "knowledge-distillation", effect: deny}
     - {action: "skill", resource: "lambda-labs", effect: deny}
     - {action: "skill", resource: "langchain", effect: deny}
     - {action: "skill", resource: "langsmith", effect: deny}
+    - {action: "skill", resource: "let-fate-decide", effect: deny}
+    - {action: "skill", resource: "libafl", effect: deny}
+    - {action: "skill", resource: "libfuzzer", effect: deny}
     - {action: "skill", resource: "linkedin-profile-optimizer", effect: deny}
     - {action: "skill", resource: "litgpt", effect: deny}
     - {action: "skill", resource: "llama-cpp", effect: deny}
@@ -83,10 +134,12 @@ opencode:
     - {action: "skill", resource: "llamaindex", effect: deny}
     - {action: "skill", resource: "llava", effect: deny}
     - {action: "skill", resource: "lm-evaluation-harness", effect: deny}
+    - {action: "skill", resource: "logicmso", effect: deny}
     - {action: "skill", resource: "long-context", effect: deny}
     - {action: "skill", resource: "mamba", effect: deny}
     - {action: "skill", resource: "megatron-core", effect: deny}
     - {action: "skill", resource: "memory-forensics", effect: deny}
+    - {action: "skill", resource: "mermaid-to-proverif", effect: deny}
     - {action: "skill", resource: "miles", effect: deny}
     - {action: "skill", resource: "ml-paper-writing", effect: deny}
     - {action: "skill", resource: "ml-training-recipes", effect: deny}
@@ -94,27 +147,42 @@ opencode:
     - {action: "skill", resource: "modal", effect: deny}
     - {action: "skill", resource: "model-merging", effect: deny}
     - {action: "skill", resource: "model-pruning", effect: deny}
+    - {action: "skill", resource: "modern-cpp", effect: deny}
+    - {action: "skill", resource: "modern-python", effect: deny}
     - {action: "skill", resource: "moe-training", effect: deny}
     - {action: "skill", resource: "motion-design", effect: deny}
+    - {action: "skill", resource: "mutation-testing", effect: deny}
     - {action: "skill", resource: "nanogpt", effect: deny}
     - {action: "skill", resource: "nemo-curator", effect: deny}
     - {action: "skill", resource: "nemo-evaluator", effect: deny}
     - {action: "skill", resource: "nemo-guardrails", effect: deny}
+    - {action: "skill", resource: "netflows", effect: deny}
+    - {action: "skill", resource: "nmap", effect: deny}
     - {action: "skill", resource: "nnsight", effect: deny}
     - {action: "skill", resource: "offer-comparison-analyzer", effect: deny}
+    - {action: "skill", resource: "onvifscan", effect: deny}
+    - {action: "skill", resource: "open-sourcing", effect: deny}
     - {action: "skill", resource: "openpi", effect: deny}
     - {action: "skill", resource: "openrlhf", effect: deny}
     - {action: "skill", resource: "openvla-oft", effect: deny}
+    - {action: "skill", resource: "ossfuzz", effect: deny}
     - {action: "skill", resource: "outlines", effect: deny}
+    - {action: "skill", resource: "patching-bugs", effect: deny}
     - {action: "skill", resource: "peft", effect: deny}
     - {action: "skill", resource: "phoenix", effect: deny}
+    - {action: "skill", resource: "picocom", effect: deny}
     - {action: "skill", resource: "pinecone", effect: deny}
     - {action: "skill", resource: "portfolio-case-study-writer", effect: deny}
+    - {action: "skill", resource: "post-patch-validation", effect: deny}
     - {action: "skill", resource: "poster-design", effect: deny}
+    - {action: "skill", resource: "pr-improver", effect: deny}
+    - {action: "skill", resource: "prepare-regression", effect: deny}
     - {action: "skill", resource: "presenting-conference-talks", effect: deny}
     - {action: "skill", resource: "product-mockup", effect: deny}
     - {action: "skill", resource: "prompt-guard", effect: deny}
+    - {action: "skill", resource: "property-based-testing", effect: deny}
     - {action: "skill", resource: "protocol-reverse-engineering", effect: deny}
+    - {action: "skill", resource: "prove-patch", effect: deny}
     - {action: "skill", resource: "pyghidra-scripting", effect: deny}
     - {action: "skill", resource: "pytorch-fsdp2", effect: deny}
     - {action: "skill", resource: "pytorch-lightning", effect: deny}
@@ -123,6 +191,11 @@ opencode:
     - {action: "skill", resource: "ray-data", effect: deny}
     - {action: "skill", resource: "ray-train", effect: deny}
     - {action: "skill", resource: "reference-list-builder", effect: deny}
+    - {action: "skill", resource: "regression-hunt", effect: deny}
+    - {action: "skill", resource: "replay-regression", effect: deny}
+    - {action: "skill", resource: "report-regressions", effect: deny}
+    - {action: "skill", resource: "reproduce-bug", effect: deny}
+    - {action: "skill", resource: "reproduce-regression", effect: deny}
     - {action: "skill", resource: "research-manager", effect: deny}
     - {action: "skill", resource: "resume-ats-optimizer", effect: deny}
     - {action: "skill", resource: "resume-bullet-writer", effect: deny}
@@ -132,40 +205,75 @@ opencode:
     - {action: "skill", resource: "resume-tailor", effect: deny}
     - {action: "skill", resource: "resume-version-manager", effect: deny}
     - {action: "skill", resource: "reverse-engineer-anything", effect: deny}
+    - {action: "skill", resource: "review-walkthrough", effect: deny}
     - {action: "skill", resource: "rigor-reviewer", effect: deny}
+    - {action: "skill", resource: "rust-review", effect: deny}
+    - {action: "skill", resource: "ruzzy", effect: deny}
     - {action: "skill", resource: "rwkv", effect: deny}
     - {action: "skill", resource: "saelens", effect: deny}
     - {action: "skill", resource: "salary-negotiation-prep", effect: deny}
+    - {action: "skill", resource: "sarif-parsing", effect: deny}
+    - {action: "skill", resource: "second-opinion", effect: deny}
+    - {action: "skill", resource: "secure-workflow-guide", effect: deny}
     - {action: "skill", resource: "security-requirement-extraction", effect: deny}
     - {action: "skill", resource: "security-threat-model", effect: deny}
     - {action: "skill", resource: "segment-anything", effect: deny}
+    - {action: "skill", resource: "semgrep", effect: deny}
+    - {action: "skill", resource: "semgrep-rule-creator", effect: deny}
+    - {action: "skill", resource: "semgrep-rule-variant-creator", effect: deny}
     - {action: "skill", resource: "sentence-transformers", effect: deny}
     - {action: "skill", resource: "sentencepiece", effect: deny}
     - {action: "skill", resource: "sglang", effect: deny}
+    - {action: "skill", resource: "sharp-edges", effect: deny}
     - {action: "skill", resource: "simpo", effect: deny}
+    - {action: "skill", resource: "skill-improver", effect: deny}
     - {action: "skill", resource: "skypilot", effect: deny}
+    - {action: "skill", resource: "slicing-code-context", effect: deny}
     - {action: "skill", resource: "slime", effect: deny}
     - {action: "skill", resource: "social-media-graphic", effect: deny}
+    - {action: "skill", resource: "solana-vulnerability-scanner", effect: deny}
+    - {action: "skill", resource: "spec-to-code-compliance", effect: deny}
     - {action: "skill", resource: "speculative-decoding", effect: deny}
     - {action: "skill", resource: "stable-diffusion", effect: deny}
     - {action: "skill", resource: "stride-analysis-patterns", effect: deny}
+    - {action: "skill", resource: "substrate-vulnerability-scanner", effect: deny}
+    - {action: "skill", resource: "supply-chain-risk-auditor", effect: deny}
     - {action: "skill", resource: "swanlab", effect: deny}
     - {action: "skill", resource: "systems-paper-writing", effect: deny}
     - {action: "skill", resource: "tech-resume-optimizer", effect: deny}
+    - {action: "skill", resource: "telnetshell", effect: deny}
     - {action: "skill", resource: "tensorboard", effect: deny}
     - {action: "skill", resource: "tensorrt-llm", effect: deny}
+    - {action: "skill", resource: "testing-handbook-generator", effect: deny}
     - {action: "skill", resource: "threat-mitigation-mapping", effect: deny}
     - {action: "skill", resource: "thumbnail-design", effect: deny}
+    - {action: "skill", resource: "token-integration-analyzer", effect: deny}
+    - {action: "skill", resource: "ton-vulnerability-scanner", effect: deny}
     - {action: "skill", resource: "torchforge", effect: deny}
     - {action: "skill", resource: "torchtitan", effect: deny}
+    - {action: "skill", resource: "trailmark", effect: deny}
+    - {action: "skill", resource: "trailmark-finding-triage", effect: deny}
+    - {action: "skill", resource: "trailmark-review-gate", effect: deny}
+    - {action: "skill", resource: "trailmark-structural", effect: deny}
+    - {action: "skill", resource: "trailmark-summary", effect: deny}
+    - {action: "skill", resource: "trailmark-variant-neighborhood", effect: deny}
     - {action: "skill", resource: "transformer-lens", effect: deny}
     - {action: "skill", resource: "trl-fine-tuning", effect: deny}
     - {action: "skill", resource: "typography", effect: deny}
     - {action: "skill", resource: "unsloth", effect: deny}
+    - {action: "skill", resource: "validate-bug", effect: deny}
+    - {action: "skill", resource: "variant-analysis", effect: deny}
+    - {action: "skill", resource: "vector-forge", effect: deny}
     - {action: "skill", resource: "verl", effect: deny}
     - {action: "skill", resource: "vllm", effect: deny}
+    - {action: "skill", resource: "vulnerability-triage-brocards", effect: deny}
     - {action: "skill", resource: "weights-and-biases", effect: deny}
     - {action: "skill", resource: "whisper", effect: deny}
+    - {action: "skill", resource: "writing-lean-proofs", effect: deny}
+    - {action: "skill", resource: "wsdiscovery", effect: deny}
+    - {action: "skill", resource: "wycheproof", effect: deny}
+    - {action: "skill", resource: "yara-rule-authoring", effect: deny}
+    - {action: "skill", resource: "zeroize-audit", effect: deny}
     - {action: "zap_*", resource: "*", effect: deny}
     - {action: "rea_*", resource: "*", effect: deny}
     - {action: "reva_*", resource: "*", effect: deny}

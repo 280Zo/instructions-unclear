@@ -47,22 +47,22 @@ Checked with OpenCode 2.1.3:
 
 This checks real native tool enforcement with dummy skills, not a model's claimed skill list. It does not verify live session reloads, MCP execution or every permission action. For the rulesync upgrade, all eight groups also generated successfully with 38 and 41 in isolation.
 
-`check_opencode_agents.py` is the same kind of opt-in test for the real `default` group. It first generates the specialists for Claude Code, Codex, Copilot, Copilot CLI and Cursor, parses each file (including the Codex TOML) and confirms OpenCode's four built-in agents don't reach those tools; the tools aren't run. In the OpenCode output it checks each specialist carries its instructions and no Claude Code section. It then generates `default` without MCP output, so no real MCP server starts, and adds three harmless local stub servers (`tests/fixtures/mcp_stub.py`) named `zap`, `codebase-memory-mcp` and `freecad`. It checks every agent's mode and Explore's resolved read-only policy. For each primary-capable agent it compares the skills, MCP servers and subagents shown to the model with `agents/generate.py`, then makes sample skill, MCP (through Code Mode) and delegation calls:
+`check_opencode_agents.py` is the same kind of opt-in test for the real `default` group. It first generates the specialists for Claude Code, Codex, Copilot, Copilot CLI and Cursor, parses each file (including the Codex TOML) and confirms OpenCode's four built-in agents don't reach those tools; the tools aren't run. In the OpenCode output it checks each specialist carries its instructions and no Claude Code section. It then generates `default` without MCP output, so no real MCP server starts, and adds three harmless local stub servers (`tests/fixtures/mcp_stub.py`) named `zap`, `codebase-memory-mcp` and `freecad`. It also copies one real `SKILL.md` from each native plugin in `NATIVE_PLUGINS` (Trail of Bits and IoTHackBot) into the test home, as if the plugin were installed; nothing else from the plugin is copied or run. It checks every agent's mode and Explore's resolved read-only policy. For each primary-capable agent it compares the skills, MCP servers and subagents shown to the model with `agents/generate.py`, then makes sample skill, MCP (through Code Mode) and delegation calls:
 
 ```fish
 python3 tests/check_opencode_agents.py "$cli41"
 ```
 
-Checked with OpenCode 2.1.3. Every list matched exactly; counts are repo skills the model sees. Superpowers isn't installed in the test home, and user-invoked skills never reach the model:
+Checked with OpenCode 2.1.3. Every list matched exactly; counts are repo skills the model sees, plus the planted plugin skill for `security` and `reverse-engineering`. Superpowers isn't installed in the test home, and user-invoked skills never reach the model:
 
 | Agent | Skills | Agent | Skills |
 |---|---|---|---|
-| `build`, `plan` | 24 | `security` | 16 |
-| `design` | 32 | `reverse-engineering` | 15 |
+| `build`, `plan` | 24 | `security` | 17 |
+| `design` | 32 | `reverse-engineering` | 16 |
 | `career` | 33 | `3d-modeling` | 11 |
 | `ai-research` | 107 | `second-opinion` / `local-model` | 3 / 5 |
 
-Design and security were denied `resume-tailor` and `binary-triage`, and build was denied `typography`. Career, reverse-engineering and ai-research loaded `resume-tailor`, `binary-triage` and `humanizer`. Security reached the ZAP stub, build reached the codebase-memory stub, and 3d-modeling reached the FreeCAD stub; design and build were blocked from servers they don't list, and those servers were absent from their Code Mode catalogs. Design couldn't delegate to `security-auditor` and career couldn't delegate to `evaluator`; security, build and second-opinion delegated to `security-auditor`, `career` and `evaluator`. Real MCP backends weren't started. File counts matched; differences were confined to OpenCode agent frontmatter and MCP config. A synthetic V2 config retained shared MCP timeouts and unrelated settings while its server list was replaced.
+Design and security were denied `resume-tailor` and `binary-triage`, and build was denied `typography`. Career, reverse-engineering and ai-research loaded `resume-tailor`, `binary-triage` and `humanizer`. Security loaded the Trail of Bits skill and reverse-engineering the IoTHackBot skill; build was denied the first and security the second. Security reached the ZAP stub, build reached the codebase-memory stub, and 3d-modeling reached the FreeCAD stub; design and build were blocked from servers they don't list, and those servers were absent from their Code Mode catalogs. Design couldn't delegate to `security-auditor` and career couldn't delegate to `evaluator`; security, build and second-opinion delegated to `security-auditor`, `career` and `evaluator`. Real MCP backends weren't started. File counts matched; differences were confined to OpenCode agent frontmatter and MCP config. A synthetic V2 config retained shared MCP timeouts and unrelated settings while its server list was replaced.
 
 ## Origin
 

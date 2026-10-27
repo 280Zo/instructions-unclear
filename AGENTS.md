@@ -248,6 +248,7 @@ rulesync installs rules, skills, agents, commands, hooks and MCP servers, not pl
 3. Use the plugin with its defaults. Don't add a rule for it unless the plugin's own documentation tells users to add instructions; if it does, say so in the README and ask the user first. Note any interaction with the rules here (for example, what it commits) in the README's Use section.
 4. Add the plugin to `plugins/README.md` and the root README.
 5. Plugins install from upstream, so nothing goes in `THIRD_PARTY_LICENSES.md` unless you copy their files here.
+6. If the plugin brings skills, give them an owning agent and regenerate, as [Adding a plugin that brings skills](agents/README.md#adding-a-plugin-that-brings-skills) describes; the same applies to a native plugin tree kept under `skills/`, such as Trail of Bits. Without that step, OpenCode's `build`, `plan` and `general` agents see every one of its skills in every request.
 
 ### MCP servers
 

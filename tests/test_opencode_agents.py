@@ -119,12 +119,44 @@ class AgentTests(unittest.TestCase):
 
     def test_specialist_skills_exist(self):
         available = set(default_skill_ids()) | set(generate.SHARED)
+        for key in generate.NATIVE_PLUGINS:
+            available |= set(generate.BUNDLES[key])
         # REA is folder-only, so its skill may be absent.
         available.add("reverse-engineer-anything")
         for spec in generate.agent_specs().values():
             for bundle in spec.get("bundles", []):
                 for skill in generate.BUNDLES[bundle]:
                     self.assertIn(skill, available, bundle)
+
+    def test_native_plugin_skills_go_to_one_agent(self):
+        # Plugins installed outside rulesync: only their owning agent may load them,
+        # and build-family agents deny them so they never reach everyday requests.
+        owners = {"trailofbits": "security", "iothackbot": "reverse-engineering"}
+        self.assertEqual(set(generate.NATIVE_PLUGINS), set(owners))
+        installed = set(default_skill_ids())
+        samples = {}
+        for key, owner in owners.items():
+            skills = generate.BUNDLES[key]
+            self.assertFalse(set(skills) & installed, key)  # IDs must not shadow repo skills
+            self.assertFalse([s for s in skills if s in {"tests", "evals", "fixtures"}], key)
+            samples[key] = skills[0]
+            for name in SPECIALISTS:
+                head, _ = frontmatter(agent_file(name))
+                allowed = f'{{action: "skill", resource: "{skills[0]}", effect: allow}}' in head
+                self.assertEqual(allowed, name == owner, (key, name))
+        for name in BUILTINS:
+            head, _ = frontmatter(agent_file(name))
+            for skill in samples.values():
+                self.assertIn(f'{{action: "skill", resource: "{skill}", effect: deny}}', head, name)
+        self.assertEqual(len(generate.BUNDLES["trailofbits"]), 95)
+        self.assertEqual(len(generate.BUNDLES["iothackbot"]), 13)
+        data = generate.map_data()
+        for key, owner in owners.items():
+            group = next(g for g in data["skills"] if g["title"].startswith(generate.NATIVE_PLUGINS[key]["title"]))
+            self.assertIn("installed separately", group["title"])
+            self.assertEqual(group["agents"], [owner])
+        hero = (ROOT / generate.HERO_FILES["light"]).read_text()
+        self.assertIn("Trail of Bits (95 skills, security agent)", hero)
 
     def test_local_model_keeps_unrestricted_delegation(self):
         head, _ = frontmatter(ROOT / "agents/local-model/subagents/local-model.md")

@@ -28,8 +28,8 @@ Every agent gets the Superpowers skills, `package-management`, Exa's `search` an
 | `design` | Design skills, UI, slides, visuals, browser, documents | Presenton | `general`, `explore` |
 | `career` | Resume skills, career workspace, interview coach, report, documents | | `general`, `explore` |
 | `ai-research` | AI research skills, report, documents, visuals | | `general`, `explore` |
-| `security` | Secure coding, SAST, threat modeling, geo-sleuth, browser, report, documents | ZAP | `general`, `explore`, `security-auditor`, `threat-modeling-expert` |
-| `reverse-engineering` | Reverse-engineering, ReVa and REA skills, report | REA, ReVa, radare2 | `general`, `explore`, the three RE agents |
+| `security` | Secure coding, SAST, threat modeling, geo-sleuth, browser, report, documents, and the Trail of Bits plugin when installed | ZAP | `general`, `explore`, `security-auditor`, `threat-modeling-expert` |
+| `reverse-engineering` | Reverse-engineering, ReVa and REA skills, report, and the IoTHackBot plugin when installed | REA, ReVa, radare2 | `general`, `explore`, the three RE agents |
 | `3d-modeling` | Report, documents, visuals, browser | FreeCAD | `general`, `explore` |
 | `second-opinion` | Shared skills only | | `evaluator`, `metacognitive`, `general`, `explore` |
 | `local-model` | Humanizer, report | | any agent |
@@ -79,6 +79,7 @@ Other groups install agents with their sets: `infosec` and `work` include `agent
 - **Delegated work uses the child's permissions.** A specialist that hands work to `general` gets build's skills and tools in that child. The custom subagents `security-auditor`, `threat-modeling-expert`, `reverse-engineer`, `malware-analyst`, `firmware-analyst`, `evaluator` and `metacognitive` have no skill or MCP filter. Hand specialist work to the specialist itself.
 - **Agent allows win over your global denies** in OpenCode, because agent rules come after global rules. To block something everywhere, use an OpenCode [policy](https://opencode.ai/v2/docs/permissions/), which runs after these rules.
 - **Only listed MCP servers are filtered.** A server you add outside this repo is open to every agent until you add it to `MCP` in `generate.py`.
+- **Only listed plugins are filtered.** Skills from a plugin not in `NATIVE_PLUGINS` (or, for Superpowers, `SUPERPOWERS`) reach `build`, `plan` and `general` in every request, and no specialist can load them.
 - A real model can still ask for a skill by name; OpenCode then denies the call.
 
 ## Keeping the README image and agent map current
@@ -90,6 +91,7 @@ The image at the top of the [root README](../README.md) (`docs/hero-light.svg` a
 - adding, removing or renaming an MCP server;
 - adding, removing or renaming an agent, or changing its skills, servers or description;
 - a new Superpowers release that adds or renames skills (update `SUPERPOWERS` in `generate.py` first);
+- adding, removing or updating a plugin that brings skills, such as Trail of Bits (see [Adding a plugin that brings skills](#adding-a-plugin-that-brings-skills));
 - changing the agent cards (`HERO_AGENTS` in `generate.py`) or the look (`agents/hero.py`).
 
 From the repo root:
@@ -123,6 +125,17 @@ python3 -m unittest discover -s tests
 Run it after every event listed in [Keeping the README image and agent map current](#keeping-the-readme-image-and-agent-map-current), in the same change, and include the regenerated `docs/hero-*.svg` and `docs/agents-map.html` in it. When an image change is visible (new card, new counts, new look), render a preview (for example `rsvg-convert -w 1800 docs/hero-light.svg -o /tmp/opencode/hero.png`) and look at both themes before reporting it done; check that long agent names and tags still fit their cards. Card labels and tags are in `HERO_AGENTS`; a new user-selectable agent needs a card there (the layout fits nine, so ask the user which to merge or drop beyond that). Colors, fonts and layout are in `hero.py`; keep its 4 px grid, accessible `<title>`/`<desc>`, and no external fonts, images or links.
 
 `tests/test_opencode_agents.py` fails until every generated file matches. Don't edit generated files or the lines between `BEGIN generated` and `END generated` markers by hand. Superpowers is a plugin, so its skill IDs are listed in the script; update them when Superpowers adds or renames a skill.
+
+#### Adding a plugin that brings skills
+
+rulesync doesn't install plugins, so their skills never appear in the `default` group, yet OpenCode still sends them to every agent that doesn't deny them. Whenever you add a plugin that ships skills (in `plugins/` or as a native tree such as `skills/trailofbits/upstream/`):
+
+1. Decide which agent owns it. If every agent should have it, as with Superpowers, list its skill IDs in `SHARED` and skip the next two steps.
+2. Otherwise add it to `NATIVE_PLUGINS` in `generate.py` with a title and the folder holding its complete tree. The script reads skill IDs from every `SKILL.md` there, skipping test and eval fixtures. If the repo holds no copy, list the IDs explicitly, as `SUPERPOWERS` does.
+3. Add its key to the owning agent's `bundles` in `SPECIALISTS`, and mention it in that agent's `instructions`.
+4. Run `python3 agents/generate.py` and the tests. Build-family agents now deny the skills, the owner allows them, the map lists the plugin as installed separately, and the hero footnote names it.
+5. Check that no new skill ID matches an existing repo skill; `test_native_plugin_skills_go_to_one_agent` fails if one does, because denying it would also block the repo skill. Update that test's owner list, and the plugin's wrapper README and this README's agent table.
+6. Run the runtime check: it plants one skill from each listed plugin and confirms only the owner can load it.
 
 Permission resources are skill directory IDs, not display names: `0-autoresearch-skill`, not `autoresearch`. MCP rules name each known server. Never use a blanket `*_*` rule, because built-in actions such as `external_directory` also contain underscores. Agent files must have unique names across a group's folders: rulesync merges folders by file path, so a later file with the same name replaces an earlier one without warning.
 

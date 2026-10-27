@@ -17,6 +17,8 @@ Each README gives you two options:
 
 In OpenCode, plugins go in the `plugins` list in `~/.config/opencode/opencode.jsonc` (OpenCode 1 called it `plugin`). Restart OpenCode after changing it.
 
+A plugin that brings skills needs an owner in the [agent setup](../agents/README.md#adding-a-plugin-that-brings-skills), or OpenCode's `build`, `plan` and `general` agents see all of its skills in every request. Superpowers goes to every agent; the Trail of Bits and IoTHackBot native plugins go to `security` and `reverse-engineering`.
+
 ## Updating: OpenCode keeps cached versions
 
 OpenCode installs each plugin entry once into `~/.cache/opencode/npm/` and keeps loading that copy. For entries that aren't pinned (`@latest`, or a git URL without a full commit hash), startup only *checks* for a newer release; it doesn't install it ([OpenCode docs](https://opencode.ai/v2/docs/plugins#reload)). Replacing or regenerating your config doesn't clear this cache, so a fresh config can still load an old plugin, including a release built for OpenCode 1.
@@ -41,7 +43,7 @@ Use `opencode plugin check` and `opencode plugin update` exactly as written. Ope
 
 ## For agents: install, remove and update
 
-To install, follow step 6 of [Installing on a machine](../AGENTS.md#6-ask-about-plugins): offer every plugin in the table above, then follow the "Let your agent do it" steps in each chosen plugin's README, one plugin at a time. No group installs a plugin. To verify in OpenCode, run `opencode plugin list` and check each plugin in a new session as its README says.
+To install, follow step 6 of [Installing on a machine](../AGENTS.md#6-ask-about-plugins): offer every plugin in the table above, then follow the "Let your agent do it" steps in each chosen plugin's README, one plugin at a time. No group installs a plugin. When adding a new plugin to this repo, follow step 6 of [Plugins](../AGENTS.md#plugins) so its skills get an owning agent. To verify in OpenCode, run `opencode plugin list` and check each plugin in a new session as its README says.
 
 To remove, get approval, then delete only that plugin's entry from the tool's plugin list (OpenCode's `plugins`, or `plugin` in V1), keeping comments and every other setting, and ask the user to restart. The cache in `~/.cache/opencode/npm/` can stay. Never open credential files. For tools where the plugin was installed with a slash command, the user removes it through that tool's plugin manager. Each plugin's README lists what else stays behind, and [Removing or replacing a component](../AGENTS.md#removing-or-replacing-a-component) has the general procedure.
 
