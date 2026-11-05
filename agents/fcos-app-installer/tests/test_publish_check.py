@@ -96,9 +96,58 @@ class WorkspaceSourceTests(unittest.TestCase):
         self.assertNotIn("notes.md", result.stdout)
         self.assertEqual(self.run_check(str(self.repo), workspace=self.make_workspace()).returncode, 1)
 
-    def test_bad_folder_refused(self):
+    def test_missing_folder_refused(self):
         self.assertEqual(self.run_check(str(self.tmp / "missing")).returncode, 2)
-        self.assertEqual(self.run_check(str(self.tmp)).returncode, 2)  # not inside a git checkout
+
+    def plain_folder(self, name="plain") -> Path:
+        folder = self.tmp / name
+        folder.mkdir()
+        return folder
+
+    def test_a_copy_that_is_not_a_checkout_is_walked(self):
+        # An installed toolkit is a plain folder, not a git checkout: every file in it is checked.
+        plain = self.plain_folder()
+        (plain / "ok.md").write_text("nothing private\n")
+        result = self.run_check(str(plain))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("(1 files)", result.stderr)
+        (plain / "sub").mkdir()
+        (plain / "sub" / "bad.md").write_text(j("gateway: 192", ".168.1.1\n"))
+        result = self.run_check(str(plain))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("sub/bad.md:1: private IPv4 address", result.stdout)
+
+    def test_a_walked_copy_is_checked_against_the_workspace_too(self):
+        plain = self.plain_folder()
+        (plain / "notes.md").write_text(f"runs on {self.secret} today\n")
+        result = self.run_check(str(plain), workspace=self.make_workspace())
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("notes.md:1: value from workspace", result.stdout)
+        self.assertNotIn(self.secret, result.stdout + result.stderr)
+
+    def test_the_walk_skips_git_internals_caches_and_symlinks(self):
+        plain = self.plain_folder()
+        (plain / "ok.md").write_text("nothing private\n")
+        for skipped in (".git", "__pycache__"):
+            (plain / skipped).mkdir()
+            (plain / skipped / "x").write_text(j("gateway: 192", ".168.1.1\n"))
+        outside = self.tmp / "outside.md"
+        outside.write_text(j("gateway: 192", ".168.1.1\n"))
+        (plain / "link.md").symlink_to(outside)
+        (plain / "linked").symlink_to(self.tmp, target_is_directory=True)
+        result = self.run_check(str(plain))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("(1 files)", result.stderr)
+
+    def test_nothing_to_scan_is_an_error_not_a_pass(self):
+        self.assertEqual(self.run_check(str(self.plain_folder("empty"))).returncode, 2)
+        (self.repo / ".gitignore").write_text("ignored/\n")
+        ignored = self.repo / "ignored"
+        ignored.mkdir()
+        (ignored / "x.md").write_text("nothing\n")
+        result = self.run_check(str(ignored))
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("nothing to scan", result.stderr)
 
     def make_workspace(self) -> Path:
         ws = self.tmp / "ws"

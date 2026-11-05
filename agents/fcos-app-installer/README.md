@@ -41,8 +41,9 @@ router, your file server, your DNS provider, and anything involving a secret.
 
 ## The workspace: your private files
 
-Everything specific to your setup lives in a folder **outside** this
-repository, by default `~/fcos-workspace`, remembered in
+Everything specific to your setup lives in a folder **outside** the toolkit's
+folder and outside any git checkout that holds it (`tools/workspace.py` refuses
+both), by default `~/fcos-workspace`, remembered in
 `~/.config/fcos-agent/workspace`:
 
 ```
@@ -172,6 +173,9 @@ python3 -m unittest discover tests
 
 `publish_check.py` fails on any value from your workspace, any private
 address, real domain or email, SSH key, password hash or secret-looking value.
+It scans the toolkit's own folder only: git's list of files when the folder is
+in a checkout, every file in it when it is a plain copy. A scan that finds no
+file to read is an error, not a pass.
 
 ## Layout
 

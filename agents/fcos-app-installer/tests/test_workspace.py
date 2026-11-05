@@ -3,6 +3,7 @@ import io
 import json
 import os
 import stat
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -102,6 +103,57 @@ class InitTests(TempHome):
         self.remembered.write_text(str(ROOT / "ws") + "\n")
         with self.assertRaises(WorkspaceError):
             resolve_workspace()
+
+
+class EnclosingCheckoutTests(TempHome):
+    """The workspace must stay out of the whole git checkout the toolkit sits in, not only out of
+    the toolkit's folder: whatever else that checkout publishes must never include a workspace."""
+
+    def setUp(self):
+        super().setUp()
+        self.big = self.tmp / "big"
+        self.toolkit = self.big / "agents" / "toolkit"
+        self.toolkit.mkdir(parents=True)
+        subprocess.run(["git", "init", "-q"], cwd=self.big, check=True)
+        patcher = mock.patch.object(workspace, "REPO_ROOT", self.toolkit)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_anywhere_in_the_enclosing_checkout_is_refused(self):
+        for bad in (self.big, self.big / "ws", self.big / "agents" / "other", self.toolkit / "ws"):
+            with self.subTest(path=str(bad)):
+                with self.assertRaises(WorkspaceError) as caught:
+                    resolve_workspace(str(bad))
+                self.assertIn(str(self.big), str(caught.exception))
+                with self.assertRaises(WorkspaceError):
+                    init_workspace(bad)
+        self.assertFalse((self.big / "ws").exists())
+        self.assertFalse(self.remembered.exists())
+
+    def test_a_remembered_path_in_the_enclosing_checkout_is_refused(self):
+        self.remembered.parent.mkdir(parents=True)
+        self.remembered.write_text(str(self.big / "ws") + "\n")
+        with self.assertRaises(WorkspaceError):
+            resolve_workspace()
+
+    def test_outside_the_checkout_is_allowed(self):
+        self.assertEqual(resolve_workspace(str(self.tmp / "ws")), self.tmp / "ws")
+
+    def test_a_toolkit_outside_any_checkout_guards_its_own_folder(self):
+        plain = self.tmp / "plain" / "toolkit"
+        plain.mkdir(parents=True)
+        with mock.patch.object(workspace, "REPO_ROOT", plain):
+            self.assertEqual(resolve_workspace(str(self.tmp / "plain" / "ws")), self.tmp / "plain" / "ws")
+            with self.assertRaises(WorkspaceError):
+                resolve_workspace(str(plain / "ws"))
+
+    def test_without_git_only_the_toolkit_folder_is_guarded(self):
+        empty = self.tmp / "no-git-here"
+        empty.mkdir()
+        with mock.patch.dict(os.environ, {"PATH": str(empty)}):
+            self.assertEqual(resolve_workspace(str(self.big / "ws")), self.big / "ws")
+            with self.assertRaises(WorkspaceError):
+                resolve_workspace(str(self.toolkit / "ws"))
 
 
 class ResolveTests(TempHome):

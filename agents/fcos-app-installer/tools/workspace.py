@@ -8,14 +8,18 @@ Usage:
 
 The workspace is found, in order, from an explicit path, the FCOS_WORKSPACE
 environment variable, then the path remembered in
-~/.config/fcos-agent/workspace. It must never be inside this repo, so private
-files can't become publishable. Secret files are only ever listed by path
+~/.config/fcos-agent/workspace. It must never be inside the toolkit's folder or
+anywhere in the git checkout that folder belongs to (git rev-parse
+--show-toplevel; without git, only the toolkit's folder), so private files
+can't become publishable. Secret files are only ever listed by path
 (existence flags), never read.
 """
 
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -41,11 +45,33 @@ def _remembered_file() -> Path:
     return Path.home() / ".config" / "fcos-agent" / "workspace"
 
 
+def _enclosing_checkout(folder: Path) -> Path:
+    """The top level of the git checkout that holds folder, or folder itself when it isn't in one
+    (or git isn't installed, in which case only the toolkit's own folder can be guarded)."""
+    git = shutil.which("git")
+    if git:
+        env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "GIT_CONFIG_NOSYSTEM": "1",
+               "GIT_CONFIG_GLOBAL": "/dev/null", "HOME": "/nonexistent"}
+        try:
+            done = subprocess.run([git, "-C", str(folder), "rev-parse", "--show-toplevel"], env=env,
+                                  capture_output=True, text=True, timeout=30)
+        except (OSError, subprocess.SubprocessError):
+            return folder
+        top = Path(done.stdout.strip()).resolve() if done.returncode == 0 and done.stdout.strip() else None
+        if top is not None and (top == folder or top in folder.parents):
+            return top
+    return folder
+
+
 def _outside_repo(path: Path) -> Path:
+    """A workspace holds private values, so it may sit neither in the toolkit's folder nor anywhere
+    else in the checkout that folder belongs to: that checkout is what gets published."""
     resolved = path.expanduser().resolve()
-    if resolved == REPO_ROOT or REPO_ROOT in resolved.parents:
+    base = _enclosing_checkout(REPO_ROOT)
+    if resolved == base or base in resolved.parents:
         raise WorkspaceError(
-            f"workspace {resolved} is inside the agent repo; choose a folder outside {REPO_ROOT}")
+            f"workspace {resolved} is inside {base}, the folder the toolkit is published from; "
+            f"choose a folder outside it")
     return resolved
 
 

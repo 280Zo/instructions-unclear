@@ -3,10 +3,12 @@
 
 Usage: publish_check.py [<folder>]
 
-Checks every tracked file plus every untracked file that isn't git-ignored, in
-the toolkit's own folder (the one holding tools/), wherever it is run from; or
-in <folder>, which must be inside a git checkout. Inside a larger repository
-(the toolkit as one folder of it) only that folder is scanned.
+Checks, in the toolkit's own folder (the one holding tools/), wherever it is run
+from, or in <folder>: every tracked file plus every untracked file that isn't
+git-ignored, when the folder is inside a git checkout (inside a larger
+repository, with the toolkit as one folder of it, only that folder is scanned);
+every file in it, git's own folder, Python caches and links excepted, when it
+isn't a checkout (an installed copy). A scan that reads no file is an error.
 Private data belongs only in the workspace, a folder outside the repo (see
 tools/workspace.py), or in git-ignored files (notes/).
 
@@ -25,6 +27,7 @@ Two kinds of rules:
 Hits print as file:line: rule, never the matched value. Exit 1 on any hit.
 """
 
+import os
 import re
 import subprocess
 import sys
@@ -63,13 +66,45 @@ def check_text(text: str, private: set[str]) -> list[str]:
     return sorted(set(hits), key=lambda h: int(h.split(":", 1)[0]))
 
 
+SKIP_DIRS = {".git", "__pycache__"}
+
+
+def _in_checkout(root: Path) -> bool:
+    try:
+        done = subprocess.run(["git", "rev-parse", "--is-inside-work-tree"], cwd=root, capture_output=True,
+                              text=True)
+    except OSError:  # git isn't installed
+        return False
+    return done.returncode == 0 and done.stdout.strip() == "true"
+
+
+def _walk(root: Path) -> list[Path]:
+    """Every file under root, for a folder that isn't a git checkout (an installed copy of the
+    toolkit). Git's own folder and Python caches are skipped, and links are never followed, so
+    nothing outside root is read."""
+    found = []
+    for base, dirs, names in os.walk(root, followlinks=False):
+        dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS and not (Path(base) / d).is_symlink())
+        found += [Path(base) / n for n in sorted(names) if not (Path(base) / n).is_symlink()]
+    return found
+
+
 def published_files(root: Path) -> list[Path]:
-    out = subprocess.run(
-        ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
-        cwd=root, capture_output=True, text=True, check=True).stdout
-    tracked_but_ignored = subprocess.run(
-        ["git", "ls-files", "--cached", "--ignored", "--exclude-standard", "-z"],
-        cwd=root, capture_output=True, text=True, check=True).stdout
+    """What would be published from root. Inside a git checkout (possibly a larger one that holds
+    the toolkit as one folder) that is git's own list for root alone, files outside root being that
+    checkout's business; in a plain folder it is every file in it. If git fails, walk: scanning
+    too much is the safe direction."""
+    if not _in_checkout(root):
+        return _walk(root)
+    try:
+        out = subprocess.run(
+            ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+            cwd=root, capture_output=True, text=True, check=True).stdout
+        tracked_but_ignored = subprocess.run(
+            ["git", "ls-files", "--cached", "--ignored", "--exclude-standard", "-z"],
+            cwd=root, capture_output=True, text=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return _walk(root)
     files = [p for p in out.split("\0") if p]
     still_tracked = [p for p in tracked_but_ignored.split("\0") if p]
     return [root / p for p in sorted(set(files) | set(still_tracked))]
@@ -85,10 +120,13 @@ def main(argv: list[str]) -> int:
               "comes from FCOS_WORKSPACE or the remembered path; there is no --config)", file=sys.stderr)
         return 2
     root = Path(args[0]).resolve() if args else TOOLKIT
-    inside = subprocess.run(["git", "rev-parse", "--is-inside-work-tree"], cwd=root, capture_output=True,
-                            text=True) if root.is_dir() else None
-    if inside is None or inside.stdout.strip() != "true":
-        print(f"publish_check: {root} is not a folder inside a git checkout", file=sys.stderr)
+    if not root.is_dir():
+        print(f"publish_check: {root} is not a folder", file=sys.stderr)
+        return 2
+    files = [p for p in published_files(root) if p.is_file()]
+    if not files:
+        print(f"publish_check: nothing to scan in {root} (every file is git-ignored, or the folder is empty); "
+              "a scan that reads no file proves nothing", file=sys.stderr)
         return 2
     try:
         ws = resolve_workspace()
@@ -106,9 +144,7 @@ def main(argv: list[str]) -> int:
         print(f"publish_check: {exc}", file=sys.stderr)
         return 2
     hits = []
-    for path in published_files(root):
-        if not path.is_file():
-            continue
+    for path in files:
         try:
             text = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
@@ -117,7 +153,8 @@ def main(argv: list[str]) -> int:
         hits += [f"{path.relative_to(root)}:{hit}" for hit in check_text(text, private)]
     for hit in hits:
         print(hit)
-    print(f"publish_check: {len(hits)} hit(s); values from {source}; scanned {root}", file=sys.stderr)
+    print(f"publish_check: {len(hits)} hit(s); values from {source}; scanned {root} ({len(files)} files)",
+          file=sys.stderr)
     return 1 if hits else 0
 
 
