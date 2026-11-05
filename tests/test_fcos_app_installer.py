@@ -199,6 +199,83 @@ class InstallerRefusalTests(InstallerBase):
         self.assertIn("git checkout", err)
         self.assertIn("folder of its own", err)
 
+    def test_more_secret_looking_names_are_refused_whatever_their_case(self):
+        for name in ("tools/.env", "tools/.env.local", "docs/id_ed25519", "docs/id_rsa.pub.bak", "docs/credentials.json",
+                     "tools/Foo.KEY", "tools/x.PEM", "docs/.npmrc", "docs/.netrc", "docs/auth.json", "docs/vault.kdbx",
+                     "docs/terraform.tfstate", "docs/.ssh/config", "docs/Secrets/x.md"):
+            with self.subTest(name=name):
+                path = self.source / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("x\n")
+                self.refused(str(self.target), "--apply", why="looks like a secret")
+                path.unlink()
+
+    def test_an_empty_folder_argument_is_a_usage_error_not_the_current_folder(self):
+        self.refused("", "--apply", why="usage")
+
+    def test_a_target_that_is_a_link_is_refused(self):
+        real = self.tmp / "real"
+        real.mkdir()
+        self.target.symlink_to(real, target_is_directory=True)
+        self.refused(str(self.target), "--apply", why="link")
+        self.assertEqual(list(real.iterdir()), [])
+
+    def test_a_folder_where_a_file_belongs_is_refused_in_the_dry_run_too(self):
+        (self.target / "tools" / "a.py").mkdir(parents=True)
+        self.refused(str(self.target), why="is a folder")
+        self.assertEqual(list((self.target / "tools" / "a.py").iterdir()), [])
+
+    def test_a_target_under_a_file_is_refused_in_the_dry_run(self):
+        self.target.write_text("x")
+        self.refused(str(self.target / "sub"), why="not a folder")
+
+    @unittest.skipIf(os.geteuid() == 0, "root can write anywhere")
+    def test_an_unwritable_folder_is_refused_before_anything_is_written(self):
+        # The earlier claim "nothing is written when a file cannot be placed" has to hold for this too.
+        (self.target / "docs" / "guide").mkdir(parents=True)
+        (self.target / "docs" / "guide").chmod(0o555)
+        self.addCleanup((self.target / "docs" / "guide").chmod, 0o755)
+        self.refused(str(self.target), "--apply", why="not writable")
+        self.assertEqual(sorted(p.name for p in self.target.iterdir()), ["docs"])
+        self.assertEqual(list((self.target / "docs").iterdir()), [self.target / "docs" / "guide"])
+
+    def test_a_pinned_images_file_named_env_is_not_taken_for_a_secret(self):
+        (self.source / "tools" / "images.env").write_text("BUTANE_IMAGE=quay.io/x\n")
+        code, out, err = run(self.module, str(self.target), source=self.source)
+        self.assertEqual(code, 0, err)
+
+    @unittest.skipIf(os.geteuid() == 0, "root can write anywhere")
+    def test_an_unwritable_existing_target_is_refused(self):
+        self.target.mkdir()
+        self.target.chmod(0o555)
+        self.addCleanup(self.target.chmod, 0o755)
+        self.refused(str(self.target), "--apply", why="not writable")
+
+    def test_a_failure_while_writing_exits_2_and_says_a_rerun_is_safe(self):
+        original = self.module.write
+
+        def broken(*args, **kwargs):
+            raise OSError(28, "No space left on device")
+        self.module.write = broken
+        self.addCleanup(setattr, self.module, "write", original)
+        code, out, err = run(self.module, str(self.target), "--apply", source=self.source)
+        self.assertEqual(code, 2, out + err)
+        self.assertIn("run it again", err)
+        self.assertIn("partly", err)
+
+    def test_a_file_name_that_is_not_utf8_does_not_crash_the_listing(self):
+        odd = os.fsdecode(b"tools/caf\xe9.py")
+        (self.source / odd).write_text("x\n")
+        code, out, err = run(self.module, str(self.target), source=self.source)
+        self.assertEqual(code, 0, err)
+        self.assertIn("caf", out)
+
+    def test_the_next_steps_quote_a_target_with_a_space(self):
+        spaced = self.tmp / "my folder"
+        code, out, _ = run(self.module, str(spaced), "--apply", source=self.source)
+        self.assertEqual(code, 0)
+        self.assertIn(f"'{spaced}'", out)
+
     def test_nothing_is_written_when_one_file_cannot_be_placed(self):
         # Placement is planned first: a refusal anywhere means no file is written anywhere.
         self.target.mkdir()

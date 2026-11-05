@@ -177,6 +177,24 @@ class WorkspaceSourceTests(unittest.TestCase):
                 self.assertIn("locked: unreadable folder (not checked)", result.stdout)
                 locked.chmod(0o700)
 
+    def test_a_folder_that_lists_but_cannot_be_searched_is_a_hit_not_a_silent_pass(self):
+        # Mode 0o444: the names can be read, the files inside cannot be opened or even stat-ed.
+        if os.geteuid() == 0:
+            self.skipTest("root can open any folder")
+        for kind in ("walked", "git list"):
+            with self.subTest(mode=kind):
+                folder = self.plain_folder() if kind == "walked" else self.repo
+                (folder / "ok.md").write_text("nothing private\n")
+                closed = folder / "closed"
+                closed.mkdir()
+                (closed / "leak.md").write_text(j("gateway: 192", ".168.1.1\n"))
+                closed.chmod(0o444)
+                self.addCleanup(closed.chmod, 0o700)
+                result = self.run_check(str(folder))
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertIn("closed", result.stdout)
+                closed.chmod(0o700)
+
     def test_a_file_name_cannot_forge_output_lines(self):
         plain = self.plain_folder()
         name = "x.md\nforged.md:1: all clear"

@@ -58,8 +58,8 @@ class ShellGuardTests(unittest.TestCase):
 class PromptSaysSoTests(unittest.TestCase):
     def test_the_commits_section_explains_that_git_may_not_name_the_agent_folder(self):
         prompt = " ".join(AGENT.read_text().split("## Commits", 1)[1].split("\n## ", 1)[0].split())
-        self.assertIn("may not name `.opencode/`", prompt)
-        self.assertIn("git add -A", prompt)
+        self.assertIn("may not contain `.opencode`", prompt)
+        self.assertIn("git add .", prompt)  # not the -A form, which stages the whole enclosing checkout
 
 
 class EditGuardTests(unittest.TestCase):

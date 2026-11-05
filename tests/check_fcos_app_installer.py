@@ -74,7 +74,25 @@ def main(argv):
               f"{name}: the permission list is unchanged ({len(after_meta['permissions'])} rules)")
         check(before_body == after_body, f"{name}: the instructions are unchanged")
         check(before_meta["opencode"]["mode"] == after_meta["mode"], f"{name}: the mode is kept")
+        check(before_meta["description"] == after_meta["description"], f"{name}: the description is kept")
+        check(before_meta["opencode"].get("color") == after_meta.get("color"), f"{name}: the color is kept")
+    rules_text = " ".join((target / "AGENTS.md").read_text(encoding="utf-8").split())
+    for rule in sorted((FOLDER / "rules").glob("*.md")):
+        body = " ".join(rule.read_text(encoding="utf-8").split("\n---\n", 1)[1].split())
+        check(body in rules_text, f"AGENTS.md holds the whole text of rules/{rule.name}")
+    for skill in SKILLS:
+        before_meta, before_body = split(FOLDER / "skills" / skill / "SKILL.md")
+        after_meta, after_body = split(target / ".opencode" / "skills" / skill / "SKILL.md")
+        check(before_meta == after_meta and before_body == after_body, f"{skill}: SKILL.md is unchanged")
+        others = [p.relative_to(FOLDER / "skills" / skill) for p in (FOLDER / "skills" / skill).rglob("*")
+                  if p.is_file() and p.name != "SKILL.md"]
+        check(all((target / ".opencode" / "skills" / skill / o).read_bytes() == (FOLDER / "skills" / skill / o).read_bytes()
+                  and (target / ".opencode" / "skills" / skill / o).stat().st_mode & 0o111
+                  == (FOLDER / "skills" / skill / o).stat().st_mode & 0o111 for o in others),
+              f"{skill}: its other files are unchanged, with their modes")
     command, _ = split(target / ".opencode" / "commands" / "add-service.md")
+    source_command, _ = split(FOLDER / "commands" / "add-service.md")
+    check(command.get("description") == source_command["description"], "the command's description is kept")
     check(command.get("agent") == "fcos-app-installer", "/add-service still runs in fcos-app-installer")
 
     requirement = subprocess.run([sys.executable, "tools/check_requirements.py"], capture_output=True, text=True,

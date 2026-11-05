@@ -155,7 +155,7 @@ opencode:
       resource: "*User root*"
       effect: deny
     - action: shell
-      resource: "rm -f /tmp/opencode/* *"
+      resource: "rm -f /tmp/opencode/* ?*"
       effect: deny
     - action: shell
       resource: "python3 -m unittest */*"
@@ -328,12 +328,6 @@ opencode:
       resource: "notes/*"
       effect: deny
     - action: edit
-      resource: ".opencode/*"
-      effect: deny
-    - action: edit
-      resource: "*/.opencode/*"
-      effect: deny
-    - action: edit
       resource: ".git/*"
       effect: deny
     # "python3 tools/*" runs from any working directory, so no folder the agent
@@ -346,6 +340,14 @@ opencode:
       effect: deny
     - action: edit
       resource: "*/secrets/*"
+      effect: deny
+    # The agent folder comes after the tools/ ask, so ".opencode/agents/tools/x" is denied, not
+    # asked (review 2026-11-04). Skills, below, are the owner's to approve.
+    - action: edit
+      resource: ".opencode/*"
+      effect: deny
+    - action: edit
+      resource: "*/.opencode/*"
       effect: deny
     - action: edit
       resource: ".opencode/skills/*"
@@ -749,10 +751,14 @@ install's files live in the workspace, which is not a repository you commit
 to. Before proposing a commit, run `python3 tools/publish_check.py` and
 `python3 -m unittest discover tests`; both must pass. Show the owner the exact
 command, message, file list and a summary, and commit only after they say yes.
-Never push. Shell commands may not name `.opencode/` (the rules deny any
-command containing it), so stage a change to the adapters or to your own files
-with `git add -A`, which names no path, and say so in the file list you show;
-`git diff` and `git status` without a path show the same files.
+Never push. A shell command may not contain `.opencode`, `host-script` or
+`.sha25` anywhere, commit messages included (the rules deny it): write the
+message to a file in `/tmp/opencode/` and run `git commit -F` on it, and keep
+those words out of the message. Stage a change to the adapters or to your own
+files with `git add .`, which names no path and stays inside the toolkit's
+folder (the `-A` form would stage the whole checkout when the toolkit is a
+subfolder of one), and say so in the file list you show; `git diff` and
+`git status` without a path show the same files.
 
 ## Final report
 

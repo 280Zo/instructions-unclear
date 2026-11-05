@@ -33,6 +33,7 @@ Hits print as file:line: rule, never the matched value. Exit 1 on any hit.
 
 import os
 import re
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -151,8 +152,18 @@ def main(argv: list[str]) -> int:
     listed, how, unreadable = published_files(root)
     # A link is never read, in either mode: its target may be outside the folder, and git publishes
     # only the link itself.
-    files = [p for p in listed if p.is_file() and not p.is_symlink()]
-    if not files and not unreadable:
+    files, cannot_stat = [], []
+    for p in listed:
+        try:
+            mode = p.lstat().st_mode
+        except (FileNotFoundError, NotADirectoryError):  # git lists a tracked file that was deleted
+            continue
+        except OSError:  # a name in a folder that can be listed but not searched: it could hold anything
+            cannot_stat.append(p)
+            continue
+        if stat.S_ISREG(mode):
+            files.append(p)
+    if not files and not unreadable and not cannot_stat:
         print(f"publish_check: nothing to scan in {root} (every file is git-ignored, or the folder is empty); "
               "a scan that reads no file proves nothing", file=sys.stderr)
         return 2
@@ -175,6 +186,7 @@ def main(argv: list[str]) -> int:
             if folder != root and root in folder.parents]
     if root in unreadable:
         hits.append(".: unreadable folder (not checked)")
+    hits += [f"{_shown(p.relative_to(root))}: unreadable (not checked)" for p in cannot_stat]
     for path in files:
         shown = _shown(path.relative_to(root))
         try:

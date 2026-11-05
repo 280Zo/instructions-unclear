@@ -13,11 +13,17 @@ Usage:
   install.py <folder> --check    dry run that exits 1 when anything would change
 
 It copies a fixed list of top-level entries and nothing else, refuses links and anything that
-looks like a secret, replaces a file only when its content or mode differs, never deletes, and
-never touches what it does not own (.opencode/, AGENTS.md, your workspace, your own files).
-Standard library only. Exit 0 on success, 1 on --check differences, 2 on a refusal or bad usage.
+looks like a secret, never deletes, and never touches files that are not on that list (.opencode/,
+AGENTS.md, your workspace, your own files). A file that is on the list and differs from the
+toolkit's copy IS replaced, including a README.md or .gitignore of yours at the folder's top and
+edits you made to a toolkit file; the dry run lists every such file as "changed" first, so read it
+before adding --apply. Everything is checked before anything is written; a failure while writing
+(a full disk) can still leave the folder partly installed, and running it again is safe.
+Standard library only. Exit 0 on success, 1 on --check differences, 2 on a refusal, a failure or
+bad usage.
 """
 import os
+import shlex
 import sys
 import tempfile
 from pathlib import Path
@@ -28,12 +34,27 @@ HERE = Path(__file__).resolve().parent
 INSTALL_LIST = ("tools", "templates", "docs", "schemas", "specs", "tests", "site.example.yaml",
                 "host-scripts.sha256", ".gitignore")
 SKIP_DIRS = {"__pycache__"}
-SECRET_SUFFIXES = (".token", ".key", ".pem")
-SECRET_FOLDERS = {"secrets"}
+SECRET_SUFFIXES = (".token", ".key", ".pem", ".p12", ".pfx", ".kdbx", ".cred", ".tfstate")
+SECRET_PREFIXES = (".env", "id_rsa", "id_ed25519", "id_ecdsa", "id_dsa")
+SECRET_NAMES = {"credentials.json", ".credentials.json", "auth.json", ".claude.json", ".npmrc", ".netrc"}
+SECRET_FOLDERS = {"secrets", ".ssh"}
 
 
 class Refusal(Exception):
     pass
+
+
+def looks_secret(relative: Path) -> bool:
+    """Names that hold or suggest a secret, whatever their case; nothing like them is installed."""
+    name = relative.name.lower()
+    return (name.endswith(SECRET_SUFFIXES) or name.startswith(SECRET_PREFIXES) or name in SECRET_NAMES
+            or bool(SECRET_FOLDERS & {part.lower() for part in relative.parts}))
+
+
+def shown(text: str) -> str:
+    """A path for the output: bytes that are not valid text, and control characters, are escaped."""
+    return "".join(c if c.isprintable() else c.encode("unicode_escape").decode("ascii")
+                   for c in text.encode("utf-8", "backslashreplace").decode("utf-8"))
 
 
 def nearest_checkout(folder: Path) -> Path | None:
@@ -64,8 +85,8 @@ def plan_files(source: Path) -> dict[str, Path]:
                 raise Refusal(f"{relative} is a link; the installer never copies links")
             if path.is_dir():
                 continue
-            if path.name.endswith(SECRET_SUFFIXES) or SECRET_FOLDERS & set(relative.parts):
-                raise Refusal(f"{relative} looks like a secret; nothing like that belongs in the toolkit")
+            if looks_secret(relative):
+                raise Refusal(f"{shown(str(relative))} looks like a secret; nothing like that belongs in the toolkit")
             files[relative.as_posix()] = path
     # This folder's README goes with the toolkit, as README.md: it is what you read in the folder you
     # run the toolkit in, and the toolkit's tests read it.
@@ -89,12 +110,33 @@ def check_target(target: Path, folder: Path, source: Path, checkout: Path | None
         raise Refusal(f"{target} exists and is not a folder")
 
 
+def check_room(target: Path) -> None:
+    """The nearest folder that exists above (or at) the target must be one we can create in."""
+    base = target
+    while not base.exists():
+        if base.is_symlink():
+            raise Refusal(f"{base} is a broken link; the installer never writes through links")
+        base = base.parent
+    if not base.is_dir():
+        raise Refusal(f"{base} is not a folder")
+    if not os.access(base, os.W_OK | os.X_OK):
+        raise Refusal(f"{base} is not writable")
+
+
 def classify(files: dict[str, Path], target: Path) -> dict[str, list[str]]:
-    """new / changed / same, refusing a destination that would be written through a link or into a
-    file; the whole plan is checked before anything is written."""
+    """new / changed / same, refusing a destination that would be written through a link, over a
+    folder, into a file or into a folder we cannot write to; the whole plan is checked before
+    anything is written."""
     result = {"new": [], "changed": [], "same": []}
     for relative, path in files.items():
         destination = target / relative
+        if destination.is_dir() and not destination.is_symlink():
+            raise Refusal(f"{shown(relative)} in {target} is a folder where a file belongs")
+        container = destination.parent
+        while not container.exists():
+            container = container.parent
+        if container.is_dir() and not os.access(container, os.W_OK | os.X_OK):
+            raise Refusal(f"{shown(container.relative_to(target).as_posix() or '.')} in {target} is not writable")
         for parent in [*reversed(destination.relative_to(target).parents)][1:] + [Path(relative)]:
             step = target / parent
             if step.is_symlink():
@@ -132,19 +174,28 @@ def write(files: dict[str, Path], target: Path, names: list[str]) -> None:
 def main(argv: list[str], source: Path | None = None) -> int:
     flags = {a for a in argv if a.startswith("--")}
     folders = [a for a in argv if not a.startswith("--")]
-    if len(folders) != 1 or not flags <= {"--apply", "--check"} or {"--apply", "--check"} <= flags:
-        print("usage: install.py <folder> [--apply | --check]", file=sys.stderr)
+    if (len(folders) != 1 or not folders[0].strip() or not flags <= {"--apply", "--check"}
+            or {"--apply", "--check"} <= flags):
+        print("usage: install.py <folder> [--apply | --check]   (the folder must be named)", file=sys.stderr)
         return 2
     source = Path(source) if source is not None else HERE / "toolkit"
     folder = source.resolve().parent  # the installer's own folder, whatever source is
     try:
-        target = Path(folders[0]).expanduser().resolve()
+        given = Path(folders[0]).expanduser()
+        if given.is_symlink():
+            raise Refusal(f"{given} is a link; name the folder it points to, so the installer never writes through a link")
+        target = given.resolve()
         checkout = nearest_checkout(HERE)
         check_target(target, folder, source.resolve(), checkout)
+        check_room(target)
         files = plan_files(source.resolve())
         plan = classify(files, target) if target.exists() else {"new": sorted(files), "changed": [], "same": []}
     except Refusal as refusal:
         print(f"install: {refusal}", file=sys.stderr)
+        return 2
+    except (OSError, RuntimeError) as error:  # a loop of links, a name too long, an unreadable file
+        print(f"install: cannot plan the install ({error.__class__.__name__}: {error}); nothing was written",
+              file=sys.stderr)
         return 2
     other = nearest_checkout(target if target.exists() else target.parent)
     if other is not None:
@@ -153,16 +204,23 @@ def main(argv: list[str], source: Path | None = None) -> int:
               "workspace inside it; a folder of its own, outside any other checkout, is better.", file=sys.stderr)
     for kind in ("new", "changed"):
         for relative in plan[kind]:
-            print(f"{kind:8} {relative}")
+            print(f"{kind:8} {shown(relative)}")
     print(f"{len(plan['new'])} new, {len(plan['changed'])} changed, {len(plan['same'])} unchanged")
     if "--apply" in flags:
-        write(files, target, plan["new"] + plan["changed"])
+        try:
+            write(files, target, plan["new"] + plan["changed"])
+        except OSError as error:
+            print(f"install: stopped while writing ({error.__class__.__name__}: {error}). The folder may be "
+                  "partly installed; nothing else is touched, so run it again once the cause is fixed",
+                  file=sys.stderr)
+            return 2
         print(f"installed into {target}")
         repo = HERE.parents[1]
         print("next, with rulesync (from the repository):\n"
-              f"  cd {repo}\n"
-              f"  npx rulesync@41.0.0 generate --config groups/fcos_app_installer.jsonc --output-roots {target}\n"
-              f"then start OpenCode in {target} and run: python3 tools/check_requirements.py")
+              f"  cd {shlex.quote(str(repo))}\n"
+              f"  npx rulesync@41.0.0 generate --config groups/fcos_app_installer.jsonc "
+              f"--output-roots {shlex.quote(str(target))}\n"
+              f"then start OpenCode in {shlex.quote(str(target))} and run: python3 tools/check_requirements.py")
         return 0
     differs = bool(plan["new"] or plan["changed"])
     if "--check" in flags:

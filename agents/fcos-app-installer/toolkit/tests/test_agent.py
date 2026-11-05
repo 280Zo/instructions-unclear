@@ -364,6 +364,47 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(positions, sorted(positions))
 
 
+class ReviewFixTests(unittest.TestCase):
+    """Gaps found in review (2026-11-04) in the hand-written permission list and its prompt."""
+
+    def setUp(self):
+        self.text = AGENT.read_text()
+
+    def test_nothing_under_the_agent_folder_is_writable_even_in_a_tools_subfolder(self):
+        # "*/tools/*" asks, and used to come after the .opencode denies, so it won for these.
+        for path in (".opencode/agents/tools/evil.md", ".opencode/commands/tools/evil.md",
+                     "/h/tk/.opencode/commands/tools/evil.md", "/h/tk/.opencode/agents/tools/x/y.md",
+                     "/h/tk/.opencode/agents/evil.md", "/h/tk/.opencode/commands/evil.md"):
+            with self.subTest(path=path):
+                self.assertEqual(effect(self.text, "edit", path), "deny")
+        # A skill's files are still the owner's to approve.
+        for path in (f"/h/tk/{SKILLS_DIR}/adapter-x/SKILL.md", f"/h/tk/{SKILLS_DIR}/adapter-x/tools/y.sh"):
+            with self.subTest(path=path):
+                self.assertEqual(effect(self.text, "edit", path), "ask")
+
+    def test_removing_its_own_scratch_file_is_allowed_and_extra_arguments_are_not(self):
+        self.assertEqual(effect(self.text, "shell", "rm -f /tmp/opencode/apply-edge.sh"), "allow")
+        for command in ("rm -f /tmp/opencode/a /etc/passwd", "rm -f /tmp/opencode/a b",
+                        "rm -f /tmp/opencode/*..*", "rm -f /tmp/opencode/a ../b"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "deny")
+
+    def test_the_commit_section_warns_about_the_words_the_rules_deny(self):
+        section = " ".join(self.text.split("## Commits", 1)[1].split("## Final report", 1)[0].split())
+        for word in (".opencode", "host-script", ".sha25", "git commit -F"):
+            with self.subTest(word=word):
+                self.assertIn(word, section)
+        self.assertIn("git add .", section)
+        self.assertNotIn("git add -A", section)
+        # The rules really do deny a commit message holding any of them.
+        for message in ("git commit -m 'Update host-scripts list'", "git commit -m 'drop .opencode'",
+                        "git commit -m 'refresh the .sha256 list'"):
+            with self.subTest(message=message):
+                self.assertEqual(effect(self.text, "shell", message), "deny")
+        self.assertEqual(effect(self.text, "shell", "git commit -F /tmp/opencode/msg.txt"), "ask")
+        self.assertEqual(effect(self.text, "shell", "git add ."), "ask")  # staging is the owner's call
+
+
 class CommandTests(unittest.TestCase):
     def test_command_uses_agent(self):
         text = COMMAND.read_text()

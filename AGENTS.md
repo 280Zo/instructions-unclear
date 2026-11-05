@@ -301,7 +301,7 @@ HOME=/tmp/opencode/rulesync-check npx rulesync@41.0.0 generate --global --featur
 Leak scan over the files git would commit:
 
 ```bash
-git ls-files --cached --others --exclude-standard -z -- . ':!AGENTS.md' ':!skills/' \
+git ls-files --cached --others --exclude-standard -z -- . ':!AGENTS.md' ':!skills/' ':!agents/fcos-app-installer/toolkit/' \
   | xargs -0 rg -n -i \
       -e '/home/' -e '/run/user/' \
       -e '\bsk-[a-z0-9_-]{16,}' -e 'gh[pousr]_[a-z0-9]{20,}' -e 'xox[abpr]-' -e 'AKIA[0-9A-Z]{16}' \
@@ -311,7 +311,7 @@ git ls-files --cached --others --exclude-standard -z -- . ':!AGENTS.md' ':!skill
 
 Expect no output. The patterns catch home paths, common token formats (Anthropic and OpenAI `sk-`, GitHub, Slack, AWS), and any token, secret, password or API key field holding a literal value. `${VAR}` placeholders and `{env:...}` / `{file:...}` references pass. The scan skips this file, which quotes the patterns. It was checked against fake Claude Code, Codex and imported MCP credentials, and caught all of them.
 
-The scan above skips `skills/`, so run it again on any of my own folders there (whose README says "Written for this repo"), replacing the `git ls-files ...` pathspec with those folders, for example `skills/eli5 skills/report skills/package-management`.
+The scan also skips `agents/fcos-app-installer/toolkit/`: its tests and guide use placeholder paths such as `/home/owner`, and it has a leak scan of its own that also looks for the owner's real values. Run that one in an installed folder (`python3 tools/publish_check.py`, as the installed README describes), not in the repository, where it can't find the skills it exempts. The scan above skips `skills/`, so run it again on any of my own folders there (whose README says "Written for this repo"), replacing the `git ls-files ...` pathspec with those folders, for example `skills/eli5 skills/report skills/package-management`.
 
 Third-party skills are full of documentation placeholders (`api_key="your-api-key"`, `/home/ubuntu`), so they get a narrower scan for real token formats and your own home path:
 

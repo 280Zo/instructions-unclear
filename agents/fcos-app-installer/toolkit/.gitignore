@@ -11,15 +11,13 @@
 /docs/design/
 /docs/superpowers/
 
-# The global gitignore excludes .opencode/; publish only this repo's agent and
-# commands from it, nothing else OpenCode keeps there.
+# The global gitignore excludes .opencode/; if you commit this folder, publish only the agents,
+# commands and skills rulesync wrote there, nothing else OpenCode keeps there.
 !/.opencode/
 /.opencode/*
 !/.opencode/agents/
 !/.opencode/commands/
 !/.opencode/skills/
-# The project config that loads rules/*.md (the global gitignore excludes a root opencode.json).
-!/.opencode/opencode.json
 
 # Python caches
 __pycache__/
