@@ -48,4 +48,4 @@ To update, follow [Check for updates](../../AGENTS.md#check-for-updates) and [Up
 
 ## Origin
 
-[trailofbits/skills](https://github.com/trailofbits/skills), complete tree at commit `a3131740a39291e42fd15b9eac07e0b393ad71b1`, copied October 20, 2026. [CC BY-SA 4.0](../../THIRD_PARTY_LICENSES.md#trailofbitsskills), by Trail of Bits; full text also retained in `upstream/LICENSE`. No local tool sections or body adaptations. Wrapper written for this repo by 280Zo.
+[trailofbits/skills](https://github.com/trailofbits/skills), complete tree at commit `a3131740a39291e42fd15b9eac07e0b393ad71b1`, copied 2026-10-20. [CC BY-SA 4.0](../../THIRD_PARTY_LICENSES.md#trailofbitsskills), by Trail of Bits; full text also retained in `upstream/LICENSE`. No local tool sections or body adaptations. Wrapper written for this repo by 280Zo.

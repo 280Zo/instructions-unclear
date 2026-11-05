@@ -16,7 +16,7 @@ npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features s
 
 Swap `--targets` for your tools. To keep it in your regular install, add `agents/second-opinion` to `inputRoots` in your `rulesync.local.jsonc`.
 
-In OpenCode, `second-opinion` loads only the Superpowers, search and user-invoked skills, uses only the Exa and PMB servers, and delegates only to `evaluator`, `metacognitive`, `general` and `explore`. [`agents/generate.py`](../generate.py) generates those rules after the edit and shell rules; see [its update steps](../README.md#update) to change them.
+In OpenCode, `second-opinion` loads only the Superpowers, `package-management`, `search`, `exa-agent`, `opencode` and user-invoked skills, uses only the Exa and PMB servers, and delegates only to `evaluator`, `metacognitive`, `general` and `explore`. [`agents/generate.py`](../generate.py) generates those rules after the edit and shell rules; see [its update steps](../README.md#update) to change them.
 
 ## Use
 

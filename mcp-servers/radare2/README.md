@@ -6,7 +6,7 @@
 
 Separately install/build **radare2 MCP 1.9.0** with a compatible radare2 release. The tagged README identifies **radare2 6.2.4**; check the native API/ABI requirements for your build rather than assuming an earlier version still matches. Put the resulting installed `r2mcp` executable on PATH. The template runs that command by name, not an absolute path or a download runner.
 
-Use the [tagged upstream instructions](https://github.com/radareorg/radare2-mcp/tree/1.9.0) and [release notes](https://github.com/radareorg/radare2-mcp/releases/tag/1.9.0), reviewed October 20, 2026, after approval. Upstream's `r2pm -Uci` example tracks package updates rather than guaranteeing this pinned source, so it is not a reproducible substitute for checking out the recorded release. This repo neither builds the native code nor changes your package manager or PATH.
+Use the [tagged upstream instructions](https://github.com/radareorg/radare2-mcp/tree/1.9.0) and [release notes](https://github.com/radareorg/radare2-mcp/releases/tag/1.9.0), reviewed 2026-10-20, after approval. Upstream's `r2pm -Uci` example tracks package updates rather than guaranteeing this pinned source, so it is not a reproducible substitute for checking out the recorded release. This repo neither builds the native code nor changes your package manager or PATH.
 
 ## Install and activate
 
@@ -50,4 +50,4 @@ Compare stable tags and their supported flags/native API requirements before cha
 
 ## Origin
 
-Connection template and documentation written for this repo by 280Zo, based on [radareorg/radare2-mcp](https://github.com/radareorg/radare2-mcp), tag `1.9.0`, commit `562c0cf23c42b65b3052f0b294d8778c20facbde`, verified October 20, 2026. No upstream executable is vendored or runtime upgrade performed. Upstream MIT, copyright 2024 dnakov; [license](https://github.com/radareorg/radare2-mcp/blob/1.9.0/LICENSE), [full text](../../THIRD_PARTY_LICENSES.md#radareorgradare2-mcp).
+Connection template and documentation written for this repo by 280Zo, based on [radareorg/radare2-mcp](https://github.com/radareorg/radare2-mcp), tag `1.9.0`, commit `562c0cf23c42b65b3052f0b294d8778c20facbde`, verified 2026-10-20. No upstream executable is vendored or runtime upgrade performed. Upstream MIT, copyright 2024 dnakov; [license](https://github.com/radareorg/radare2-mcp/blob/1.9.0/LICENSE), [full text](../../THIRD_PARTY_LICENSES.md#radareorgradare2-mcp).

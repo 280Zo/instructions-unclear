@@ -44,4 +44,4 @@ To update, follow [Check for updates](../../AGENTS.md#check-for-updates) and [Up
 
 ## Origin
 
-[BrownFineSecurity/iothackbot](https://github.com/BrownFineSecurity/iothackbot), complete tree at commit `d443c408a9fdd83f97d8c354b9c639afa2251974`, copied October 20, 2026. MIT, © 2025 iothackbot contributors; [full notice](../../THIRD_PARTY_LICENSES.md#brownfinesecurityiothackbot), also preserved in `upstream/LICENSE`. Wrapper written for this repo by 280Zo.
+[BrownFineSecurity/iothackbot](https://github.com/BrownFineSecurity/iothackbot), complete tree at commit `d443c408a9fdd83f97d8c354b9c639afa2251974`, copied 2026-10-20. MIT, © 2025 iothackbot contributors; [full notice](../../THIRD_PARTY_LICENSES.md#brownfinesecurityiothackbot), also preserved in `upstream/LICENSE`. Wrapper written for this repo by 280Zo.

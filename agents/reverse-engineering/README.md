@@ -59,7 +59,7 @@ Start in this repo and ask:
 
 > Follow `agents/reverse-engineering/README.md` to prepare the tools for my chosen workflow. Inspect what is installed, propose the smallest setup, ask before changes, and verify it with harmless local fixtures. Do not analyze real targets.
 
-This is a repo-owned setup procedure, not an upstream agent prompt. Keep it separate from the copied skills. Also follow the component-specific instructions for [REA](../../mcp-servers/rea/README.md#for-agents-install-and-verify), [ReVa](../../mcp-servers/reva/README.md#for-agents-install-and-verify) or [radare2 MCP](../../mcp-servers/radare2/README.md#for-agents-install-and-verify) when applicable.
+This is a repo-owned setup procedure, not an upstream agent prompt. Keep it separate from the copied skills. Also follow the component-specific instructions for [REA](../../mcp-servers/rea/README.md#for-agents-install-remove-and-update), [ReVa](../../mcp-servers/reva/README.md#for-agents-install-remove-and-update) or [radare2 MCP](../../mcp-servers/radare2/README.md#for-agents-install-remove-and-update) when applicable.
 
 ### Approval before installation
 
@@ -109,4 +109,4 @@ Start your tool in the profile folder and point it at what you're analyzing by p
 
 ## Origin
 
-[wshobson/agents](https://github.com/wshobson/agents), `plugins/reverse-engineering`, commit `0874a27b17a22e2b7c2e2bcd725768e0803cad06`, refreshed October 20, 2026. Protocol guidance includes the complete new binary/encryption and documentation references. Existing agent metadata adaptations are retained. [MIT](../../THIRD_PARTY_LICENSES.md#wshobsonagents), © 2024 Seth Hobson. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).
+[wshobson/agents](https://github.com/wshobson/agents), `plugins/reverse-engineering`, commit `0874a27b17a22e2b7c2e2bcd725768e0803cad06`, refreshed 2026-10-20. Protocol guidance includes the complete new binary/encryption and documentation references. Existing agent metadata adaptations are retained. [MIT](../../THIRD_PARTY_LICENSES.md#wshobsonagents), © 2024 Seth Hobson. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).

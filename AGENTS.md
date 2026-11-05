@@ -129,7 +129,7 @@ A profile is a folder meant to load only in one directory the user picks, not th
 
 Adding, removing or renaming a skill folder, an MCP server or an agent, or changing `groups/default.jsonc`, may change the agents' OpenCode permissions, the README hero image (`docs/hero-*.svg`) and the agent map: run `python3 agents/generate.py` in the same change and follow [`agents/README.md`](agents/README.md#update). Never edit the generated SVGs or `docs/agents-map.html` by hand.
 
-Each agent has one folder, `agents/<name>/subagents/<name>.md`, except agents that belong to a set (`second-opinion` with its two reviewers; `security` and `reverse-engineering` with their bundles). rulesync merges source trees by file path: when two trees in one selection hold the same relative path, the later one replaces the earlier one even if their `targets` differ, so agent file names must be unique within a group.
+Each agent has one folder, `agents/<name>/subagents/<name>.md`, except agents that belong to a set (`second-opinion` with its two reviewers; `security` and `reverse-engineering` with their bundles; `fcos-app-installer` with its `adapter-drafter` helper). rulesync merges source trees by file path: when two trees in one selection hold the same relative path, the later one replaces the earlier one even if their `targets` differ, so agent file names must be unique within a group.
 
 `groups/*.jsonc` are named install selections, not source trees. Home-folder
 groups (`default`, `work`, `writing_reporting`) run with `--config` and

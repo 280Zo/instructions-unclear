@@ -52,4 +52,4 @@ Follow [Check for updates](../../AGENTS.md#check-for-updates) and [Updating](#up
 
 ## Origin
 
-Template and README written for this repo by 280Zo. Primary source: [zaproxy/zap-extensions](https://github.com/zaproxy/zap-extensions), `addOns/mcp/`, tag `mcp-v0.4.0`, commit `03a03eb34db2c4ccec61c2a434d6fab298311a25`, inspected October 15, 2026. No upstream Java code or binaries copied. ZAP source is Apache-2.0, copyright 2026 The ZAP Development Team; [upstream license](https://github.com/zaproxy/zap-extensions/blob/mcp-v0.4.0/LICENSE).
+Template and README written for this repo by 280Zo. Primary source: [zaproxy/zap-extensions](https://github.com/zaproxy/zap-extensions), `addOns/mcp/`, tag `mcp-v0.4.0`, commit `03a03eb34db2c4ccec61c2a434d6fab298311a25`, inspected 2026-10-15. No upstream Java code or binaries copied. ZAP source is Apache-2.0, copyright 2026 The ZAP Development Team; [upstream license](https://github.com/zaproxy/zap-extensions/blob/mcp-v0.4.0/LICENSE).

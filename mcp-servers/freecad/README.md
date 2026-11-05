@@ -18,7 +18,7 @@ It has two halves: an addon inside FreeCAD that listens for commands, and the MC
 
 1. Open FreeCAD, switch to the **MCP Addon** workbench and click **Start RPC Server**.
 2. Turn the `freecad` server on in your tool. In OpenCode, set `"enabled": true` on it in `opencode.jsonc`.
-3. Ask: "make a 40 mm cube with a 10 mm hole through the centre", "add 2 mm fillets to the top edges", "run a stress analysis on this bracket with 500 N on the top face".
+3. Ask: "make a 40 mm cube with a 10 mm hole through the center", "add 2 mm fillets to the top edges", "run a stress analysis on this bracket with 500 N on the top face".
 4. When you're done, turn the server off again.
 
 ## Updating

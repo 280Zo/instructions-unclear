@@ -29,7 +29,7 @@ The detailed usage instructions the AI sees ("read before you write", one `recor
 
 ## Use
 
-Start the configured server in the intended project and verify its workspace before writes. The rule has the agent read memory before starting work and save decisions, lessons and progress as it goes. Ask "where were we?", "what did we decide about X?" or "what are the open goals?" to use it directly. Say "remember that…" to pin something important. Reviewed runtime baseline: `pmb-ai 1.2.3`, checked October 20, 2026; server-provided instructions remain owned by upstream, not copied into this repo.
+Start the configured server in the intended project and verify its workspace before writes. The rule has the agent read memory before starting work and save decisions, lessons and progress as it goes. Ask "where were we?", "what did we decide about X?" or "what are the open goals?" to use it directly. Say "remember that…" to pin something important. Reviewed runtime baseline: `pmb-ai 1.2.3`, checked 2026-10-20; server-provided instructions remain owned by upstream, not copied into this repo.
 
 PMB also offers `pmb connect --active`, but inspect and approve its host-configuration changes first: the source-reviewed release includes shared-daemon connection defaults, which are different from this repo's explicit `pmb-mcp` stdio entry. Do not run it as an automatic prerequisite for an already configured server.
 
@@ -61,3 +61,7 @@ OpenCode names each tool `<server name>_<tool>`, e.g. `pmb_prepare`. Any permiss
 ### Update
 
 - Follow [Check for updates](../../AGENTS.md#check-for-updates). The pin is `pmb-ai==1.2.3` in `mcp.jsonc`. Change it together with the version and reviewed baseline in [Install](#install) and [Use](#use), and read upstream's update notes for changes to stored data first. Regenerating doesn't restart a running server.
+
+## Origin
+
+Connection template and rule written for this repo by 280Zo, based on [oleksiijko/pmb](https://github.com/oleksiijko/pmb), PyPI package `pmb-ai` 1.2.3 (author "PMB contributors"). No upstream files are copied here; the server is installed from PyPI at the pinned version. Upstream is Apache-2.0 according to its PyPI metadata, checked 2026-11-05. This repo's own files are [MIT](../../LICENSE).

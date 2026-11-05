@@ -9,7 +9,7 @@
 
 ## Install and update
 
-Reviewed release: **v0.12.1**, commit `a7158ac2f48ca646b4527341b76f930f2aeff87e`, checked October 20, 2026. Follow the [upstream installation instructions](https://github.com/DeusData/codebase-memory-mcp#installation), selecting only the clients you intend to configure. Read and approve installer operations first; do not pipe downloaded scripts directly into a shell.
+Reviewed release: **v0.12.1**, commit `a7158ac2f48ca646b4527341b76f930f2aeff87e`, checked 2026-10-20. Follow the [upstream installation instructions](https://github.com/DeusData/codebase-memory-mcp#installation), selecting only the clients you intend to configure. Read and approve installer operations first; do not pipe downloaded scripts directly into a shell.
 
 1. Generate your selected rulesync configuration first, keeping all desired roots in the run. This folder needs the `mcp` feature, not `skills`.
 2. Install/activate the reviewed upstream release following its supported procedure. The native command supports `install --clients=opencode --dry-run` to preview the OpenCode integration; specify other intended clients rather than configuring every detected client accidentally. Follow its prompts only after reviewing the affected paths. Do not use noninteractive overwrite flags on an unreviewed live installation.

@@ -79,6 +79,6 @@ Follow [Check for updates](../../AGENTS.md#check-for-updates) and [Updating and 
 
 ## Updating and origin
 
-Full `documents/` from [magnus919/agent-skills](https://github.com/magnus919/agent-skills), revision **`92c327e525da69c9ad3812fd223a1770e977c2e3`**, checked/imported October 20, 2026. Payload unchanged, including all references, templates, fixtures, eval scenarios and tests. Compare the complete folder, test the selective native installation and subsequent rulesync generation in isolation, and update groups/counts/provenance together before adopting another revision.
+Full `documents/` from [magnus919/agent-skills](https://github.com/magnus919/agent-skills), revision **`92c327e525da69c9ad3812fd223a1770e977c2e3`**, checked/imported 2026-10-20. Payload unchanged, including all references, templates, fixtures, eval scenarios and tests. Compare the complete folder, test the selective native installation and subsequent rulesync generation in isolation, and update groups/counts/provenance together before adopting another revision.
 
 **MIT, © 2026 Magnus Hedemark**, verified from upstream `LICENSE.md`; [full license text](../../THIRD_PARTY_LICENSES.md#magnus919agent-skills--documents). Wrapper and `uv` setup guidance written for this repo by 280Zo. Packaging and fixture checks are not evidence of a real-world document-generation/rendering workflow.

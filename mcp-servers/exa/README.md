@@ -127,4 +127,4 @@ Refresh `skills/search/` and `skills/exa-agent/` together from the recorded upst
 
 ## Origin
 
-[exa-labs/exa-mcp-server](https://github.com/exa-labs/exa-mcp-server), paths `skills/search/` and `skills/exa-agent/`, commit `0b499f095c4ca145eee07b09137641c037d58449`, copied October 20, 2026. Skill payloads unchanged. [MIT](../../THIRD_PARTY_LICENSES.md#exa-labsexa-mcp-server), © Exa Labs. Connection and rule written for this repo.
+[exa-labs/exa-mcp-server](https://github.com/exa-labs/exa-mcp-server), paths `skills/search/` and `skills/exa-agent/`, commit `0b499f095c4ca145eee07b09137641c037d58449`, copied 2026-10-20. Skill payloads unchanged. [MIT](../../THIRD_PARTY_LICENSES.md#exa-labsexa-mcp-server), © Exa Labs. Connection and rule written for this repo.

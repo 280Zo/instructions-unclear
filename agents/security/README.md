@@ -173,7 +173,7 @@ Upstreams and baselines:
 
 | Upstream | Path | Baseline |
 | --- | --- | --- |
-| [wshobson/agents](https://github.com/wshobson/agents) | `plugins/security-scanning`, `plugins/security-compliance` | Payload copied at `46891e7e60da0e52baf1050b7b6391b64e84c6d9`; verified unchanged at `0874a27b17a22e2b7c2e2bcd725768e0803cad06` on October 20, 2026 |
+| [wshobson/agents](https://github.com/wshobson/agents) | `plugins/security-scanning`, `plugins/security-compliance` | Payload copied at `46891e7e60da0e52baf1050b7b6391b64e84c6d9`; verified unchanged at `0874a27b17a22e2b7c2e2bcd725768e0803cad06` on 2026-10-20 |
 | [openai/skills](https://github.com/openai/skills) | `skills/.curated/security-best-practices` | `49f948faa9258a0c61caceaf225e179651397431`; the repo is deprecated, so updates are unlikely. `security-threat-model` from the same source is maintained in its own folder |
 | This repo | `rules/secure-coding.md` | Written for this repo from the OpenSSF guide |
 
@@ -195,7 +195,7 @@ Keep routing consistent with the repo's routing rule (`rules/routing`): a threat
 
 ## Origin
 
-Assembled and edited for this repo by 280Zo on October 21, 2026.
+Assembled and edited for this repo by 280Zo on 2026-10-21.
 
 - Agents, commands and the five technique/SAST skills: [wshobson/agents](https://github.com/wshobson/agents) `plugins/security-scanning` and `plugins/security-compliance`. [MIT](../../THIRD_PARTY_LICENSES.md#wshobsonagents), © 2024 Seth Hobson.
 - `security-best-practices`: [openai/skills](https://github.com/openai/skills) at `49f948faa9258a0c61caceaf225e179651397431`. Publisher: OpenAI. [Apache-2.0](../../THIRD_PARTY_LICENSES.md#openaiskills); the license retains unfilled copyright-example boilerplate, not a named holder. Each skill's original `LICENSE.txt` is kept in its folder.

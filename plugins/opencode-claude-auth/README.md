@@ -43,4 +43,4 @@ Select an Anthropic model after connecting. Use the plugin defaults and upstream
 
 ## Origin
 
-[griffinmartin/opencode-claude-auth](https://github.com/griffinmartin/opencode-claude-auth), MIT; current upstream release 3.0.0 and [fork retirement notice](https://github.com/heymaaz/opencode-claude-auth-v2/releases/tag/migration-to-upstream) checked October 20, 2026. Nothing is copied into this repo. Future updates come from upstream, not the retired fork.
+[griffinmartin/opencode-claude-auth](https://github.com/griffinmartin/opencode-claude-auth), MIT; current upstream release 3.0.0 and [fork retirement notice](https://github.com/heymaaz/opencode-claude-auth-v2/releases/tag/migration-to-upstream) checked 2026-10-20. Nothing is copied into this repo. Future updates come from upstream, not the retired fork.

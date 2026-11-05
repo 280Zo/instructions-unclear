@@ -7,7 +7,7 @@ description: "How to hand the owner the steps the agent never does itself, and h
 # Owner steps
 
 How to hand work to the owner: the steps they do on systems the agent never
-touches, and how to wait for them. Owner, 2026-11-04.
+touches, and how to wait for them.
 
 - **The agent never touches** the file server, the router, the hypervisor's
   shell, the DNS provider or remote-access consoles, and never runs commands

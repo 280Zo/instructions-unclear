@@ -26,8 +26,8 @@ Every rule installs into the same file (`~/.config/opencode/AGENTS.md`, `~/.clau
 
 ## Notes
 
-- The secure-coding rule moved into the repo-owned [`agents/security`](../agents/security/) bundle. It is based on OpenSSF's [Security-Focused Guide for AI Code Assistant Instructions](https://best.openssf.org/Security-Focused-Guide-for-AI-Code-Assistant-Instructions.html) (2025).
-- `routing/` replaced the one-line rules that used to live in skill folders (`diagram-design`, `frontend-slides`, `visual-explainer`, `theme-factory`, `humanizer`). Several skills claimed the same jobs, so one rule now names the owner of each job. If a named skill isn't installed, the rule tells the agent to use the closest one that is.
+- The secure-coding rule lives in the repo-owned [`agents/security`](../agents/security/) bundle. It is based on OpenSSF's [Security-Focused Guide for AI Code Assistant Instructions](https://best.openssf.org/Security-Focused-Guide-for-AI-Code-Assistant-Instructions.html) (2025).
+- `routing/` is the only place that says which skill owns a job when several claim it (`diagram-design`, `frontend-slides`, `visual-explainer`, `theme-factory`, `humanizer`). If a named skill isn't installed, the rule tells the agent to use the closest one that is.
 - `preferences/` covers commands and instructions the agent hands to you. The agent's own shell tool may still run bash.
 
 ## For agents: install, remove and update

@@ -1,12 +1,12 @@
 # build
 
-Restrictions for OpenCode's default agent. The file adds only deny rules: OpenCode keeps the built-in `build` agent's prompt, mode (`primary`) and permissions, and this agent no longer sees the design, career, AI research, threat-modeling and reverse-engineering skills or the ZAP, REA, ReVa, radare2 and FreeCAD servers. Everything else stays available. See [how agents keep skills out of each other's requests](../README.md#how-agents-keep-skills-out-of-each-others-requests).
+Restrictions for OpenCode's default agent. The file adds only deny rules: OpenCode keeps the built-in `build` agent's prompt, mode (`primary`) and permissions, and this agent no longer sees the design, career, AI research, security, reverse-engineering and FCOS app installer skills or the ZAP, REA, ReVa, radare2 and FreeCAD servers. Everything else stays available. See [how agents keep skills out of each other's requests](../README.md#how-agents-keep-skills-out-of-each-others-requests).
 
 It installs only for OpenCode. Other tools have their own built-in agents and can't filter skills.
 
 ## Install
 
-Part of the [`default` group](../../groups/README.md#default). Install it with the specialist agents and their skill folders; without them, the denied skills have no agent that can load them.
+Part of the [`default` group](../../groups/README.md#default). Install it with the specialist agents and their skill folders; without them, the denied skills have no agent that can load them. The FCOS app installer's skills are the exception: `default` doesn't install them at all, and only that folder group's agent can load them.
 
 ## For agents: install, remove and update
 

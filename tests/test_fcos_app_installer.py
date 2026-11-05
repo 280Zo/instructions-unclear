@@ -427,7 +427,7 @@ class GroupTests(unittest.TestCase):
         self.assertEqual(group["inputRoots"][0], "agents/fcos-app-installer")
 
     def test_the_group_installs_the_installer_alone_and_matches_the_profile(self):
-        # Owner, 2026-11-05: no companion agents in this folder. A subagent runs with its own
+        # No companion agents in this folder. A subagent runs with its own
         # permissions, not the starter's, and the installer starts only adapter-drafter.
         group = jsonc(ROOT / "groups" / "fcos_app_installer.jsonc")
         profile = jsonc(FOLDER / "profile.jsonc")
@@ -456,6 +456,7 @@ class GroupTests(unittest.TestCase):
                              ("groups/README.md", "agents/fcos-app-installer"),
                              ("agents/README.md", "fcos-app-installer"),
                              ("README.md", "agents/fcos-app-installer"),
+                             ("README.md", "`fcos_app_installer`"),
                              ("AGENTS.md", "fcos_app_installer"),
                              ("AGENTS.md", "agents/fcos-app-installer/subagents"),
                              ("tests/README.md", "test_fcos_app_installer")):

@@ -34,6 +34,6 @@ To update, follow [Check for updates](../../AGENTS.md#check-for-updates). The pi
 
 ## Updating and origin
 
-Complete unchanged `skills/.curated/screenshot/` from [OpenAI's skills repository](https://github.com/openai/skills), pinned to `49f948faa9258a0c61caceaf225e179651397431`, imported October 20, 2026. Upstream is deprecated. Its installer was verified in isolation before import; preserve every OS helper and executable mode and regenerate affected selections when updating.
+Complete unchanged `skills/.curated/screenshot/` from [OpenAI's skills repository](https://github.com/openai/skills), pinned to `49f948faa9258a0c61caceaf225e179651397431`, imported 2026-10-20. Upstream is deprecated. Its installer was verified in isolation before import; preserve every OS helper and executable mode and regenerate affected selections when updating.
 
 Publisher: OpenAI. Apache-2.0; the license retains unfilled copyright-example boilerplate, not a named holder. Original [LICENSE.txt](skills/screenshot/LICENSE.txt) and [consolidated terms](../../THIRD_PARTY_LICENSES.md#openaiskills) are retained. Wrapper written for this repo by 280Zo.

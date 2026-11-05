@@ -6,7 +6,7 @@ description: "Never ask for, read, print or store a secret or a real value; keep
 
 # Secrets and private values
 
-How secrets and the owner's real values are handled. Owner, 2026-11-04.
+How secrets and the owner's real values are handled.
 
 ## Secrets
 

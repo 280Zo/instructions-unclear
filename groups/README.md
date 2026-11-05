@@ -38,7 +38,7 @@ Everything in [`rulesync.jsonc`](../rulesync.jsonc), into OpenCode: all selected
 npx rulesync@41.0.0 generate --config groups/default.jsonc --global
 ```
 
-`npx rulesync@41.0.0 generate --global` does the same thing. Isolated generation of all eight groups with 38.0.0 and 41.0.0 changed only OpenCode agent frontmatter and MCP configuration; file counts and all other output bytes were unchanged. Native skill permission enforcement was tested with the installed OpenCode 2.1.3. See [the regression check](../tests/README.md#opencode-permission-regression).
+`npx rulesync@41.0.0 generate --global` does the same thing. Isolated generation of every group then in the repo with 38.0.0 and 41.0.0 changed only OpenCode agent frontmatter and MCP configuration; file counts and all other output bytes were unchanged. Native skill permission enforcement was tested with the installed OpenCode 2.1.3. See [the regression check](../tests/README.md#opencode-permission-regression).
 
 ## work
 

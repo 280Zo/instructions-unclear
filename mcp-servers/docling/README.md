@@ -21,7 +21,7 @@ Extraction, picture descriptions and durable knowledge are separate things. Reta
 
 2. This folder adds a rule and an MCP server, and rulesync installs both by replacing your tool's whole set. So add `mcp-servers/docling` to `inputRoots` in your `rulesync.local.jsonc` (see the [root README](../../README.md#install)) and run your install command with `--features rules,mcp`.
 
-That is the launch command, not an extra server to start alongside your assistant's process. Reviewed runtime baseline: `docling-mcp 3.3.0`, checked October 20, 2026. First launch may download dependencies; approve that operation before enabling it. The top-level package is pinned, not the whole transitive dependency graph. Refresh this README and `mcp.jsonc` together when reviewing a new release; do not use a blanket live-tool upgrade as a substitute.
+That is the launch command, not an extra server to start alongside your assistant's process. Reviewed runtime baseline: `docling-mcp 3.3.0`, checked 2026-10-20. First launch may download dependencies; approve that operation before enabling it. The top-level package is pinned, not the whole transitive dependency graph. Refresh this README and `mcp.jsonc` together when reviewing a new release; do not use a blanket live-tool upgrade as a substitute.
 
 ## Use
 
@@ -75,3 +75,7 @@ OpenCode names each tool `<server name>_<tool>`, e.g. `docling_convert_...`. Per
 // Retain page images for thumbnails; this does not enable VLM descriptions.
 // Allow five minutes for large conversion requests.
 ```
+
+## Origin
+
+Connection template and rules written for this repo by 280Zo, based on [docling-project/docling-mcp](https://github.com/docling-project/docling-mcp), PyPI package `docling-mcp` 3.3.0 (authors from IBM Research and Red Hat, listed in its PyPI metadata). No upstream files are copied here; the server runs from PyPI at the pinned version. Upstream is MIT according to its PyPI metadata, checked 2026-11-05. This repo's own files are [MIT](../../LICENSE).

@@ -152,14 +152,16 @@ Three habits keep those guard rails working:
 
 - Pick the `fcos-app-installer` agent in this folder. OpenCode's own `build`
   agent sees the same tools and skills but none of this agent's rules, so it
-  would run or edit things this agent may not.
+  would run or edit things this agent may not. (The `default` group's
+  restrictions for `build` hide this agent's skills from it, but they don't
+  add this agent's guard rails.)
 - Answer an approval with "Allow once". "Allow always" saves the command's
   pattern for the whole project (OpenCode's Permissions docs), so later
   commands that merely start the same way stop asking. A configured deny still
   wins, but the asks you rely on disappear. "Reject" also cancels every other
   request waiting at that moment.
 - The workspace rule is broad on purpose: the agent may work in any folder whose
-  path contains "fcos-" without asking (owner decision, 2026-10-31). Keep that
+  path contains "fcos-" without asking. Keep that
   word for install folders such as `~/fcos-installs/<place>/` and don't use it
   for unrelated folders. `secrets/` inside such a folder stays off limits.
 
@@ -353,8 +355,7 @@ command. The pinned Butane and Podman images are updated by hand (see
 
 ## Origin
 
-Written for this repo by 280Zo, under the repository's MIT license. The toolkit
-started as a separate project and moved here as a rulesync profile, and it has
-no upstream to check. The agent's closing "How to work" section is the shared
+Written for this repo by 280Zo, under the repository's MIT license. It has no
+upstream to check. The agent's closing "How to work" section is the shared
 one from `agents/generate.py`, adapted from OpenCode v2.1.3 (MIT, © 2025
 opencode). The license text is in the repository's `THIRD_PARTY_LICENSES.md`.

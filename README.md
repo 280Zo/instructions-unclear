@@ -167,7 +167,6 @@ The secure-coding rule ships inside [`agents/security`](agents/security/).
 | [`agents/build`](agents/build/), [`plan`](agents/plan/), [`general`](agents/general/), [`explore`](agents/explore/) | Restrictions for OpenCode's own agents of these names, so they don't see the specialist skills |
 | [`agents/second-opinion`](agents/second-opinion/) | `second-opinion` reviews how the session is going; `evaluator` and `metacognitive` check answers and reasoning                                                           |
 | [`agents/local-model`](agents/local-model/)       | Small working turns, scoped delegation and safe pause/resume handoffs for local models or fragile connections                                                            |
-| [`agents/fcos-app-installer`](agents/fcos-app-installer/) | Builds Fedora CoreOS VMs on Proxmox and adds services behind one login page, with the toolkit it runs; a profile for a folder of its own (`fcos_app_installer` group), not part of the default install |
 | [`agents/security`](agents/security/)             | The `security` agent plus one security bundle owned by this repo: secure-coding rule, security auditor and threat-modeling agents, 6 skills and 4 commands; included in the default global install |
 
 </details>
@@ -233,6 +232,7 @@ A profile installs into one folder instead of your home folder, keeping speciali
 | [`mcp-servers/zap`](mcp-servers/zap/)                       | Official ZAP MCP connection for web-security workflows; disabled until configured               |
 | [`mcp-servers/reva`](mcp-servers/reva/)                     | Shared Ghidra projects and 6 companion skills; MCP connection disabled                          |
 | [`mcp-servers/radare2`](mcp-servers/radare2/)               | Optional radare2-native MCP connection; disabled, read-only tools                               |
+| [`agents/fcos-app-installer`](agents/fcos-app-installer/)   | Builds Fedora CoreOS VMs on Proxmox and adds services behind one login page, with the toolkit it runs; `install.py` places the toolkit first |
 | [`agents/reverse-engineering`](agents/reverse-engineering/) | The `reverse-engineering` agent plus reverse-engineer, firmware and malware analyst agents, 4 skills |
 
 Each README has its install command.
@@ -329,7 +329,7 @@ In a synthetic-config test, rulesync 41 preserved unrelated plugins/model/permis
 
 #### OpenCode agent permissions need rulesync 41
 
-The repo keeps `name:` in agent sources, but the OpenCode target now omits it from generated agent files. On OpenCode 2.1.3, rulesync 38's extra `name:` sent native `permissions:` through legacy migration and silently lost the restrictions. Runtime checks with 41 output confirmed that Design denies `eli5`, allows `humanizer`, and Build denies `eli5`. All eight groups were generated with both versions; only OpenCode agent frontmatter and MCP config changed. See [the reproducible test](tests/README.md#opencode-permission-regression). The `opencode` target now means V2; explicitly use `opencodev1` and its matching tool sections for V1 installations.
+The repo keeps `name:` in agent sources, but the OpenCode target now omits it from generated agent files. On OpenCode 2.1.3, rulesync 38's extra `name:` sent native `permissions:` through legacy migration and silently lost the restrictions. Runtime checks with 41 output confirmed that Design denies `eli5`, allows `humanizer`, and Build denies `eli5`. Every group then in the repo was generated with both versions; only OpenCode agent frontmatter and MCP config changed. See [the reproducible test](tests/README.md#opencode-permission-regression). The `opencode` target now means V2; explicitly use `opencodev1` and its matching tool sections for V1 installations.
 
 #### Keeping customized MCP entries
 
@@ -371,6 +371,7 @@ Saved selections, so you don't have to list folders. [`groups/README.md`](groups
 | `career`              | Career skills in a folder you choose; the `career` agent comes with `default`                                                                 |
 | `reverse_engineering` | REA, the `reverse-engineering` agent and its helpers, and disabled ReVa/radare2 connections, in a folder you choose; IoTHackBot is native-owned                                      |
 | `design`              | Design skills for graphics, UI, palettes and brand, in a folder you choose                                                                    |
+| `fcos_app_installer`  | The FCOS app installer agent, helper, command, 6 skills and 2 rules, in a folder of its own; run `install.py` first                           |
 
 ```bash
 npx rulesync@41.0.0 generate --config groups/default.jsonc --global

@@ -15,7 +15,7 @@ One folder per agent or agent set, each with the skills, rules and commands that
 | [`fcos-app-installer`](fcos-app-installer/) | Builds Fedora CoreOS VMs on Proxmox and adds services to them, with the toolkit it runs. A profile: installs into a folder you choose (the `fcos_app_installer` group), not part of `default` |
 | [`build`](build/), [`plan`](plan/), [`general`](general/), [`explore`](explore/) | Restrictions for OpenCode's own agents of these names, so they don't see the specialist skills. Installed by default, for OpenCode only |
 
-A profile installs into one folder you choose, not your home folder. To install several profiles into the same folder, run each one's command with the same `--output-roots`.
+A profile installs into one folder you choose, not your home folder. To install several profiles into the same folder, run each one's command with the same `--output-roots`. The exception is `fcos-app-installer`, which needs a folder of its own: its group replaces that folder's `AGENTS.md`, and its permission list guards the one folder it runs in.
 
 ## How agents keep skills out of each other's requests
 
@@ -60,7 +60,7 @@ Outside OpenCode every installed skill stays visible, so install specialist skil
 
 ## Install
 
-The [`default` group](../groups/README.md#default) installs every agent folder above and every skill folder the agents filter:
+The [`default` group](../groups/README.md#default) installs every agent folder above except `fcos-app-installer`, and every skill folder the agents filter:
 
 ```bash
 npx rulesync@41.0.0 generate --config groups/default.jsonc --global

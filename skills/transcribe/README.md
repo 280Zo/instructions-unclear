@@ -43,6 +43,6 @@ To update, follow [Check for updates](../../AGENTS.md#check-for-updates). The pi
 
 ## Updating and origin
 
-Complete unchanged `skills/.curated/transcribe/` from [OpenAI's skills repository](https://github.com/openai/skills), pinned to `49f948faa9258a0c61caceaf225e179651397431`, imported October 20, 2026. Upstream is deprecated. Its installer was verified in isolation before import; preserve all scripts/references/assets and modes when reviewing a new revision, and recheck generated resource paths. Do not automatically remove existing live copies.
+Complete unchanged `skills/.curated/transcribe/` from [OpenAI's skills repository](https://github.com/openai/skills), pinned to `49f948faa9258a0c61caceaf225e179651397431`, imported 2026-10-20. Upstream is deprecated. Its installer was verified in isolation before import; preserve all scripts/references/assets and modes when reviewing a new revision, and recheck generated resource paths. Do not automatically remove existing live copies.
 
 Publisher: OpenAI. Apache-2.0; the license retains unfilled copyright-example boilerplate, not a named holder. Original [LICENSE.txt](skills/transcribe/LICENSE.txt) and [consolidated terms](../../THIRD_PARTY_LICENSES.md#openaiskills) are retained. Wrapper written for this repo by 280Zo.

@@ -57,4 +57,4 @@ Update the extension version, skill commit and matching Ghidra requirements toge
 
 ## Origin
 
-Skills copied unchanged from [cyberkaida/reverse-engineering-assistant](https://github.com/cyberkaida/reverse-engineering-assistant), `ReVa/skills/`, tag `v7.3.1`, commit `3cb3e65f354cda8d6125ecff654063436a3ab5ab`, October 15, 2026. Apache-2.0, copyright 2023 サイバーカイダ; [upstream license](https://github.com/cyberkaida/reverse-engineering-assistant/blob/v7.3.1/LICENSE), [shipped full text](../../THIRD_PARTY_LICENSES.md#cyberkaidareverse-engineering-assistant). Connection template and README written for this repo by 280Zo.
+Skills copied unchanged from [cyberkaida/reverse-engineering-assistant](https://github.com/cyberkaida/reverse-engineering-assistant), `ReVa/skills/`, tag `v7.3.1`, commit `3cb3e65f354cda8d6125ecff654063436a3ab5ab`, 2026-10-15. Apache-2.0, copyright 2023 サイバーカイダ; [upstream license](https://github.com/cyberkaida/reverse-engineering-assistant/blob/v7.3.1/LICENSE), [shipped full text](../../THIRD_PARTY_LICENSES.md#cyberkaidareverse-engineering-assistant). Connection template and README written for this repo by 280Zo.

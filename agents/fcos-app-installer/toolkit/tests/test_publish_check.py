@@ -95,7 +95,7 @@ class WorkspaceSourceTests(unittest.TestCase):
                               cwd=self.repo, env=env, capture_output=True, text=True)
 
     def test_only_the_named_folder_is_scanned(self):
-        # Owner, 2026-11-04: inside instructions-unclear the toolkit is one folder of a larger
+        # Inside instructions-unclear the toolkit is one folder of a larger
         # repo; files outside it are that repo's own business.
         sub = self.repo / "agents" / "toolkit"
         sub.mkdir(parents=True)
@@ -114,7 +114,7 @@ class WorkspaceSourceTests(unittest.TestCase):
         path.write_text(text)
 
     def test_every_installed_file_gets_the_full_scan_with_no_exemptions(self):
-        # Owner, 2026-11-05: no companion agents live in this folder, so nothing is exempt. A file
+        # No companion agents live in this folder, so nothing is exempt. A file
         # under the agent folders, a skill, or one named like an upstream agent is scanned like any other.
         folder = self.plain_folder()
         example = j("gateway: 10", ".1.2.3\n")
