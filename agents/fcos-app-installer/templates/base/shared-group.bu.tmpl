@@ -1,0 +1,11 @@
+variant: fcos
+version: 1.7.0
+
+# A group shared by several service users, e.g. every coding tool editing
+# the same NFS projects tree. SHARED_GROUP_GID must match the NAS group.
+# On the NAS, project folders are owned by this group, setgid, umask 0002.
+
+passwd:
+  groups:
+    - name: {{SHARED_GROUP_NAME}}
+      gid: {{SHARED_GROUP_GID}}

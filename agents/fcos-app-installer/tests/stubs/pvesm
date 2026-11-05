@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+"""Fake pvesm for tests/test_host_proxmox.py; see _stubstate.py for the state.
+
+Options follow https://pve.proxmox.com/pve-docs/pvesm.1.html: `pvesm status`
+takes only --content, --enabled, --format, --storage and --target. It has no
+--output-format (the real tool answers "Unknown option: output-format").
+"""
+
+import os
+import sys
+
+sys.dont_write_bytecode = True
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+import _stubstate as st  # noqa: E402
+
+STATUS_USAGE = "pvesm status  [OPTIONS]"
+
+
+def main(argv):
+    st.log_call(["pvesm"] + argv)
+    if argv[:1] != ["status"]:
+        st.fail(f"pvesm stub: unsupported command {argv[:2]}", 2)
+    _, opts = st.parse(argv[1:], {"content", "enabled", "format", "storage", "target"}, STATUS_USAGE, 0)
+    state = st.load()
+    wanted = opts.get("--storage")
+    print("Name  Type  Status")
+    for name in state["storages"]:
+        if wanted in (None, name):
+            print(f"{name}  dir  active")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

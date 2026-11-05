@@ -1,0 +1,24 @@
+# Private data never goes in git. The real config and everything rendered
+# from it live in the workspace, a folder outside this repo (tools/workspace.py
+# refuses one inside it); published files use placeholders only.
+# tools/publish_check.py enforces this. The /config.yaml and /vms/ lines below are
+# a safety net for stray v1-style files.
+/config.yaml
+/vms/
+/notes/
+
+# Planning documents are not part of the published repo.
+/docs/design/
+/docs/superpowers/
+
+# The global gitignore excludes .opencode/; publish only this repo's agent and
+# commands from it, nothing else OpenCode keeps there.
+!/.opencode/
+/.opencode/*
+!/.opencode/agents/
+!/.opencode/commands/
+# The project config that loads rules/*.md (the global gitignore excludes a root opencode.json).
+!/.opencode/opencode.json
+
+# Python caches
+__pycache__/

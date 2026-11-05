@@ -1,0 +1,117 @@
+# Provider-neutral owner steps, one set per role. Used when the owner's
+# provider has no adapter: they say what must happen and what to report back,
+# never how a particular product does it. While the owner works, the agent
+# records what they actually did and offers to draft an adapter from it
+# (tools/adapters.py draft). Placeholders are filled from the site file.
+roles:
+  virtualization:
+    owner_steps:
+      download_image:
+        title: Get the current Fedora CoreOS image for your hypervisor
+        steps:
+          - Download the stable Fedora CoreOS image made for your hypervisor from the official stream metadata (builds.coreos.fedoraproject.org/streams/stable.json).
+          - Check its SHA-256 against the value published in that metadata; if it doesn't match, delete the file and stop.
+          - Put it where your hypervisor can create a VM disk from it on host {{HOST}}.
+        uses: [HOST]
+        report_back:
+          - the image file name
+          - where it is stored
+      copy_ignition_snippet:
+        title: Give the VM its Ignition file
+        steps:
+          - Copy {{VM_NAME}}.ign from the VM's folder in your workspace to host {{HOST}}.
+          - Attach it to VM {{VM_NAME}} the way your hypervisor passes Ignition to Fedora CoreOS (see Fedora CoreOS's provisioning page for your platform).
+        uses: [VM_NAME, HOST]
+        report_back:
+          - done, and how the file was attached
+      rebuild_os_disk:
+        title: Replace the OS disk of {{VM_NAME}}, keep the data disk (destructive)
+        steps:
+          - Shut down VM {{VM_NAME}}.
+          - Replace only its OS disk with a new disk made from the current Fedora CoreOS image, grown to {{OS_DISK_GIB}} GiB. The second disk (the data disk) must stay attached and untouched.
+          - Give it the rebuilt Ignition file, then start it.
+        uses: [VM_NAME, OS_DISK_GIB]
+        report_back:
+          - done, and that the data disk is still attached
+      create_api_access:
+        title: Give the agent limited API access (optional)
+        steps:
+          - If your hypervisor has an API, create a user or token that can only create, configure, start and stop VMs in one group or pool, use one disk storage and one network.
+          - Store the secret only through the hidden prompt the agent shows you; never paste it into the chat.
+        uses: []
+        report_back:
+          - whether the hypervisor has such an API, and the token's name (never its secret)
+  router_firewall:
+    owner_steps:
+      reserve_ip:
+        title: Reserve {{VM_IP}} for VM {{VM_NAME}}
+        steps:
+          - In your router's DHCP service, reserve {{VM_IP}} for MAC address {{VM_MAC}}.
+          - Do this after the VM is created and before its first start, so it gets this address on first boot.
+        uses: [VM_IP, VM_NAME, VM_MAC]
+        report_back:
+          - done, or the address you reserved if it differs
+      dns_wildcard:
+        title: Send every name under {{DOMAIN}} to the login front end
+        steps:
+          - In your local DNS, make every name under {{DOMAIN}} (a wildcard) resolve to {{EDGE_IP}}.
+          - If your DNS has no wildcard, add one name per service instead (the login page's name plus one per service).
+          - From your desktop, check that a made-up name under {{DOMAIN}} resolves to {{EDGE_IP}}.
+        uses: [DOMAIN, EDGE_IP]
+        report_back:
+          - wildcard or one name per service, and the check's result
+      allow_flows:
+        title: Allow the traffic VM {{VM_NAME}} needs
+        steps:
+          - If VM {{VM_NAME}} ({{VM_IP}}) is on a different network or VLAN from the file server or the login front end, allow these flows and nothing more.
+          - VM to file server {{NAS_IP}} for NFS (TCP 2049).
+          - Login front end {{EDGE_IP}} to the VM on its service ports.
+          - Admin networks {{ADMIN_LAN_CIDR}} to the VM for SSH (TCP 22).
+          - Only if the VM is the login front end and a network below is on another VLAN; networks {{LAN_CIDR}} to the VM on TCP 80 and 443.
+        uses: [VM_NAME, VM_IP, NAS_IP, EDGE_IP, ADMIN_LAN_CIDR, LAN_CIDR]
+        report_back:
+          - the flows you added, or that none were needed
+  file_server:
+    owner_steps:
+      nfs_export:
+        title: Let VM {{VM_NAME}} mount {{SHARE_EXPORT}} over NFS
+        steps:
+          - On your file server, allow {{VM_IP}} on the NFS export {{SHARE_EXPORT}}.
+          - Map root to an unprivileged user (root squash), so the VM's root can't act as root on the file server.
+        uses: [VM_NAME, SHARE_EXPORT, VM_IP]
+        report_back:
+          - done, plus the exact export path if it differs
+      service_user:
+        title: Create the file server user for {{SVC_NAME}}
+        steps:
+          - Create user {{SVC_NAME}} with UID {{SVC_UID}} and primary group GID {{SVC_GID}}, no password and no login.
+          - Give it the folders the service uses on the share; for a shared group, use group ownership with the setgid bit so new files keep the group.
+          - If you are moving existing data, make sure it is owned by UID {{SVC_UID}} and GID {{SVC_GID}}.
+        uses: [SVC_NAME, SVC_UID, SVC_GID]
+        report_back:
+          - done, and the exact folder paths
+      backup_folder:
+        title: Create the backup folder for {{SVC_NAME}} on VM {{VM_NAME}}
+        steps:
+          - On the backups share, create {{VM_NAME}}/{{SVC_NAME}}/ yourself, owned by UID {{SVC_UID}} and GID {{SVC_GID}}, mode 0750. The VM sends numbers, so the owner's UID must be {{SVC_UID}}.
+          - The folder {{VM_NAME}}/ above it should let everyone enter it but not write in it (mode 0755, not group-writable). The service can't create its own folder there, so its backups fail until you have.
+        uses: [VM_NAME, SVC_NAME, SVC_UID, SVC_GID]
+        report_back:
+          - done
+  dns_certificates:
+    owner_steps:
+      api_token:
+        title: Get the API token for certificates under {{DOMAIN}}
+        steps:
+          - In your DNS provider's account, create or copy an API token that can change TXT records for {{DOMAIN}}, and only that if the provider allows it.
+          - Save it in your password manager. You will paste it at the hidden prompt for the login front end's DNS secret; never into the chat.
+        uses: [DOMAIN]
+        report_back:
+          - done (never the token itself)
+      traefik_provider:
+        title: Tell the agent which certificate provider Traefik should use
+        steps:
+          - Find your DNS provider in lego's list of DNS providers (go-acme.github.io/lego/dns/; Traefik uses lego for certificates) and note its provider code and the environment variable names it needs.
+        uses: []
+        report_back:
+          - the provider code and the variable names (never their values)

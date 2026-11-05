@@ -1,0 +1,44 @@
+variant: fcos
+version: 1.7.0
+
+# local-db backup for the Postgres container {{PG_CONTAINER}} of {{SVC_NAME}}:
+# pg_dump (custom format) through `podman exec`, so no extra network or
+# password is needed. Keeps the newest {{BACKUP_KEEP}}. Skips when the NAS
+# isn't mounted.
+
+storage:
+  files:
+    - path: /etc/systemd/user/{{BACKUP_UNIT}}.service
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          [Unit]
+          Description=pg_dump of {{PG_CONTAINER}} to the NAS
+          ConditionUser={{SVC_NAME}}
+
+          [Service]
+          Type=oneshot
+          ExecCondition=/usr/local/bin/require-mounts /var/mnt/backups /var/lib/appdata
+          ExecStartPre=/usr/bin/mkdir -p /var/mnt/backups/{{VM_NAME}}/{{SVC_NAME}}
+          ExecStart=/bin/sh -c 'f=/var/mnt/backups/{{VM_NAME}}/{{SVC_NAME}}/{{CTR_NAME}}-$$(date -u +%%Y%%m%%dT%%H%%M%%SZ).dump; /usr/bin/podman exec {{PG_CONTAINER}} pg_dump -Fc -U {{PG_USER}} {{PG_DB}} > "$$f.tmp" && mv "$$f.tmp" "$$f"'
+          ExecStartPost=/bin/sh -c 'ls -1t /var/mnt/backups/{{VM_NAME}}/{{SVC_NAME}}/{{CTR_NAME}}-*.dump | tail -n +$$(({{BACKUP_KEEP}} + 1)) | xargs -r rm -f'
+    - path: /etc/systemd/user/{{BACKUP_UNIT}}.timer
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          [Unit]
+          Description=Schedule for {{BACKUP_UNIT}}
+          ConditionUser={{SVC_NAME}}
+
+          [Timer]
+          OnCalendar={{BACKUP_ONCALENDAR}}
+          Persistent=true
+
+          [Install]
+          WantedBy=timers.target
+  links:
+    - path: /etc/systemd/user/timers.target.wants/{{BACKUP_UNIT}}.timer
+      target: /etc/systemd/user/{{BACKUP_UNIT}}.timer
+      hard: false

@@ -1,0 +1,19 @@
+# Route for {{ROUTE_NAME}}: https://{{ROUTE_HOST}} -> {{ROUTE_BACKEND}}
+# WITHOUT the login page: the service uses only its own login (login: app-only,
+# with the reason in its spec). Same certificate; the app's port stays open
+# only to the login front end.
+# Names are quoted so a service called e.g. "null" or "on" stays a string.
+http:
+  routers:
+    "{{ROUTE_NAME}}":
+      rule: "Host(`{{ROUTE_HOST}}`)"
+      entryPoints: [websecure]
+      service: "{{ROUTE_NAME}}"
+      priority: 10
+{{REDIRECT_ROUTERS}}
+{{REDIRECT_MIDDLEWARES}}
+  services:
+    "{{ROUTE_NAME}}":
+      loadBalancer:
+        servers:
+          - url: "{{ROUTE_BACKEND}}"

@@ -1,0 +1,18 @@
+variant: fcos
+version: 1.7.0
+
+# Edge VM only: rootless Traefik binds 80/443, and every LAN client may
+# reach them.
+
+storage:
+  files:
+    - path: /etc/sysctl.d/90-unprivileged-ports.conf
+      mode: 0644
+      contents:
+        inline: |
+          net.ipv4.ip_unprivileged_port_start=80
+    - path: /etc/nftables.d/10-edge-https.nft
+      mode: 0644
+      contents:
+        inline: |
+          add element inet host_filter lan_tcp { 80, 443 }

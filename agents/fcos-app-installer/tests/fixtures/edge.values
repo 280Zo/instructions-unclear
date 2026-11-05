@@ -1,0 +1,99 @@
+# Test fixture: edge VM. Example values only, never real ones.
+# Secret-named keys must stay empty; secrets live in Podman secrets.
+
+# --- base ---
+ADMIN_USER=admin
+VM_NAME=edge
+MERGE_ENTRIES=      - local: igns/base-config.ign\n      - local: igns/firewall.ign\n      - local: igns/edge-ports.ign\n      - local: igns/nfs-share.ign\n      - local: igns/backup-postgres.ign
+ADMIN_SSH_PUBKEY=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEXAMPLEEXAMPLEEXAMPLEEXAMPLEEXAMPLEEXAMPLE owner@example.com
+ADMIN_PASSWORD_HASH=$y$j9T$EXAMPLEONLY$NOTAREALHASHNOTAREALHASHNOTAREAL00
+TIMEZONE=UTC
+ZINCATI_DAYS="Wed"
+ZINCATI_START=04:00
+ZINCATI_MINUTES=30
+CONTAINER_UPDATE_ONCALENDAR=Wed *-*-* 04:30:00
+
+# --- nfs share (backups only on edge) ---
+NFS_MOUNT_NAME=backups
+NFS_SERVER=192.0.2.1
+NFS_EXPORT=/mnt/pool/backups
+
+# --- shared group (unused on edge, still rendered by the validator) ---
+SHARED_GROUP_NAME=edge-shared
+SHARED_GROUP_GID=3200
+
+# --- service (an example app living on the edge VM itself) ---
+SVC_NAME=whoami
+SVC_UID=3203
+SVC_GID=3203
+SVC_SUBUIDS=744488960-744554495
+SVC_SUBGIDS=744488960-744554495
+SVC_EXTRA_GROUPS=
+SVC_DESCRIPTION=whoami test app (example)
+SVC_IMAGE=docker.io/traefik/whoami:v1
+SVC_BIND_IP=127.0.0.1
+SVC_PORT=8081
+SVC_CONTAINER_PORT=80
+SVC_VOLUMES=Volume=/var/lib/appdata/whoami/data:/data:z
+SVC_SECRETS=
+SVC_ENVIRONMENT=
+SVC_MOUNT_ROOTS=/var/lib/appdata
+SVC_APPDATA_DIRS=    - path: /var/lib/appdata/whoami/data\n      mode: 0750\n      user:\n        id: 3203\n      group:\n        id: 3203
+SVC_QUADLET_FILES=    - path: /etc/containers/systemd/users/3203/whoami-app.container\n      mode: 0644\n      contents:\n        local: service/container\n    - path: /etc/containers/systemd/users/3203/whoami.network\n      mode: 0644\n      contents:\n        local: service/network
+SVC_DB_FILE=app.db
+SVC_DB_DIR=/var/lib/appdata/whoami/data
+
+# --- container of the service (one Quadlet per container) ---
+CTR_NAME=app
+CTR_DEPENDS=
+CTR_SECURITY=UserNS=keep-id
+CTR_NETWORK=Network=whoami.network
+CTR_PUBLISH=PublishPort=127.0.0.1:8081:80
+CTR_SHM=
+CTR_EXEC=
+
+# --- edge: Traefik + Authentik ---
+DOMAIN=example.duckdns.org
+ACME_EMAIL=owner@example.com
+TRAEFIK_UID=3202
+TRAEFIK_GID=3202
+TRAEFIK_IMAGE=docker.io/library/traefik:v3
+AUTHENTIK_HOST=auth.example.duckdns.org
+AUTHENTIK_UID=3201
+AUTHENTIK_GID=3201
+AUTHENTIK_IMAGE=ghcr.io/goauthentik/server:2026.8
+PG_IMAGE=docker.io/library/postgres:17-alpine
+OUTPOST_APPLY_ENTRIES=  - model: authentik_blueprints.metaapplyblueprint\n    attrs:\n      identifiers:\n        name: "app-opencode"\n      required: true
+OUTPOST_PROVIDER_LIST=        - !Find [authentik_providers_proxy.proxyprovider, [name, "opencode"]]
+
+# --- edge route for one service ---
+ROUTE_NAME=opencode
+ROUTE_TITLE=OpenCode
+ROUTE_HOST=opencode.example.duckdns.org
+ROUTE_BACKEND=http://192.0.2.20:4096
+API_SKIP_REGEX=^/api/.*$
+REDIRECT_ROUTERS=    # redirects: none
+REDIRECT_MIDDLEWARES=  # middlewares: none
+SECTION_LINE=      # section: none
+ICON_LINE=      # icon: none
+ACCESS_ENTRIES=  # groups: none listed, so every Authentik user may open it
+ROUTE_FILE=edge/route.yml
+BLUEPRINT_FILE=edge/authentik-app.blueprint.yaml
+TRAEFIK_STATIC_FILE=edge/traefik.yml
+OUTPOST_BLUEPRINT_FILE=edge/outpost-providers.blueprint.yaml
+
+# --- backups ---
+BACKUP_SQLITE_IMAGE=docker.io/library/python:3-alpine
+BACKUP_KEEP=14
+BACKUP_ONCALENDAR=*-*-* 02:45:00
+BACKUP_UNIT=whoami-backup-app
+BACKUP_SECURITY=UserNS=keep-id
+DUMP_COMMAND=mydump --all
+PG_CONTAINER=authentik-postgres
+PG_USER=authentik
+PG_DB=authentik
+
+# --- firewall ---
+ADMIN_LAN_CIDR=192.0.2.0/24
+LAN_CIDR=192.0.2.0/24, 198.51.100.0/24
+EDGE_IP=192.0.2.10

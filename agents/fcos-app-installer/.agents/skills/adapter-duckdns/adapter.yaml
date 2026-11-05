@@ -1,0 +1,28 @@
+role: dns_certificates
+provider: duckdns
+name: DuckDNS (Let's Encrypt DNS-01 through Traefik)
+notes: >-
+  The login front end asks for one wildcard certificate (*.<domain>) through
+  Traefik's ACME DNS-01 challenge, which uses lego's duckdns provider.
+docs:
+  # Traefik's ACME uses lego; lego lists provider code duckdns and DUCKDNS_TOKEN (the account token).
+  - https://go-acme.github.io/lego/dns/duckdns/
+  - https://doc.traefik.io/traefik/reference/install-configuration/tls/certificate-resolvers/acme/
+discovery:
+  ask: the DuckDNS domain (the site file's domain).
+capabilities: {}
+owner_steps:
+  api_token:
+    title: Copy your DuckDNS token for {{DOMAIN}}
+    steps:
+      - Sign in at duckdns.org and copy the account token shown there. The agent never sees it.
+      - Save it in your password manager. You'll paste it at the hidden prompt for the secret duckdns_token on the login front end VM (the agent shows that command).
+    uses: [DOMAIN]
+    report_back:
+      - done (never the token itself)
+  traefik_provider:
+    title: Traefik's DuckDNS provider (nothing to do)
+    steps:
+      - Traefik's built-in duckdns provider uses the environment variable DUCKDNS_TOKEN, which the login front end fills from the secret duckdns_token. There is nothing for you to set up.
+    uses: []
+    report_back: []

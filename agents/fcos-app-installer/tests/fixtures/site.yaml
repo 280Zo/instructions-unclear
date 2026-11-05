@@ -1,0 +1,37 @@
+# Test fixture: a site file for the generator and the login front end.
+# Example values only (documentation addresses, example.* names), never real ones.
+domain: example.duckdns.org
+acme_email: owner@example.com
+admin_user: admin
+backups:
+  keep: 14
+  oncalendar: "*-*-* 02:15:00"
+  sqlite_image: docker.io/library/python:3-alpine
+edge:
+  vm: edge
+  traefik:
+    uid: 3202
+    gid: 3202
+    image: docker.io/library/traefik:v3
+  authentik:
+    host: auth.example.duckdns.org
+    uid: 3201
+    gid: 3201
+    image: ghcr.io/goauthentik/server:2026.8
+    postgres_image: docker.io/library/postgres:17-alpine
+    postgres_user: authentik
+    postgres_db: authentik
+vms:
+  - name: ai
+    ip: 192.0.2.20
+    nfs_shares:
+      - {name: projects, export: /mnt/pool/projects}
+      - {name: backups, export: /mnt/pool/backups}
+  - name: apps
+    ip: 192.0.2.30
+    nfs_shares:
+      - {name: backups, export: /mnt/pool/backups}
+  - name: edge
+    ip: 192.0.2.10
+    nfs_shares:
+      - {name: backups, export: /mnt/pool/backups}

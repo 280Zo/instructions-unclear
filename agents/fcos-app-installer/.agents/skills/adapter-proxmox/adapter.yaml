@@ -1,0 +1,218 @@
+role: virtualization
+provider: proxmox
+name: Proxmox VE
+notes: >-
+  Tested on Proxmox VE 9.2 with the Fedora CoreOS stable proxmoxve image
+  (docs/guide/research-notes.md rows 10-15). The agent creates, starts and
+  checks VMs through tools/pve.py with a pool-scoped API token; it never runs
+  commands on the host. Everything that deletes, or needs root, is an owner
+  step. Blocks that change or delete things run as one strict script
+  (bash -euo pipefail) that stops at the first failed check.
+docs:
+  - https://pve.proxmox.com/pve-docs/qm.1.html
+  - https://pve.proxmox.com/pve-docs/pveum.1.html
+  - https://pve.proxmox.com/pve-docs/api-viewer/
+  - https://github.com/coreos/fedora-coreos-docs/blob/main/modules/ROOT/pages/provisioning-proxmoxve.adoc
+  - https://pve.proxmox.com/pve-docs/chapter-qm.html
+discovery:
+  api: tools/pve.py check shows the version and the token's rights; list shows the pool's VMs.
+  ask: node name, VM disk storage, ISO/import storage and the folder of its import content (/var/lib/vz/import for storage local), bridge, VLAN tag, MTU, always_on.
+capabilities:
+  api_create_vm: true
+  api_upload_ignition: true
+  api_start_vm: true
+  api_delete_vm: false
+defaults:
+  # Proven in the Task 4 spike: Ignition on an uploaded NoCloud ISO (ide2).
+  # copy_ignition_snippet is the fallback when uploads are not allowed.
+  ignition_method: nocloud-iso
+scripts:
+  - scripts/setup-agent-access.sh
+  - scripts/teardown-agent-access.sh
+  - scripts/lib.sh
+  - scripts/discover-host.sh
+owner_steps:
+  download_image:
+    title: Download the current Fedora CoreOS image to {{HOST}}
+    steps:
+      - This puts the stable proxmoxve image in {{IMPORT_DIR}}, the import folder of storage {{ISO_STORAGE}}, where the agent's token can create VM disks from it.
+      - The SHA-256 comes from the official stream metadata. If it doesn't match, the script deletes the download and stops; nothing is unpacked.
+    blocks:
+      - machine: "proxmox {{HOST}} (bash, root)"
+        code: |
+          bash -euo pipefail <<'EOF'
+          trap 'echo "STOP: failed at line $LINENO"' ERR
+          cd {{IMPORT_DIR}}
+          read -r url sha < <(curl -fsSL https://builds.coreos.fedoraproject.org/streams/stable.json \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin)["architectures"]["x86_64"]["artifacts"]["proxmoxve"]["formats"]["qcow2.xz"]["disk"]; print(d["location"], d["sha256"])')
+          [ -n "${url:-}" ] && [ -n "${sha:-}" ] || { echo "STOP: could not read the stream metadata"; exit 1; }
+          file=$(basename "$url")
+          curl -fLO "$url"
+          if ! echo "$sha  $file" | sha256sum -c -; then rm -f -- "$file"; echo "STOP: checksum mismatch, download deleted"; exit 1; fi
+          xz -df -- "$file"
+          echo "image: ${file%.xz}"
+          EOF
+    uses: [HOST, ISO_STORAGE, IMPORT_DIR]
+    report_back:
+      - the OK line from sha256sum and the image line, or the STOP line
+  create_api_access:
+    title: Give the agent its limited Proxmox token on {{HOST}}
+    steps:
+      - Copy the three host scripts from your desktop to the node, check they arrived unchanged (each line must end in OK), and run the check; it changes nothing.
+      - If anything isn't OK, or the check shows an error, "would reset role" or "would create" you didn't expect, stop and report it.
+      - Otherwise apply (third block). When the token is new, the script prints its secret once. Copy its value row, and never paste it into the chat; the next step stores it.
+      - If the check says the token already exists and this workspace has no copy of its secret, replace it instead (fourth block, a check; then the fifth). The old token stops working, and any other workspace's copy with it.
+    blocks:
+      - machine: "desktop (fish)"
+        code: |
+          ssh root@{{HOST_ADDRESS}} 'mkdir -p /root/fcos-agent'
+          scp {{SKILL_DIR}}/scripts/lib.sh {{SKILL_DIR}}/scripts/setup-agent-access.sh {{SKILL_DIR}}/scripts/teardown-agent-access.sh root@{{HOST_ADDRESS}}:/root/fcos-agent/
+      - machine: "proxmox {{HOST}} (bash, root)"
+        code: |
+          cd /root/fcos-agent
+          printf '%s  %s\n' {{LIB_SHA256}} lib.sh {{SETUP_SHA256}} setup-agent-access.sh {{TEARDOWN_SHA256}} teardown-agent-access.sh | sha256sum -c - && bash setup-agent-access.sh --storage {{STORAGE}} --bridge {{BRIDGE}} --iso-storage {{ISO_STORAGE}} --host-key {{HOST}} --check
+      - machine: "proxmox {{HOST}} (bash, root)"
+        code: |
+          cd /root/fcos-agent
+          bash setup-agent-access.sh --storage {{STORAGE}} --bridge {{BRIDGE}} --iso-storage {{ISO_STORAGE}} --host-key {{HOST}}
+      - machine: "proxmox {{HOST}} (bash, root)"
+        code: |
+          cd /root/fcos-agent
+          bash setup-agent-access.sh --storage {{STORAGE}} --bridge {{BRIDGE}} --iso-storage {{ISO_STORAGE}} --host-key {{HOST}} --rotate --check
+      - machine: "proxmox {{HOST}} (bash, root)"
+        code: |
+          cd /root/fcos-agent
+          bash setup-agent-access.sh --storage {{STORAGE}} --bridge {{BRIDGE}} --iso-storage {{ISO_STORAGE}} --host-key {{HOST}} --rotate
+    uses: [HOST, HOST_ADDRESS, SKILL_DIR, LIB_SHA256, SETUP_SHA256, TEARDOWN_SHA256, STORAGE, BRIDGE, ISO_STORAGE]
+    report_back:
+      - the three OK lines and the check's output
+      - then the apply's (or the replacement's) output, without the secret
+  store_api_token:
+    title: Store the agent's Proxmox token for {{HOST}} on your desktop
+    steps:
+      - Run this on your desktop right after the token was created. It creates the file readable only by you, then asks for the secret at a hidden prompt (paste the value row the setup script printed) and writes it to the workspace's token file, readable only by you. Only tools/pve.py reads that file; the agent never does.
+    blocks:
+      - machine: "desktop (fish)"
+        code: |
+          read -s -P "Proxmox token secret: " t; and test -n "$t"; and install -m 600 /dev/null {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token; and printf '%s' 'fcos-agent@pve!fcos-bootstrap='$t > {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token; and chmod 600 {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token; set -e t
+    uses: [HOST, WORKSPACE]
+    report_back:
+      - done (never the secret)
+  discover_host:
+    title: Describe {{HOST}} for the agent (read-only)
+    steps:
+      - Copy the discovery script and its helper to the node, check they arrived unchanged (each line must end in OK), and run it. It only reads; nothing on the node changes.
+      - Then copy its output into your workspace, where the agent reads it. It holds names, sizes, network settings (including your network comments and the server's addresses) and VM network cards, but no passwords or keys. Look it over before the agent reads it if you like.
+    blocks:
+      - machine: "desktop (fish)"
+        code: |
+          ssh root@{{HOST_ADDRESS}} 'mkdir -p /root/fcos-agent'
+          scp {{SKILL_DIR}}/scripts/lib.sh {{SKILL_DIR}}/scripts/discover-host.sh root@{{HOST_ADDRESS}}:/root/fcos-agent/
+      - machine: "proxmox {{HOST}} (bash, root)"
+        code: |
+          cd /root/fcos-agent
+          printf '%s  %s\n' {{LIB_SHA256}} lib.sh {{DISCOVER_SHA256}} discover-host.sh | sha256sum -c - && bash discover-host.sh > discovery.txt && tail -n 1 discovery.txt
+      - machine: "desktop (fish)"
+        code: |
+          mkdir -p {{WORKSPACE}}/hosts/{{HOST}}; and scp root@{{HOST_ADDRESS}}:/root/fcos-agent/discovery.txt {{WORKSPACE}}/hosts/{{HOST}}/discovery.txt
+    uses: [HOST, HOST_ADDRESS, SKILL_DIR, LIB_SHA256, DISCOVER_SHA256, WORKSPACE]
+    report_back:
+      - the two OK lines and the "Done. Nothing was changed." line
+      - that the file is in the workspace (the agent reads it from there)
+  teardown_api_access:
+    title: Remove the agent's Proxmox access from {{HOST}}
+    steps:
+      - Run this once the install is verified. The VMs keep running; they move into pool backrooms (created if it doesn't exist), then the agent's pool is deleted. A pool is only a label for a set of VMs; the agent's own pool is deleted, and your VMs are not changed.
+      - Run the first block (the check; it changes nothing) and report its output. Run the second block only after that.
+      - Afterwards delete the token file in your workspace, as the script's last line says.
+    blocks:
+      - machine: "proxmox {{HOST}} (bash, root)"
+        code: |
+          cd /root/fcos-agent
+          bash teardown-agent-access.sh --move-to backrooms --create-pool --host-key {{HOST}} --check
+      - machine: "proxmox {{HOST}} (bash, root)"
+        code: |
+          cd /root/fcos-agent
+          bash teardown-agent-access.sh --move-to backrooms --create-pool --host-key {{HOST}}
+    uses: [HOST]
+    report_back:
+      - the check's output, then the teardown's output
+  copy_ignition_snippet:
+    title: Give VM {{VMID}} its Ignition file as a snippet (fallback)
+    steps:
+      - Only when config disc uploads are not allowed. Storage {{SNIPPETS_STORAGE}} needs content type snippets; its folder on the node is {{SNIPPETS_DIR}}.
+      - Fedora's Proxmox guide uses this cloud-init drive together with ciupgrade 0. Not tested here, a forum report says that on this path Proxmox also sets the hostname, and an Ignition-written /etc/hostname then drops Fedora CoreOS into the emergency shell (research notes row 14). Tell the agent you're using this path before the first boot.
+    blocks:
+      - machine: "desktop (fish)"
+        code: |
+          scp {{VM_FOLDER}}/{{VM_NAME}}.ign root@{{HOST_ADDRESS}}:{{SNIPPETS_DIR}}/snippets/{{VM_NAME}}.ign
+      - machine: "proxmox {{HOST}} (bash, root)"
+        code: |
+          qm set {{VMID}} --ide2 {{STORAGE}}:cloudinit --cicustom vendor={{SNIPPETS_STORAGE}}:snippets/{{VM_NAME}}.ign --ciupgrade 0
+          qm config {{VMID}} | grep -E '^(ide2|cicustom|ciupgrade)'
+    uses: [VMID, SNIPPETS_STORAGE, SNIPPETS_DIR, VM_FOLDER, VM_NAME, HOST_ADDRESS, HOST, STORAGE]
+    report_back:
+      - the ide2, cicustom and ciupgrade lines
+  rebuild_os_disk:
+    title: Replace the OS disk of VM {{VMID}} ({{VM_NAME}}), keep the data disk
+    steps:
+      - For VMs that get Ignition from the config disc (the default). Download a current image first (download_image) and note its file name. The new config disc {{IGN_ISO_VOLUME}} must already be on the storage, under a new dated name (the old disc is attached and is never overwritten). The old disc stays on the storage; remove it once the rebuilt VM runs.
+      - The script first checks that VM {{VMID}} is named {{VM_NAME}} and has its data disk scsi1, and stops if not. It remembers the old OS disk, detaches it, and deletes only the unused slot holding exactly that disk; other unused disks are never touched.
+      - It also checks that the image exists before the VM is shut down. If it prints STOP after "protection off", protection stays off and the VM may be without its OS disk; report the whole output and don't start the VM.
+    blocks:
+      - machine: "proxmox {{HOST}} (bash, root, destructive)"
+        code: |
+          bash -euo pipefail <<'EOF'
+          trap 'echo "STOP: failed at line $LINENO (protection may be off; report this output)"' ERR
+          VMID={{VMID}}; QCOW={{QCOW2}}
+          name=$(qm config $VMID | sed -n 's/^name: //p')
+          [ "$name" = "{{VM_NAME}}" ] || { echo "STOP: VM $VMID is named '$name', not {{VM_NAME}}; nothing changed"; exit 1; }
+          qm config $VMID | grep -q '^scsi1:' || { echo "STOP: VM $VMID has no data disk scsi1; nothing changed"; exit 1; }
+          [ -f "$(pvesm path {{ISO_STORAGE}}:import/$QCOW 2>/dev/null || true)" ] || { echo "STOP: image $QCOW not found in {{ISO_STORAGE}}; nothing changed"; exit 1; }
+          [ -f "$(pvesm path {{IGN_ISO_VOLUME}} 2>/dev/null || true)" ] || { echo "STOP: config disc {{IGN_ISO_VOLUME}} not uploaded yet; nothing changed"; exit 1; }
+          cur=$(qm config $VMID | awk -F': ' '$1 == "ide2" { split($2, a, ","); print a[1] }')
+          [ "$cur" != "{{IGN_ISO_VOLUME}}" ] || { echo "STOP: {{IGN_ISO_VOLUME}} is already attached; the rebuilt config disc needs a new name; nothing changed"; exit 1; }
+          qm shutdown $VMID --timeout 120 || qm stop $VMID
+          qm set $VMID --protection 0; echo "protection off"
+          OLD=$(qm config $VMID | awk -F': ' '$1 == "scsi0" { split($2, a, ","); print a[1] }')
+          [ -n "$OLD" ] || { echo "STOP: no OS disk scsi0 found"; exit 1; }
+          echo "old OS disk: $OLD"
+          qm set $VMID --delete scsi0
+          SLOT=$(qm config $VMID | awk -F': ' -v v="$OLD" '$1 ~ /^unused[0-9]+$/ && $2 == v { print $1 }')
+          [ -n "$SLOT" ] || { echo "STOP: the old OS disk is not among the unused disks; nothing deleted"; exit 1; }
+          qm config $VMID | grep -q '^scsi1:' || { echo "STOP: data disk scsi1 missing; nothing deleted"; exit 1; }
+          echo "deleting $SLOT ($OLD)"
+          qm disk unlink $VMID --idlist "$SLOT"
+          qm set $VMID --scsi0 "{{STORAGE}}:0,import-from={{ISO_STORAGE}}:import/$QCOW,{{SCSI0_OPTIONS}}"
+          qm resize $VMID scsi0 {{OS_DISK_GIB}}G
+          qm set $VMID --ide2 {{IGN_ISO_VOLUME}},media=cdrom --boot order=scsi0
+          qm set $VMID --protection 1
+          qm start $VMID
+          echo "done: VM $VMID rebuilt and started"
+          EOF
+    uses: [VMID, VM_NAME, HOST, QCOW2, STORAGE, ISO_STORAGE, SCSI0_OPTIONS, OS_DISK_GIB, IGN_ISO_VOLUME]
+    report_back:
+      - the whole output (old OS disk, deleting, done), or the STOP line
+  remove_vm:
+    title: Delete VM {{VMID}} ({{VM_NAME}}) and its disks
+    steps:
+      - This deletes the VM, its OS disk and its data disk for good. Back up anything you need first.
+      - The script first checks that VM {{VMID}} is named {{VM_NAME}} and that its config disc is {{IGN_ISO_VOLUME}} (the only extra volume it deletes), and stops without changing anything if not. For a VM on the snippet fallback, ask the agent for the matching step instead.
+    blocks:
+      - machine: "proxmox {{HOST}} (bash, root, destructive)"
+        code: |
+          bash -euo pipefail <<'EOF'
+          trap 'echo "STOP: failed at line $LINENO (protection may be off; report this output)"' ERR
+          name=$(qm config {{VMID}} | sed -n 's/^name: //p')
+          [ "$name" = "{{VM_NAME}}" ] || { echo "STOP: VM {{VMID}} is named '$name', not {{VM_NAME}}; nothing deleted"; exit 1; }
+          disc=$(qm config {{VMID}} | awk -F': ' '$1 == "ide2" { split($2, a, ","); print a[1] }')
+          [ "$disc" = "{{IGN_ISO_VOLUME}}" ] || { echo "STOP: the VM's config disc is '$disc', not {{IGN_ISO_VOLUME}}; nothing deleted"; exit 1; }
+          qm set {{VMID}} --protection 0
+          qm stop {{VMID}}
+          qm destroy {{VMID}} --purge
+          pvesm free {{IGN_ISO_VOLUME}}
+          echo "done: VM {{VMID}} deleted"
+          EOF
+    uses: [VMID, VM_NAME, HOST, IGN_ISO_VOLUME]
+    report_back:
+      - the output, or the STOP line

@@ -1,0 +1,300 @@
+#!/usr/bin/env python3
+"""The private workspace: where one install's real files live, outside the repo.
+
+Usage:
+  workspace.py init <path>         create the workspace layout and remember it
+  workspace.py where               print the workspace path in use
+  workspace.py previous <dir>...   summarize earlier installs as JSON
+
+The workspace is found, in order, from an explicit path, the FCOS_WORKSPACE
+environment variable, then the path remembered in
+~/.config/fcos-agent/workspace. It must never be inside this repo, so private
+files can't become publishable. Secret files are only ever listed by path
+(existence flags), never read.
+"""
+
+import json
+import os
+import re
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+EXAMPLE = REPO_ROOT / "site.example.yaml"
+SKIP_VALUE = re.compile(r"(?i)^(?:\d+(?:\.\d+)?|true|false|null|none|ask|yes|no)$")
+SERVICE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+SUBDIRS = ("secrets", "vms", "services", "adapters-draft")
+
+
+class WorkspaceError(Exception):
+    pass
+
+
+class WorkspaceNotSet(WorkspaceError):
+    pass
+
+
+def _remembered_file() -> Path:
+    return Path.home() / ".config" / "fcos-agent" / "workspace"
+
+
+def _outside_repo(path: Path) -> Path:
+    resolved = path.expanduser().resolve()
+    if resolved == REPO_ROOT or REPO_ROOT in resolved.parents:
+        raise WorkspaceError(
+            f"workspace {resolved} is inside the agent repo; choose a folder outside {REPO_ROOT}")
+    return resolved
+
+
+def resolve_workspace(explicit: str | None = None) -> Path:
+    if explicit:
+        return _outside_repo(Path(explicit))
+    from_env = os.environ.get("FCOS_WORKSPACE", "").strip()
+    if from_env:
+        return _outside_repo(Path(from_env))
+    remembered = _remembered_file()
+    if remembered.is_file():
+        text = remembered.read_text(encoding="utf-8").strip()
+        if text:
+            return _outside_repo(Path(text))
+    raise WorkspaceNotSet(
+        "no workspace set: pass a path, set FCOS_WORKSPACE, or run `workspace.py init <path>`")
+
+
+def init_workspace(path: Path) -> None:
+    ws = _outside_repo(Path(path))
+    ws.mkdir(parents=True, exist_ok=True)
+    site = ws / "site.yaml"
+    if not site.exists():
+        site.write_text(EXAMPLE.read_text(encoding="utf-8"), encoding="utf-8")
+    for name in SUBDIRS:
+        (ws / name).mkdir(exist_ok=True)
+    secrets = ws / "secrets"
+    if secrets.stat().st_mode & 0o777 != 0o700:
+        secrets.chmod(0o700)
+    # rg, and search tools built on it, skip paths listed in .ignore, so a
+    # search of the whole workspace doesn't read the secrets folder.
+    ignore = ws / ".ignore"
+    lines = ignore.read_text(encoding="utf-8").splitlines() if ignore.is_file() else []
+    if "secrets/" not in lines:
+        ignore.write_text("\n".join(lines + ["secrets/"]) + "\n", encoding="utf-8")
+    remembered = _remembered_file()
+    wanted = f"{ws}\n"
+    if not remembered.is_file() or remembered.read_text(encoding="utf-8") != wanted:
+        remembered.parent.mkdir(parents=True, exist_ok=True)
+        remembered.write_text(wanted, encoding="utf-8")
+
+
+def _yaml():
+    try:
+        import yaml
+    except ImportError:
+        print("install PyYAML (python-yaml / python3-yaml)", file=sys.stderr)
+        raise SystemExit(2)
+    return yaml
+
+
+def _safe_load(path: Path):
+    return _yaml().safe_load(path.read_text(encoding="utf-8"))
+
+
+def _mapping(path: Path) -> dict:
+    data = _safe_load(path)
+    if data is None:
+        return {}
+    if not isinstance(data, dict):
+        raise WorkspaceError(f"{path.name} must be a mapping at the top level")
+    return data
+
+
+def load_site(ws: Path) -> dict:
+    return _mapping(Path(ws) / "site.yaml")
+
+
+def load_service(ws: Path, name: str) -> dict:
+    if not SERVICE_NAME.match(name) or ".." in name:
+        raise WorkspaceError(f"invalid service name {name!r}")
+    path = Path(ws) / "services" / name / "service.yaml"
+    if not path.is_file():
+        raise WorkspaceError(f"no service spec at {path}")
+    return _mapping(path)
+
+
+def _strings(node):
+    if isinstance(node, str):
+        yield node
+    elif isinstance(node, dict):
+        for value in node.values():
+            yield from _strings(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from _strings(value)
+
+
+SPEC_IDENTIFYING = ("hostname", "title", "description", "login_reason", "accepted_risks")
+
+
+def _identifying(spec) -> list:
+    """The parts of an app spec that can identify the owner (owner decision 2026-10-31)."""
+    if not isinstance(spec, dict):
+        return []
+    own = str(spec.get("name", "")).lower()
+    # A web name or title that is just the app's own (public) name doesn't identify anyone.
+    out = [spec.get(key) for key in SPEC_IDENTIFYING
+           if not (key in ("hostname", "title") and str(spec.get(key, "")).lower() == own)]
+    for ctr in spec.get("containers") or []:
+        if not isinstance(ctr, dict):
+            continue
+        for vol in ctr.get("volumes") or []:
+            if isinstance(vol, dict) and vol.get("class") == "nfs":
+                out.append(vol.get("host"))
+        # Env values that carry an address, a domain or free text (an admin email,
+        # a person's name, an outside mail host) can identify the owner.
+        env = ctr.get("env") if isinstance(ctr.get("env"), dict) else {}
+        out += [v for v in env.values() if isinstance(v, str) and IDENTIFYING_ENV.search(v)]
+    return [item for item in out if item is not None]
+
+
+# "@", whitespace, a name with a dot and a 2+ letter last label (example.net),
+# or an IPv4 address.
+IDENTIFYING_ENV = re.compile(r"@|\s|[A-Za-z0-9-]+\.[A-Za-z]{2,}|\b\d{1,3}(?:\.\d{1,3}){3}\b")
+
+
+def private_values(ws: Path) -> set[str]:
+    """Every scalar in site.yaml and the service specs worth protecting."""
+    ws = Path(ws)
+    public = EXAMPLE.read_text(encoding="utf-8") if EXAMPLE.exists() else ""
+    # Exact names of the adapters the agent ships (.agents/skills/adapter-<name>/) are public.
+    shipped = {p.parent.name.removeprefix("adapter-") for p in (REPO_ROOT / ".agents" / "skills").glob("adapter-*/adapter.yaml")}
+    files = [ws / "site.yaml", *sorted((ws / "services").glob("*/service.yaml")),
+             *sorted((ws / "vms").glob("*/vm.yaml"))]
+    values = set()
+    for path in files:
+        if not path.is_file():
+            continue
+        try:
+            data = _mapping(path)
+        except _yaml().YAMLError:
+            raise WorkspaceError(f"{path} is not valid YAML") from None
+        # Site file: every value. App specs: only the fields that can identify
+        # the owner (a public app's image, folders and settings are public; the
+        # domain and addresses inside them are caught through the site file).
+        if path.name == "site.yaml":
+            source = data
+        elif path.name == "vm.yaml":  # its free-text description (the rest is public settings)
+            settings = data.get("settings") if isinstance(data, dict) else None
+            desc = settings.get("description") if isinstance(settings, dict) else None
+            source = [desc["use"]] if isinstance(desc, dict) and isinstance(desc.get("use"), str) else []
+        else:
+            source = _identifying(data)
+        for text in _strings(source):
+            for part in text.splitlines():
+                part = part.strip()
+                if len(part) < 4 or SKIP_VALUE.match(part) or part in public or part in shipped:
+                    continue
+                values.add(part)
+    return values
+
+
+def _installs(directory: Path) -> list[Path]:
+    def is_install(path: Path) -> bool:
+        return (path / "site.yaml").is_file() or (path / "services").is_dir()
+
+    if not directory.is_dir():
+        return []
+    if is_install(directory):
+        return [directory]
+    return [child for child in sorted(directory.iterdir()) if child.is_dir() and is_install(child)]
+
+
+def _merge(into: dict, new: dict) -> None:
+    for key, value in new.items():
+        if key not in into or into[key] in (None, "ASK"):
+            into[key] = value
+        elif isinstance(into[key], dict) and isinstance(value, dict):
+            _merge(into[key], value)
+        elif isinstance(into[key], list) and isinstance(value, list):
+            into[key].extend(item for item in value if item not in into[key])
+
+
+def _collect_used(node, vm: str, used: dict) -> None:
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "uid" and isinstance(value, int) and not isinstance(value, bool):
+                used["uids"].add(value)
+            elif key == "port" and isinstance(value, int) and not isinstance(value, bool):
+                used["ports"].setdefault(vm, set()).add(value)
+            elif key == "hostname" and isinstance(value, str) and value:
+                used["hostnames"].add(value)
+            else:
+                _collect_used(value, vm, used)
+    elif isinstance(node, list):
+        for item in node:
+            _collect_used(item, vm, used)
+
+
+def _secret_files(install: Path) -> list[Path]:
+    found = []
+    for root, _dirs, files in os.walk(install / "secrets"):
+        for name in files:
+            path = Path(root) / name
+            if not path.is_symlink():
+                found.append(path)
+    return sorted(found)
+
+
+def scan_previous(dirs: list[Path]) -> dict:
+    site: dict = {}
+    used = {"uids": set(), "ports": {}, "hostnames": set()}
+    present: list[Path] = []
+    for directory in dirs:
+        for install in _installs(Path(directory)):
+            if (install / "site.yaml").is_file():
+                _merge(site, load_site(install))
+            for spec_path in sorted((install / "services").glob("*/service.yaml")):
+                spec = _mapping(spec_path)
+                vm = spec.get("vm") if isinstance(spec.get("vm"), str) else ""
+                _collect_used(spec, vm, used)
+            present += _secret_files(install)
+    return {"site": site, "used": used, "secret_files": present}
+
+
+def _printable(result: dict) -> dict:
+    used = result["used"]
+    return {
+        "site": result["site"],
+        "used": {
+            "uids": sorted(used["uids"]),
+            "ports": {vm: sorted(ports) for vm, ports in sorted(used["ports"].items())},
+            "hostnames": sorted(used["hostnames"]),
+        },
+        "secret_files": {str(path): True for path in result["secret_files"]},
+    }
+
+
+def main(argv: list[str]) -> int:
+    usage = "usage: workspace.py init <path> | where | previous <dir>..."
+    if not argv:
+        print(usage, file=sys.stderr)
+        return 2
+    command, args = argv[0], argv[1:]
+    try:
+        if command == "init" and len(args) == 1:
+            init_workspace(Path(args[0]))
+            print(resolve_workspace(args[0]))
+        elif command == "where" and not args:
+            print(resolve_workspace())
+        elif command == "previous" and args:
+            print(json.dumps(_printable(scan_previous([Path(a) for a in args])),
+                             indent=2, default=str))
+        else:
+            print(usage, file=sys.stderr)
+            return 2
+    except WorkspaceError as exc:
+        print(f"workspace: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

@@ -1,0 +1,196 @@
+#!/usr/bin/env python3
+"""Fake pveum for tests/test_host_proxmox.py; see _stubstate.py for the state."""
+
+import os
+import sys
+
+sys.dont_write_bytecode = True
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+import _stubstate as st  # noqa: E402
+
+FAKE_VALUE = "00000000-stub-0000-0000-000000000000"
+BUILTIN_ROLES = st.BUILTIN_ROLES
+
+
+def split_token(token_id):
+    user, _, name = token_id.partition("!")
+    return user, name
+
+
+def drop_acls(state, kind=None, ident=None, role=None, path=None):
+    def hit(acl):
+        return ((kind is None or acl[1] == kind) and (ident is None or acl[2] == ident)
+                and (role is None or acl[3] == role) and (path is None or acl[0] == path))
+    state["acls"] = [acl for acl in state["acls"] if not hit(acl)]
+
+
+def pool_add(state, pos, opts):
+    if pos[0] in state["pools"]:
+        st.fail(f"create pool failed: pool '{pos[0]}' already exists")
+    state["pools"][pos[0]] = []
+
+
+def pool_modify(state, pos, opts):
+    if pos[0] not in state["pools"]:
+        st.fail(f"update pool failed: pool '{pos[0]}' does not exist")
+    for vmid in (int(v) for v in opts.get("--vms", "").split(",") if v):
+        if not opts.get("--allow-move"):
+            for members in state["pools"].values():
+                if vmid in members:
+                    st.fail(f"400 Result verification failed: VM {vmid} already in a pool")
+        for members in state["pools"].values():
+            if vmid in members:
+                members.remove(vmid)
+        state["pools"][pos[0]].append(vmid)
+
+
+def pool_delete(state, pos, opts):
+    if pos[0] not in state["pools"]:
+        st.fail(f"delete pool failed: pool '{pos[0]}' does not exist")
+    if state["pools"][pos[0]]:
+        st.fail(f"delete pool failed: pool '{pos[0]}' is not empty")
+    del state["pools"][pos[0]]
+    drop_acls(state, path=f"/pool/{pos[0]}")
+
+
+def role_add(state, pos, opts):
+    if pos[0] in state["roles"] or pos[0] in BUILTIN_ROLES:
+        st.fail(f"create role failed: role '{pos[0]}' already exists")
+    state["roles"][pos[0]] = ",".join(opts.get("--privs", "").split())
+
+
+def role_modify(state, pos, opts):
+    if pos[0] not in state["roles"]:
+        st.fail(f"role '{pos[0]}' does not exist")
+    state["roles"][pos[0]] = ",".join(opts.get("--privs", "").split())
+
+
+def role_delete(state, pos, opts):
+    if pos[0] not in state["roles"]:
+        st.fail(f"delete role failed: role '{pos[0]}' does not exist")
+    del state["roles"][pos[0]]
+    drop_acls(state, role=pos[0])
+
+
+def user_add(state, pos, opts):
+    if pos[0] in state["users"]:
+        st.fail(f"create user failed: user '{pos[0]}' already exists")
+    state["users"].append(pos[0])
+
+
+def user_delete(state, pos, opts):
+    if pos[0] not in state["users"]:
+        st.fail(f"delete user failed: no such user ('{pos[0]}')")
+    state["users"].remove(pos[0])
+    for token_id in [t for t in state["tokens"] if split_token(t)[0] == pos[0]]:
+        state["tokens"].remove(token_id)
+        drop_acls(state, "token", token_id)
+    drop_acls(state, "user", pos[0])
+
+
+def token_add(state, pos, opts):
+    user, name = pos[0], pos[1]
+    token_id = f"{user}!{name}"
+    if user not in state["users"]:
+        st.fail(f"no such user ('{user}')")
+    if token_id in state["tokens"]:
+        st.fail(f"Token already exists: {token_id}")
+    state["tokens"].append(token_id)
+    if opts.get("--privsep") == "0":
+        state["tokens_no_privsep"].append(token_id)
+    print(f"full-tokenid | {token_id}\ninfo         | {{\"privsep\":\"{opts.get('--privsep', '1')}\"}}\n"
+          f"value        | {FAKE_VALUE}")
+
+
+def token_remove(state, pos, opts):
+    token_id = f"{pos[0]}!{pos[1]}"
+    if token_id not in state["tokens"]:
+        st.fail(f"no such token ('{token_id}')")
+    state["tokens"].remove(token_id)
+    if token_id in state["tokens_no_privsep"]:
+        state["tokens_no_privsep"].remove(token_id)
+    drop_acls(state, "token", token_id)
+
+
+def token_permissions(state, pos, opts):
+    token_id = f"{pos[0]}!{pos[1]}"
+    if token_id not in state["tokens"]:
+        st.fail(f"no such token ('{token_id}')")
+    for path, kind, ident, role in state["acls"]:
+        if kind == "token" and ident == token_id:
+            print(f"{path}: {state['roles'].get(role, BUILTIN_ROLES.get(role, ''))}")
+
+
+def acl_target(opts):
+    if "--users" in opts:
+        return "user", opts["--users"]
+    if "--tokens" in opts:
+        return "token", opts["--tokens"]
+    st.fail("need --users, --tokens or --groups", 2)
+
+
+def acl_modify(state, pos, opts):
+    path, kind, ident = pos[0], *acl_target(opts)
+    role = opts.get("--roles")
+    if role not in state["roles"] and role not in BUILTIN_ROLES:
+        st.fail(f"role '{role}' does not exist")
+    if (kind == "user" and ident not in state["users"]) or (kind == "token" and ident not in state["tokens"]):
+        st.fail(f"{kind} '{ident}' does not exist")
+    if path.startswith("/pool/") and path[6:] not in state["pools"]:
+        st.fail(f"pool '{path[6:]}' does not exist")
+    if path.startswith("/storage/") and path[9:] not in state["storages"]:
+        st.fail(f"storage '{path[9:]}' does not exist")
+    entry = [path, kind, ident, role]
+    if entry not in state["acls"]:
+        state["acls"].append(entry)
+
+
+def acl_delete(state, pos, opts):
+    kind, ident = acl_target(opts)
+    drop_acls(state, kind, ident, opts.get("--roles"), pos[0])
+
+
+ACL_OPTIONS = {"groups", "propagate", "roles", "tokens", "users"}
+USER_ADD_OPTIONS = {"comment", "email", "enable", "expire", "firstname", "groups", "keys", "lastname", "password"}
+FORMAT = set(st.FORMAT_OPTIONS)
+
+# command -> (handler, mutates state, positional count, allowed options, required options),
+# transcribed from https://pve.proxmox.com/pve-docs/pveum.1.html. Only the
+# commands the scripts use are here; JSON reads go through `pvesh get`.
+COMMANDS = {
+    ("pool", "add"): (pool_add, True, 1, {"comment"}, ()),
+    ("pool", "modify"): (pool_modify, True, 1, {"allow-move", "comment", "delete", "storage", "vms"}, ()),
+    ("pool", "delete"): (pool_delete, True, 1, set(), ()),
+    ("role", "add"): (role_add, True, 1, {"privs"}, ()),
+    ("role", "modify"): (role_modify, True, 1, {"append", "privs"}, ()),
+    ("role", "delete"): (role_delete, True, 1, set(), ()),
+    ("user", "add"): (user_add, True, 1, USER_ADD_OPTIONS, ()),
+    ("user", "delete"): (user_delete, True, 1, set(), ()),
+    ("user", "token", "add"): (token_add, True, 2, {"comment", "expire", "privsep"} | FORMAT, ()),
+    ("user", "token", "remove"): (token_remove, True, 2, FORMAT, ()),  # alias of "user token delete"
+    ("user", "token", "permissions"): (token_permissions, False, 2, {"path"} | FORMAT, ()),
+    ("acl", "modify"): (acl_modify, True, 1, ACL_OPTIONS, ("roles",)),
+    ("acl", "delete"): (acl_delete, True, 1, ACL_OPTIONS, ("roles",)),
+}
+
+
+def main(argv):
+    st.log_call(["pveum"] + argv)
+    for length in (3, 2):
+        handler = COMMANDS.get(tuple(argv[:length]))
+        if handler:
+            break
+    else:
+        st.fail(f"pveum stub: unsupported command {argv[:3]}", 2)
+    func, mutates, npos, allowed, required = handler
+    state = st.load()
+    usage = "pveum " + " ".join(argv[:length]) + " [OPTIONS]"
+    pos, opts = st.parse(argv[length:], allowed, usage, npos, required)
+    func(state, pos, opts)
+    if mutates:
+        st.save(state)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

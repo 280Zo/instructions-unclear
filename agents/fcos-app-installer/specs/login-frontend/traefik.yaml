@@ -1,0 +1,31 @@
+# Login front end, part 1: Traefik, the front door on the login front end VM.
+# A normal service spec (schemas/service.schema.md). Values written as
+# "<site: a.b>" are filled from the site file by tools/login_frontend.py;
+# a missing one is an error that names it. No real values here.
+#
+# Rootless, host network: it binds 80/443 (the VM's edge-ports fragment lowers
+# the unprivileged port start), reaches Authentik on 127.0.0.1:9000 and the
+# apps on the LAN. Routes come only from files in /dynamic (no container
+# socket). Its settings and routes are written by login_frontend.py into the
+# config and dynamic folders, which the container mounts read-only.
+# One wildcard certificate via DuckDNS DNS-01; it is kept in acme/.
+name: traefik
+vm: "<site: edge.vm>"
+uid: "<site: edge.traefik.uid>"
+gid: "<site: edge.traefik.gid>"
+title: Traefik
+description: Traefik reverse proxy (login front end)
+login: app-only
+login_reason: It is the front door that serves the login page itself
+containers:
+  - name: traefik
+    image: "<site: edge.traefik.image>"
+    user_mode: map-user
+    network: host
+    secrets: [{env: DUCKDNS_TOKEN, name: duckdns_token}]
+    volumes:
+      - {path: /etc/traefik, class: local, name: config, read_only: true, expected_gib: 0.1}
+      - {path: /dynamic, class: local, name: dynamic, read_only: true, expected_gib: 0.1}
+      - {path: /acme, class: local, name: acme, expected_gib: 0.1}
+secrets:
+  - {name: duckdns_token, durable: true, source: prompt}

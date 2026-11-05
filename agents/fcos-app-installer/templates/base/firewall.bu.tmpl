@@ -1,0 +1,74 @@
+variant: fcos
+version: 1.7.0
+
+# Inbound firewall. Everything is dropped except:
+#   - SSH from the admin LAN
+#   - ports in @edge_tcp, from the edge VM only (backend services)
+#   - ports in @lan_tcp, from the LAN (only the edge VM uses this: 80/443)
+# Service fragments add their ports with files in /etc/nftables.d/.
+# Uses its own table, so Podman's netavark rules are left alone.
+
+storage:
+  directories:
+    - path: /etc/nftables.d
+      mode: 0755
+  files:
+    - path: /etc/nftables.d/00-placeholder.nft
+      mode: 0644
+      contents:
+        inline: |
+          # Service fragments add "add element inet host_filter ..." files here.
+    - path: /etc/sysconfig/nftables.conf
+      mode: 0600
+      overwrite: true
+      contents:
+        inline: |
+          table inet host_filter
+          delete table inet host_filter
+
+          table inet host_filter {
+            set edge_tcp {
+              type inet_service
+            }
+            set lan_tcp {
+              type inet_service
+            }
+
+            chain input {
+              type filter hook input priority 0; policy drop;
+              ct state established,related accept
+              ct state invalid drop
+              iif "lo" accept
+              meta l4proto { icmp, ipv6-icmp } accept
+              # ADMIN_LAN_CIDR and LAN_CIDR are comma-separated lists of networks.
+              tcp dport 22 ip saddr { {{ADMIN_LAN_CIDR}} } accept
+              tcp dport @edge_tcp ip saddr {{EDGE_IP}} accept
+              tcp dport @lan_tcp ip saddr { {{LAN_CIDR}} } accept
+            }
+
+            # Rootful containers publish ports through DNAT, which passes the
+            # forward hook, not input. Only the edge VM may open them.
+            chain forward {
+              type filter hook forward priority 0; policy accept;
+              ct status dnat ct state new ip saddr != {{EDGE_IP}} drop
+              ct status dnat ct state new meta nfproto ipv6 drop
+            }
+          }
+
+          include "/etc/nftables.d/*.nft"
+    # Fedora's unit flushes the whole ruleset on reload and stop, which would
+    # also wipe Podman's rules. Reload and stop touch only this table instead.
+    - path: /etc/systemd/system/nftables.service.d/10-own-table.conf
+      mode: 0644
+      contents:
+        inline: |
+          [Service]
+          ExecReload=
+          ExecReload=/sbin/nft -f /etc/sysconfig/nftables.conf
+          ExecStop=
+          ExecStop=/sbin/nft delete table inet host_filter
+
+systemd:
+  units:
+    - name: nftables.service
+      enabled: true

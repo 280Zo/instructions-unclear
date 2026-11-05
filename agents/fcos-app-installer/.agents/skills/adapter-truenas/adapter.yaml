@@ -1,0 +1,42 @@
+role: file_server
+provider: truenas
+name: TrueNAS
+notes: >-
+  The agent never touches the NAS. These steps are done by the owner in the
+  TrueNAS web interface. Menu names change between versions; when one doesn't
+  match, follow the linked documentation for your version.
+docs:
+  - https://www.truenas.com/docs/scale/shares/nfs/addingnfsshares/
+  - https://www.truenas.com/docs/scale/26/credentials/users/manageusers/
+discovery:
+  ask: the NFS export path of each share, and the NAS address.
+capabilities: {}
+owner_steps:
+  nfs_export:
+    title: Let VM {{VM_NAME}} mount {{SHARE_EXPORT}}
+    steps:
+      - In Shares, Unix (NFS) Shares, edit the share for the export path {{SHARE_EXPORT}}.
+      - Add the VM's address {{VM_IP}} under Hosts. Listing hosts restricts the share to them.
+      - Under Advanced Options, set Maproot User to nobody and Maproot Group to the share's group. The VM mounts the share as root, and this maps root to an unprivileged user on the NAS.
+      - Security - SYS.
+    uses: [VM_NAME, SHARE_EXPORT, VM_IP]
+    report_back:
+      - done, plus the export path if it differs
+  service_user:
+    title: Create the NAS user for {{SVC_NAME}}
+    steps:
+      - Create the user {{SVC_NAME}} with UID {{SVC_UID}}. Disable the password, uncheck SMB user, uncheck create new primary group, and set the primary group to GID {{SVC_GID}} (the service's group or its shared group).
+      - Create its folders on the share and give them to that user and group, as listed in the service's file-server.md table (folder, user, group, mode). For a shared group, use group ownership with the setgid bit (mode 2775), so new files keep the group.
+      - If you are moving existing data, make sure it is owned by UID {{SVC_UID}} and GID {{SVC_GID}}.
+    uses: [SVC_NAME, SVC_UID, SVC_GID]
+    report_back:
+      - done, and the exact folder paths
+  backup_folder:
+    title: Create the backup folder for {{SVC_NAME}} on VM {{VM_NAME}}
+    steps:
+      - In the backups share, make sure the folder {{VM_NAME}}/ exists, owned by root or the share's admin account, mode 0755. Everyone can enter it and nobody else can add or remove anything in it. It is not group-writable and has no setgid bit; each service has its own group, and group write without a sticky bit would let a member delete another service's backup folder.
+      - Create {{VM_NAME}}/{{SVC_NAME}}/ yourself, owned by UID {{SVC_UID}} and GID {{SVC_GID}}, mode 0750. The service can't create it in a folder it can't write to, and its backups fail until it exists. The VM sends numbers, so the owner's UID must be {{SVC_UID}}; the name of the account or group on the file server doesn't matter.
+      - Check it with `ls -n` in {{VM_NAME}}/. The owner column must show {{SVC_UID}}.
+    uses: [VM_NAME, SVC_NAME, SVC_UID, SVC_GID]
+    report_back:
+      - done, and the `ls -n` line for the folder

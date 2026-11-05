@@ -1,0 +1,33 @@
+# Authentik blueprint for {{ROUTE_NAME}}: a forward-auth proxy provider and
+# its application. skip_path_regex lists paths desktop/mobile clients call
+# directly (one regex per line, matched against the request path). The app's
+# own password protects those paths. A regex that fails to compile is skipped
+# silently by Authentik, which leaves that path behind the login.
+version: 1
+metadata:
+  name: app-{{ROUTE_NAME}}
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+entries:
+  - model: authentik_providers_proxy.proxyprovider
+    id: provider-{{ROUTE_NAME}}
+    identifiers:
+      name: "{{ROUTE_NAME}}"
+    attrs:
+      mode: forward_single
+      external_host: "https://{{ROUTE_HOST}}"
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      skip_path_regex: |
+        {{API_SKIP_REGEX}}
+  - model: authentik_core.application
+    id: app-{{ROUTE_NAME}}
+    identifiers:
+      slug: "{{ROUTE_NAME}}"
+    attrs:
+      # Quoted: a title like "yes" or "123" must stay text.
+      name: "{{ROUTE_TITLE}}"
+{{ICON_LINE}}
+{{SECTION_LINE}}
+      provider: !KeyOf provider-{{ROUTE_NAME}}
+{{ACCESS_ENTRIES}}

@@ -1,0 +1,66 @@
+variant: fcos
+version: 1.7.0
+
+# Service {{SVC_NAME}} on {{VM_NAME}}: its own user, data folders and rootless
+# Quadlets (one per container, plus a private network). A normal user, never
+# a system user, so it gets /etc/subuid ranges. If it touches NFS, SVC_UID and
+# SVC_GID match its file server user and group.
+
+passwd:
+  groups:
+    - name: {{SVC_NAME}}
+      gid: {{SVC_GID}}
+  users:
+    - name: {{SVC_NAME}}
+      uid: {{SVC_UID}}
+      primary_group: {{SVC_NAME}}
+      groups: [ {{SVC_EXTRA_GROUPS}} ]
+      shell: /sbin/nologin
+
+storage:
+  directories:
+    - path: /var/lib/appdata/{{SVC_NAME}}
+      mode: 0750
+      user:
+        id: {{SVC_UID}}
+      group:
+        id: {{SVC_GID}}
+{{SVC_APPDATA_DIRS}}
+    - path: /etc/containers/systemd/users/{{SVC_UID}}
+      mode: 0755
+  files:
+    # Lingering starts this user's systemd (and its containers) at boot.
+    # No overwrite: Ignition allows it only with contents; an existing empty
+    # linger file counts as unchanged when pushed again.
+    - path: /var/lib/systemd/linger/{{SVC_NAME}}
+      mode: 0644
+{{SVC_QUADLET_FILES}}
+
+systemd:
+  units:
+    # Pins this user's subordinate ID ranges to ones computed from its UID and
+    # GID (ids.md has them), replacing whatever useradd handed out. Without it
+    # the ranges follow creation order, and removing one app then rebuilding
+    # would shift another app's container users onto different disk owners.
+    # Runs before the user's systemd (and so before any of its containers);
+    # RequiredBy: if it fails, the user's systemd and containers don't start
+    # on the wrong ranges. flock: every app's unit runs at the same boot, and
+    # usermod refuses to run while another holds /etc/subuid; the wait and the
+    # start are bounded, so a hang fails visibly instead of stalling the boot.
+    # Restarting this unit also restarts the user's systemd and its containers.
+    # The ranges are a lasting promise: tools/gen_service.py subid_range.
+    - name: subids-{{SVC_NAME}}.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Pin subordinate ID ranges of {{SVC_NAME}}
+        Before=user@{{SVC_UID}}.service
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        TimeoutStartSec=2min
+        ExecStart=/usr/bin/flock -w 60 /run/subids.lock /usr/sbin/usermod --del-subuids 1-4294967294 --del-subgids 1-4294967294 --add-subuids {{SVC_SUBUIDS}} --add-subgids {{SVC_SUBGIDS}} {{SVC_NAME}}
+
+        [Install]
+        RequiredBy=user@{{SVC_UID}}.service

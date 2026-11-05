@@ -1,0 +1,45 @@
+variant: fcos
+version: 1.7.0
+
+# Second copy of {{SVC_NAME}}'s local (data-disk) files on the NAS, as a
+# tarball. The db/ folder is excluded; databases use their own backup.
+# `podman unshare` enters the user namespace, so files owned by subordinate
+# IDs (written by containers that start as root) are readable.
+# Keeps the newest {{BACKUP_KEEP}}. Skips when the NAS isn't mounted.
+
+storage:
+  files:
+    - path: /etc/systemd/user/{{SVC_NAME}}-backup-files.service
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          [Unit]
+          Description=Copy {{SVC_NAME}} data-disk files to the NAS
+          ConditionUser={{SVC_NAME}}
+
+          [Service]
+          Type=oneshot
+          ExecCondition=/usr/local/bin/require-mounts /var/mnt/backups /var/lib/appdata
+          ExecStartPre=/usr/bin/mkdir -p /var/mnt/backups/{{VM_NAME}}/{{SVC_NAME}}
+          ExecStart=/bin/sh -c 'f=/var/mnt/backups/{{VM_NAME}}/{{SVC_NAME}}/files-$$(date -u +%%Y%%m%%dT%%H%%M%%SZ).tar.gz; /usr/bin/podman unshare tar -C /var/lib/appdata/{{SVC_NAME}} --exclude=./db -czf - . > "$$f.tmp" && mv "$$f.tmp" "$$f"'
+          ExecStartPost=/bin/sh -c 'ls -1t /var/mnt/backups/{{VM_NAME}}/{{SVC_NAME}}/files-*.tar.gz | tail -n +$$(({{BACKUP_KEEP}} + 1)) | xargs -r rm -f'
+    - path: /etc/systemd/user/{{SVC_NAME}}-backup-files.timer
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          [Unit]
+          Description=Schedule for {{SVC_NAME}}-backup-files
+          ConditionUser={{SVC_NAME}}
+
+          [Timer]
+          OnCalendar={{BACKUP_ONCALENDAR}}
+          Persistent=true
+
+          [Install]
+          WantedBy=timers.target
+  links:
+    - path: /etc/systemd/user/timers.target.wants/{{SVC_NAME}}-backup-files.timer
+      target: /etc/systemd/user/{{SVC_NAME}}-backup-files.timer
+      hard: false

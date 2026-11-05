@@ -1,0 +1,21 @@
+# Binds every proxy provider to Authentik's embedded outpost. Written by
+# tools/login_frontend.py from all services behind the login page; the
+# providers list is replaced as a whole, so it is regenerated whenever a
+# service is added or removed.
+# Authentik applies blueprint files in no fixed order, so each app's blueprint
+# is applied first (authentik_blueprints.metaapplyblueprint), which makes sure
+# its provider exists before !Find looks it up.
+version: 1
+metadata:
+  name: outpost-providers
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+entries:
+{{OUTPOST_APPLY_ENTRIES}}
+  - model: authentik_outposts.outpost
+    identifiers:
+      managed: goauthentik.io/outposts/embedded
+    state: present
+    attrs:
+      providers:
+{{OUTPOST_PROVIDER_LIST}}

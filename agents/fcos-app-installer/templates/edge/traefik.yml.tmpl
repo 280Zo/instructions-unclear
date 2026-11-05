@@ -1,0 +1,47 @@
+# Traefik static config (edge VM). Routes come only from files in /dynamic
+# (no container socket). It is a separate mount, not inside the read-only
+# /etc/traefik mount. One wildcard certificate,
+# *.{{DOMAIN}}, via DuckDNS DNS-01: DuckDNS holds one TXT record at a time,
+# so never add extra names (sans) here.
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: ":443"
+    http:
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: "*.{{DOMAIN}}"
+
+providers:
+  file:
+    directory: /dynamic
+    watch: true
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: "{{ACME_EMAIL}}"
+      storage: /acme/acme.json
+      dnsChallenge:
+        provider: duckdns
+        resolvers:
+          - "1.1.1.1:53"
+          - "9.9.9.9:53"
+        propagation:
+          delayBeforeChecks: 60s
+
+api:
+  dashboard: false
+
+log:
+  level: INFO
+
+accessLog: {}

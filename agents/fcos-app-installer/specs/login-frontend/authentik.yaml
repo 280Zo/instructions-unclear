@@ -1,0 +1,73 @@
+# Login front end, part 2: Authentik (server, worker, PostgreSQL) on the login
+# front end VM. A normal service spec (schemas/service.schema.md). Values
+# written as "<site: a.b>" are filled from the site file by
+# tools/login_frontend.py; a missing one is an error that names it. No real
+# values here.
+#
+# Follows authentik's official compose file (2026.8.5,
+# lifecycle/container/compose.yml): server and worker share /data and
+# /templates and get 512 MB of shared memory; the worker also mounts /certs.
+# No Redis. Not taken over: the Docker socket mount (outposts are not managed
+# from here; the embedded outpost serves Traefik) and port 9443 (Traefik ends
+# TLS). The server is published only on 127.0.0.1:9000, for Traefik.
+# Blueprints written by login_frontend.py are mounted read-only into the
+# worker's blueprint folder; authentik applies them when they change.
+# The official compose uses postgres:16; the site file picks the image.
+name: authentik
+vm: "<site: edge.vm>"
+uid: "<site: edge.authentik.uid>"
+gid: "<site: edge.authentik.gid>"
+title: Authentik
+description: Authentik login (login front end)
+login: app-only
+login_reason: It is the login page itself
+bind: loopback
+port: 9000
+containers:
+  - name: postgres
+    image: "<site: edge.authentik.postgres_image>"
+    user_mode: map-user
+    env:
+      POSTGRES_USER: "<site: edge.authentik.postgres_user>"
+      POSTGRES_DB: "<site: edge.authentik.postgres_db>"
+    secrets: [{env: POSTGRES_PASSWORD, name: authentik_pg_password}]
+    volumes:
+      - {path: /var/lib/postgresql/data, class: local-db, engine: postgres, expected_gib: 2}
+  - name: server
+    image: "<site: edge.authentik.image>"
+    user_mode: map-user
+    command: [server]
+    publish: 9000
+    shm_size_mib: 512
+    depends_on: [postgres]
+    env:
+      AUTHENTIK_POSTGRESQL__HOST: authentik-postgres
+      AUTHENTIK_POSTGRESQL__USER: "<site: edge.authentik.postgres_user>"
+      AUTHENTIK_POSTGRESQL__NAME: "<site: edge.authentik.postgres_db>"
+    secrets:
+      - {env: AUTHENTIK_POSTGRESQL__PASSWORD, name: authentik_pg_password}
+      - {env: AUTHENTIK_SECRET_KEY, name: authentik_secret_key}
+    volumes:
+      - {path: /data, class: local, name: data, expected_gib: 1}
+      - {path: /templates, class: local, name: custom-templates, expected_gib: 0.1}
+  - name: worker
+    image: "<site: edge.authentik.image>"
+    user_mode: map-user
+    command: [worker]
+    shm_size_mib: 512
+    depends_on: [postgres]
+    env:
+      AUTHENTIK_POSTGRESQL__HOST: authentik-postgres
+      AUTHENTIK_POSTGRESQL__USER: "<site: edge.authentik.postgres_user>"
+      AUTHENTIK_POSTGRESQL__NAME: "<site: edge.authentik.postgres_db>"
+    secrets:
+      - {env: AUTHENTIK_POSTGRESQL__PASSWORD, name: authentik_pg_password}
+      - {env: AUTHENTIK_SECRET_KEY, name: authentik_secret_key}
+    volumes:
+      - {path: /data, class: local, name: data, expected_gib: 1}
+      - {path: /templates, class: local, name: custom-templates, expected_gib: 0.1}
+      - {path: /certs, class: local, name: certs, expected_gib: 0.1}
+      - {path: /blueprints/custom, class: local, name: blueprints, read_only: true, expected_gib: 0.1}
+secrets:
+  - {name: authentik_pg_password, durable: true, source: prompt}
+  - {name: authentik_secret_key, durable: true, source: prompt}

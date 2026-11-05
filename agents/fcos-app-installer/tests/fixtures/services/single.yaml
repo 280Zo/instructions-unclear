@@ -1,0 +1,29 @@
+# Test fixture: one map-user container with a SQLite database, plain local
+# files and an NFS folder. Example values only.
+name: opencode
+vm: ai
+uid: 3101
+extra_groups: [ai-projects]
+title: OpenCode
+description: OpenCode server (example)
+login: authentik
+hostname: opencode
+api_paths: ["^/api/.*$"]
+port: 4096
+bind: vm_ip
+containers:
+  - name: app
+    image: ghcr.io/example/opencode:1
+    user_mode: map-user
+    publish: 4096
+    env:
+      TZ: UTC
+      LOG_FORMAT: "%d $x"
+    secrets: [{env: MODEL_API, name: opencode_model_api}]
+    volumes:
+      - {path: /data/db, class: local-db, engine: sqlite, file: opencode.db, expected_gib: 1}
+      - {path: /data/config, class: local, expected_gib: 1}
+      - {path: /projects, class: nfs, host: /var/mnt/projects/ai}
+secrets:
+  - {name: opencode_model_api, durable: false, source: prompt}
+backups: {schedule: daily, keep: 14}

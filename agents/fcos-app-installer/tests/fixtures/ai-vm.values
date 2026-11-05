@@ -1,0 +1,97 @@
+# Test fixture: AI VM. Example values only, never real ones.
+# Secret-named keys must stay empty; secrets live in Podman secrets.
+
+# --- base ---
+ADMIN_USER=admin
+VM_NAME=ai-vm
+MERGE_ENTRIES=      - local: igns/base-config.ign\n      - local: igns/firewall.ign\n      - local: igns/nfs-share.ign
+ADMIN_SSH_PUBKEY=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEXAMPLEEXAMPLEEXAMPLEEXAMPLEEXAMPLEEXAMPLE owner@example.com
+ADMIN_PASSWORD_HASH=$y$j9T$EXAMPLEONLY$NOTAREALHASHNOTAREALHASHNOTAREAL00
+TIMEZONE=UTC
+ZINCATI_DAYS="Sun"
+ZINCATI_START=03:00
+ZINCATI_MINUTES=60
+CONTAINER_UPDATE_ONCALENDAR=Sun *-*-* 03:30:00
+
+# --- nfs share ---
+NFS_MOUNT_NAME=projects
+NFS_SERVER=192.0.2.1
+NFS_EXPORT=/mnt/pool/projects
+
+# --- shared group ---
+SHARED_GROUP_NAME=ai-projects
+SHARED_GROUP_GID=3100
+
+# --- service (example coding tool) ---
+SVC_NAME=opencode
+SVC_UID=3101
+SVC_GID=3101
+SVC_SUBUIDS=737804288-737869823
+SVC_SUBGIDS=737804288-737869823
+SVC_EXTRA_GROUPS=ai-projects
+SVC_DESCRIPTION=OpenCode server (example)
+SVC_IMAGE=ghcr.io/example/opencode:1
+SVC_BIND_IP=192.0.2.20
+SVC_PORT=4096
+SVC_CONTAINER_PORT=4096
+SVC_VOLUMES=Volume=/var/lib/appdata/opencode/db:/data/db:z\nVolume=/var/mnt/projects/ai:/projects
+SVC_SECRETS=Secret=opencode_model_api,type=env,target=MODEL_API
+SVC_ENVIRONMENT=Environment="TZ=UTC"
+SVC_MOUNT_ROOTS=/var/lib/appdata /var/mnt/projects
+SVC_APPDATA_DIRS=    - path: /var/lib/appdata/opencode/db\n      mode: 0750\n      user:\n        id: 3101\n      group:\n        id: 3101
+SVC_QUADLET_FILES=    - path: /etc/containers/systemd/users/3101/opencode-app.container\n      mode: 0644\n      contents:\n        local: service/container\n    - path: /etc/containers/systemd/users/3101/opencode.network\n      mode: 0644\n      contents:\n        local: service/network
+SVC_DB_FILE=opencode.db
+SVC_DB_DIR=/var/lib/appdata/opencode/db
+
+# --- container of the service (one Quadlet per container) ---
+CTR_NAME=app
+CTR_DEPENDS=
+CTR_SECURITY=UserNS=keep-id
+CTR_NETWORK=Network=opencode.network
+CTR_PUBLISH=PublishPort=192.0.2.20:4096:4096
+CTR_SHM=
+CTR_EXEC=
+
+# --- backups ---
+BACKUP_SQLITE_IMAGE=docker.io/library/python:3-alpine
+BACKUP_KEEP=14
+BACKUP_ONCALENDAR=*-*-* 02:15:00
+BACKUP_UNIT=opencode-backup-app
+BACKUP_SECURITY=UserNS=keep-id
+DUMP_COMMAND=mydump --all
+PG_CONTAINER=opencode-postgres
+PG_USER=opencode
+PG_DB=opencode
+
+# --- edge keys (not used on this VM; the validator renders every template) ---
+DOMAIN=example.duckdns.org
+ACME_EMAIL=owner@example.com
+TRAEFIK_UID=3202
+TRAEFIK_GID=3202
+TRAEFIK_IMAGE=docker.io/library/traefik:v3
+AUTHENTIK_HOST=auth.example.duckdns.org
+AUTHENTIK_UID=3201
+AUTHENTIK_GID=3201
+AUTHENTIK_IMAGE=ghcr.io/goauthentik/server:2026.8
+PG_IMAGE=docker.io/library/postgres:17-alpine
+OUTPOST_APPLY_ENTRIES=  - model: authentik_blueprints.metaapplyblueprint\n    attrs:\n      identifiers:\n        name: "app-opencode"\n      required: true
+OUTPOST_PROVIDER_LIST=        - !Find [authentik_providers_proxy.proxyprovider, [name, "opencode"]]
+ROUTE_NAME=opencode
+ROUTE_TITLE=OpenCode
+ROUTE_HOST=opencode.example.duckdns.org
+ROUTE_BACKEND=http://192.0.2.20:4096
+API_SKIP_REGEX=^/api/.*$
+REDIRECT_ROUTERS=    # redirects: none
+REDIRECT_MIDDLEWARES=  # middlewares: none
+SECTION_LINE=      # section: none
+ICON_LINE=      # icon: none
+ACCESS_ENTRIES=  # groups: none listed, so every Authentik user may open it
+ROUTE_FILE=edge/route.yml
+BLUEPRINT_FILE=edge/authentik-app.blueprint.yaml
+TRAEFIK_STATIC_FILE=edge/traefik.yml
+OUTPOST_BLUEPRINT_FILE=edge/outpost-providers.blueprint.yaml
+
+# --- firewall ---
+ADMIN_LAN_CIDR=192.0.2.0/24, 198.51.100.0/24
+LAN_CIDR=192.0.2.0/24
+EDGE_IP=192.0.2.10

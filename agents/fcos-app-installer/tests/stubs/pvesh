@@ -1,0 +1,175 @@
+#!/usr/bin/env python3
+"""Fake pvesh for tests/test_host_proxmox.py; see _stubstate.py for the state.
+
+`pvesh get <api_path>` takes the API parameters of that path plus the
+FORMAT_OPTIONS and --noproxy (https://pve.proxmox.com/pve-docs/pvesh.1.html);
+the per-path parameters and result fields come from the API viewer
+(https://pve.proxmox.com/pve-docs/api-viewer/). Anything else fails the way the
+real tool does ("Unknown option: <name>"). Like the real tool, the default
+output format is a text table; only --output-format json[-pretty] is JSON.
+"""
+
+import json
+import os
+import re
+import sys
+
+sys.dont_write_bytecode = True
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+import _stubstate as st  # noqa: E402
+
+GET_USAGE = "pvesh get <api_path> [OPTIONS] [FORMAT_OPTIONS]"
+COMMON = set(st.FORMAT_OPTIONS) | {"noproxy"}
+OUTPUT_FORMATS = ("text", "json", "json-pretty", "yaml")
+NETWORK_TYPES = ("bridge", "bond", "eth", "alias", "vlan", "fabric", "OVSBridge", "OVSBond", "OVSPort",
+                 "OVSIntPort", "vnet", "any_bridge", "any_local_bridge", "include_sdn")
+
+
+def split_token(token_id):
+    user, _, name = token_id.partition("!")
+    return user, name
+
+
+def node_storage(state, match, opts):
+    wanted = opts.get("--storage")
+    content = state.get("storage_content", {})
+    info = state.get("storage_info", {})
+    return [dict({"storage": name, "type": "dir", "active": 1, "enabled": 1,
+                  "content": content.get(name, "images,rootdir")}, **info.get(name, {}))
+            for name in state["storages"] if wanted in (None, name)]
+
+
+def node_network(state, match, opts):
+    kind = opts.get("--type")
+    if kind is not None and kind not in NETWORK_TYPES:
+        st.fail(f"400 Parameter verification failed.\ntype: value '{kind}' does not have a value in the enumeration")
+    rows = state.get("interfaces") or [{"iface": name, "type": "bridge", "active": 1} for name in state["bridges"]]
+    return rows if kind in (None, "bridge", "any_bridge", "any_local_bridge", "include_sdn") else []
+
+
+# Read-only paths the discovery script uses (fields from the API viewer schema).
+def version(state, match, opts):
+    return state.get("version", {"version": "9.2.21", "release": "9.2"})
+
+
+def node_status(state, match, opts):
+    return state.get("node_status", {})
+
+
+def storage_config(state, match, opts):
+    name = match.group(1)
+    if name not in state.get("storage_config", {}):
+        st.fail(f"storage '{name}' does not exist")
+    return state["storage_config"][name]
+
+
+def guests(kind):
+    def handler(state, match, opts):
+        return [{k: v for k, v in g.items() if k != "config"} for g in state.get("guests", {}).get(kind, [])]
+    return handler
+
+
+def guest_config(kind):
+    def handler(state, match, opts):
+        vmid = int(match.group(2))
+        for g in state.get("guests", {}).get(kind, []):
+            if g["vmid"] == vmid:
+                return g.get("config", {})
+        st.fail(f"Configuration file 'nodes/{match.group(1)}/{kind}/{vmid}.conf' does not exist")
+    return handler
+
+
+def pools(state, match, opts):
+    names = [opts["--poolid"]] if "--poolid" in opts else sorted(state["pools"])
+    rows = []
+    for name in names:
+        if name not in state["pools"]:
+            st.fail(f"pool '{name}' does not exist")
+        row = {"poolid": name}
+        if "--poolid" in opts:
+            row["members"] = pool_members(state, name)
+        rows.append(row)
+    return rows
+
+
+def pool_members(state, name):
+    return [{"type": "qemu", "vmid": vmid, "id": f"qemu/{vmid}", "node": "testnode"}
+            for vmid in state["pools"][name]]
+
+
+def pool(state, match, opts):
+    name = match.group(1)
+    if name not in state["pools"]:
+        st.fail(f"pool '{name}' does not exist")
+    return {"members": pool_members(state, name)}
+
+
+def roles(state, match, opts):
+    every = dict(st.BUILTIN_ROLES, **state["roles"])
+    return [{"roleid": name, "privs": privs, "special": int(name in st.BUILTIN_ROLES)}
+            for name, privs in sorted(every.items())]
+
+
+def users(state, match, opts):
+    return [{"userid": user, "enable": 1} for user in state["users"]]
+
+
+def user_tokens(state, match, opts):
+    user = match.group(1)
+    if user not in state["users"]:
+        st.fail(f"no such user ('{user}')")
+    return [{"tokenid": split_token(t)[1], "privsep": 0 if t in state["tokens_no_privsep"] else 1}
+            for t in state["tokens"] if split_token(t)[0] == user]
+
+
+def acl(state, match, opts):
+    return [{"path": path, "type": kind, "ugid": ident, "roleid": role, "propagate": 1}
+            for path, kind, ident, role in state["acls"]]
+
+
+# path regex -> (allowed API parameters, handler)
+GET_PATHS = (
+    (r"/nodes/([^/]+)/storage", {"content", "enabled", "format", "storage", "target"}, node_storage),
+    (r"/nodes/([^/]+)/network", {"type"}, node_network),
+    (r"/version", set(), version),
+    (r"/nodes/([^/]+)/status", set(), node_status),
+    (r"/storage/([^/]+)", set(), storage_config),
+    (r"/nodes/([^/]+)/qemu", {"full"}, guests("qemu")),
+    (r"/nodes/([^/]+)/lxc", set(), guests("lxc")),
+    (r"/nodes/([^/]+)/qemu/(\d+)/config", {"current", "snapshot"}, guest_config("qemu")),
+    (r"/nodes/([^/]+)/lxc/(\d+)/config", {"current", "snapshot"}, guest_config("lxc")),
+    (r"/pools", {"poolid", "type"}, pools),
+    (r"/pools/([^/]+)", {"type"}, pool),
+    (r"/access/roles", set(), roles),
+    (r"/access/users", {"enabled", "full"}, users),
+    (r"/access/users/([^/]+)/token", set(), user_tokens),
+    (r"/access/acl", set(), acl),
+)
+
+
+def main(argv):
+    st.log_call(["pvesh"] + argv)
+    if len(argv) < 2 or argv[0] != "get":
+        st.fail(f"pvesh stub: unsupported command {argv[:2]}", 2)
+    for pattern, params, handler in GET_PATHS:
+        match = re.fullmatch(pattern, argv[1])
+        if match:
+            break
+    else:
+        st.fail(f"pvesh stub: unsupported api path {argv[1]}", 2)
+    _, opts = st.parse(argv[2:], params | COMMON, GET_USAGE, 0)
+    if argv[1] in st.load().get("fail_paths", []):  # test hook: this call fails like an API error
+        st.fail(f"500 stub failure for {argv[1]}")
+    fmt = opts.get("--output-format", "text")
+    if fmt not in OUTPUT_FORMATS:
+        st.fail(f"400 Parameter verification failed.\noutput-format: value '{fmt}' does not have a value in the enumeration")
+    result = handler(st.load(), match, opts)
+    if fmt in ("json", "json-pretty"):
+        print(json.dumps(result))
+    else:
+        print("┌─────────┐\n│ (stub text table, not JSON) │\n└─────────┘")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

@@ -1,0 +1,374 @@
+import re
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+AGENT = ROOT / ".opencode" / "agents" / "fcos-app-installer.md"
+COMMAND = ROOT / ".opencode" / "commands" / "add-service.md"
+
+
+def frontmatter(text: str) -> str:
+    match = re.match(r"^---\n(.*?)\n---\n", text, re.S)
+    if not match:
+        raise AssertionError("missing frontmatter")
+    return match.group(1)
+
+
+def rules(text: str) -> list[tuple[str, str, str]]:
+    """(action, resource, effect) in order, from the YAML permission list."""
+    found = re.findall(
+        r'- action: (\S+)\n\s+resource: "([^"]*)"\n\s+effect: (\S+)', frontmatter(text))
+    return [(a.strip('"'), r, e) for a, r, e in found]  # YAML drops the quotes around "pmb_*"
+
+
+def effect(text: str, action: str, resource: str) -> str:
+    """Last matching rule wins, as in OpenCode; whole-value * and ? wildcards."""
+    def glob(pattern: str) -> str:
+        return re.escape(pattern).replace(r"\*", ".*").replace(r"\?", ".")
+
+    result = "ask"
+    for a, r, e in rules(text):
+        a_re = "^" + glob(a) + "$"
+        # A shell pattern ending in " *" also matches the bare command.
+        r_re = "^" + (glob(r[:-2]) + "(?: .*)?" if r.endswith(" *") else glob(r)) + "$"
+        if re.match(a_re, action) and re.match(r_re, resource, re.S):
+            result = e
+    return result
+
+
+def body(text: str) -> str:
+    """The agent's instructions as the model gets them: the prompt plus the rule files
+    opencode.json loads for this folder (tests/test_rules.py checks that it loads them)."""
+    rules_text = "\n".join(p.read_text() for p in sorted((ROOT / "rules").glob("*.md")))
+    return text.split("\n---\n", 1)[1] + "\n" + " ".join(rules_text.split())
+
+
+class AgentTests(unittest.TestCase):
+    def setUp(self):
+        self.text = AGENT.read_text()
+
+    def test_is_primary_v2_agent(self):
+        fm = frontmatter(self.text)
+        self.assertIn("mode: primary", fm)
+        self.assertIn("description:", fm)
+        self.assertIn("permissions:", fm)
+        for legacy in ("permission:", "tools:", "maxSteps:", "temperature:"):
+            self.assertNotRegex(fm, rf"(?m)^{legacy}")
+        self.assertNotIn("config.yaml", self.text)
+
+    def test_hands_off_for_its_own_steps(self):
+        ws = "/home/owner/fcos-workspace"
+        for command in (f"python3 tools/pve.py check --host host-a --workspace {ws}",
+                        f"python3 tools/pve.py create {ws}/vms/apps/vm.yaml --host host-a --dry-run",
+                        f"python3 tools/gen_service.py {ws}/services/monica/service.yaml {ws}/site.yaml {ws}/services/monica",
+                        f"python3 tools/login_frontend.py {ws}/site.yaml {ws}/login-frontend",
+                        "python3 tools/adapters.py draft --role file_server --provider synology --from x.json",
+                        "python3 tools/workspace.py init /home/owner/fcos-workspace",
+                        f"bash tools/build-vm.sh {ws}/vms/edge",
+                        "python3 tools/publish_check.py",
+                        "python3 -m unittest discover tests",
+                        "python3 tools/http_check.py https://monica.example.duckdns.org/",
+                        f"python3 tools/vmssh.py run edge --workspace {ws} -- sudo systemctl --user -M x@ start x.service",
+                        "git status --short"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "allow")
+        for path in (f"{ws}/site.yaml", f"{ws}/vms/apps/vm.yaml", f"{ws}/services/monica/service.yaml",
+                     f"{ws}/adapters-draft/adapter-synology/adapter.yaml", "/tmp/opencode/x.sh"):
+            with self.subTest(path=path):
+                self.assertEqual(effect(self.text, "edit", path), "allow")
+        self.assertEqual(effect(self.text, "question", "*"), "allow")
+
+    def test_never_touches_owner_systems(self):
+        for command in ("qm set 201 --delete scsi0", "pvesm add dir coreos", "pveum role list",
+                        "pvesh get /nodes", "ssh root@192.0.2.5 qm list", "scp vms/x.ign root@192.0.2.5:/var/coreos/",
+                        "git push origin main", "sudo rm -rf /",
+                        "curl -s https://192.0.2.21:8006/api2/json/nodes",
+                        "curl -s -H 'Authorization: PVEAPIToken=x' https://pve/",
+                        "cat /home/owner/fcos-workspace/secrets/proxmox-host-a.token",
+                        "cat secrets/x"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "deny")
+
+    def test_every_vm_setting_is_decided_and_shown(self):
+        text = " ".join(body(self.text).split())
+        for needle in ("Every VM setting matters", "settings table", "never leave a setting to a Proxmox default"):
+            self.assertIn(needle, text)
+
+    def test_question_rules_from_the_trial_run(self):
+        # Owner, 2026-10-31: the only text box is the tool's own "Other" entry; sizes show
+        # what's free with every VM running, the official figures, and the lowest safe amount.
+        text = " ".join(body(self.text).split())  # wording may wrap across lines
+        self.assertIn('pick "Other" and type', text)
+        self.assertIn("never an option that means \"type it\"", text)
+        for needle in ("every machine and container on the server running", "official docs recommend",
+                       "lowest amount"):
+            self.assertIn(needle, text)
+        questions = " ".join((ROOT / "docs" / "guide" / "questions.md").read_text().split())
+        for needle in ('"Other"', "every machine and container on the server running",
+                       "official docs recommend", "lowest amount"):
+            self.assertIn(needle, questions)
+
+    def test_workspace_folders_named_fcos_are_open_but_secrets_never(self):
+        # Owner decision 2026-10-31: any folder whose name contains "fcos-".
+        for ws in ("/home/owner/fcos-workspace", "/home/owner/AI/fcos-trial"):
+            with self.subTest(ws=ws):
+                self.assertEqual(effect(self.text, "external_directory", f"{ws}/site.yaml"), "allow")
+                self.assertEqual(effect(self.text, "external_directory", f"{ws}/hosts/a/discovery.txt"), "allow")
+                self.assertEqual(effect(self.text, "external_directory", f"{ws}/secrets"), "deny")
+                self.assertEqual(effect(self.text, "external_directory", f"{ws}/secrets/x.token"), "deny")
+        for other in ("/home/owner/Documents/taxes.pdf", "/etc/passwd",
+                      # "*" crosses "/": hidden folders and /tmp go back to asking.
+                      "/home/owner/.ssh/fcos-proxmox", "/home/owner/.config/fcos-x/a",
+                      "/home/owner/.cache/fcos-y", "/tmp/x-fcos-y/site.yaml", "/tmp/fcos-a/vms/x"):
+            with self.subTest(other=other):
+                self.assertEqual(effect(self.text, "external_directory", other), "ask")
+        self.assertEqual(effect(self.text, "external_directory", "/tmp/opencode/fcos-x.json"), "allow")
+
+    def test_known_bypasses_are_closed(self):
+        ws = "/home/owner/fcos-workspace"
+        for command in (f"rg -uu . {ws}/secrets", f"rg token {ws}/secrets/", f"sha256sum {ws}/secrets/x",
+                        f"rg -uu . {ws}", f"rg --no-ignore token {ws}", f"rg --unrestricted . {ws}",
+                        "python3 tools/../../../../tmp/opencode/x.py", "bash tools/../evil.sh",
+                        "rm -f /tmp/opencode/../../home/owner/agent/README.md",
+                        "ssh -l root 192.0.2.5 qm list", "ssh -lroot 192.0.2.5", "ssh -o User=root 192.0.2.5",
+                        "git log --output=/tmp/x", "git diff --output=x"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "deny")
+        for path in (f"{ws}/secrets", f"{ws}/secrets/proxmox-host-a.token"):
+            with self.subTest(path=path):
+                self.assertEqual(effect(self.text, "external_directory", path), "deny")
+        for command in ("rm -f /tmp/opencode/x README.md .git/index",
+                        "python3 -m unittest discover -s /tmp/opencode",
+                        "python3 -m unittest /tmp/opencode/test_x.py",
+                        "python3 -m unittest tests.test_pve /tmp/opencode/x.py",
+                        "ssh -l 'root' 192.0.2.5", "ssh -l \"root\" 192.0.2.5", "ssh -l'root' 192.0.2.5",
+                        "ssh -o 'User root' 192.0.2.5",
+                        "ssh-keygen -R 192.0.2.20 -f /home/owner/agent/README.md"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "deny")
+        # Searching and fetching need the owner's OK: rg could walk into secrets/,
+        # and curl has too many ways to send or write data.
+        for command in (f"rg . {ws}", f"rg token {ws}", "curl -s -o /dev/null -d@x https://x",
+                        "curl -sI https://auth.example.duckdns.org/", "curl -s https://x"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "ask")
+        # The verification commands the guide uses still run hands-off.
+        for command in ("python3 tools/http_check.py --timeout 3 http://192.0.2.30:8110/",
+                        "python3 tools/http_check.py https://monica.example.duckdns.org/",
+                        "python3 tools/workspace.py where",
+                        "python3 -m unittest discover tests",
+                        "python3 -m unittest tests.test_pve",
+                        "ssh-keygen -R 192.0.2.20",
+                        "python3 tools/adapters.py render --role router_firewall --provider opnsense --step reserve_ip --values /tmp/opencode/v.json"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "allow")
+        self.assertEqual(effect(self.text, "edit", "tests/fixtures/services/monica.yaml"), "ask")
+
+    def test_prompt_says_how_to_run_the_guides_desktop_commands(self):
+        text = body(self.text)
+        self.assertIn("bash equivalent", text)
+        self.assertIn("tools/http_check.py", text)
+
+    def test_prompt_names_real_commands(self):
+        text = body(self.text)
+        self.assertIn("python3 tools/workspace.py where", text)
+        self.assertIn("python3 tools/workspace.py previous", text)
+        self.assertIn("python3 tools/adapters.py show", text)
+        self.assertIn("python3 tools/adapters.py render", text)
+        self.assertIn("python3 tools/pve.py list", text)
+        self.assertNotRegex(text, r"`python3 tools/workspace\.py`")
+
+    def test_search_tool_asks(self):
+        # The built-in search could reach secrets/ through its file filter; owner decision 2026-10-30.
+        for pattern in ("token", "*", "PVEAPIToken"):
+            with self.subTest(pattern=pattern):
+                self.assertEqual(effect(self.text, "grep", pattern), "ask")
+
+    def test_denies_are_not_too_broad(self):
+        for command in ("ssh-keygen -R login-frontend.lan", "ssh-keygen -R 192.0.2.20"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "allow")
+        self.assertEqual(effect(self.text, "shell", "rg -n podman-auto-update templates"), "ask")
+        for command in ("rg -u x .", "rg -uu x .", "rg --unrestricted x .", "ssh-keygen -R h -f /x",
+                        "ssh-keygen -R h x"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "deny")
+
+    def test_old_workspaces_get_the_ignore_file(self):
+        self.assertIn("python3 tools/workspace.py init <path>", body(self.text).split("2. **Earlier")[0])
+        self.assertIn("every run", body(self.text).split("2. **Earlier")[0])
+
+    def test_every_rule_is_parsed(self):
+        # A rule the parser can't read would silently go untested.
+        fm = frontmatter(self.text)
+        self.assertEqual(fm.count("- action:"), len(rules(self.text)))
+
+    def test_never_reads_secrets(self):
+        for path in ("/home/owner/fcos-workspace/secrets/proxmox-host-a.token", "/x/secrets/y",
+                     "/somewhere/proxmox-host-a.token"):
+            with self.subTest(path=path):
+                self.assertEqual(effect(self.text, "read", path), "deny")
+                self.assertEqual(effect(self.text, "edit", path), "deny")
+
+    def test_owner_approves_commits_and_downloads(self):
+        for command in ("git commit -m x", "docker pull quay.io/x", "curl -fLO https://x", "curl -s -O https://x"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "ask")
+        self.assertEqual(effect(self.text, "shell", "some-unknown-tool --flag"), "ask")
+
+    def test_no_shell_writes_into_the_skills(self):
+        # Review of ff605b1: the owner runs the skills' host scripts as root.
+        for command in ("python3 tools/render.py t v > .agents/skills/adapter-proxmox/scripts/lib.sh",
+                        "python3 tools/render.py t v >.agents/skills/x/SKILL.md",
+                        "python3 tools/x.py | tee .agents/skills/x/adapter.yaml",
+                        "python3 tools/gen_service.py s site .agents/skills/x"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "deny")
+        self.assertEqual(effect(self.text, "edit", ".agents/skills/adapter-proxmox/scripts/lib.sh"), "ask")
+        self.assertEqual(effect(self.text, "edit", "/home/x/AI/Proxmox/.agents/skills/a/SKILL.md"), "ask")
+
+    # Owner, 2026-11-04: only its own skills plus an approved list, so the others' descriptions
+    # aren't sent with every request; MCP servers it doesn't need are denied (Exa stays, for research).
+    ALLOWED_SKILLS = ("adapter-proxmox", "adapter-generic", "researching-apps-for-self-hosting", "opencode",
+                      "package-management", "search", "exa-agent", "docker-compose-patterns",
+                      "docker-destructive-guardrails", "systematic-debugging", "verification-before-completion")
+
+    def test_skills_are_filtered(self):
+        for skill in self.ALLOWED_SKILLS:
+            with self.subTest(skill=skill):
+                self.assertEqual(effect(self.text, "skill", skill), "allow")
+        for skill in ("eli5", "brainstorming", "frontend-design", "axolotl", "career-intake", "humanizer"):
+            with self.subTest(skill=skill):
+                self.assertEqual(effect(self.text, "skill", skill), "deny")
+
+    def test_overrides_of_global_rules_are_short_and_cover_the_clashes(self):
+        # Global AGENTS.md always loads and can't be switched off by a folder (OpenCode V2
+        # Instructions: "combined rather than used as overrides"), so the clashes are overridden
+        # here, briefly (owner, 2026-11-04: not a lot of tokens).
+        prompt = AGENT.read_text().split("\n---\n", 1)[1]
+        section = prompt.split("## Overrides of global rules", 1)[1].split("\n## ", 1)[0]
+        lines = [l for l in section.strip().splitlines() if l.strip()]
+        self.assertLessEqual(len(lines), 6, section)
+        text = " ".join(section.split())
+        for needle in ("memory tools", "workspace", "in scope", "without asking", "adapter-drafter"):
+            self.assertIn(needle, text)
+
+    def test_how_to_work_matches_the_shared_section(self):
+        # The agent body replaces OpenCode's base prompt; the owner's other agents carry this
+        # section (instructions-unclear agents/generate.py BASE_INSTRUCTIONS, adapted from
+        # OpenCode 2.1.3's system prompt, MIT).
+        prompt = AGENT.read_text()
+        self.assertIn("## How to work", prompt)
+        for needle in ("Rules files and skills give more specific procedures; follow them.",
+                       "Run independent tool calls in parallel.",
+                       "Treat unfamiliar files or changes as potential user work"):
+            self.assertIn(needle, prompt)
+
+    def test_relative_secret_paths_are_denied_too(self):
+        # Whole-branch review, 2026-11-04: V2 reads inside the location use relative paths,
+        # which "*/secrets/*" doesn't match.
+        for action, path in (("read", "secrets/agent-ssh/edge/id_ed25519"), ("read", "secrets"),
+                             ("edit", "secrets/x.token"), ("edit", "secrets")):
+            with self.subTest(action=action, path=path):
+                self.assertEqual(effect(self.text, action, path), "deny")
+        for command in ("cat secrets/proxmox-a.token", "ls secrets", "ls -la secrets/"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "deny")
+        self.assertNotEqual(effect(self.text, "read", "services/monica/secrets.md"), "deny")
+
+    def test_overrides_cover_document_tools(self):
+        section = AGENT.read_text().split("## Overrides of global rules", 1)[1].split("\n## ", 1)[0]
+        self.assertIn("Docling", section)
+
+    def test_file_name_search_stays_out_of_secrets(self):
+        # General review, 2026-11-04: glob had no rule, so it could list secret file names.
+        # OpenCode V2 matches glob rules against the requested pattern (Permissions docs).
+        for pattern in ("**/secrets/*", "secrets/**", "/home/owner/fcos-installs/home/secrets/*", "**/*.token"):
+            with self.subTest(pattern=pattern):
+                self.assertEqual(effect(self.text, "glob", pattern), "deny")
+        self.assertNotEqual(effect(self.text, "glob", "**/*.md"), "deny")
+
+    def test_frontmatter_is_valid_yaml_with_every_rule(self):
+        # A YAML mistake would make OpenCode drop the whole permission list.
+        import yaml
+        for path in (AGENT, ROOT / ".opencode" / "agents" / "adapter-drafter.md"):
+            with self.subTest(agent=path.name):
+                text = path.read_text()
+                data = yaml.safe_load(frontmatter(text))
+                parsed = [(p["action"], p["resource"], p["effect"]) for p in data["permissions"]]
+                self.assertEqual(parsed, rules(text))
+        self.assertIn(("pmb_*", "*", "deny"), rules(self.text))
+
+    def test_unneeded_mcp_servers_are_denied(self):
+        for action in ("pmb_record_batch", "docling_convert_directory_files_into_docling_document",
+                       "presenton_generate", "freecad_create", "codebase_memory_mcp_search", "podman_run",
+                       "zap_scan", "rea_open", "reva_list", "radare2_open"):
+            with self.subTest(action=action):
+                self.assertEqual(effect(self.text, action, "*"), "deny")
+        self.assertNotEqual(effect(self.text, "exa_web_search_exa", "*"), "deny")
+        # Never a blanket *_* rule: built-in actions such as external_directory contain an underscore.
+        self.assertNotIn(("*_*", "*", "deny"), rules(self.text))
+        self.assertEqual(effect(self.text, "external_directory", "/home/owner/fcos-installs/home/site.yaml"), "allow")
+
+    def test_may_start_only_the_adapter_drafter(self):
+        self.assertEqual(effect(self.text, "subagent", "adapter-drafter"), "allow")
+        self.assertEqual(effect(self.text, "subagent", "general"), "deny")
+        self.assertIn("adapter-drafter", body(self.text))
+
+    def test_private_and_shared_files_protected(self):
+        self.assertEqual(effect(self.text, "read", "notes/Fedora CoreOS (FCOS).md"), "deny")
+        self.assertEqual(effect(self.text, "edit", "notes/x.md"), "deny")
+        self.assertEqual(effect(self.text, "edit", ".opencode/agents/fcos-app-installer.md"), "deny")
+        for path in ("templates/base/firewall.bu.tmpl", "tools/render.py", "docs/guide/03-add-a-service.md",
+                     ".agents/skills/adapter-proxmox/adapter.yaml", "specs/login-frontend/traefik.yaml"):
+            with self.subTest(path=path):
+                self.assertEqual(effect(self.text, "edit", path), "ask")
+
+    def test_prompt_states_the_rules(self):
+        text = body(self.text)
+        for phrase in ("docs/guide/README.md", "docs/guide/questions.md", "publish_check.py", "which server",
+                       "5 GB", "[Owner]", "secret", "workspace", "tools/pve.py", "tools/adapters.py",
+                       "tools/gen_service.py", "tools/login_frontend.py", "research-notes.md"):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase.lower(), text.lower())
+
+    def test_prompt_rules_from_the_plan(self):
+        text = body(self.text)
+        for phrase in ("teardown-agent-access.sh", "ends its turn", "plain language", "questions.md",
+                       "draft an adapter", "never commit after an install"):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, text)
+        # Workspace first: the workspace question comes before anything else is read or asked.
+        self.assertLess(text.index("Where should I keep"), text.index("docs/guide/README.md"))
+
+    def test_prompt_rules_from_the_owner(self):
+        text = body(self.text)
+        for phrase in ("discovery", "never assume", "one at a time", "official", "forum",
+                       "dry run", "fish", "bash", "checksum", "Okta-style", "break-glass",
+                       "check the history"):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase.lower(), text.lower())
+
+    def test_prompt_follows_the_design_run_order(self):
+        text = body(self.text)
+        steps = ["Where to keep the files", "Earlier installs", "Which systems", "Hypervisor access",
+                 "Where the service goes", "Login page", "Research", "Owner decisions", "Owner steps",
+                 "Build, push, verify", "Adapter draft"]
+        positions = [text.index(s) for s in steps]
+        self.assertEqual(positions, sorted(positions))
+
+
+class CommandTests(unittest.TestCase):
+    def test_command_uses_agent(self):
+        text = COMMAND.read_text()
+        fm = frontmatter(text)
+        self.assertIn("agent: fcos-app-installer", fm)
+        self.assertIn("description:", fm)
+        self.assertIn("$1", text)
+        self.assertNotIn("$2", text)  # the VM is asked, not an argument
+        self.assertNotIn("config.yaml", text)
+        self.assertNotIn("!`", text)  # no shell blocks fed with arguments
+
+
+if __name__ == "__main__":
+    unittest.main()

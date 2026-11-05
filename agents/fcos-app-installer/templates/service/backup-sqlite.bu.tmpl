@@ -1,0 +1,56 @@
+variant: fcos
+version: 1.7.0
+
+# local-db backup for the SQLite database of {{SVC_NAME}}-{{CTR_NAME}}: online
+# backup (safe while the app runs, including WAL mode) to the NAS, keeping the
+# newest {{BACKUP_KEEP}}. FCOS has no sqlite3, so it uses Python's sqlite3
+# backup API in the official python image. Skips (not fails) when the NAS
+# isn't mounted. The database folder is on the data disk, mounted with :z in
+# both the app and this container.
+
+storage:
+  files:
+    - path: /etc/containers/systemd/users/{{SVC_UID}}/{{BACKUP_UNIT}}.container
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          [Unit]
+          Description=Online backup of the {{SVC_NAME}}-{{CTR_NAME}} SQLite database to the NAS
+          ConditionUser={{SVC_NAME}}
+
+          [Container]
+          ContainerName={{BACKUP_UNIT}}
+          Image={{BACKUP_SQLITE_IMAGE}}
+          {{BACKUP_SECURITY}}
+          NoNewPrivileges=true
+          DropCapability=ALL
+          Network=none
+          Volume={{SVC_DB_DIR}}:/src:z
+          Volume=/var/mnt/backups/{{VM_NAME}}/{{SVC_NAME}}:/dest
+          Exec=python3 -c "import sqlite3,sys,os,glob,time;s,d,k,p=sys.argv[1],sys.argv[2],int(sys.argv[3]),sys.argv[4];o=os.path.join(d,p+time.strftime('%%Y%%m%%dT%%H%%M%%S')+'.sqlite');t=o+'.tmp';a=sqlite3.connect('file:'+s+'?mode=rw',uri=True);b=sqlite3.connect(t);a.backup(b);b.close();a.close();os.replace(t,o);[os.remove(f) for f in sorted(glob.glob(os.path.join(d,p+'*.sqlite')))[:-k]]" /src/{{SVC_DB_FILE}} /dest {{BACKUP_KEEP}} {{CTR_NAME}}-
+
+          [Service]
+          Type=oneshot
+          ExecCondition=/usr/local/bin/require-mounts /var/mnt/backups /var/lib/appdata
+          ExecStartPre=/usr/bin/mkdir -p /var/mnt/backups/{{VM_NAME}}/{{SVC_NAME}}
+    - path: /etc/systemd/user/{{BACKUP_UNIT}}.timer
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          [Unit]
+          Description=Schedule for {{BACKUP_UNIT}}
+          ConditionUser={{SVC_NAME}}
+
+          [Timer]
+          OnCalendar={{BACKUP_ONCALENDAR}}
+          Persistent=true
+          Unit={{BACKUP_UNIT}}.service
+
+          [Install]
+          WantedBy=timers.target
+  links:
+    - path: /etc/systemd/user/timers.target.wants/{{BACKUP_UNIT}}.timer
+      target: /etc/systemd/user/{{BACKUP_UNIT}}.timer
+      hard: false

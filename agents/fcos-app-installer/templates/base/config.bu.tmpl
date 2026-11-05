@@ -1,0 +1,9 @@
+variant: fcos
+version: 1.7.0
+
+# Top-level config for VM {{VM_NAME}}. It only merges the transpiled
+# fragments in igns/. Never edit the .ign files by hand.
+ignition:
+  config:
+    merge:
+{{MERGE_ENTRIES}}

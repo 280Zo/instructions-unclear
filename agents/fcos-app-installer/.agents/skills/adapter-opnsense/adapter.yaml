@@ -1,0 +1,49 @@
+role: router_firewall
+provider: opnsense
+name: OPNsense
+notes: >-
+  The agent never touches OPNsense. These steps are done by the owner in the
+  OPNsense web interface. Menu names change between versions; when one doesn't
+  match, follow the linked manual page for your version.
+docs:
+  - https://docs.opnsense.org/manual/dhcp.html
+  - https://docs.opnsense.org/manual/unbound.html
+  - https://docs.opnsense.org/manual/firewall.html
+discovery:
+  ask: which DHCP service hands out addresses on the VM's network (Dnsmasq is the default; KEA, or ISC which is end-of-life), and whether that network gives addresses only to reserved MACs.
+capabilities: {}
+owner_steps:
+  reserve_ip:
+    title: Reserve {{VM_IP}} for VM {{VM_NAME}} (MAC {{VM_MAC}})
+    steps:
+      - Do this after the VM is created and before its first start, so the VM gets this address on first boot. On a network that only serves reserved MACs it gets no address at all without it.
+      - In the DHCP service your OPNsense uses on that network, add a reservation for MAC {{VM_MAC}} with address {{VM_IP}}.
+      - With Dnsmasq (the default), the address should be inside the dynamic pool; it is then never handed to anyone else. With KEA (or the end-of-life ISC service), it should be outside the dynamic pool.
+      - Apply the change.
+    uses: [VM_IP, VM_NAME, VM_MAC]
+    report_back:
+      - which DHCP service, and that the reservation is applied
+  dns_wildcard:
+    title: Send every name under {{DOMAIN}} to the login front end
+    steps:
+      - In Services, Unbound DNS, Overrides, add a host override with Host * (a wildcard), Domain {{DOMAIN}}, type A, IP {{EDGE_IP}}, and apply.
+      - Check from your desktop with the command below; it should print {{EDGE_IP}}.
+      - Bug reports exist about wildcard overrides (github.com/opnsense/core issues 5828 and 8051; secondary sources). If the check doesn't print the address, add one host override per name instead (the login page's name, plus one per service).
+    blocks:
+      - machine: "desktop (fish)"
+        code: |
+          dig +short made-up-name.{{DOMAIN}}
+    uses: [DOMAIN, EDGE_IP]
+    report_back:
+      - the dig output, and whether you used the wildcard or one override per name
+  allow_flows:
+    title: Allow only the traffic VM {{VM_NAME}} needs
+    steps:
+      - Only if VM {{VM_NAME}} ({{VM_IP}}) is on a different network or VLAN from the file server or the login front end. In Firewall, Rules, on the interface the traffic enters, add pass rules for exactly these flows.
+      - VM {{VM_IP}} to file server {{NAS_IP}}, TCP 2049 (NFS).
+      - Login front end {{EDGE_IP}} to VM {{VM_IP}}, on the service ports the agent lists.
+      - Admin networks {{ADMIN_LAN_CIDR}} to VM {{VM_IP}}, TCP 22 (SSH); one rule per network, or one alias holding them.
+      - Only if VM {{VM_NAME}} is the login front end and a network below is on another VLAN; networks {{LAN_CIDR}} to VM {{VM_IP}}, TCP 80 and 443 (the login page and apps); one rule per network, or one alias.
+    uses: [VM_NAME, VM_IP, NAS_IP, EDGE_IP, ADMIN_LAN_CIDR, LAN_CIDR]
+    report_back:
+      - the rules you added, or that none were needed

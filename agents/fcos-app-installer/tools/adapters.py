@@ -1,0 +1,535 @@
+#!/usr/bin/env python3
+"""Provider adapters: the owner's steps for systems the agent never touches.
+
+Each provider is a skill, .agents/skills/adapter-<provider>/ (owner 2026-11-04): SKILL.md
+says what the product is and when to use it, adapter.yaml holds its steps, and
+scripts/ any host scripts. This tool is the one renderer for every adapter skill.
+adapter.yaml:
+
+  role, provider, name        which role it fills, and its display name
+  docs                        official documentation links
+  discovery                   what the agent can read, or must ask, about it
+  capabilities                what the agent may do through an API (bools)
+  defaults                    optional choices for the agent (e.g. ignition_method)
+  owner_steps                 <step id>: {title, steps[], blocks[], uses[], report_back[]}
+                              blocks: [{machine, code}]; machine names the machine
+                              and shell, e.g. "proxmox {{HOST}} (bash, root)"
+  scripts                     host scripts it ships (paths in its skill folder); the
+                              tool fills in each one's checksum as <FIRST WORD>_SHA256
+                              (lib.sh: LIB_SHA256), the agent's folder as AGENT_REPO
+                              and the skill's folder as SKILL_DIR; none may be passed in
+
+Every role's adapter defines that role's steps (ROLE_STEPS). An unknown
+provider gets adapter-generic's provider-neutral steps, marked
+generic: true, so the agent can offer to draft an adapter as it goes.
+Placeholders are {{KEY}}; every one a step uses is listed in its `uses`.
+{{HOST}} is always the site file's hosts key for the server (it names the
+token file and hosts/<HOST>/), never its display or node name; `render`
+refuses any other value when a workspace is set.
+
+Usage:
+  adapters.py show --role <role> [--provider <name>]
+      the adapter (or the generic fallback): capabilities, defaults, and each
+      step with the values it uses
+  adapters.py render --role <role> [--provider <name>] --step <id> --values <values.json>
+      one owner step as Markdown with every value filled in (refuses unsafe values)
+  adapters.py draft --role <role> --provider <name> --from <recorded.json> [--workspace <path>]
+      writes <workspace>/adapters-draft/adapter-<provider>/ (adapter.yaml, SKILL.md, a small test)
+"""
+
+import argparse
+import json
+import os
+import re
+import shutil
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from render import RenderError, render  # noqa: E402
+
+REPO = Path(__file__).resolve().parent.parent
+ADAPTERS = REPO / ".agents" / "skills"
+ROLE_STEPS = {
+    "virtualization": ["download_image", "copy_ignition_snippet", "rebuild_os_disk", "create_api_access"],
+    "router_firewall": ["reserve_ip", "dns_wildcard", "allow_flows"],
+    "file_server": ["nfs_export", "service_user", "backup_folder"],
+    "dns_certificates": ["api_token", "traefik_provider"],
+}
+PROVIDER = re.compile(r"[a-z][a-z0-9-]{0,40}")
+STEP_ID = re.compile(r"[a-z][a-z0-9_]{0,40}")
+KEY = re.compile(r"[A-Z][A-Z0-9_]*")
+ANY_PLACEHOLDER = re.compile(r"\{\{([^}]*)\}\}")
+# Values go into commands the owner runs as root. No value may hold spaces,
+# quotes, $, ;, |, &, <, >, backticks, glob or brace characters (* ? [ ] { }),
+# ~ or %, or start with - (an option). Checked by kind, from the key's name:
+#   *_DIR, *_REPO, *_FOLDER  an absolute local path: no :, no .. segment, not /
+#   *_OPTIONS                a comma list of key=value options
+#   *_ISO_VOLUME             <storage>:iso/<file>.iso (a config disc, never another disk)
+#   *_ADDRESS                a host name or IP address (no @ or :, so ssh can't be redirected)
+#   anything else            a name, number, address, volume id or CIDR
+#                            (no , or =, so it can't add options)
+SAFE_VALUE = re.compile(r"[A-Za-z0-9/][A-Za-z0-9._:/@+-]{0,199}")
+ISO_VOLUME_VALUE = re.compile(r"[a-z][a-z0-9_-]{0,63}:iso/[A-Za-z0-9][A-Za-z0-9._-]{0,120}\.iso")
+ADDRESS_VALUE = re.compile(r"[A-Za-z0-9][A-Za-z0-9.-]{0,252}")
+PATH_VALUE = re.compile(r"/[A-Za-z0-9._/@+-]{1,199}")
+OPTIONS_VALUE = re.compile(r"[a-z0-9_]+=[A-Za-z0-9._-]+(,[a-z0-9_]+=[A-Za-z0-9._-]+)*")
+MACHINE = re.compile(r".+ \((bash|fish)(, [^)]+)?\)")
+TOP_KEYS = {"role", "provider", "name", "docs", "discovery", "capabilities", "defaults", "owner_steps", "scripts",
+            "draft", "notes"}
+STEP_KEYS = {"title", "steps", "blocks", "uses", "report_back"}
+
+
+class AdapterError(Exception):
+    pass
+
+
+def _yaml():
+    try:
+        import yaml
+    except ImportError:
+        raise AdapterError("install PyYAML (python-yaml / python3-yaml)") from None
+    return yaml
+
+
+def _strings(value) -> bool:
+    return isinstance(value, list) and all(isinstance(v, str) and v for v in value)
+
+
+def _check_step(where: str, step) -> None:
+    if not isinstance(step, dict):
+        raise AdapterError(f"{where}: a step must be a mapping")
+    unknown = set(step) - STEP_KEYS
+    if unknown:
+        raise AdapterError(f"{where}: unknown field(s) {sorted(unknown)}")
+    if not (isinstance(step.get("title"), str) and step["title"]):
+        raise AdapterError(f"{where}: title is required")
+    if not _strings(step.get("steps")):
+        raise AdapterError(f"{where}: steps must be a list of sentences")
+    for key in ("uses", "report_back"):
+        if key in step and not (isinstance(step[key], list) and all(isinstance(v, str) for v in step[key])):
+            raise AdapterError(f"{where}: {key} must be a list of strings")
+    uses = step.get("uses", [])
+    if not all(KEY.fullmatch(u) for u in uses):
+        raise AdapterError(f"{where}: uses must list placeholder names like VM_IP")
+    blocks = step.get("blocks", [])
+    if not isinstance(blocks, list):
+        raise AdapterError(f"{where}: blocks must be a list")
+    texts = [step["title"], *step["steps"], *step.get("report_back", [])]
+    for block in blocks:
+        if not (isinstance(block, dict) and set(block) == {"machine", "code"}
+                and isinstance(block["machine"], str) and isinstance(block["code"], str)):
+            raise AdapterError(f"{where}: each block needs machine and code")
+        if not MACHINE.fullmatch(block["machine"]):
+            raise AdapterError(f"{where}: block machine must end in (bash...) or (fish...)")
+        if block["machine"].startswith("desktop") and "(fish" not in block["machine"]:
+            raise AdapterError(f"{where}: desktop commands are fish")
+        texts += [block["machine"], block["code"]]
+    for text in texts:
+        for name in ANY_PLACEHOLDER.findall(text):
+            if not KEY.fullmatch(name):
+                raise AdapterError(f"{where}: placeholder {{{{{name}}}}} must be capital letters, digits, _")
+            if name not in uses:
+                raise AdapterError(f"{where}: {{{{{name}}}}} is used but not listed in uses")
+
+
+def _check_adapter(data, role: str, provider: str) -> dict:
+    where = f"adapter-{provider}/adapter.yaml"
+    if not isinstance(data, dict):
+        raise AdapterError(f"{where}: must be a mapping")
+    unknown = set(data) - TOP_KEYS
+    if unknown:
+        raise AdapterError(f"{where}: unknown field(s) {sorted(unknown)}")
+    if data.get("role") != role or data.get("provider") != provider:
+        raise AdapterError(f"{where}: role/provider inside the file must be {role}/{provider}")
+    if not isinstance(data.get("name"), str):
+        raise AdapterError(f"{where}: name is required")
+    docs = data.get("docs", [])
+    if not (isinstance(docs, list) and all(isinstance(d, str) and d.startswith("https://") for d in docs)):
+        raise AdapterError(f"{where}: docs must be a list of https links")
+    for key in ("discovery", "capabilities", "defaults"):
+        if not isinstance(data.get(key, {}), dict):
+            raise AdapterError(f"{where}: {key} must be a mapping")
+    if not all(isinstance(v, bool) for v in data.get("capabilities", {}).values()):
+        raise AdapterError(f"{where}: capabilities are true or false")
+    if not _strings(data.get("scripts", [])) and data.get("scripts", []) != []:
+        raise AdapterError(f"{where}: scripts must be a list of paths")
+    _check_scripts(data.get("scripts", []), where)
+    steps = data.get("owner_steps")
+    if not isinstance(steps, dict):
+        raise AdapterError(f"{where}: owner_steps is required")
+    for step_id, step in steps.items():
+        if not (isinstance(step_id, str) and STEP_ID.fullmatch(step_id)):
+            raise AdapterError(f"{where}: step id {step_id!r} must be lowercase letters, digits, _")
+        _check_step(f"{where} {step_id}", step)
+    missing = [s for s in ROLE_STEPS[role] if s not in steps]
+    if missing:
+        raise AdapterError(f"{where}: missing the role's steps {missing}")
+    return data
+
+
+def _value_ok(key: str, value) -> bool:
+    if not isinstance(value, str):
+        return False
+    if key.endswith(("_CIDR", "_IP")):
+        # Networks and addresses: checked (and normalized) by render.py, which
+        # refuses anything but real IPv4 networks / one address.
+        from render import _address, _networks
+        try:
+            (_networks if key.endswith("_CIDR") else _address)(key, value)
+        except RenderError:
+            return False
+        return True
+    if key.endswith(("_DIR", "_REPO", "_FOLDER")):
+        return bool(PATH_VALUE.fullmatch(value)) and ".." not in value.split("/") and value.strip("/") != ""
+    if key.endswith("_OPTIONS"):
+        return bool(OPTIONS_VALUE.fullmatch(value))
+    if key.endswith("_ISO_VOLUME"):
+        return bool(ISO_VOLUME_VALUE.fullmatch(value)) and ".." not in value
+    if key.endswith("_ADDRESS"):
+        return bool(ADDRESS_VALUE.fullmatch(value)) and ".." not in value
+    return bool(SAFE_VALUE.fullmatch(value)) and ".." not in value.split("/")
+
+
+def example_value(key: str) -> str:
+    """A valid example for a placeholder, for tests and drafted adapters' checks."""
+    if key.endswith(("_DIR", "_REPO", "_FOLDER")):
+        return "/example/path"
+    if key.endswith("_OPTIONS"):
+        return "iothread=1"
+    if key.endswith("_ISO_VOLUME"):
+        return "local:iso/example-1.iso"
+    if key.endswith("_CIDR"):
+        return "192.0.2.0/24"
+    if key.endswith("_IP"):
+        return "192.0.2.10"
+    return "example-1"
+
+
+def _read_yaml(path: Path):
+    yaml = _yaml()
+    try:
+        return yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (yaml.YAMLError, UnicodeDecodeError) as error:
+        raise AdapterError(f"{path.name}: not valid YAML ({type(error).__name__})") from None
+
+
+def _generic_steps(role: str) -> dict:
+    data = _read_yaml(ADAPTERS / "adapter-generic" / "adapter.yaml")
+    try:
+        steps = data["roles"][role]["owner_steps"]
+    except (TypeError, KeyError):
+        raise AdapterError(f"adapter-generic/adapter.yaml: no steps for role {role}") from None
+    for step_id, step in steps.items():
+        _check_step(f"adapter-generic/adapter.yaml {role}.{step_id}", step)
+    return steps
+
+
+def load_adapter(role: str, provider: str | None, root: Path | None = None) -> dict:
+    """The adapter for role/provider, or the generic steps (generic: true)."""
+    if role not in ROLE_STEPS:
+        raise AdapterError(f"unknown role {role!r}; roles: {', '.join(ROLE_STEPS)}")
+    if provider is not None and not (isinstance(provider, str) and PROVIDER.fullmatch(provider)):
+        raise AdapterError("provider must be lowercase letters, digits and hyphens")
+    root = ADAPTERS if root is None else Path(root)
+    folder = root / f"adapter-{provider}"
+    path = folder / "adapter.yaml"
+    if provider is not None and provider != "generic" and path.is_file():
+        data = _check_adapter(_read_yaml(path), role, provider)
+        return dict(data, generic=False, skill_dir=str(folder.resolve()))
+    steps = _generic_steps(role)
+    return {"role": role, "provider": provider or "generic", "name": provider or "generic", "generic": True,
+            "docs": [], "discovery": {}, "capabilities": {}, "defaults": {}, "scripts": [], "owner_steps": steps}
+
+
+def _checksum_key(path: str) -> str:
+    """lib.sh -> LIB_SHA256, discover-host.sh -> DISCOVER_SHA256: the first word of the file name."""
+    stem = Path(path).name.split(".", 1)[0]
+    return re.split(r"[-_]", stem, maxsplit=1)[0].upper() + "_SHA256"
+
+
+def _git(*args: str) -> tuple[int, str]:
+    """Run git in the agent's folder without the user's or the system's git config."""
+    import subprocess
+    git = shutil.which("git")
+    if git is None:
+        raise AdapterError("git not found; the agent checks its host scripts against the committed version "
+                           "with git, so install git")
+    env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "GIT_CONFIG_NOSYSTEM": "1",
+           "GIT_CONFIG_GLOBAL": "/dev/null", "HOME": "/nonexistent"}
+    done = subprocess.run([git, "-C", str(REPO), *args], env=env, capture_output=True, text=True)
+    return done.returncode, done.stdout.strip()
+
+
+def _committed(path: Path) -> bool:
+    """True when path's contents equal the committed version (HEAD). The owner runs these scripts
+    as root, and their checksum is taken from the file as it is, so a script the agent (or
+    anything else) changed would pass the owner's sha256sum check (review of ff605b1). The
+    committed blob is compared with the file's own hash, so index flags such as
+    --assume-unchanged can't hide a change (review of f632889)."""
+    if _git("rev-parse", "--show-toplevel")[0] != 0:
+        raise AdapterError(f"the agent's folder {REPO} isn't a git checkout, so its host scripts can't be "
+                           "checked against the committed version; install the toolkit with git clone")
+    rel = str(path.resolve().relative_to(REPO))
+    code, committed = _git("rev-parse", "--verify", "--quiet", f"HEAD:./{rel}")
+    return code == 0 and committed == _blob_hash(path)
+
+
+def _blob_hash(path: Path) -> str:
+    """The file's git blob id, computed here: git's own hashing command would apply the repo's
+    .gitattributes filters, which can hide a change or run a command (whole-branch review)."""
+    import hashlib
+    data = path.read_bytes()
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def derived_values(adapter: dict) -> dict:
+    """Values the tool fills in itself, never the caller: AGENT_REPO (where this
+    agent is installed, found from this file's location, so moving the agent
+    keeps every step right) and <WORD>_SHA256 of each script the adapter ships."""
+    import hashlib
+    out = {"AGENT_REPO": str(REPO)}
+    skill = Path(adapter["skill_dir"]) if adapter.get("skill_dir") else None
+    if skill is not None:
+        out["SKILL_DIR"] = str(skill)
+    for path in adapter.get("scripts", []):
+        target = (skill / path).resolve() if skill is not None else None
+        if target is None or skill not in target.parents or not target.is_file():
+            raise AdapterError(f"{adapter.get('provider')}: script {path} is not a file in its skill folder")
+        if not _committed(target):
+            raise AdapterError(f"{adapter.get('provider')}: script {path} differs from the committed version, "
+                               "or isn't committed; the owner runs it as root, so this step isn't shown. "
+                               "Tell the owner; don't change or restore it yourself")
+        key = _checksum_key(path)
+        if key in out:
+            raise AdapterError(f"{adapter.get('provider')}: two scripts give the checksum {key}")
+        out[key] = hashlib.sha256(target.read_bytes()).hexdigest()
+    return out
+
+
+def derived_keys(adapter: dict) -> set[str]:
+    keys = {"AGENT_REPO", "SKILL_DIR"} | {_checksum_key(p) for p in adapter.get("scripts", [])}
+    return keys
+
+
+def _check_scripts(scripts: list, where: str) -> None:
+    """Each shipped script gives one valid, distinct checksum key (checked on load)."""
+    seen: dict[str, str] = {}
+    for path in scripts:
+        key = _checksum_key(path)
+        if not KEY.fullmatch(key):
+            raise AdapterError(f"{where}: script {path}: its name must start with a letter "
+                               f"(its checksum key would be {key})")
+        if key in seen:
+            raise AdapterError(f"{where}: two scripts give the checksum {key}: {seen[key]} and {path}")
+        seen[key] = path
+
+
+def render_step(adapter: dict, step_id: str, values: dict) -> str:
+    """The step as Markdown with every value filled in; refuses missing or unsafe values.
+    The agent's folder and the scripts' checksums are filled in here, never passed in."""
+    step = adapter.get("owner_steps", {}).get(step_id)
+    if step is None:
+        raise AdapterError(f"{adapter.get('provider')} has no step {step_id!r}")
+    passed = sorted(derived_keys(adapter) & set(values))
+    if passed:
+        raise AdapterError(f"{', '.join(passed)} is filled in by the tool (from where the agent is "
+                           "installed); leave it out of the values")
+    uses = step.get("uses", [])
+    unfillable = [k for k in uses if k.endswith("_SHA256") and k not in derived_keys(adapter)]
+    if unfillable:
+        raise AdapterError(f"step {step_id} uses checksum {', '.join(unfillable)}, but the adapter ships "
+                           "no script it could be taken from; checksums are never typed in by hand")
+    if any(k in derived_keys(adapter) for k in uses):
+        derived = derived_values(adapter)
+        if not all(_value_ok(k, derived[k]) for k in ("AGENT_REPO", "SKILL_DIR") if k in derived):
+            raise AdapterError(f"the agent is installed at {derived['AGENT_REPO']!r}, a path the owner's commands "
+                               "can't carry safely; install it in a folder whose path has no spaces or "
+                               "shell characters")
+        values = dict(values, **derived)
+    code = "\n".join(block.get("code", "") for block in step.get("blocks", []))
+    for key in uses:
+        if key.endswith("_CIDR") and "," in str(values.get(key, "")) and "{{" + key + "}}" in code:
+            raise AdapterError(f"{key} holds several networks, but step {step_id} puts it in a command, "
+                               "where it would split into separate arguments; give one network")
+    clean = {}
+    for key in uses:
+        if key not in values:
+            raise AdapterError(f"missing value for {{{{{key}}}}} in step {step_id}")
+        value = values[key]
+        if not _value_ok(key, value):
+            raise AdapterError(f"value for {key} must be a plain name, path or address "
+                               "(no spaces, quotes or shell characters; see SAFE_VALUE in tools/adapters.py)")
+        clean[key] = value
+    try:
+        fill = lambda text: render(text, clean)  # noqa: E731
+        out = [f"### {fill(step['title'])}", ""]
+        out += [f"{n}. {fill(s)}" for n, s in enumerate(step["steps"], start=1)]
+        for block in step.get("blocks", []):
+            out += ["", f"```{'fish' if '(fish' in block['machine'] else 'bash'}", f"# {fill(block['machine'])}",
+                    fill(block["code"]).rstrip("\n"), "```"]
+        if step.get("report_back"):
+            out += ["", "Report back:"] + [f"- {fill(r)}" for r in step["report_back"]]
+    except RenderError as error:
+        raise AdapterError(f"step {step_id}: {error}") from None
+    return "\n".join(out) + "\n"
+
+
+def draft_adapter(role: str, provider: str, recorded: list) -> str:
+    """YAML for a new adapter from the steps the owner actually did.
+
+    Role steps nobody recorded come from the generic adapter, so the draft is
+    complete; draft: true marks it for review before it joins the repo.
+    """
+    if role not in ROLE_STEPS:
+        raise AdapterError(f"unknown role {role!r}")
+    if not (isinstance(provider, str) and PROVIDER.fullmatch(provider)) or provider == "generic":
+        raise AdapterError("provider must be lowercase letters, digits and hyphens")
+    if not isinstance(recorded, list):
+        raise AdapterError("recorded steps must be a list")
+    steps = {}
+    for item in recorded:
+        if not isinstance(item, dict) or not (isinstance(item.get("id"), str) and STEP_ID.fullmatch(item["id"])):
+            raise AdapterError("each recorded step needs an id: lowercase letters, digits, _")
+        step = {k: v for k, v in item.items() if k != "id"}
+        _check_step(f"recorded {item['id']}", step)
+        steps[item["id"]] = step
+    generic = _generic_steps(role)
+    for step_id in ROLE_STEPS[role]:
+        steps.setdefault(step_id, generic[step_id])
+    data = {"role": role, "provider": provider, "name": provider, "draft": True,
+            "notes": "Drafted while working; check every step against the provider's official docs.",
+            "docs": [], "discovery": {}, "capabilities": {}, "scripts": [], "owner_steps": steps}
+    _check_adapter(data, role, provider)
+    return _yaml().safe_dump(data, sort_keys=False, allow_unicode=True)
+
+
+def _check_host_key(values: dict) -> None:
+    """HOST is the site file's hosts key for the server (it names the token file
+    and hosts/<HOST>/), never its display or node name. Checked against the
+    workspace's site.yaml when one is set."""
+    if "HOST" not in values:
+        return
+    from workspace import WorkspaceError, WorkspaceNotSet, load_site, resolve_workspace
+    try:
+        # The step's own WORKSPACE value first, then the set or remembered one.
+        ws = resolve_workspace(values.get("WORKSPACE") if isinstance(values.get("WORKSPACE"), str) else None)
+    except WorkspaceNotSet:  # no workspace at all: the agent's own check stands
+        return
+    except WorkspaceError as error:
+        raise AdapterError(f"workspace: {error}") from None
+    if not (Path(ws) / "site.yaml").is_file():
+        raise AdapterError(f"the site file {Path(ws) / 'site.yaml'} is missing; HOST can't be checked")
+    try:
+        site = load_site(ws)
+    except (OSError, _yaml().YAMLError):
+        raise AdapterError(f"the site file {Path(ws) / 'site.yaml'} can't be read as YAML") from None
+    hosts = site.get("hosts") if isinstance(site, dict) else None
+    if isinstance(hosts, dict) and hosts and values["HOST"] not in hosts:
+        raise AdapterError(f"HOST {values['HOST']!r} is not a server key in the site file; use one of: "
+                           f"{', '.join(sorted(map(str, hosts)))} (the key, not the server's display or node name)")
+
+
+SKILL_TEMPLATE = """---
+name: adapter-{provider}
+description: "DRAFT owner steps for {provider} in the {role} role of the fcos-app-installer toolkit. Use when the owner's {role} is {provider}. Review every step against {provider}'s official documentation before moving this skill into .agents/skills/."
+license: MIT
+compatibility: Needs the fcos-app-installer toolkit; tools/adapters.py renders the steps.
+---
+
+# {provider} ({role}), draft
+
+Drafted from the steps the owner actually did. Before use: check each step and
+menu name against {provider}'s official documentation, add the links to
+`docs:` in adapter.yaml and below, then move this folder into `.agents/skills/`.
+
+Render a step with every value filled in, never by hand:
+
+```fish
+# desktop (fish)
+python3 tools/adapters.py render --role {role} --provider {provider} --step <id> --values <values.json>
+```
+"""
+
+
+TEST_TEMPLATE = '''"""Checks the drafted adapter loads and every role step renders."""
+import os
+import sys
+from pathlib import Path
+
+ROOT = Path({repo!r})
+sys.path.insert(0, str(ROOT / "tools"))
+from adapters import ROLE_STEPS, derived_keys, example_value, load_adapter, render_step  # noqa: E402
+
+HERE = Path(__file__).resolve().parent.parent
+adapter = load_adapter({role!r}, {provider!r}, root=HERE)
+assert not adapter["generic"]
+for step in ROLE_STEPS[{role!r}]:
+    uses = adapter["owner_steps"][step].get("uses", [])
+    render_step(adapter, step, {{k: example_value(k) for k in uses if k not in derived_keys(adapter)}})
+print("ok")
+'''
+
+
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="adapters.py")
+    sub = parser.add_subparsers(dest="command", required=True)
+    draft = sub.add_parser("draft")
+    draft.add_argument("--role", required=True)
+    draft.add_argument("--provider", required=True)
+    draft.add_argument("--from", dest="source", required=True)
+    draft.add_argument("--workspace")
+    show = sub.add_parser("show")
+    show.add_argument("--role", required=True)
+    show.add_argument("--provider")
+    rend = sub.add_parser("render")
+    rend.add_argument("--role", required=True)
+    rend.add_argument("--provider")
+    rend.add_argument("--step", required=True)
+    rend.add_argument("--values", required=True, help="JSON file: {KEY: value}")
+    args = parser.parse_args(argv[1:])
+    if args.command in ("show", "render"):
+        try:
+            adapter = load_adapter(args.role, args.provider)
+            if args.command == "show":
+                out = {"role": adapter["role"], "provider": adapter["provider"], "generic": adapter["generic"],
+                       "capabilities": adapter.get("capabilities", {}), "defaults": adapter.get("defaults", {}),
+                       "steps": {k: v.get("uses", []) for k, v in adapter["owner_steps"].items()}}
+                sys.stdout.write(_yaml().safe_dump(out, sort_keys=False))
+            else:
+                values = json.loads(Path(args.values).read_text(encoding="utf-8"))
+                if not isinstance(values, dict):
+                    raise AdapterError("--values must hold a JSON object")
+                _check_host_key(values)
+                sys.stdout.write(render_step(adapter, args.step, values))
+        except (AdapterError, OSError, ValueError) as error:
+            print(f"adapters: {error}", file=sys.stderr)
+            return 1
+        return 0
+    try:
+        from workspace import WorkspaceError, resolve_workspace
+        recorded = json.loads(Path(args.source).read_text(encoding="utf-8"))
+        text = draft_adapter(args.role, args.provider, recorded)
+        ws = resolve_workspace(args.workspace)
+        # A draft must land in a real workspace, never in a folder OpenCode loads skills from:
+        # there an unreviewed draft would become a live skill (whole-branch review, 2026-11-04).
+        if not (ws / "site.yaml").is_file():
+            raise AdapterError(f"{ws} has no site.yaml: drafts go into an install's workspace")
+        if "skills" in ws.parts or any(p in (".agents", ".opencode", ".claude") for p in ws.parts):
+            raise AdapterError(f"{ws} is inside a skill or agent folder; drafts go into an install's workspace")
+        folder = ws / "adapters-draft" / f"adapter-{args.provider}"
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / "adapter.yaml").write_text(text, encoding="utf-8")
+        (folder / "SKILL.md").write_text(SKILL_TEMPLATE.format(role=args.role, provider=args.provider),
+                                         encoding="utf-8")
+        (folder / f"test_{args.provider.replace('-', '_')}.py").write_text(
+            TEST_TEMPLATE.format(repo=str(REPO), role=args.role, provider=args.provider), encoding="utf-8")
+        print(folder / "adapter.yaml")
+    except (AdapterError, OSError, ValueError, WorkspaceError) as error:
+        print(f"adapters: {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

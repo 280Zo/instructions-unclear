@@ -1,0 +1,58 @@
+variant: fcos
+version: 1.7.0
+
+# local-db backup for the MariaDB container {{SVC_NAME}}-{{CTR_NAME}}: the dump
+# runs inside the container with its own MARIADB_* environment (no password on
+# any command line outside the container, no network), is compressed on the
+# host, and is written as .tmp then moved into place. Keeps the newest
+# {{BACKUP_KEEP}}. Skips when the NAS isn't mounted.
+# The commands live in a script file, so no quoting goes through systemd.
+
+storage:
+  files:
+    - path: /usr/local/bin/{{SVC_NAME}}-{{CTR_NAME}}-mariadb-backup
+      mode: 0755
+      overwrite: true
+      contents:
+        inline: |
+          #!/bin/bash
+          set -euo pipefail
+          dest=/var/mnt/backups/{{VM_NAME}}/{{SVC_NAME}}
+          f="$dest/{{CTR_NAME}}-$(date -u +%Y%m%dT%H%M%SZ).sql.gz"
+          trap 'rm -f "$f.tmp"' EXIT
+          /usr/bin/podman exec {{SVC_NAME}}-{{CTR_NAME}} sh -c 'mariadb-dump --single-transaction --quick "-u$MARIADB_USER" "-p$MARIADB_PASSWORD" "$MARIADB_DATABASE"' | gzip > "$f.tmp"
+          mv "$f.tmp" "$f"
+          ls -1t "$dest"/{{CTR_NAME}}-*.sql.gz | tail -n +$(({{BACKUP_KEEP}} + 1)) | xargs -r rm -f
+    - path: /etc/systemd/user/{{BACKUP_UNIT}}.service
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          [Unit]
+          Description=Dump the {{CTR_NAME}} database of {{SVC_NAME}} to the NAS
+          ConditionUser={{SVC_NAME}}
+
+          [Service]
+          Type=oneshot
+          ExecCondition=/usr/local/bin/require-mounts /var/mnt/backups /var/lib/appdata
+          ExecStartPre=/usr/bin/mkdir -p /var/mnt/backups/{{VM_NAME}}/{{SVC_NAME}}
+          ExecStart=/usr/local/bin/{{SVC_NAME}}-{{CTR_NAME}}-mariadb-backup
+    - path: /etc/systemd/user/{{BACKUP_UNIT}}.timer
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          [Unit]
+          Description=Schedule for {{BACKUP_UNIT}}
+          ConditionUser={{SVC_NAME}}
+
+          [Timer]
+          OnCalendar={{BACKUP_ONCALENDAR}}
+          Persistent=true
+
+          [Install]
+          WantedBy=timers.target
+  links:
+    - path: /etc/systemd/user/timers.target.wants/{{BACKUP_UNIT}}.timer
+      target: /etc/systemd/user/{{BACKUP_UNIT}}.timer
+      hard: false

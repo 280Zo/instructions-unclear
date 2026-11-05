@@ -1,0 +1,35 @@
+# Quadlet for one container of {{SVC_NAME}}: rootless, run by the {{SVC_NAME}} user.
+# Written by tools/gen_service.py from the service spec.
+#   - Volume= host paths sit under one of the roots in the require-mounts line.
+#   - NFS paths (/var/mnt/...) never get :Z or :z; data-disk paths use :z.
+#   - Secrets come from Podman secrets only (Secret=), never Environment=.
+#   - No wait for the system's network-online target here: a user unit can't
+#     wait for system targets, and Quadlet adds its own user-level network
+#     wait (podman-systemd.unit, "Implicit network dependencies").
+[Unit]
+Description={{SVC_DESCRIPTION}}
+{{CTR_DEPENDS}}
+
+[Container]
+ContainerName={{SVC_NAME}}-{{CTR_NAME}}
+Image={{SVC_IMAGE}}
+AutoUpdate=registry
+NoNewPrivileges=true
+DropCapability=ALL
+{{CTR_SECURITY}}
+{{CTR_NETWORK}}
+{{CTR_PUBLISH}}
+{{CTR_SHM}}
+{{SVC_VOLUMES}}
+{{SVC_SECRETS}}
+{{SVC_ENVIRONMENT}}
+{{CTR_EXEC}}
+
+[Service]
+ExecStartPre=/usr/local/bin/require-mounts {{SVC_MOUNT_ROOTS}}
+Restart=on-failure
+RestartSec=30
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

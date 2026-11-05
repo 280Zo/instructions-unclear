@@ -1,0 +1,221 @@
+# Example site file for the FCOS service agent.
+#
+# `workspace.py init <path>` copies this to <workspace>/site.yaml, in a private
+# folder outside the repo. site.yaml is the only place real values go (names,
+# addresses, domains, users, hosts). Every value here is a placeholder;
+# documentation addresses (192.0.2.0/24) and example.* names stand in for real
+# ones. tools/publish_check.py fails if any workspace value shows up in a
+# published file.
+#
+# Values marked "# ASK" must be confirmed with the owner before use.
+#
+# Never put a secret value in this file. Secrets are listed
+# by NAME only; the owner creates them on the VM with `podman secret create`.
+#
+# "maps to:" names the template placeholder each value fills. Some
+# placeholders are derived (built by the agent from several values); those
+# are listed under `derived:` at the bottom.
+
+# --- Roles: who provides each part of the setup (ASK until the owner answers) ---
+roles:
+  virtualization: {provider: ASK}
+  router_firewall: {provider: ASK}
+  file_server: {provider: ASK}
+  dns_certificates: {provider: ASK}
+
+# --- Proxmox hosts (keys are your own names; always ask which one a VM goes on) ---
+# always_on: false means the host is sometimes shut down; anything on it is off
+# with it. The edge VM must go on an always_on host.
+hosts:
+  host-a:
+    name: pve-a                 # ASK: the name the owner uses for this server
+    node: pve-a                 # optional: Proxmox node name, if different from the key
+    address: 192.0.2.21         # optional until tools/pve.py is used: the server's IP or DNS name (API on port 8006)
+    ca_file: null               # optional: path to the CA certificate for the API (null: system CAs)
+    always_on: false            # ASK
+    storage: local-lvm          # ASK: VM disk storage pool
+    snippets_storage: coreos    # ASK: storage with content "snippets" (guide 01)
+    iso_storage: local          # optional: directory storage with content "iso"; only for ignition.method nocloud-iso (granted by setup-agent-access.sh --iso-storage <id>)
+    image_dir: /var/lib/vz/import  # import folder of iso_storage (Proxmox default for storage local)
+    bridge: vmbr0               # ASK
+    vlan_tag: null              # ASK: null if untagged
+    max_cores: 12               # ASK
+    max_ram_mib: 12288          # ASK
+    backup_storage: local       # ASK: host-local storage for vzdump
+  host-b:
+    name: pve-b                 # ASK
+    node: pve-b                 # optional
+    address: 192.0.2.22         # optional until tools/pve.py is used
+    ca_file: null               # optional
+    always_on: true             # ASK
+    storage: local-lvm          # ASK
+    snippets_storage: coreos    # ASK
+    iso_storage: local          # optional (see host-a)
+    image_dir: /var/lib/vz/import  # import folder of iso_storage (Proxmox default for storage local)
+    bridge: vmbr0               # ASK
+    vlan_tag: null              # ASK
+    max_cores: 4                # ASK
+    max_ram_mib: 8192           # ASK
+    backup_storage: local       # ASK
+
+# --- Network (the owner sets reservations, DNS and inter-VLAN rules in OPNsense) ---
+network:
+  gateway: 192.0.2.1            # ASK
+  admin_lan_cidr: 192.0.2.0/24  # ASK  maps to: ADMIN_LAN_CIDR (SSH allowed from here; comma-separated list)
+  lan_cidr: 192.0.2.0/24         # ASK  maps to: LAN_CIDR (clients allowed to reach the edge VM; comma-separated list)
+  dns: 192.0.2.1                # ASK: OPNsense Unbound
+  timezone: UTC     # ASK  maps to: TIMEZONE
+
+# Tailscale is only the route into the LAN for the owner's desktop and phone.
+# Their Tailscale DNS points at OPNsense. If the subnet router runs on a host
+# that isn't always_on, remote access stops while that host is off: warn.
+tailscale:
+  subnet_router_on: ASK         # opnsense, a key under hosts:, or other
+
+# --- Admin user name on every VM ---
+admin_user: admin               # ASK  maps to: ADMIN_USER
+
+# --- NAS (the owner does all NAS work; the agent only asks for these values) ---
+nas:
+  nfs_server: 192.0.2.1         # ASK  maps to: NFS_SERVER
+  backups_export: /mnt/pool/backups   # ASK; mounted at /var/mnt/backups on every VM
+
+# --- Domain and certificates ---
+domain: example.duckdns.org # maps to: DOMAIN (wildcard *.domain only)
+acme_email: ASK                 # maps to: ACME_EMAIL
+# Secret (on the edge VM): duckdns_token
+
+# --- Admin user on every VM ---
+admin:
+  ssh_pubkey: ASK               # maps to: ADMIN_SSH_PUBKEY (public key only)
+  password_hash: ASK            # maps to: ADMIN_PASSWORD_HASH (yescrypt hash from `mkpasswd --method=yescrypt`, never the password)
+
+# --- Update windows (OS reboots and container updates together) ---
+updates:
+  zincati_days: ["Sun"]         # maps to: ZINCATI_DAYS
+  zincati_start: "03:00"        # maps to: ZINCATI_START (local time, see timezone)
+  zincati_minutes: 60           # maps to: ZINCATI_MINUTES
+  containers_oncalendar: "Sun *-*-* 03:30:00"  # maps to: CONTAINER_UPDATE_ONCALENDAR
+
+backups:
+  keep: 14                      # maps to: BACKUP_KEEP
+  oncalendar: "*-*-* 02:15:00"  # maps to: BACKUP_ONCALENDAR
+  sqlite_image: docker.io/library/python:3-alpine   # maps to: BACKUP_SQLITE_IMAGE
+
+# --- Shared groups (must match NAS groups) ---
+shared_groups: []
+# Entry shape (one per group; copy and fill in):
+#   - name: ai-projects           # maps to: SHARED_GROUP_NAME
+#     gid: 3100                   # ASK  maps to: SHARED_GROUP_GID
+
+# --- VMs ---
+vms: []
+# Entry shape (one per VM; the owner decides how many):
+#   - name: edge                  # maps to: VM_NAME
+#     vmid: 201                   # ASK: unused Proxmox VM ID on that host
+#     host: host-b
+#     ip: 192.0.2.10              # ASK  maps to: EDGE_IP (for every VM's firewall)
+#     cores: 2
+#     ram_mib: 4096
+#     os_disk_gib: 20
+#     data_disk_gib: 10           # sum of its services' local storage + headroom
+#     nfs_shares:
+#       - name: backups           # maps to: NFS_MOUNT_NAME (lowercase letters/digits)
+#         export: /mnt/pool/backups   # maps to: NFS_EXPORT
+
+# --- Edge layer (on the edge VM) ---
+edge:
+  vm: edge                      # the VM (from vms) that runs the login front end; must be on an always_on host
+  traefik:
+    uid: 3202                   # maps to: TRAEFIK_UID
+    gid: 3202                   # maps to: TRAEFIK_GID
+    image: docker.io/library/traefik:v3   # maps to: TRAEFIK_IMAGE
+  authentik:
+    host: auth.example.duckdns.org    # maps to: AUTHENTIK_HOST
+    uid: 3201                   # maps to: AUTHENTIK_UID
+    gid: 3201                   # maps to: AUTHENTIK_GID
+    image: ghcr.io/goauthentik/server:2026.8   # ASK: check the current release  maps to: AUTHENTIK_IMAGE
+    postgres_image: docker.io/library/postgres:17-alpine   # stay on 17  maps to: PG_IMAGE
+    postgres_user: authentik    # maps to: PG_USER
+    postgres_db: authentik      # maps to: PG_DB
+    # Secrets (on the edge VM): authentik_secret_key, authentik_pg_password
+
+# --- Services (one entry per service; the add-a-service procedure fills these) ---
+services: []
+# Entry shape (one per service):
+#   - name: opencode              # maps to: SVC_NAME, ROUTE_NAME
+#     title: OpenCode             # maps to: ROUTE_TITLE
+#     description: OpenCode server   # maps to: SVC_DESCRIPTION
+#     vm: ai
+#     uid: 3101                   # ASK: must match the NAS user  maps to: SVC_UID
+#     gid: 3101                   # ASK  maps to: SVC_GID
+#     extra_groups: [ai-projects] # maps to: SVC_EXTRA_GROUPS
+#     image: ghcr.io/example/opencode:1   # from the app's official docs, major tag  maps to: SVC_IMAGE
+#     port: 4096                  # host port on the VM  maps to: SVC_PORT
+#     container_port: 4096        # maps to: SVC_CONTAINER_PORT
+#     bind: vm_ip                 # vm_ip (reached by edge) | loopback (edge VM only)  maps to: SVC_BIND_IP
+#     hostname: opencode.example.duckdns.org   # maps to: ROUTE_HOST
+#     rootless: true
+#     rootful_reason: null        # required text if rootless is false
+#     storage:                    # every path the container uses
+#       - host: /var/lib/appdata/opencode/db
+#         container: /data/db
+#         class: local-db         # nfs | local | local-db
+#         expected_gib: 1         # 5 GB rule: over 5 on the data disk needs a talk with the owner
+#         db: { engine: sqlite, file: opencode.db }   # maps to: SVC_DB_FILE
+#       - host: /var/mnt/projects/ai
+#         container: /projects
+#         class: nfs
+#     environment:
+#       TZ: UTC
+#     secrets:                    # names only
+#       - name: opencode_model_api
+#         target_env: MODEL_API
+#     api_skip_regex:             # paths desktop/mobile clients call directly  maps to: API_SKIP_REGEX
+#       - "^/api/.*$"
+#     login: authentik            # authentik | app-only (record why)
+#     groups: [family]            # Authentik groups that may open it (none: every user)
+#     redirects: [{path: /.well-known/carddav, to: /dav/}]   # answered by Traefik with https
+#     section: Relationships      # dashboard heading the app is listed under
+#     icon: monica.svg            # logo file in services/<svc>/, from the app's official sources
+#     accepted_risks: []          # e.g. "db on NFS, 12 GB, accepted 2026-11-02"
+
+# --- Derived placeholders (the agent builds these; nothing to fill in) ---
+# Login page accounts (all optional). Sign-up: anyone who can reach the login page creates
+# an account (no email) in this group; approve: true starts them disabled until the owner
+# turns them on. people: accounts made in advance (the owner sets their passwords).
+# signup: {group: guests}
+# people:
+#   - {username: sam, name: "Sam Example", groups: [family]}
+
+derived:
+  # maps to: REDIRECT_ROUTERS       one Traefik router per entry in a service's redirects (written by tools/gen_service.py)
+  # maps to: REDIRECT_MIDDLEWARES   the matching redirectRegex middlewares (https://<host><to>)
+  # maps to: SECTION_LINE           the app's dashboard section (Authentik application group)
+  # maps to: ICON_LINE              the app's icon in Authentik (a service's icon file, stored on the VM)
+  # maps to: ACCESS_ENTRIES         one Authentik group + binding per entry in a service's groups (written by tools/gen_service.py)
+  # maps to: MERGE_ENTRIES          one "      - local: igns/<fragment>.ign" line per fragment of the VM
+  # maps to: SVC_VOLUMES            one Volume= line per storage entry (:z on data disk, nothing on NFS)
+  # maps to: SVC_SECRETS            one Secret=<name>,type=env,target=<env> line per secret
+  # maps to: SVC_ENVIRONMENT        one Environment="KEY=value" line per environment entry (% and $ doubled)
+  # maps to: SVC_MOUNT_ROOTS        distinct mount roots of the storage paths (/var/lib/appdata, /var/mnt/<share>)
+  # maps to: SVC_APPDATA_DIRS       Butane directory entries for each data-disk subfolder, owned by the service
+  # maps to: SVC_QUADLET_FILES      Butane file entries placing each container's Quadlet and the private network
+  # maps to: SVC_SUBUIDS            the service's pinned subordinate UID range (tools/gen_service.py subid_range)
+  # maps to: SVC_SUBGIDS            the same for its GID
+  # maps to: CTR_NAME               the container's name inside the service (<svc>-<name> on the VM)
+  # maps to: CTR_DEPENDS            Requires= and After= lines for the containers it depends on
+  # maps to: CTR_SECURITY           UserNS=keep-id (map-user) or AddCapability= lines (root-start)
+  # maps to: CTR_NETWORK            Network=<svc>.network, or Network=host
+  # maps to: CTR_PUBLISH            PublishPort=<vm ip or 127.0.0.1>:<host port>:<container port>
+  # maps to: CTR_EXEC               Exec= line from the container's command
+  # maps to: CTR_SHM                ShmSize=<n>m from the container's shm_size_mib (empty when not set)
+  # maps to: BACKUP_UNIT            <svc>-backup-<container>
+  # maps to: BACKUP_SECURITY        UserNS=keep-id or AddCapability=DAC_OVERRIDE for the SQLite backup container
+  # maps to: SVC_DB_DIR             data-disk folder holding the database
+  # maps to: DUMP_COMMAND           dump command of a custom database engine
+  # maps to: ROUTE_BACKEND          http://<vm ip>:<port> (http://127.0.0.1:<port> for a loopback service on the edge VM)
+  # maps to: OUTPOST_APPLY_ENTRIES  one metaapplyblueprint entry per routed service (written by tools/login_frontend.py)
+  # maps to: OUTPOST_PROVIDER_LIST  one "        - !Find [authentik_providers_proxy.proxyprovider, [name, \"<svc>\"]]" line per routed service (written by tools/login_frontend.py)
+  # maps to: PG_CONTAINER           <owner>-postgres for services with a Postgres local-db
+  # maps to: SVC_BIND_IP            the VM's ip when bind is vm_ip, 127.0.0.1 when loopback

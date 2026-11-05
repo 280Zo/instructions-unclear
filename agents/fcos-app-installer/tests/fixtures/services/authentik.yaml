@@ -1,0 +1,52 @@
+# Test fixture: the login front end's own app (server, worker, Postgres) on
+# loopback, no login in front of it. Example values only.
+name: authentik
+vm: edge
+uid: 3201
+title: Authentik
+login: app-only
+login_reason: It is the login page itself
+bind: loopback
+port: 9000
+containers:
+  - name: postgres
+    image: docker.io/library/postgres:17-alpine
+    user_mode: map-user
+    env: {POSTGRES_USER: authentik, POSTGRES_DB: authentik}
+    secrets: [{env: POSTGRES_PASSWORD, name: authentik_pg_password}]
+    volumes:
+      - {path: /var/lib/postgresql/data, class: local-db, engine: postgres, expected_gib: 2}
+  - name: server
+    image: ghcr.io/goauthentik/server:2026.8
+    user_mode: map-user
+    command: [server]
+    publish: 9000
+    depends_on: [postgres]
+    env:
+      AUTHENTIK_POSTGRESQL__HOST: authentik-postgres
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+    secrets:
+      - {env: AUTHENTIK_POSTGRESQL__PASSWORD, name: authentik_pg_password}
+      - {env: AUTHENTIK_SECRET_KEY, name: authentik_secret_key}
+    volumes:
+      - {path: /data, class: local, expected_gib: 1}
+  - name: worker
+    image: ghcr.io/goauthentik/server:2026.8
+    user_mode: map-user
+    command: [worker]
+    depends_on: [postgres]
+    env:
+      AUTHENTIK_POSTGRESQL__HOST: authentik-postgres
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+    secrets:
+      - {env: AUTHENTIK_POSTGRESQL__PASSWORD, name: authentik_pg_password}
+      - {env: AUTHENTIK_SECRET_KEY, name: authentik_secret_key}
+    volumes:
+      - {path: /data, class: local, expected_gib: 1}
+      - {path: /blueprints/custom, class: local, name: blueprints, expected_gib: 1}
+secrets:
+  - {name: authentik_pg_password, durable: true}
+  - {name: authentik_secret_key, durable: true}
+backups: {schedule: weekly, keep: 8}

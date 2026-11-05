@@ -1,0 +1,57 @@
+variant: fcos
+version: 1.7.0
+
+# One NFS share, mounted on first access. Render once per share.
+# NFS_MOUNT_NAME: lowercase letters and digits only (it becomes a unit name).
+# Only the .automount is enabled; it starts the .mount when the path is used.
+
+storage:
+  directories:
+    - path: /var/mnt/{{NFS_MOUNT_NAME}}
+      mode: 0755
+
+systemd:
+  units:
+    - name: var-mnt-{{NFS_MOUNT_NAME}}.mount
+      contents: |
+        [Unit]
+        Description=NFS share {{NFS_MOUNT_NAME}}
+        Wants=network-online.target
+        After=network-online.target
+
+        [Mount]
+        What={{NFS_SERVER}}:{{NFS_EXPORT}}
+        Where=/var/mnt/{{NFS_MOUNT_NAME}}
+        Type=nfs4
+        Options=_netdev,nofail
+
+    - name: var-mnt-{{NFS_MOUNT_NAME}}.automount
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Automount NFS share {{NFS_MOUNT_NAME}}
+
+        [Automount]
+        Where=/var/mnt/{{NFS_MOUNT_NAME}}
+        TimeoutIdleSec=20min
+
+        [Install]
+        WantedBy=multi-user.target
+
+    # Containers may use NFS-backed paths. NFS can't carry per-file SELinux
+    # labels, so never use :Z or :z on these paths; this boolean allows access.
+    - name: virt-use-nfs.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Allow containers to use NFS (SELinux virt_use_nfs)
+        ConditionPathExists=!/var/lib/virt-use-nfs.done
+
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/sbin/setsebool -P virt_use_nfs 1
+        ExecStart=/usr/bin/touch /var/lib/virt-use-nfs.done
+        RemainAfterExit=yes
+
+        [Install]
+        WantedBy=multi-user.target

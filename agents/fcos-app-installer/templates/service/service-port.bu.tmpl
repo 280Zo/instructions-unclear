@@ -1,0 +1,14 @@
+variant: fcos
+version: 1.7.0
+
+# Opens {{SVC_NAME}}'s port to the edge VM only. Skip this fragment for
+# services on the edge VM itself (they listen on 127.0.0.1).
+
+storage:
+  files:
+    - path: /etc/nftables.d/50-{{SVC_NAME}}.nft
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          add element inet host_filter edge_tcp { {{SVC_PORT}} }
