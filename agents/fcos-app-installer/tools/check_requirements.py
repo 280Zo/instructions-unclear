@@ -10,6 +10,8 @@ Usage: check_requirements.py
 - git: the host-script check compares each shipped script with the committed one.
 - Python 3 with PyYAML: every tool reads YAML.
 - podman or docker: the build checks run Butane and Podman in containers.
+- launch folder: OpenCode must be started in the toolkit's folder. The agent's allow rules
+  (python3 tools/*), its guard rules and the rules/ it loads are relative to that folder.
 
 Exits 0 when everything is there, 1 otherwise, with one line per item.
 """
@@ -19,8 +21,16 @@ import re
 import shutil
 import subprocess
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from layout import TOOLKIT_ROOT  # noqa: E402
 
 MINIMUM_OPENCODE = (2, 1, 3)
+
+
+def launch_folder() -> Path:
+    return Path.cwd().resolve()
 
 
 def opencode_version() -> str:
@@ -59,6 +69,8 @@ def main(argv: list[str]) -> int:
         ("Python 3 with PyYAML", has_pyyaml(), "found", "PyYAML missing; install python3-yaml"),
         ("podman or docker", runtime is not None, f"found {runtime}",
          "neither found; needed for the build checks"),
+        ("launch folder", launch_folder() == TOOLKIT_ROOT, f"{TOOLKIT_ROOT}",
+         f"OpenCode was started in {launch_folder()}; stop and start it in {TOOLKIT_ROOT}"),
     ]
     for name, ok, good, bad in rows:
         print(f"{'ok  ' if ok else 'FAIL'}  {name}: {good if ok else bad}")

@@ -11,10 +11,13 @@ router, your file server, your DNS provider, and anything involving a secret.
 
 ## What it needs
 
-- OpenCode 2.1.3 or newer on your desktop, with this repository as the project
-  folder. Earlier 2.0 releases ignore the config's `instructions` list, so the
-  rules in `rules/` wouldn't load (fixed in 2.0.30), and the agents' skill and
-  subagent filters were tested on 2.1.3.
+- OpenCode 2.1.3 or newer on your desktop. Start OpenCode in the toolkit's
+  folder, the one that holds `tools/`, `rules/` and `.opencode/`: the agent's
+  allow rules, guard rules and rule files are all relative to it, and
+  `python3 tools/check_requirements.py` fails when you start anywhere else.
+  Earlier 2.0 releases ignore the config's `instructions` list, so the rules in
+  `rules/` wouldn't load (fixed in 2.0.30), and the agents' skill and subagent
+  filters were tested on 2.1.3.
 - git, and Python 3 with PyYAML.
 - Podman or Docker: the build checks run Butane and Podman's Quadlet generator
   in containers, from the images pinned in `tools/images.env`. You pull them
@@ -28,7 +31,7 @@ router, your file server, your DNS provider, and anything involving a secret.
 
 ## Install
 
-1. Clone this repository and open it in OpenCode.
+1. Clone this repository and start OpenCode in its folder.
 2. The agent and its command live in `.opencode/` (`agents/fcos-app-installer.md`,
    `commands/add-service.md`); OpenCode picks them up from the project folder.
 3. Run the checks in [`docs/guide/10-trial-run.md`](docs/guide/10-trial-run.md)

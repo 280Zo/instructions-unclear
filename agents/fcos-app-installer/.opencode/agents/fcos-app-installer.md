@@ -507,7 +507,11 @@ Ask in plain language, grouped with the question tool, in this order. The
 exact wording, options and what each answer fills are in
 `docs/guide/questions.md`; use them.
 
-1. **Where to keep the files.** Ask first, before anything else:
+1. **Where to keep the files.** First run `python3 tools/check_requirements.py`
+   (it only reads). If its launch folder line fails, OpenCode was started in
+   the wrong folder: stop, tell the owner to start it in the toolkit's folder
+   (the one holding `tools/`, `rules/` and `.opencode/`), and do nothing else.
+   Then ask, before anything else:
    "Where should I keep this install's files?" Offer the remembered workspace
    (`python3 tools/workspace.py where`). On every run, then run
    `python3 tools/workspace.py init <path>` on the chosen folder: it creates a

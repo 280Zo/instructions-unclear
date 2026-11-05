@@ -10,25 +10,32 @@ sys.path.insert(0, str(ROOT / "tools"))
 
 
 class RequirementsTests(unittest.TestCase):
-    def run_check(self, opencode="opencode v2.2.4", which=lambda name: "/usr/bin/" + name, yaml_ok=True):
+    def run_check(self, opencode="opencode v2.2.4", which=lambda name: "/usr/bin/" + name, yaml_ok=True,
+                  launch=None):
         import check_requirements as mod
-        saved = mod.opencode_version, mod.shutil.which, mod.has_pyyaml
+        saved = mod.opencode_version, mod.shutil.which, mod.has_pyyaml, mod.launch_folder
         mod.opencode_version = lambda: opencode
         mod.shutil.which = which
         mod.has_pyyaml = lambda: yaml_ok
+        mod.launch_folder = lambda: launch if launch is not None else mod.TOOLKIT_ROOT
         out = io.StringIO()
         try:
             with redirect_stdout(out):
                 code = mod.main([])
         finally:
-            mod.opencode_version, mod.shutil.which, mod.has_pyyaml = saved
+            mod.opencode_version, mod.shutil.which, mod.has_pyyaml, mod.launch_folder = saved
         return code, out.getvalue()
 
     def test_all_present(self):
         code, out = self.run_check()
         self.assertEqual(code, 0, out)
-        for needle in ("OpenCode", "2.1.3", "git", "PyYAML", "podman or docker"):
+        for needle in ("OpenCode", "2.1.3", "git", "PyYAML", "podman or docker", "launch folder"):
             self.assertIn(needle, out)
+
+    def test_started_elsewhere_refused(self):
+        code, out = self.run_check(launch=Path("/somewhere/else"))
+        self.assertEqual(code, 1)
+        self.assertIn("FAIL  launch folder", out)
 
     def test_old_opencode_refused(self):
         for version in ("opencode v2.0.29", "opencode v2.1.2", "1.17.10", "not a version"):
