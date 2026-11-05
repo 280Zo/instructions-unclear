@@ -1,4 +1,4 @@
-# Traefik dynamic file 00-authentik.yml, shared by every route: the Authentik
+# Traefik dynamic file 00-authgw-authentik.yml, shared by every route: the Authentik
 # forward-auth middleware, the outpost service, and the route to Authentik
 # itself (no middleware on it). Written by tools/login_frontend.py.
 # Forward-auth settings: docs.goauthentik.io/add-secure-apps/providers/proxy/server_traefik/
@@ -25,7 +25,7 @@ http:
           - X-authentik-meta-version
   routers:
     authentik:
-      rule: "Host(`{{AUTHENTIK_HOST}}`)"
+      rule: "Host(`{{GATEWAY_HOST}}`)"
       entryPoints: [websecure]
       service: authentik-server
   services:

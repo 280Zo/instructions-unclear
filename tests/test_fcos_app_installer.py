@@ -382,7 +382,7 @@ class SourceTests(unittest.TestCase):
 
     def test_skills_use_only_the_shared_fields_and_names_stay_unique_in_the_repo(self):
         skills = sorted((FOLDER / "skills").glob("*/SKILL.md"))
-        self.assertEqual(len(skills), 6)
+        self.assertEqual(len(skills), 8)
         for path in skills:
             with self.subTest(skill=path.parent.name):
                 meta = frontmatter(path)

@@ -73,15 +73,15 @@ bash tools/build-vm.sh $ws/login-frontend/rendered
 
 With no service yet, leave out the service specs; the outpost list is then
 empty. The output goes to `<workspace>/login-frontend/`, outside every VM
-folder. It holds Traefik and Authentik as ordinary services (from
-`specs/login-frontend/`) and `login-frontend.bu` with Traefik's settings, the
+folder. It holds Traefik and Authentik as ordinary services (from the chosen
+modules' specs) and `login-frontend.bu` with Traefik's settings, the
 login middleware, every route and login rule, and the outpost list. Copy the
 fragments and `files/` into `<workspace>/vms/<vm>/`, add them to
 `MERGE_ENTRIES`, render `config.bu`, and build the VM folder.
 
 **Providers.** The certificate step is wired for DuckDNS only today:
-`templates/edge/traefik.yml.tmpl` names the `duckdns` provider and
-`specs/login-frontend/traefik.yaml` the secret `duckdns_token`
+`.opencode/skills/ingress-traefik/templates/traefik.yml.tmpl` names the `duckdns` provider and
+`.opencode/skills/ingress-traefik/spec.yaml` the secret `duckdns_token`
 (the skill `adapter-duckdns`). Another DNS provider needs those
 two changed first; that is a known gap.
 

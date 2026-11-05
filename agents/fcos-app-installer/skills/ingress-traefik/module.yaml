@@ -1,0 +1,21 @@
+capability: ingress
+product: Traefik
+summary: Reverse proxy on the login front end VM. It ends TLS with one wildcard certificate and sends each web name to its service.
+provides:
+  - tls_termination
+  - host_routing
+  - forward_auth_client
+needs:
+  - acme_dns01_provider
+  - auth_gateway
+pairs_with:
+  - module: authgw-authentik
+    tested: true
+    how: Traefik's forwardAuth middleware asks the Authentik embedded outpost on the same VM before it lets a request through.
+spec: spec.yaml
+code: ingress.traefik
+notes: >-
+  Traefik reads routes only from files in a folder (no container socket). The certificate comes
+  from the ACME DNS-01 challenge, so it needs the token variable of the DNS provider the site uses
+  (the dns_certificates adapter). forwardAuth is a general pattern, and other auth gateways document
+  working with it; this module ships glue only for the gateways listed in pairs_with with tested: true.

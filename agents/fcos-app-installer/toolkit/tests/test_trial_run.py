@@ -43,7 +43,7 @@ class TrialRunTests(unittest.TestCase):
         readme = (ROOT / "README.md").read_text()
         layout = readme.split("## Layout", 1)[1]
         for folder in ("`.opencode/`", f"`{SKILLS_DIR}/`", "`AGENTS.md`", "`docs/guide/`", "`schemas/`",
-                       "`specs/login-frontend/`", "`templates/`", "`tools/`", "`tests/`"):
+                       "`templates/`", "`tools/`", "`tests/`"):
             with self.subTest(folder=folder):
                 self.assertIn(folder, layout)
         self.assertIn("adapter-drafter", layout)

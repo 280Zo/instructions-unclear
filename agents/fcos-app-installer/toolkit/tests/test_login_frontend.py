@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 
 from gen_service import SpecError  # noqa: E402
+from layout import SKILLS  # noqa: E402
 from login_frontend import frontend_specs, generate_login_frontend  # noqa: E402
 
 FIXTURES = ROOT / "tests" / "fixtures"
@@ -63,9 +64,9 @@ class FrontendCase(unittest.TestCase):
 
 class SpecTests(FrontendCase):
     def test_specs_are_placeholders_filled_from_the_site(self):
-        for name in ("traefik", "authentik"):
-            text = (ROOT / "specs" / "login-frontend" / f"{name}.yaml").read_text()
-            self.assertIn("<site: ", text, name)
+        for module in ("ingress-traefik", "authgw-authentik"):
+            text = (SKILLS / module / "spec.yaml").read_text()
+            self.assertIn("<site: ", text, module)
         traefik, authentik = frontend_specs(copy.deepcopy(SITE))
         self.assertEqual((traefik["vm"], traefik["uid"], traefik["gid"]), ("edge", 3202, 3202))
         self.assertEqual((authentik["vm"], authentik["uid"], authentik["gid"]), ("edge", 3201, 3201))
@@ -128,7 +129,7 @@ class TraefikTests(FrontendCase):
         self.assertEqual((redirect["to"], redirect["scheme"]), ("websecure", "https"))
 
     def test_forward_auth_middleware(self):
-        dynamic = yaml.safe_load(self.read(self.gen(), "files/00-authentik.yml"))["http"]
+        dynamic = yaml.safe_load(self.read(self.gen(), "files/00-authgw-authentik.yml"))["http"]
         auth = dynamic["middlewares"]["authentik"]["forwardAuth"]
         self.assertEqual(auth["address"], "http://127.0.0.1:9000/outpost.goauthentik.io/auth/traefik")
         self.assertTrue(auth["trustForwardHeader"])
@@ -217,7 +218,7 @@ class RouteTests(FrontendCase):
         files = self.files(out, "login-frontend.bu")
         expected = {
             "/var/lib/appdata/traefik/config/traefik.yml": (3202, "files/traefik.yml"),
-            "/var/lib/appdata/traefik/dynamic/00-authentik.yml": (3202, "files/00-authentik.yml"),
+            "/var/lib/appdata/traefik/dynamic/00-authgw-authentik.yml": (3202, "files/00-authgw-authentik.yml"),
             "/var/lib/appdata/traefik/dynamic/monica.yml": (3202, "files/route-monica.yml"),
             "/var/lib/appdata/authentik/blueprints/app-monica.yaml": (3201, "files/app-monica.blueprint.yaml"),
             "/var/lib/appdata/authentik/blueprints/outpost-providers.yaml":
@@ -299,7 +300,7 @@ class RouteTests(FrontendCase):
                 self.assertIn(name, str(caught.exception))
 
     def test_names_that_clash_with_traefik_routers_refused(self):
-        # 00-authentik.yml defines authentik-server and authentik-outpost; every
+        # 00-authgw-authentik.yml defines authentik-server and authentik-outpost; every
         # route adds <svc>-outpost. A duplicate name would break the shared ones.
         for name in ("authentik-server", "authentik-outpost", "monica-outpost", "x-outpost"):
             with self.subTest(name=name):
@@ -359,11 +360,15 @@ class RouteTests(FrontendCase):
 
 class OldTemplatesGoneTests(unittest.TestCase):
     def test_replaced_templates_deleted(self):
-        for name in ("traefik.bu.tmpl", "authentik.bu.tmpl", "edge-route.bu.tmpl"):
-            self.assertFalse((ROOT / "templates" / "edge" / name).exists(), name)
-        for name in ("traefik.yml.tmpl", "route.yml.tmpl", "authentik-app.blueprint.yaml.tmpl",
-                     "outpost-providers.blueprint.yaml.tmpl"):
-            self.assertTrue((ROOT / "templates" / "edge" / name).exists(), name)
+        # The product templates live with their modules, not in the shared templates folder.
+        self.assertFalse((ROOT / "templates" / "edge").exists())
+        for module, names in {"ingress-traefik": ("traefik.yml.tmpl", "route-open.yml.tmpl",
+                                                  "gateways/authgw-authentik/route.yml.tmpl",
+                                                  "gateways/authgw-authentik/middleware.yml.tmpl"),
+                              "authgw-authentik": ("app.blueprint.yaml.tmpl", "bookmark.blueprint.yaml.tmpl",
+                                                   "outpost-providers.blueprint.yaml.tmpl")}.items():
+            for name in names:
+                self.assertTrue((SKILLS / module / "templates" / name).is_file(), f"{module}/{name}")
 
 
 if __name__ == "__main__":
@@ -645,6 +650,6 @@ class NoProfilePictureTests(FrontendCase):
 
     def test_the_jwt_header_is_not_passed_to_apps(self):
         # The proxy scope puts every user attribute into X-authentik-jwt; no app here uses it.
-        middleware = self.read(self.gen(copy.deepcopy(SITE)), "files/00-authentik.yml")
+        middleware = self.read(self.gen(copy.deepcopy(SITE)), "files/00-authgw-authentik.yml")
         self.assertNotIn("X-authentik-jwt", middleware)
         self.assertIn("X-authentik-username", middleware)

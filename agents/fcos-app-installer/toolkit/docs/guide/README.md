@@ -65,6 +65,7 @@ anything irreversible, and commits.
 9. [Admin commands](09-admin-commands.md)
 10. [Trial run after installing](10-trial-run.md): the checks only a live OpenCode can show
 11. [Move and update](11-move-and-update.md): another computer, a newer toolkit, a service's new release line
+12. [Add a module for another tool](12-add-a-module.md): a new reverse proxy, login service or other product
 
 ## Conventions
 
@@ -97,7 +98,8 @@ describes the containers, storage, secrets and login
 ([`schemas/service.schema.md`](../../schemas/service.schema.md)).
 `tools/gen_service.py` turns it into Quadlets, Butane fragments, backups, a
 firewall port, and the route and login rules. The login front end is generated
-the same way from `specs/login-frontend/` by `tools/login_frontend.py`.
+the same way from the specs of the two modules the site chose (`python3 tools/modules.py list`) by
+`tools/login_frontend.py`.
 
 **Several servers, never clustered.** Each server is an entry under `hosts` in
 the site file, with its own storage, network and limits. One marked as not

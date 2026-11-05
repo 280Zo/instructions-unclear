@@ -123,6 +123,14 @@ vms: []
 #       - name: backups           # maps to: NFS_MOUNT_NAME (lowercase letters/digits)
 #         export: /mnt/pool/backups   # maps to: NFS_EXPORT
 
+# --- Login front end: which product fills each part (ASK; no default) ---
+# Run `python3 tools/modules.py list` to see the modules installed, what each provides and needs, and
+# what it pairs with. Name the module (the skill folder), for example an ingress-<product> and an
+# authgw-<product>.
+login_frontend:
+  ingress: ASK
+  auth_gateway: ASK
+
 # --- Edge layer (on the edge VM) ---
 edge:
   vm: edge                      # the VM (from vms) that runs the login front end; must be on an always_on host
@@ -173,7 +181,7 @@ services: []
 #         target_env: MODEL_API
 #     api_skip_regex:             # paths desktop/mobile clients call directly  maps to: API_SKIP_REGEX
 #       - "^/api/.*$"
-#     login: authentik            # authentik | app-only (record why)
+#     login: gateway              # gateway | app-only (record why)
 #     groups: [family]            # Authentik groups that may open it (none: every user)
 #     redirects: [{path: /.well-known/carddav, to: /dav/}]   # answered by Traefik with https
 #     section: Relationships      # dashboard heading the app is listed under

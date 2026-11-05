@@ -19,8 +19,8 @@ error that names it.
 | `gid` | no | Defaults to `uid`. Same range and uniqueness as `uid`. |
 | `extra_groups` | no | Shared groups the user joins (names only). |
 | `title`, `description` | no | Plain text. `title` defaults to `name`. |
-| `login` | yes | `authentik` (route and rules behind the login page) or `app-only` (needs `login_reason`, one sentence; with a `hostname` it gets an HTTPS route without the login page and an Authentik dashboard link, without one no route). |
-| `hostname` | with `authentik`; optional with `app-only` | One name under the site domain (no dots). Needs a container that publishes. |
+| `login` | yes | `gateway` (route and rules behind the login page) or `app-only` (needs `login_reason`, one sentence; with a `hostname` it gets an HTTPS route without the login page and an Authentik dashboard link, without one no route). |
+| `hostname` | with `gateway`; optional with `app-only` | One name under the site domain (no dots). Needs a container that publishes. |
 | `api_paths` | no | Regular expressions for paths clients call directly (skip the login). Must compile. |
 | `port` | with a publisher | Host port, 1024-65535. |
 | `bind` | no | `vm_ip` (default; the VM's address from `site.yaml`) or `loopback` (`127.0.0.1`, no firewall port). |
@@ -76,7 +76,7 @@ Every container also gets `NoNewPrivileges=true`, `DropCapability=ALL`,
 `<out>/rendered/<service>.bu`, `<service>-port.bu` (unless `bind: loopback`),
 `<service>-backup-<container>.bu` per `local-db` volume,
 `<service>-backup-files.bu` if any `local` volume, `<service>-route.bu` plus
-route and blueprint files when `login: authentik`, `<out>/secrets.md` (a table of the secrets, then
+route and gateway rules files when `login: gateway`, `<out>/secrets.md` (a table of the secrets, then
 the commands), `<out>/ids.md`, `<out>/backups.md` (what is backed up, when, where, how to restore) and
 `<out>/file-server.md` (one table of the folders to make on the
 file server: user, group, mode).

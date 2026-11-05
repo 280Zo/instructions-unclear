@@ -1,0 +1,25 @@
+capability: auth_gateway
+product: Authentik
+summary: Login page, users, groups and per-app access rules on the login front end VM. A reverse proxy asks it whether to let a request through (forward auth).
+provides:
+  - forward_auth_endpoint
+  - user_directory
+  - groups
+  - per_app_access_rules
+  - app_dashboard
+  - sign_up_page
+  - social_sign_in
+needs:
+  - ingress
+  - database
+pairs_with:
+  - module: ingress-traefik
+    tested: true
+    how: The embedded outpost answers Traefik's forwardAuth requests; each app gets a proxy provider and an application in generated rules files.
+spec: spec.yaml
+code: authgw.authentik
+notes: >-
+  Runs as server, worker and a PostgreSQL container in one service spec, with rules files (Authentik
+  calls them blueprints) that the generator writes from the services' specs and the site file.
+  Break-glass: if it is down, the apps keep running and are reached through an SSH tunnel to the
+  app's own VM (guide 8).

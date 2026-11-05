@@ -130,7 +130,7 @@ def cmd_call(ws: Path, site: dict, args) -> int:
         raise ApiError(f"method must be one of {', '.join(METHODS)}")
     if not PATH.match(args.path) or SNEAKY.search(args.path):
         raise ApiError("path must start with / and use plain URL characters (no encoded or .. segments)")
-    if spec.get("login") == "authentik":
+    if spec.get("login") == "gateway":
         allowed = spec.get("api_paths") or []
         if not any(re.search(rx, args.path.split("?", 1)[0]) for rx in allowed):
             raise ApiError(f"{args.path} is behind the login page; only the app's api_paths are reachable "

@@ -1,4 +1,4 @@
-"""tools/authentik_rules_status.py runs inside the Authentik worker (ak shell). Here
+"""tools/authgw/authentik_rules_status.py runs inside the Authentik worker (ak shell). Here
 Authentik's modules are stand-ins; field names from authentik 2026.8.5
 (blueprints/models.py, blueprints/v1/tasks.py)."""
 import sys
@@ -9,7 +9,7 @@ from hashlib import sha512
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "tools" / "authentik_rules_status.py"
+SCRIPT = ROOT / "tools" / "authgw" / "authentik_rules_status.py"
 
 
 class Instance:
@@ -148,7 +148,7 @@ class RulesStatusTests(unittest.TestCase):
         guide = " ".join((ROOT / "docs" / "guide" / "03-add-a-service.md").read_text().split())
         # As an argument, never through the interactive shell (Django falls back to it).
         self.assertIn('ak shell -c \\"\\$(cat)\\"', guide)
-        self.assertIn("< tools/authentik_rules_status.py", guide)
+        self.assertIn("< tools/authgw/authentik_rules_status.py", guide)
         self.assertIn("sudo sha512sum", guide)
         self.assertIn("sudo find /var/lib/appdata/authentik/blueprints", guide)  # admin can't list it
         self.assertIn("EXPECTED = {", guide)

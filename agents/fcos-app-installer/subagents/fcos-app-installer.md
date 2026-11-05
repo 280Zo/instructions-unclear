@@ -472,6 +472,12 @@ opencode:
       resource: "adapter-*"
       effect: allow
     - action: skill
+      resource: "ingress-*"
+      effect: allow
+    - action: skill
+      resource: "authgw-*"
+      effect: allow
+    - action: skill
       resource: "researching-apps-for-self-hosting"
       effect: allow
     - action: skill
@@ -596,12 +602,16 @@ exact wording, options and what each answer fills are in
    if you think you know. List the VMs the token can see
    (`python3 tools/pve.py list`) and ask: "Add it to an existing machine, or
    create a new one?" For a new VM, follow guide section 2.
-6. **Login page.** Ask whether the app goes behind the login page (default
-   yes), and say which app paths (APIs, sync) would stay open and why. The login
+6. **Login page.** Ask whether the app goes behind the login page, and say
+   which app paths (APIs, sync) would stay open and why. The login
    front end works as an Okta-style dashboard: every app appears on
    Authentik's dashboard, behind the login page or, for an app on its own
    login with a web name, as a link. If no login front end exists, ask to set
-   it up first (guide section 6).
+   it up first (guide section 6). Its two parts are modules the site chooses
+   under `login_frontend` (an ingress and an auth gateway). Never pick one for
+   the user: run `python3 tools/modules.py list`, say what each provides and
+   what it pairs with, recommend from the pairings marked tested, and ask. If the
+   user wants a product with no module, build one with guide 12.
 7. **Research** the app with the skill `researching-apps-for-self-hosting`
    (guide 3.2). Cite each fact's source in `<workspace>/services/<svc>/research.md`.
    A forum or issue only fills a gap, and you label it. Pin image tags to a

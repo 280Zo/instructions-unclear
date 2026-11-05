@@ -243,7 +243,7 @@ class FcosAppInstallerMapTests(unittest.TestCase):
 
     NAME = "fcos-app-installer"
     SKILLS = ["adapter-duckdns", "adapter-generic", "adapter-opnsense", "adapter-proxmox", "adapter-truenas",
-              "researching-apps-for-self-hosting"]
+              "authgw-authentik", "ingress-traefik", "researching-apps-for-self-hosting"]
 
     def test_it_is_declared_and_on_the_map_but_not_generated(self):
         self.assertEqual(generate.DECLARED, {self.NAME: "agents/fcos-app-installer/subagents/fcos-app-installer.md"})

@@ -326,7 +326,7 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(effect(self.text, "edit", "notes/x.md"), "deny")
         self.assertEqual(effect(self.text, "edit", ".opencode/agents/fcos-app-installer.md"), "deny")
         for path in ("templates/base/firewall.bu.tmpl", "tools/render.py", "docs/guide/03-add-a-service.md",
-                     f"{SKILLS_DIR}/adapter-proxmox/adapter.yaml", "specs/login-frontend/traefik.yaml"):
+                     f"{SKILLS_DIR}/adapter-proxmox/adapter.yaml", f"{SKILLS_DIR}/ingress-traefik/spec.yaml"):
             with self.subTest(path=path):
                 self.assertEqual(effect(self.text, "edit", path), "ask")
 

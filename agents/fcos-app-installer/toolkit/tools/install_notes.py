@@ -101,7 +101,7 @@ def render(ws: Path, notes: list[str]) -> str:
         classes = sorted({v.get("class") for v in _volumes(spec)})
         backups = (spec.get("backups") or {}).get("schedule", "daily") if any(c != "nfs" for c in classes) else "none"
         uid = spec.get("uid")
-        out.append(f"| {spec['name']} | {spec.get('vm')} | {_web_name(spec, domain)} | {spec.get('login', 'authentik')} "
+        out.append(f"| {spec['name']} | {spec.get('vm')} | {_web_name(spec, domain)} | {spec.get('login', 'gateway')} "
                    f"| {', '.join(spec.get('groups') or []) or 'every user'} | {spec.get('section', 'none')} "
                    f"| {spec.get('port', 'none')} | {uid}/{spec.get('gid', uid)} | {', '.join(classes) or 'none'} "
                    f"| {backups} |")

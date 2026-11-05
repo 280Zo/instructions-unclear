@@ -292,12 +292,11 @@ at all is an error, not a pass.
 | Folder | Holds |
 |---|---|
 | `.opencode/` | the agents (`fcos-app-installer`, the main one for Fedora CoreOS; `adapter-drafter`, its helper that drafts adapters) and the `/add-service` command, written by rulesync |
-| `.opencode/skills/` | skills: one adapter per provider (its owner steps, notes and host scripts), the generic fallback, and `researching-apps-for-self-hosting` |
+| `.opencode/skills/` | skills: one adapter per provider (its owner steps, notes and host scripts), the generic fallback, `researching-apps-for-self-hosting`, and one module per product the login front end can use (`ingress-*`, `authgw-*`): its data, spec and templates. List them with `python3 tools/modules.py list` |
 | `host-scripts.sha256` | the pinned checksum of every host script; the agent's rules keep it from editing this file |
 | `AGENTS.md` | rules that don't depend on the OS: how owner steps are given, how secrets and private values are handled; written by rulesync |
 | `docs/guide/` | the procedure, provider-neutral |
 | `schemas/` | the service spec's field reference |
-| `specs/login-frontend/` | Traefik and Authentik as service specs |
 | `templates/` | Butane and Quadlet building blocks |
 | `tools/` | the desktop-side tools |
 | `tests/` | tests, including the publish and wording checks |
@@ -318,7 +317,7 @@ Install. Follow [Install](#install) with the user's folder, and ask before each
 step: the installer copies files and rulesync writes the agent files, so both
 change the user's disk. Run the dry run first and show the user its list,
 especially any "changed" line, since those files get replaced. The group installs
-the installer agent, `adapter-drafter`, the `/add-service` command, 6 skills and
+the installer agent, `adapter-drafter`, the `/add-service` command, 8 skills and
 2 rules, and writes no MCP settings, so it can't replace the user's MCP list. It
 is not part of the `default` group; it needs `--output-roots`, never `--global`.
 To verify, ask the user to start OpenCode in the new folder, pick

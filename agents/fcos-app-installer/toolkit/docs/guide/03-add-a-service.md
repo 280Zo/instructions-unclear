@@ -289,7 +289,7 @@ lacks the worker's extra group and can't list the rules folder:
 
 ```fish
 # desktop (fish)
-python3 tools/vmssh.py run <login-vm> -- 'cd / && u=authentik && r=/run/user/$(id -u $u) && sudo -u $u XDG_RUNTIME_DIR=$r systemctl --user restart authentik-worker.service && for i in $(seq 30); do sudo -u $u XDG_RUNTIME_DIR=$r podman exec authentik-worker true 2>/dev/null && break; sleep 5; done && { printf "EXPECTED = {"; for f in $(sudo find /var/lib/appdata/authentik/blueprints -maxdepth 1 -name "*.yaml" | sort); do printf "\"custom/%s\": \"%s\", " "$(basename "$f")" "$(sudo sha512sum "$f" | cut -d" " -f1)"; done; echo "}"; cat; } | sudo -u $u XDG_RUNTIME_DIR=$r podman exec -i authentik-worker sh -c "exec ak shell -c \"\$(cat)\""' < tools/authentik_rules_status.py
+python3 tools/vmssh.py run <login-vm> -- 'cd / && u=authentik && r=/run/user/$(id -u $u) && sudo -u $u XDG_RUNTIME_DIR=$r systemctl --user restart authentik-worker.service && for i in $(seq 30); do sudo -u $u XDG_RUNTIME_DIR=$r podman exec authentik-worker true 2>/dev/null && break; sleep 5; done && { printf "EXPECTED = {"; for f in $(sudo find /var/lib/appdata/authentik/blueprints -maxdepth 1 -name "*.yaml" | sort); do printf "\"custom/%s\": \"%s\", " "$(basename "$f")" "$(sudo sha512sum "$f" | cut -d" " -f1)"; done; echo "}"; cat; } | sudo -u $u XDG_RUNTIME_DIR=$r podman exec -i authentik-worker sh -c "exec ak shell -c \"\$(cat)\""' < tools/authgw/authentik_rules_status.py
 ```
 
 Expected: one `ok` line per rules file and exit status 0. If a file reports

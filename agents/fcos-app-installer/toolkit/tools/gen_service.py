@@ -26,6 +26,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import modules  # noqa: E402
 from render import render  # noqa: E402
 from secret_scan import scan_text  # noqa: E402
 
@@ -370,93 +371,28 @@ def _has_cycle(graph: dict) -> bool:
     return any(visit(node) for node in graph)
 
 
-GROUP = re.compile(r"[a-z][a-z0-9-]{0,62}")
-MAX_GROUPS = 10
-
-
-def _check_groups(spec, errors):
-    """Authentik groups that may open the app (none listed: every Authentik user may)."""
-    if "groups" not in spec:
-        return
-    groups = spec["groups"]
-    if (not isinstance(groups, list) or not groups or len(groups) > MAX_GROUPS
-            or not all(isinstance(g, str) and GROUP.fullmatch(g) for g in groups) or len(set(groups)) != len(groups)):
-        errors.append(f"groups must be a list of 1 to {MAX_GROUPS} different lowercase names (letters, digits, -)")
-    if spec.get("login") != "authentik":
-        # Its route skips the login page: a binding would only hide the dashboard link.
-        errors.append("groups only work for apps behind the login page (login: authentik)")
-
-
-REDIRECT_PATH = re.compile(r"/[A-Za-z0-9._~/-]{0,200}")
-MAX_REDIRECTS = 10
-
-
-def _matches(regex, path) -> bool:
+def _frontend_code(spec, site, errors):
+    """(ingress code, gateway code) when the site chose its login front end modules. A spec that
+    uses the login page or a key only they give meaning to needs them; there is no default."""
+    needs = spec.get("login") == "gateway" or any(k in spec for k in ("groups", "icon", "section", "redirects"))
+    if not needs:
+        return None, None
     try:
-        return re.search(regex, path) is not None
-    except (re.error, TypeError):
-        return False
-
-
-def _check_redirects(spec, errors):
-    """Paths Traefik answers itself with an https redirect (an app whose own redirect
-    builds http:// behind the proxy, e.g. Monica's .htaccess for /.well-known/carddav)."""
-    if "redirects" not in spec:
-        return
-    items = spec["redirects"]
-    ok = isinstance(items, list) and 0 < len(items) <= MAX_REDIRECTS and all(
-        isinstance(i, dict) and set(i) == {"path", "to"}
-        and all(isinstance(i[k], str) and REDIRECT_PATH.fullmatch(i[k]) for k in ("path", "to")) for i in items)
-    if not ok:
-        errors.append(f"redirects must be a list of 1 to {MAX_REDIRECTS} {{path, to}} entries, each a path "
-                      "starting with / (letters, digits, . _ ~ / -)")
-    elif not spec.get("hostname"):
-        errors.append("redirects need a hostname (they are answered on the app's web name)")
-    else:
-        paths = [i["path"] for i in items]
-        if len(set(paths)) != len(paths):
-            errors.append("redirects: each path at most once")
-        for item in items:
-            if item["to"] == item["path"]:
-                errors.append(f"redirects: {item['path']} would redirect to itself")
-            if item["path"].startswith("/outpost.goauthentik.io"):
-                errors.append("redirects: paths under /outpost.goauthentik.io belong to the login page")
-            # Behind the login page, a client that follows the redirect must not land on the login.
-            if spec.get("login") == "authentik" and not any(
-                    _matches(rx, item["to"]) for rx in spec.get("api_paths") or []):
-                errors.append(f"redirects: {item['to']} is behind the login page; add it to api_paths "
-                              "or redirect to a path that is")
-
-
-ICON = re.compile(r"[a-z0-9][a-z0-9-]{0,62}\.(svg|png|webp|jpg)")
-
-
-def _check_icon(spec, errors):
-    """The app's logo: a file in the service's workspace folder, stored on the login front
-    end and served by Authentik itself (docs.goauthentik.io/customize/file-picker/)."""
-    if "icon" in spec and not (isinstance(spec["icon"], str) and ICON.fullmatch(spec["icon"])):
-        errors.append("icon must be a file name in the service's folder (letters, digits, -; .svg .png .webp .jpg)")
-    if "icon" in spec and not spec.get("hostname"):
-        errors.append("icon needs a hostname (it is shown on the app's dashboard entry)")
-
-
-SECTION = re.compile(r"[A-Za-z0-9][A-Za-z0-9 &'.,-]{0,49}")
-
-
-def _check_section(spec, errors):
-    """The dashboard section (Authentik's application group): a short plain heading."""
-    if "section" in spec and not (isinstance(spec["section"], str) and SECTION.fullmatch(spec["section"])):
-        errors.append("section must be a short heading (letters, digits, spaces, & ' . , -; at most 50)")
+        names = modules.chosen(site)
+    except SpecError as error:
+        errors.append(str(error))
+        return None, None
+    return modules.code(names["ingress"]), modules.code(names["auth_gateway"])
 
 
 def _check_login(spec, site, publisher, errors):
-    _check_groups(spec, errors)
-    _check_icon(spec, errors)
-    _check_section(spec, errors)
-    _check_redirects(spec, errors)
+    ingress, gateway = _frontend_code(spec, site, errors)
+    if gateway is not None:
+        gateway.check_spec(spec, errors)
+        ingress.check_spec(spec, gateway.reserved_paths(), errors)
     login = spec.get("login")
-    if login not in ("authentik", "app-only"):
-        errors.append("login is required: authentik (behind the login page) or app-only (with login_reason)")
+    if login not in ("gateway", "app-only"):
+        errors.append("login is required: gateway (behind the login page) or app-only (with login_reason)")
     elif login == "app-only":
         if not _plain(spec.get("login_reason"), human=True):
             errors.append("login app-only needs login_reason, a sentence on why there is no login in front")
@@ -470,17 +406,18 @@ def _check_login(spec, site, publisher, errors):
                 errors.append("site.yaml: domain is missing or invalid")
     else:
         if not publisher:
-            errors.append("login authentik needs one container that publishes a port")
+            errors.append("login gateway needs one container that publishes a port")
         if not _text(spec.get("hostname"), HOST_LABEL, 63):
-            errors.append("login authentik needs hostname, one name under the site domain (no dots)")
+            errors.append("login gateway needs hostname, one name under the site domain (no dots)")
         if not _text(site.get("domain"), DOMAIN, 253):
             errors.append("site.yaml: domain is missing or invalid")
         edge = site.get("edge") if isinstance(site.get("edge"), dict) else {}
-        for who in ("traefik", "authentik"):
-            entry = edge.get(who) if isinstance(edge.get(who), dict) else {}
-            for key in ("uid", "gid"):
-                if not _int(entry.get(key), MIN_ID, MAX_ID):
-                    errors.append(f"site.yaml: edge.{who}.{key} is missing or invalid")
+        if ingress is not None:
+            for who in (modules.service_name(modules.chosen(site)[k]) for k in ("ingress", "auth_gateway")):
+                entry = edge.get(who) if isinstance(edge.get(who), dict) else {}
+                for key in ("uid", "gid"):
+                    if not _int(entry.get(key), MIN_ID, MAX_ID):
+                        errors.append(f"site.yaml: edge.{who}.{key} is missing or invalid")
     paths = spec.get("api_paths", [])
     if not isinstance(paths, list):
         errors.append("api_paths must be a list of regular expressions")
@@ -957,7 +894,7 @@ def _backup_fragment(spec, site, ctr, vol, base, calendar, keep) -> dict:
 
 
 def route_backend(spec: dict, site: dict) -> str:
-    """The address Traefik forwards to: the VM's IP, or 127.0.0.1 for a loopback service."""
+    """The address the ingress forwards to: the VM's IP, or 127.0.0.1 for a loopback service."""
     if spec.get("bind", "vm_ip") == "loopback":
         return f"http://127.0.0.1:{spec['port']}"
     return f"http://{_vm_entry(site, spec['vm'])['ip']}:{spec['port']}"
@@ -965,72 +902,30 @@ def route_backend(spec: dict, site: dict) -> str:
 
 def has_route(spec: dict) -> bool:
     """Behind the login page, or on its own login with a hostname (HTTPS, no login page)."""
-    return spec.get("login") == "authentik" or (spec.get("login") == "app-only" and "hostname" in spec)
+    return spec.get("login") == "gateway" or (spec.get("login") == "app-only" and "hostname" in spec)
 
 
 def route_texts(spec: dict, site: dict) -> tuple[str, str]:
-    """(Traefik route file, Authentik blueprint) for a validated, routed spec.
+    """(route file, gateway rules file) for a validated, routed spec, written by the chosen modules.
 
-    login authentik: a route through the login middleware, and a blueprint with
-    the forward-auth provider and its application. Each api_paths regex goes on
-    its own line of the skip_path_regex block, indented to the block's level
-    (an unindented line would end the block).
-    login app-only with a hostname: a route without the login, and a blueprint
-    with only a dashboard link (an application with no provider).
+    login gateway: a route through the auth gateway, and rules that give the app a provider and an
+    application. login app-only with a hostname: a route without the login, and a dashboard link only.
     """
+    names = modules.chosen(site)
+    ingress, gateway = modules.code(names["ingress"]), modules.code(names["auth_gateway"])
     svc = spec["name"]
     values = {"ROUTE_NAME": svc, "ROUTE_TITLE": spec.get("title", svc), "ROUTE_BACKEND": route_backend(spec, site),
               "ROUTE_HOST": f"{spec['hostname']}.{site['domain']}",
-              "API_SKIP_REGEX": "\n        ".join(spec.get("api_paths") or []),
-              "ACCESS_ENTRIES": _access_entries(svc, spec.get("groups") or [])}
-    values.update(_redirect_blocks(svc, values["ROUTE_HOST"], spec.get("redirects") or []))
-    values["SECTION_LINE"] = (f'      group: "{spec["section"]}"' if spec.get("section")
-                              else "      # section: none (listed under Ungrouped)")
-    values["ICON_LINE"] = (f'      icon: "{icon_ref(spec)}"' if spec.get("icon")
-                           else "      # icon: none (Authentik shows the app's initials)")
-    if spec["login"] == "authentik":
-        return _fill("edge/route.yml.tmpl", values), _fill("edge/authentik-app.blueprint.yaml.tmpl", values)
-    if spec["login"] == "app-only":
-        return _fill("edge/route-open.yml.tmpl", values), _fill("edge/authentik-bookmark.blueprint.yaml.tmpl", values)
-    raise SpecError(f"login {spec['login']!r} has no route kind")  # fail closed on a new value
+              "API_SKIP_REGEX": "\n        ".join(spec.get("api_paths") or [])}
+    values.update(ingress.redirect_blocks(svc, values["ROUTE_HOST"], spec.get("redirects") or []))
+    kind = {"gateway": "gateway", "app-only": "open"}.get(spec["login"])
+    if kind is None:
+        raise SpecError(f"login {spec['login']!r} has no route kind")  # fail closed on a new value
+    return (ingress.route_text(kind, names["auth_gateway"], values), gateway.binding_text(spec, values, kind))
 
-
-def _redirect_blocks(svc: str, host: str, redirects: list) -> dict:
-    """Traefik routers and redirectRegex middlewares (doc.traefik.io, middlewares/redirectregex)
-    for each redirect; above the app's routers (10) and its outpost path (15)."""
-    routers, middlewares = [], []
-    for n, item in enumerate(redirects):
-        name = f"{svc}-redirect-{n}"
-        routers.append(f'    "{name}":\n      rule: "Host(`{host}`) && Path(`{item["path"]}`)"\n'
-                       f'      entryPoints: [websecure]\n      middlewares: ["{name}"]\n'
-                       f'      service: "{svc}"\n      priority: 20')
-        middlewares.append(f'    "{name}":\n      redirectRegex:\n        regex: "^.*$"\n'
-                           f'        replacement: "https://{host}{item["to"]}"\n        permanent: true')
-    return {"REDIRECT_ROUTERS": "\n".join(routers) if routers else "    # redirects: none",
-            "REDIRECT_MIDDLEWARES": ("  middlewares:\n" + "\n".join(middlewares)) if middlewares
-            else "  # middlewares: none"}
-
-
-def icon_ref(spec: dict) -> str:
-    """The icon's media path as Authentik references it (/data/media/public/<this>)."""
-    return f"app-icons/{spec['name']}{Path(spec['icon']).suffix}"
-
-
-def _access_entries(svc: str, groups: list) -> str:
-    """Groups and their bindings are written by the login front end's access.yaml only
-    (one creator per group: two rules files creating the same unique name race)."""
-    if groups:
-        # Until access.yaml has bound the groups, nobody gets in (policy engine "any": a member's
-        # group binding still passes); never an app open to every account in between (review).
-        return (f"  # groups {', '.join(groups)}: bound in access.yaml (tools/login_frontend.py)\n"
-                f"  - model: authentik_policies_expression.expressionpolicy\n    id: deny-{svc}\n"
-                f"    identifiers:\n      name: \"deny-until-bound-{svc}\"\n    attrs:\n      expression: return False\n"
-                f"  - model: authentik_policies.policybinding\n    identifiers:\n      target: !KeyOf app-{svc}\n"
-                f"      policy: !KeyOf deny-{svc}\n    attrs:\n      order: 99")
-    return "  # groups: none listed, so every Authentik user may open it"
 
 def _route_files(spec, site) -> dict:
-    """The route (and blueprint), written next to the service for review; the
+    """The route (and gateway rules), written next to the service for review; the
     login front end (tools/login_frontend.py) places them on its VM."""
     svc = spec["name"]
     route, blueprint = route_texts(spec, site)

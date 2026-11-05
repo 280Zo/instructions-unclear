@@ -17,7 +17,7 @@ FAKE = "fake-abcdefghijklmnopqrstuvwxyz-0123456789"
 
 SITE = "domain: example.duckdns.org\n"
 SPEC = """name: monica
-login: authentik
+login: gateway
 hostname: monica
 api_paths:
   - "^/api/.*$"

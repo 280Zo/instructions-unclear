@@ -6,7 +6,7 @@ uid: 3101
 extra_groups: [ai-projects]
 title: OpenCode
 description: OpenCode server (example)
-login: authentik
+login: gateway
 hostname: opencode
 api_paths: ["^/api/.*$"]
 port: 4096

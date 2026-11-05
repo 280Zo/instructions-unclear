@@ -30,6 +30,7 @@ opencode:
     - {action: "skill", resource: "audit-augmentation", effect: deny}
     - {action: "skill", resource: "audit-context-building", effect: deny}
     - {action: "skill", resource: "audit-prep-assistant", effect: deny}
+    - {action: "skill", resource: "authgw-authentik", effect: deny}
     - {action: "skill", resource: "autogpt", effect: deny}
     - {action: "skill", resource: "awq", effect: deny}
     - {action: "skill", resource: "axolotl", effect: deny}
@@ -116,6 +117,7 @@ opencode:
     - {action: "skill", resource: "image-generation", effect: deny}
     - {action: "skill", resource: "image-treatment", effect: deny}
     - {action: "skill", resource: "implement-patch", effect: deny}
+    - {action: "skill", resource: "ingress-traefik", effect: deny}
     - {action: "skill", resource: "instructor", effect: deny}
     - {action: "skill", resource: "interpreting-culture-index", effect: deny}
     - {action: "skill", resource: "interview-coach", effect: deny}

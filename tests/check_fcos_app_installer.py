@@ -20,7 +20,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 FOLDER = ROOT / "agents" / "fcos-app-installer"
 SKILLS = ["adapter-duckdns", "adapter-generic", "adapter-opnsense", "adapter-proxmox", "adapter-truenas",
-          "researching-apps-for-self-hosting"]
+          "authgw-authentik", "ingress-traefik", "researching-apps-for-self-hosting"]
 AGENTS = ["adapter-drafter", "fcos-app-installer"]
 problems = []
 
@@ -56,7 +56,7 @@ def main(argv):
     check((target / "AGENTS.md").is_file(), "the rules are in AGENTS.md")
     check(not (target / ".opencode" / "opencode.json").exists(), "no opencode.json (no instructions list)")
     found = sorted(p.parent.name for p in (target / ".opencode" / "skills").rglob("SKILL.md"))
-    check(found == SKILLS, "the six skills are siblings under .opencode/skills, and the only skills")
+    check(found == SKILLS, "the eight skills are siblings under .opencode/skills, and the only skills")
     agents = sorted(p.stem for p in (target / ".opencode" / "agents").glob("*.md"))
     check(agents == AGENTS, "the only agents are the installer and its helper")
     check(sorted(p.stem for p in (target / ".opencode" / "commands").glob("*.md")) == ["add-service"],

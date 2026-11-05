@@ -4,7 +4,7 @@ name: monica
 vm: apps
 uid: 3110
 title: Monica
-login: authentik
+login: gateway
 hostname: monica
 api_paths: ["^/dav/.*$", "^/\\.well-known/(carddav|caldav)$"]
 port: 8110

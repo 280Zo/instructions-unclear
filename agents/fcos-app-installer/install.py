@@ -31,7 +31,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 # The only top-level entries of toolkit/ that get installed. Anything else in toolkit/ is an error,
 # so a stray file can never be copied by accident.
-INSTALL_LIST = ("tools", "templates", "docs", "schemas", "specs", "tests", "site.example.yaml",
+INSTALL_LIST = ("tools", "templates", "docs", "schemas", "tests", "site.example.yaml",
                 "host-scripts.sha256", ".gitignore")
 SKIP_DIRS = {"__pycache__"}
 SECRET_SUFFIXES = (".token", ".key", ".pem", ".p12", ".pfx", ".p8", ".jks", ".keystore", ".kdbx", ".cred",
