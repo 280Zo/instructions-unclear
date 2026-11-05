@@ -13,11 +13,12 @@ fi
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 values="$(realpath "$1")"
-out="/tmp/opencode/render/$(basename "$values" .values)"
-gen="$out-generated"
+# A private folder made for this run: a fixed path in a shared /tmp could be pre-created by someone else.
+work="$(mktemp -d "${TMPDIR:-/tmp}/fcos-validate.XXXXXX")"
+out="$work/$(basename "$values" .values)"
+gen="$work/$(basename "$values" .values)-generated"
 site="$root/tests/fixtures/site.yaml"
 
-rm -rf "$out" "$gen"
 mkdir -p "$out" "$gen"
 failures=0
 
@@ -59,7 +60,8 @@ else
 fi
 
 if [[ $failures -gt 0 ]]; then
-    echo "validate: $failures build(s) failed"
+    echo "validate: $failures build(s) failed; the files are kept in $work"
     exit 1
 fi
+rm -rf "$work"
 echo "validate: all builds passed"

@@ -13,8 +13,8 @@ Usage:
   install.py <folder> --check    dry run that exits 1 when anything would change
 
 It copies a fixed list of top-level entries and nothing else, refuses links and common secret
-file names (it never reads a file's contents for secrets), never deletes, and never touches files that are not on that list (.opencode/,
-AGENTS.md, your workspace, your own files). A file that is on the list and differs from the
+file names (it never reads a file's contents for secrets), never deletes, and never touches
+files that are not on that list (.opencode/, AGENTS.md, your workspace, your own files). A file that is on the list and differs from the
 toolkit's copy IS replaced, including a README.md or .gitignore of yours at the folder's top and
 edits you made to a toolkit file; the dry run lists every such file as "changed" first, so read it
 before adding --apply. Everything is checked before anything is written; a failure while writing
@@ -35,14 +35,15 @@ INSTALL_LIST = ("tools", "templates", "docs", "schemas", "specs", "tests", "site
                 "host-scripts.sha256", ".gitignore")
 SKIP_DIRS = {"__pycache__"}
 SECRET_SUFFIXES = (".token", ".key", ".pem", ".p12", ".pfx", ".p8", ".jks", ".keystore", ".kdbx", ".cred",
-                   ".tfstate", ".tfstate.backup", ".gpg", ".asc")
+                   ".tfstate", ".tfstate.backup", ".gpg", ".asc", ".keytab", ".secret", ".secrets")
 SECRET_PREFIXES = (".env", "id_rsa", "id_ed25519", "id_ecdsa", "id_dsa")
 SECRET_NAMES = {"credentials.json", ".credentials.json", "auth.json", ".claude.json", ".npmrc", ".netrc",
                 ".git-credentials", ".pgpass", ".htpasswd", ".dockercfg", ".boto", "kubeconfig", "known_hosts",
-                "service-account.json", "oauth.json", "terraform.tfvars"}
+                "service-account.json", "oauth.json", "terraform.tfvars", ".pypirc"}
 # A file whose whole name (before the extension) is one of these; "secret_scan.py" is not.
 SECRET_STEMS = {"secret", "secrets", "token", "tokens", "password", "passwords", "passwd", "api_key", "apikey",
-                "api-key", "credentials", "credential"}
+                "api-key", "credentials", "credential", "vault-password", "vault_password",
+                "service_account", "service-account", "kubeconfig"}
 SECRET_FOLDERS = {"secrets", ".ssh", ".aws", ".gnupg"}
 
 

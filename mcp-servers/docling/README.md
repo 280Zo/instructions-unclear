@@ -78,4 +78,4 @@ OpenCode names each tool `<server name>_<tool>`, e.g. `docling_convert_...`. Per
 
 ## Origin
 
-Connection template and rules written for this repo by 280Zo, based on [docling-project/docling-mcp](https://github.com/docling-project/docling-mcp), PyPI package `docling-mcp` 3.3.0 (authors from IBM Research and Red Hat, listed in its PyPI metadata). No upstream files are copied here; the server runs from PyPI at the pinned version. Upstream is MIT according to its PyPI metadata, checked 2026-11-05. This repo's own files are [MIT](../../LICENSE).
+Connection template and rules written for this repo by 280Zo, based on [docling-project/docling-mcp](https://github.com/docling-project/docling-mcp), PyPI package `docling-mcp` 3.3.0. No upstream files are copied here; the server runs from PyPI at the pinned version. Upstream is [MIT](https://github.com/docling-project/docling-mcp/blob/main/LICENSE), copyright 2025 Docling Project. Checked 2026-11-05. This repo's own files are [MIT](../../LICENSE).

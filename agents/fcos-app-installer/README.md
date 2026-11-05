@@ -162,7 +162,7 @@ Three habits keep those guard rails working:
   request waiting at that moment.
 - The workspace rule is broad on purpose: the agent may work in any folder whose
   path contains "fcos-" without asking. Keep that
-  word for install folders such as `~/fcos-installs/<place>/` and don't use it
+  word for install folders such as `~/fcos-<place>/` and don't use it
   for unrelated folders. `secrets/` inside such a folder stays off limits.
 
 The agent starts only its own `adapter-drafter` helper. A subagent runs with

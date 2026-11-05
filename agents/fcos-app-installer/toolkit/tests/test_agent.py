@@ -402,8 +402,17 @@ class ReviewFixTests(unittest.TestCase):
         self.assertIn("Hand work only to `adapter-drafter`", prompt)
 
     def test_removing_its_own_scratch_file_is_allowed_and_extra_arguments_are_not(self):
-        self.assertEqual(effect(self.text, "shell", "rm -f /tmp/opencode/apply-edge.sh"), "allow")
-        for command in ("rm -f /tmp/opencode/a /etc/passwd", "rm -f /tmp/opencode/a b",
+        for name in ("apply-edge.sh", "apply-login-frontend.sh", "apply-monica.sh"):
+            self.assertEqual(effect(self.text, "shell", f"rm -f /tmp/opencode/{name}"), "allow")
+        # Nothing but a generated apply script: not a bare glob, not another scratch file.
+        for command in ("rm -f /tmp/opencode/*", "rm -f /tmp/opencode/other.txt", "rm -f /tmp/opencode/a*"):
+            with self.subTest(command=command):
+                self.assertNotEqual(effect(self.text, "shell", command), "allow")
+        for command in (
+                # An expansion the shell makes after the rules matched can split one word into two:
+                "rm -f /tmp/opencode/apply-x$PS4/etc/passwd", "rm -f /tmp/opencode/apply-x$({printf,'\\040/etc/passwd'})",
+                "rm -f /tmp/opencode/apply-x`echo /etc/passwd`", "rm -f /tmp/opencode/apply-x{,/../../etc/passwd}",
+                "rm -f /tmp/opencode/apply-x$(echo)", "rm -f /tmp/opencode/apply-x'/etc/passwd'","rm -f /tmp/opencode/a /etc/passwd", "rm -f /tmp/opencode/a b",
                         "rm -f /tmp/opencode/*..*", "rm -f /tmp/opencode/a ../b",
                         # The shell splits on a tab or $IFS as on a space, and a redirect truncates a file.
                         "rm -f /tmp/opencode/a\t/etc/passwd", "rm -f /tmp/opencode/a${IFS}/etc/passwd",
@@ -420,10 +429,10 @@ class ReviewFixTests(unittest.TestCase):
         self.assertNotIn("git add -A", section)
         # Without a path, status and diff list the whole enclosing checkout, which add . does not stage.
         self.assertIn("git status .", section)
-        self.assertIn("git diff .", section)
+        self.assertIn("git diff --cached .", section)  # plain `git diff .` shows nothing once staged
         self.assertNotIn("show the same files", section)
         self.assertEqual(effect(self.text, "shell", "git status ."), "allow")
-        self.assertEqual(effect(self.text, "shell", "git diff ."), "allow")
+        self.assertEqual(effect(self.text, "shell", "git diff --cached ."), "allow")
         # The rules really do deny a commit message holding any of them.
         for message in ("git commit -m 'Update host-scripts list'", "git commit -m 'drop .opencode'",
                         "git commit -m 'refresh the .sha256 list'"):

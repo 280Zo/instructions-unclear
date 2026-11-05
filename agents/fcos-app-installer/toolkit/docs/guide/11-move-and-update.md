@@ -12,7 +12,7 @@ computer. The old computer's agent access is never copied.
 
 1. Install the toolkit on the new computer and run its checks there:
    `python3 tools/check_requirements.py`, then guide 10 (`10-trial-run.md`).
-2. Copy your workspace folders (for example `~/fcos-installs/`) to the new
+2. Copy your workspace folders (for example `~/fcos-<place>/`) to the new
    computer, **without** each workspace's `secrets/` folder. It holds the
    hypervisor token and the agent's VM keys, which belong to the old computer.
 3. Point the agent at the workspace once:

@@ -44,7 +44,7 @@ opencode:
       resource: "ssh-keygen -R *"
       effect: allow
     - action: shell
-      resource: "rm -f /tmp/opencode/*"
+      resource: "rm -f /tmp/opencode/apply-*"
       effect: allow
     # Web checks go through tools/http_check.py (status only, writes nothing);
     # curl and rg ask (too many ways to send data, or to search into secrets/).
@@ -157,12 +157,26 @@ opencode:
     - action: shell
       resource: "rm -f /tmp/opencode/* ?*"
       effect: deny
-    # The shell splits on a tab or $IFS as it does on a space, and a redirect truncates a file.
+    # Only a generated apply script is removed, by a plain name. The shell splits one word into two
+    # on a tab, on $IFS or $PS4, after a brace expansion or after a command substitution, and a
+    # redirect truncates a file, so none of those characters may appear.
     - action: shell
       resource: "rm -f /tmp/opencode/*\t*"
       effect: deny
     - action: shell
-      resource: "rm -f /tmp/opencode/*IFS*"
+      resource: "rm -f /tmp/opencode/*$*"
+      effect: deny
+    - action: shell
+      resource: "rm -f /tmp/opencode/*`*"
+      effect: deny
+    - action: shell
+      resource: "rm -f /tmp/opencode/*{*"
+      effect: deny
+    - action: shell
+      resource: "rm -f /tmp/opencode/*(*"
+      effect: deny
+    - action: shell
+      resource: "rm -f /tmp/opencode/*'*"
       effect: deny
     - action: shell
       resource: "rm -f /tmp/opencode/*>*"
@@ -757,8 +771,9 @@ those words out of the message. Stage a change to the adapters or to your own
 files with `git add .`, which names no path and stays inside the toolkit's
 folder (the `-A` form would stage the whole checkout when the toolkit is a
 subfolder of one), and say so in the file list you show. Check what is staged with
-`git status .` and `git diff .`: without the `.` they list the whole checkout,
-including files `git add .` did not stage.
+`git status .` and `git diff --cached .`: without the `.` they list the whole
+checkout, including files `git add .` did not stage, and plain `git diff .`
+shows nothing once a file is staged.
 
 ## Final report
 

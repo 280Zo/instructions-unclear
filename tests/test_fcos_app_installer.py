@@ -215,7 +215,8 @@ class InstallerRefusalTests(InstallerBase):
                      "tools/password.txt", "docs/.aws/credentials", "docs/.git-credentials", "docs/.pgpass",
                      "docs/.htpasswd", "docs/.dockercfg", "docs/.boto", "docs/kubeconfig", "docs/service-account.json",
                      "docs/oauth.json", "docs/terraform.tfvars", "docs/x.tfstate.backup", "docs/x.p8", "docs/x.jks",
-                     "docs/x.keystore", "docs/x.asc", "docs/x.gpg", "docs/known_hosts", "docs/.gnupg/pubring.kbx"):
+                     "docs/x.keystore", "docs/x.asc", "docs/x.gpg", "docs/known_hosts", "docs/.gnupg/pubring.kbx", "tools/.pypirc", "tools/x.keytab", "tools/x.secret",
+                     "tools/vault-password.txt", "tools/kubeconfig.yaml", "tools/service_account.json"):
             with self.subTest(name=name):
                 path = self.source / name
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -462,6 +463,10 @@ class GroupTests(unittest.TestCase):
                              ("tests/README.md", "test_fcos_app_installer")):
             with self.subTest(file=path, needle=needle):
                 self.assertIn(needle, (ROOT / path).read_text(encoding="utf-8"))
+
+    def test_the_root_readme_says_default_leaves_out_the_installer(self):
+        text = " ".join((ROOT / "README.md").read_text().split())
+        self.assertIn("except REA and the FCOS app installer", text)
 
     def test_the_groups_readme_shows_the_install_commands(self):
         section = (ROOT / "groups" / "README.md").read_text().split("## fcos_app_installer", 1)[1]

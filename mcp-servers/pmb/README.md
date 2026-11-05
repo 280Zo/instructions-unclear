@@ -64,4 +64,4 @@ OpenCode names each tool `<server name>_<tool>`, e.g. `pmb_prepare`. Any permiss
 
 ## Origin
 
-Connection template and rule written for this repo by 280Zo, based on [oleksiijko/pmb](https://github.com/oleksiijko/pmb), PyPI package `pmb-ai` 1.2.3 (author "PMB contributors"). No upstream files are copied here; the server is installed from PyPI at the pinned version. Upstream is Apache-2.0 according to its PyPI metadata, checked 2026-11-05. This repo's own files are [MIT](../../LICENSE).
+Connection template and rule written for this repo by 280Zo, based on [oleksiijko/pmb](https://github.com/oleksiijko/pmb), PyPI package `pmb-ai` 1.2.3 (author "PMB contributors"). No upstream files are copied here; the server is installed from PyPI at the pinned version. Upstream is [Apache-2.0](https://github.com/oleksiijko/pmb/blob/main/LICENSE); its LICENSE file is the standard text and names no copyright holder, and its package metadata lists "PMB contributors" as the author. Checked 2026-11-05. This repo's own files are [MIT](../../LICENSE).

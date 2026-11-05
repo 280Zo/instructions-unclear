@@ -222,7 +222,7 @@ The secure-coding rule ships inside [`agents/security`](agents/security/).
 <details>
 <summary>Profiles: sets that load only in a folder you choose</summary>
 
-A profile installs into one folder instead of your home folder, keeping specialist context separate from your normal setup. Start your coding tool there to load it; discovery and context costs depend on the assistant. In OpenCode, `default` also installs all of these except REA globally, where only the matching [agent](agents/README.md) loads them.
+A profile installs into one folder instead of your home folder, keeping specialist context separate from your normal setup. Start your coding tool there to load it; discovery and context costs depend on the assistant. In OpenCode, `default` also installs all of these except REA and the FCOS app installer globally, where only the matching [agent](agents/README.md) loads them.
 
 | Folder                                                      | Adds                                                                                            |
 | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
