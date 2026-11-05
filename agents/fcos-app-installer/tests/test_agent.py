@@ -22,7 +22,8 @@ def rules(text: str) -> list[tuple[str, str, str]]:
     """(action, resource, effect) in order, from the YAML permission list."""
     found = re.findall(
         r'- action: (\S+)\n\s+resource: "([^"]*)"\n\s+effect: (\S+)', frontmatter(text))
-    return [(a.strip('"'), r, e) for a, r, e in found]  # YAML drops the quotes around "pmb_*"
+    # YAML drops the quotes around "pmb_*", and a double-quoted "\n" is a newline.
+    return [(a.strip('"'), r.replace("\\n", "\n").replace("\\r", "\r"), e) for a, r, e in found]
 
 
 def effect(text: str, action: str, resource: str) -> str:

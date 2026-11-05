@@ -214,7 +214,7 @@ class AdapterTests(unittest.TestCase):
         self.assertIn("allow 192.0.2.0/24", render_step(step, "s", {"LAN_CIDR": "192.0.2.0/24"}))
 
     # Review of ff605b1: the owner runs the host scripts as root, and the step shows the checksum of
-    # the file as it is. The pinned list, a file the agent can't edit, says what the file must be.
+    # the file as it is. The pinned list, a file the agent's rules keep it from editing, says what the file must be.
     def pinned(self, text):
         path = Path(tempfile.mkdtemp(dir=SCRATCH)) / "host-scripts.sha256"
         self.addCleanup(shutil.rmtree, path.parent, True)
@@ -246,16 +246,43 @@ class AdapterTests(unittest.TestCase):
         with self.assertRaisesRegex(AdapterError, "differs from the pinned checksum"):
             self.render_discover(self.pinned("\n".join(lines) + "\n"))
 
-    def test_a_script_missing_from_the_list_is_refused(self):
+    def test_a_script_missing_from_the_list_is_refused_with_its_own_message(self):
         lines = [l for l in self.real_list().splitlines() if not l.endswith("scripts/lib.sh")]
-        with self.assertRaisesRegex(AdapterError, "isn't listed"):
+        with self.assertRaises(AdapterError) as caught:
             self.render_discover(self.pinned("\n".join(lines) + "\n"))
+        self.assertIn("isn't listed", str(caught.exception))
+        self.assertNotIn("differs", str(caught.exception))  # not the same news as a changed script
+
+    def test_a_changed_script_says_it_differs_not_that_it_is_unlisted(self):
+        import hashlib
+        wrong = hashlib.sha256(b"not the script").hexdigest()
+        lines = [l.replace(l.split("  ")[0], wrong) if l.endswith("scripts/lib.sh") else l
+                 for l in self.real_list().splitlines()]
+        with self.assertRaises(AdapterError) as caught:
+            self.render_discover(self.pinned("\n".join(lines) + "\n"))
+        self.assertIn("differs", str(caught.exception))
+        self.assertNotIn("isn't listed", str(caught.exception))
 
     def test_an_unreadable_or_malformed_list_refuses_plainly(self):
         with self.assertRaisesRegex(AdapterError, "checksum list.*can't be read"):
             self.render_discover(Path(tempfile.gettempdir()) / "no-such-list.sha256")
         with self.assertRaisesRegex(AdapterError, r"host-scripts\.sha256:1: not a sha256sum line"):
             self.render_discover(self.pinned("this is not a checksum\n"))
+        # Blank lines and comments are not allowed either, and the message says so.
+        with self.assertRaisesRegex(AdapterError, "no blank lines or comments"):
+            self.render_discover(self.pinned("\n"))
+
+    def test_a_list_that_is_not_text_is_refused_plainly(self):
+        path = Path(tempfile.mkdtemp(dir=SCRATCH)) / "host-scripts.sha256"
+        self.addCleanup(shutil.rmtree, path.parent, True)
+        path.write_bytes(b"\xff\xfe\x00 not utf-8\n")
+        with self.assertRaisesRegex(AdapterError, "checksum list.*can't be read"):
+            self.render_discover(path)
+
+    def test_a_line_listed_twice_is_refused_as_sha256sum_would_complain(self):
+        lines = self.real_list().splitlines()
+        with self.assertRaisesRegex(AdapterError, r"host-scripts\.sha256:\d+: .* is listed twice"):
+            self.render_discover(self.pinned("\n".join(lines + lines[:1]) + "\n"))
 
     def test_the_script_check_needs_no_git(self):
         # The agent used to compare each script with the committed one, so it needed git and a clone.
@@ -267,8 +294,9 @@ class AdapterTests(unittest.TestCase):
         code = ("import sys; sys.path.insert(0, sys.argv[1]); "
                 "from adapters import derived_values, load_adapter; "
                 "print(sorted(derived_values(load_adapter('virtualization', 'proxmox'))))")
+        env = dict(os.environ, PATH=str(elsewhere), HOME=str(elsewhere))  # everything else as it is, git gone
         result = subprocess.run([sys.executable, "-c", code, str(ROOT / "tools")], cwd=elsewhere,
-                                capture_output=True, text=True, env={"PATH": str(elsewhere), "HOME": str(elsewhere)})
+                                capture_output=True, text=True, env=env)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("DISCOVER_SHA256", result.stdout)
 

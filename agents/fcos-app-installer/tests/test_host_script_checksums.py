@@ -2,7 +2,8 @@
 
 The owner runs the adapters' host scripts as root, after checking the checksum a step shows.
 The step takes that checksum from the script itself, so a changed script would pass the owner's
-check; the pinned list, which the agent cannot edit, is what makes the tool refuse it. The list
+check; the pinned list, which the agent's rules keep it from editing, is what makes the tool refuse
+it. The list
 is in `sha256sum -c` format, outside every skill folder, with paths relative to the skills folder.
 """
 import hashlib
@@ -57,14 +58,44 @@ class PinnedListTests(unittest.TestCase):
         self.assertIn(SKILLS_DIR, readme)
 
 
-class AgentCannotEditTheListTests(unittest.TestCase):
-    """Edits are denied, and so is any shell command that names the list (a redirect, tee, cp, sed,
-    a chained write): the agent reads it with its read tool if it needs to."""
+    def test_every_shipped_script_is_declared_by_its_adapter_so_it_is_pinned(self):
+        # A script an adapter does not declare in `scripts:` gets no checksum and no pin check.
+        import yaml
+        for folder in sorted(SKILLS.glob("*/scripts")):
+            adapter = yaml.safe_load((folder.parent / "adapter.yaml").read_text())
+            with self.subTest(skill=folder.parent.name):
+                present = {p.relative_to(folder.parent).as_posix() for p in folder.iterdir() if p.is_file()}
+                self.assertEqual(present, set(adapter.get("scripts", [])))
+
+
+class HonestWordingTests(unittest.TestCase):
+    """The rules are a guard rail: the shell expands quoted and globbed names, and the agent runs as
+    the owner's user. No file may say the agent *cannot* edit the list."""
+
+    def test_nothing_claims_a_wall(self):
+        for path in (ROOT / "README.md", ROOT / "tools" / "layout.py", ROOT / "tools" / "adapters.py"):
+            with self.subTest(file=path.name):
+                text = " ".join(path.read_text().split())
+                self.assertNotRegex(text, r"(?i)\bagent (?:cannot|can't|can not) edit")
+
+    def test_the_readme_says_it_is_a_guard_rail_and_what_makes_it_hard(self):
+        section = " ".join((ROOT / "README.md").read_text().split("## Changing a host script", 1)[1]
+                           .split("\n## ", 1)[0].split())
+        self.assertIn("guard rail", section)
+        self.assertIn("separate user", section)
+        self.assertIn("read the change first", section)
+
+
+class AgentGuardsTheListTests(unittest.TestCase):
+    """A guard rail, not a wall: the agent's rules deny edits to the list and any shell command that
+    names it, including the quoted, globbed and variable spellings of its name. The agent runs as
+    the owner's user, so only a separate user (README) makes this a hard boundary. The agent reads
+    the list with its read tool if it needs to."""
 
     def setUp(self):
         self.text = AGENT.read_text()
 
-    def test_edits_are_denied_however_the_path_is_written(self):
+    def test_edits_are_denied_for_the_usual_spellings_of_the_path(self):
         for path in ("host-scripts.sha256", "./host-scripts.sha256", "/home/x/toolkit/host-scripts.sha256"):
             with self.subTest(path=path):
                 self.assertEqual(effect(self.text, "edit", path), "deny")
@@ -79,8 +110,35 @@ class AgentCannotEditTheListTests(unittest.TestCase):
             with self.subTest(command=command):
                 self.assertEqual(effect(self.text, "shell", command), "deny")
 
-    def test_the_drafter_cannot_edit_it_either(self):
-        self.assertEqual(effect(DRAFTER.read_text(), "edit", "host-scripts.sha256"), "deny")
+    def test_quoted_globbed_and_variable_spellings_of_the_name_are_denied_too(self):
+        # Review of the checksum-list commit: the shell expands these to the real file.
+        for command in ("sha256sum a > host-scripts.sha\"256\"",
+                        "sha256sum a > host-scripts.sha25?",
+                        "sha256sum a > host-scripts.sha2*",
+                        "sha256sum a > 'host-scripts'.sha256",
+                        "sha256sum a > ./*.sha256",
+                        "python3 tools/adapters.py show; f=host-scripts; cp /tmp/opencode/x $f.sha256",
+                        "python3 tools/adapters.py show; python3 -c \"open('host-scripts'+'.sha256','w')\""):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "deny")
+
+    def test_the_scratch_and_checksum_commands_the_agent_needs_still_work(self):
+        for command in ("sha256sum /tmp/opencode/v.json", "python3 tools/adapters.py show --role file_server",
+                        "python3 tools/check_requirements.py"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "allow")
+
+    def test_the_drafter_cannot_edit_or_name_it_either(self):
+        drafter = DRAFTER.read_text()
+        self.assertEqual(effect(drafter, "edit", "host-scripts.sha256"), "deny")
+        for command in ("python3 tools/adapters.py show --role x\ncp /tmp/opencode/x host-scripts.sha256",
+                        "python3 tools/adapters.py show --role x\r\ncp /tmp/opencode/x host-scripts.sha256",
+                        f"python3 tools/adapters.py show --role x\ncp /tmp/opencode/x {SKILLS_DIR}/adapter-proxmox/scripts/lib.sh",
+                        "python3 tools/adapters.py show --role file_server --provider host-scripts.sha\"256\""):
+            with self.subTest(command=command):
+                self.assertEqual(effect(drafter, "shell", command), "deny")
+        # What it is for still works.
+        self.assertEqual(effect(drafter, "shell", "python3 tools/adapters.py show --role file_server"), "allow")
 
 
 if __name__ == "__main__":

@@ -46,6 +46,9 @@ install (`python3 tools/workspace.py where`).
    (`host-scripts.sha256`): the next virtualization step (such as
    `create_api_access`) shows the new checksum, so check it again before
    running the script, as on a first install.
+   The pinned list travels with the scripts, so it guards against changes made
+   on your computer, not against a tampered download: take the toolkit only
+   from a source you trust.
 4. Keep the previous folder until the new one passes these checks, so you can
    go back to it. Your workspaces are in neither folder, so nothing in them
    changes.

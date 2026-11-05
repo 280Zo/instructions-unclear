@@ -23,8 +23,9 @@ router, your file server, your DNS provider, and anything involving a secret.
   Earlier 2.0 releases ignore the config's `instructions` list, so the rules in
   `rules/` wouldn't load (fixed in 2.0.30), and the agents' skill and subagent
   filters were tested on 2.1.3.
-- Python 3 with PyYAML. (git is optional: if it is installed, the tools use it
-  to find the checkout around the toolkit; nothing needs it.)
+- Python 3 with PyYAML. (git is optional: when it is installed, the tools ask it
+  for the checkout around the toolkit; without it they look for a `.git` above
+  the toolkit instead. Nothing else needs it.)
 - Podman or Docker: the build checks run Butane and Podman's Quadlet generator
   in containers, from the images pinned in `tools/images.env`. You pull them
   once yourself; the tools say the exact command.
@@ -175,17 +176,26 @@ can't run (no network), say so and carry on with the current pins.
 
 You run the adapters' host scripts as root, after checking the checksum a step
 shows. A step takes that checksum from the script itself, so the tools also
-compare every script with `host-scripts.sha256`, a list the agent cannot edit
-(it sits outside the skills, and the agent's rules deny edits to it and any
-shell command that names it). A script whose hash differs from the list stops
-its step with a message. After you change a script on purpose, review the
-change, then rewrite the list yourself from the skills folder
-(`.opencode/skills`), and check it:
+compare every script with `host-scripts.sha256`, a list the agent's rules keep
+it from editing: the list sits outside the skills, edits to it are denied, and
+so is any shell command that names it, its extension or the word `host-script`
+(quoted, globbed and variable spellings of the name included). This is a guard
+rail like the rest of the agent's permissions, not a wall: the agent runs as
+your user, so a command written to get around the rules could still rewrite the
+file. For a hard boundary run the agent as a separate user. A script whose hash
+differs from the list, or that the list does not hold, stops its step with a
+message, and only scripts an adapter declares in its `scripts:` list are
+pinned. The list takes one `sha256sum` line per script, no blank lines or
+comments.
+
+After you change a script on purpose, read the change first (for example with
+`git diff` in the checkout you keep the toolkit in), then rewrite the list
+yourself from the skills folder (`.opencode/skills`) and check it:
 
 ```fish
 # desktop (fish)
 cd .opencode/skills
-sha256sum adapter-*/scripts/* | sort -k 2 > ../../host-scripts.sha256
+sha256sum adapter-*/scripts/* > ../../host-scripts.sha256
 sha256sum -c ../../host-scripts.sha256
 ```
 
@@ -216,7 +226,7 @@ at all is an error, not a pass.
 |---|---|
 | `.opencode/` | the agents (`fcos-app-installer`, the main one for Fedora CoreOS; `adapter-drafter`, its helper that drafts adapters), the `/add-service` command, and `opencode.json`, which loads `rules/` |
 | `.opencode/skills/` | skills: one adapter per provider (its owner steps, notes and host scripts), the generic fallback, and `researching-apps-for-self-hosting` |
-| `host-scripts.sha256` | the pinned checksum of every host script, which the agent cannot edit |
+| `host-scripts.sha256` | the pinned checksum of every host script; the agent's rules keep it from editing this file |
 | `rules/` | rules that don't depend on the OS: how owner steps are given, how secrets and private values are handled |
 | `docs/guide/` | the procedure, provider-neutral |
 | `schemas/` | the service spec's field reference |

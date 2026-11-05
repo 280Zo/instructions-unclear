@@ -34,6 +34,24 @@ permissions:
   - action: shell
     resource: "*$(*"
     effect: deny
+  # A newline or carriage return also separates commands. (How OpenCode matches globs across a
+  # newline is not verified; this is best effort.) The drafter never needs the agent folder or the
+  # pinned checksum list, so a command naming either is denied outright.
+  - action: shell
+    resource: "*\n*"
+    effect: deny
+  - action: shell
+    resource: "*\r*"
+    effect: deny
+  - action: shell
+    resource: "*.opencode*"
+    effect: deny
+  - action: shell
+    resource: "*host-script*"
+    effect: deny
+  - action: shell
+    resource: "*.sha25*"
+    effect: deny
   # Files: drafts and scratch files only; never the toolkit, the site file or secrets.
   - action: edit
     resource: "*"

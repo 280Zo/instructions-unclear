@@ -1,5 +1,6 @@
 """tools/check_requirements.py: what the toolkit needs on the desktop (owner, 2026-11-04)."""
 import io
+import re
 import sys
 import unittest
 from contextlib import redirect_stdout
@@ -31,7 +32,9 @@ class RequirementsTests(unittest.TestCase):
         self.assertEqual(code, 0, out)
         for needle in ("OpenCode", "2.1.3", "PyYAML", "podman or docker", "launch folder"):
             self.assertIn(needle, out)
-        self.assertNotIn("git", out)  # the host-script check reads a pinned list; the toolkit needs no git
+        # The host-script check reads a pinned list; the toolkit needs no git. (Look at the rows, not the
+        # text: the launch folder row prints a path, and a path may contain "git".)
+        self.assertEqual([l for l in out.splitlines() if re.match(r"(?:ok  |FAIL)  git\b", l)], [])
 
     def test_a_hung_or_unrunnable_opencode_counts_as_missing(self):
         import subprocess

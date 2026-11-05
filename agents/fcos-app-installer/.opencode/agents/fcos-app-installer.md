@@ -272,9 +272,15 @@ permissions:
     resource: "*.opencode"
     effect: deny
   # The pinned list of host-script checksums is the one file the agent must never write: a changed
-  # script plus a matching list would pass. No shell command may name it, in any form or chain.
+  # script plus a matching list would pass. No shell command may name it, its extension, or the
+  # "host-script" word it starts with (so quoted, globbed and variable spellings of the name are
+  # caught too). A guard rail, not a wall: the agent runs as the owner's user, so only a separate
+  # user makes this hard (README).
   - action: shell
-    resource: "*host-scripts.sha256*"
+    resource: "*host-script*"
+    effect: deny
+  - action: shell
+    resource: "*.sha25*"
     effect: deny
   # Files: its own work in the workspace and /tmp/opencode freely; templates,
   # tools, adapters, specs and the guide need the owner's OK; secrets, private

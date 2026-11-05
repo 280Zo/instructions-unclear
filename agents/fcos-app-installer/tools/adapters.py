@@ -39,9 +39,7 @@ Usage:
 
 import argparse
 import json
-import os
 import re
-import shutil
 import sys
 from pathlib import Path
 
@@ -256,28 +254,35 @@ def _pinned() -> dict[str, str]:
     """The pinned list (sha256sum format): script path in the skills folder -> sha256."""
     try:
         text = CHECKSUMS.read_text(encoding="utf-8")
-    except OSError as error:
-        raise AdapterError(f"the checksum list {CHECKSUMS} can't be read ({error.strerror}); the host "
+    except (OSError, UnicodeDecodeError) as error:
+        reason = getattr(error, "strerror", None) or "it is not UTF-8 text"
+        raise AdapterError(f"the checksum list {CHECKSUMS} can't be read ({reason}); the host "
                            "scripts can't be checked, so no step that runs one is shown") from None
     found = {}
     for number, line in enumerate(text.splitlines(), start=1):
         match = PINNED_LINE.fullmatch(line)
         if match is None:
-            raise AdapterError(f"{CHECKSUMS.name}:{number}: not a sha256sum line")
+            raise AdapterError(f"{CHECKSUMS.name}:{number}: not a sha256sum line "
+                               "(the list takes no blank lines or comments)")
+        if match[2] in found:  # `sha256sum -c` would complain too, and the last line would win silently
+            raise AdapterError(f"{CHECKSUMS.name}:{number}: {match[2]} is listed twice")
         found[match[2]] = match[1]
     return found
 
 
-def _is_pinned(path: Path, digest: str) -> bool:
-    """True when the script's sha256 is the one the pinned list holds for it. The owner runs these
-    scripts as root, and a step shows the checksum of the file as it is, so a script the agent (or
-    anything else) changed would pass the owner's sha256sum check (review of ff605b1). The list is a
-    file the agent's rules deny it to edit, kept outside every skill folder, and it needs no git."""
+def _pin_state(path: Path, digest: str) -> str:
+    """"pinned" when the script's sha256 is the one the list holds for it, "differs" when the list
+    holds another, "unlisted" when the list does not hold it. The owner runs these scripts as root,
+    and a step shows the checksum of the file as it is, so a script the agent (or anything else)
+    changed would pass the owner's sha256sum check (review of ff605b1). The list is a file the
+    agent's rules keep it from editing (a guard rail; README), outside every skill folder, and it
+    needs no git."""
     try:
         key = path.resolve().relative_to(ADAPTERS.resolve()).as_posix()
     except ValueError:
-        return False
-    return _pinned().get(key) == digest
+        return "unlisted"
+    pinned = _pinned().get(key)
+    return "unlisted" if pinned is None else "pinned" if pinned == digest else "differs"
 
 
 def derived_values(adapter: dict) -> dict:
@@ -294,10 +299,12 @@ def derived_values(adapter: dict) -> dict:
         if target is None or skill not in target.parents or not target.is_file():
             raise AdapterError(f"{adapter.get('provider')}: script {path} is not a file in its skill folder")
         digest = hashlib.sha256(target.read_bytes()).hexdigest()
-        if not _is_pinned(target, digest):
-            raise AdapterError(f"{adapter.get('provider')}: script {path} differs from the pinned checksum in "
-                               f"{CHECKSUMS.name}, or isn't listed there; the owner runs it as root, so this "
-                               "step isn't shown. Tell the owner; don't change or restore it yourself")
+        state = _pin_state(target, digest)
+        if state != "pinned":
+            what = (f"differs from the pinned checksum in {CHECKSUMS.name}" if state == "differs"
+                    else f"isn't listed in {CHECKSUMS.name}")
+            raise AdapterError(f"{adapter.get('provider')}: script {path} {what}; the owner runs it as root, "
+                               "so this step isn't shown. Tell the owner; don't change or restore it yourself")
         key = _checksum_key(path)
         if key in out:
             raise AdapterError(f"{adapter.get('provider')}: two scripts give the checksum {key}")
