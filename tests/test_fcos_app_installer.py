@@ -305,6 +305,21 @@ class GroupTests(unittest.TestCase):
         self.assertEqual(profile["inputRoots"][0], "agents/fcos-app-installer")
         self.assertEqual(group["inputRoots"][0], "agents/fcos-app-installer")
 
+    def test_every_subagent_it_may_start_is_installed_by_the_group(self):
+        # A permission to start an agent the folder lacks would be a promise the install cannot keep.
+        allowed = [r["resource"] for r in frontmatter(FOLDER / "subagents" / "fcos-app-installer.md")
+                   ["opencode"]["permissions"] if r["action"] == "subagent" and r["effect"] == "allow"]
+        group = jsonc(ROOT / "groups" / "fcos_app_installer.jsonc")
+        self.assertEqual(group["inputRoots"], ["agents/fcos-app-installer", "agents/second-opinion",
+                                               "agents/security", "agents/plan", "agents/explore"])
+        installed = {p.stem for root in group["inputRoots"] for p in (ROOT / root / "subagents").glob("*.md")}
+        self.assertEqual(sorted(set(allowed) - installed), [])
+        self.assertEqual(sorted(allowed), ["adapter-drafter", "explore", "plan", "second-opinion", "security"])
+
+    def test_the_companions_are_not_pulled_into_other_agents_by_this_group(self):
+        # plan and explore only restrict OpenCode's own agents, so the group must stay OpenCode-only.
+        self.assertEqual(jsonc(ROOT / "groups" / "fcos_app_installer.jsonc")["targets"], ["opencode"])
+
     def test_it_is_a_folder_group_not_part_of_default(self):
         default = jsonc(ROOT / "groups" / "default.jsonc")["inputRoots"]
         self.assertNotIn("agents/fcos-app-installer", default)

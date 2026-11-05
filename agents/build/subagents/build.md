@@ -11,6 +11,11 @@ opencode:
     - {action: "skill", resource: "academic-plotting", effect: deny}
     - {action: "skill", resource: "accelerate", effect: deny}
     - {action: "skill", resource: "ad-creative-design", effect: deny}
+    - {action: "skill", resource: "adapter-duckdns", effect: deny}
+    - {action: "skill", resource: "adapter-generic", effect: deny}
+    - {action: "skill", resource: "adapter-opnsense", effect: deny}
+    - {action: "skill", resource: "adapter-proxmox", effect: deny}
+    - {action: "skill", resource: "adapter-truenas", effect: deny}
     - {action: "skill", resource: "address-sanitizer", effect: deny}
     - {action: "skill", resource: "adjudicate-regression", effect: deny}
     - {action: "skill", resource: "aflpp", effect: deny}
@@ -197,6 +202,7 @@ opencode:
     - {action: "skill", resource: "reproduce-bug", effect: deny}
     - {action: "skill", resource: "reproduce-regression", effect: deny}
     - {action: "skill", resource: "research-manager", effect: deny}
+    - {action: "skill", resource: "researching-apps-for-self-hosting", effect: deny}
     - {action: "skill", resource: "resume-ats-optimizer", effect: deny}
     - {action: "skill", resource: "resume-bullet-writer", effect: deny}
     - {action: "skill", resource: "resume-formatter", effect: deny}

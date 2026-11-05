@@ -12,7 +12,7 @@ Saved selections, so you don't have to name every folder. Run every command from
 | [`career`](#career) | A folder you choose | 22 career skills, the interview coach and 4 career-workspace skills, including the application starter. The `career` agent comes with `default` |
 | [`reverse_engineering`](#reverse_engineering) | A folder you choose | REA, RE agents and disabled ReVa/radare2 MCPs; IoTHackBot is native-owned |
 | [`design`](#design) | A folder you choose | 19 design skills (graphics, brand, palettes, typography, design systems, critique) plus `anatomy` |
-| [`fcos_app_installer`](#fcos_app_installer) | A folder you choose | The FCOS app installer agent and its helper, the `/add-service` command, 6 skills and 2 rules; `install.py` places the toolkit's own files |
+| [`fcos_app_installer`](#fcos_app_installer) | A folder you choose | The FCOS app installer agent and its helper, the `/add-service` command, 6 skills and 2 rules, plus the companions it may start (`second-opinion`, `security`, OpenCode's `plan` and `explore`); `install.py` places the toolkit's own files |
 
 ## How they behave
 
@@ -158,7 +158,7 @@ npx rulesync@41.0.0 generate --config groups/design.jsonc --output-roots ~/AI/de
 
 ## fcos_app_installer
 
-The [FCOS app installer](../agents/fcos-app-installer/): the `fcos-app-installer` agent and its `adapter-drafter` helper, the `/add-service` command, 6 skills (the provider adapters and `researching-apps-for-self-hosting`) and 2 rules, which rulesync writes into the folder's `AGENTS.md`. rulesync can't place the toolkit's own files (`tools/`, `templates/`, `docs/`, `tests/` and the rest), so [`install.py`](../agents/fcos-app-installer/install.py) copies those first; it lists what it would do unless you add `--apply`. The folder must be one of its own, outside any git checkout. Only OpenCode enforces the agent's permission list; other tools get its instructions without those guard rails, and the tools read the skills where OpenCode keeps them, so keep `opencode` in `--targets`. Writes no MCP settings. Not part of `default`.
+The [FCOS app installer](../agents/fcos-app-installer/): the `fcos-app-installer` agent and its `adapter-drafter` helper, the `/add-service` command, 6 skills (the provider adapters and `researching-apps-for-self-hosting`) and 2 rules, which rulesync writes into the folder's `AGENTS.md`. The group also installs the companions the agent may start: the [`second-opinion`](../agents/second-opinion/) set, the [`security`](../agents/security/) bundle (its secure-coding rule joins `AGENTS.md`, and it adds 6 skills and 4 commands), and the restrictions for OpenCode's `plan` and `explore`. That is why it targets OpenCode only: `plan` and `explore` are OpenCode's own agents. The toolkit's publish check gives those companions' upstream files the workspace-value scan only. rulesync can't place the toolkit's own files (`tools/`, `templates/`, `docs/`, `tests/` and the rest), so [`install.py`](../agents/fcos-app-installer/install.py) copies those first; it lists what it would do unless you add `--apply`. The folder must be one of its own, outside any git checkout. Only OpenCode enforces the agent's permission list; other tools get its instructions without those guard rails, and the tools read the skills where OpenCode keeps them, so keep `opencode` in `--targets`. Writes no MCP settings. Not part of `default`.
 
 ```bash
 python3 agents/fcos-app-installer/install.py ~/AI/fcos-app-installer

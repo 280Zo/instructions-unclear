@@ -11,6 +11,8 @@ agents/<name>/subagents/<name>.md. From the manifest this script writes:
   deny rules, so OpenCode keeps the built-in prompt and policy. They install
   only for OpenCode, the one tool that has these agents and filters skills.
 - the marked permission block in second-opinion and local-model
+- nothing for fcos-app-installer: its permission list is hand-written (DECLARED), and the map
+  reads its skills, MCP servers and subagents from that list
 - the README hero (docs/hero-light.svg, docs/hero-dark.svg and the marked
   block in README.md) and docs/agents-map.html
 
@@ -22,6 +24,7 @@ folder changes the output and fails the --check run until regenerated.
 """
 
 import argparse
+from fnmatch import fnmatchcase
 import html
 import json
 from pathlib import Path
@@ -108,6 +111,7 @@ BUNDLES = {
     "reverse-engineering": skill_ids(
         "agents/reverse-engineering", "mcp-servers/rea", "mcp-servers/reva"
     ),
+    "fcos": skill_ids("agents/fcos-app-installer"),
     **{key: plugin_skill_ids(plugin["root"]) for key, plugin in NATIVE_PLUGINS.items()},
 }
 BUNDLE_TITLES = {
@@ -117,10 +121,13 @@ BUNDLE_TITLES = {
     "threat": "Threat modeling and photo geolocation", "design": "Design skills",
     "career": "Career skills", "ai-research": "AI research skills",
     "reverse-engineering": "Reverse-engineering skills",
+    "fcos": "FCOS app installer skills (folder group fcos_app_installer, not default)",
     **{key: f"{plugin['title']} (native plugin, installed separately)" for key, plugin in NATIVE_PLUGINS.items()},
 }
+# Bundles no group but their own folder group installs: shown whole on the map.
+FOLDER_ONLY_BUNDLES = ["fcos"]
 # Only build-family agents see everything else; these stay with their specialist.
-SPECIALIST_BUNDLES = ["design", "career", "ai-research", "threat", "reverse-engineering", *NATIVE_PLUGINS]
+SPECIALIST_BUNDLES = ["design", "career", "ai-research", "threat", "reverse-engineering", "fcos", *NATIVE_PLUGINS]
 
 # Configured MCP server name -> OpenCode permission action (<server>_<tool>).
 # "?" also matches a hyphen that OpenCode turns into "_".
@@ -204,8 +211,42 @@ MARKED = {
 }
 
 
+# Agents whose permission list is hand-written in their own file. The map reads the skills, MCP
+# servers and subagents from that list, so it cannot drift from the agent; nothing is written to it.
+DECLARED = {
+    "fcos-app-installer": "agents/fcos-app-installer/subagents/fcos-app-installer.md",
+}
+# Subagents that exist only in a folder group: no other agent starts them.
+FOLDER_SUBAGENTS = ["adapter-drafter"]
+
+
 def agent_path(name):
     return f"agents/{name}/subagents/{name}.md"
+
+
+def declared_rules(path):
+    """(action, resource, effect) in order, from the agent file's permission list."""
+    head = (ROOT / path).read_text().split("\n---\n", 1)[0]
+    found = re.findall(r'^\s*- action: "?([^"\n]+?)"?\n\s+resource: "([^"]*)"\n\s+effect: (allow|ask|deny)$',
+                       head, re.M)
+    if len(found) != len(re.findall(r"^\s*- action:", head, re.M)):
+        raise ValueError(f"{path}: a permission rule is not in the form this script reads")
+    return found
+
+
+def declared_effect(rules, action, resource):
+    """The last matching rule wins; nothing matching leaves the action allowed."""
+    result = "allow"
+    for rule_action, pattern, effect in rules:
+        if rule_action in ("*", action) and fnmatchcase(resource, pattern):
+            result = effect
+    return result
+
+
+def declared_spec(path):
+    rules = declared_rules(path)
+    subagents = [r for a, r, e in rules if a == "subagent" and e == "allow"]
+    return {"mode": "declared", "rules": rules, "subagents": subagents}
 
 
 def agent_specs():
@@ -213,6 +254,7 @@ def agent_specs():
     specs = {name: {"mode": "deny-specialists"} for name in OVERRIDES}
     specs.update(SPECIALISTS)
     specs.update({Path(path).stem: spec for path, spec in MARKED.items()})
+    specs.update({name: declared_spec(path) for name, path in DECLARED.items()})
     return specs
 
 
@@ -221,12 +263,18 @@ def allowed_skills(spec, installed):
     if spec.get("mode") == "deny-specialists":
         specialist = {s for b in SPECIALIST_BUNDLES for s in BUNDLES[b]}
         return (set(installed) | set(SHARED)) - specialist
+    if spec.get("mode") == "declared":
+        every = set(installed) | set(SHARED) | {s for b in FOLDER_ONLY_BUNDLES for s in BUNDLES[b]}
+        return {s for s in every if declared_effect(spec["rules"], "skill", s) == "allow"}
     return set(SHARED).union(*(BUNDLES[b] for b in spec["bundles"]))
 
 
 def allowed_mcp(spec):
     if spec.get("mode") == "deny-specialists":
         return [m for m in MCP if m not in BUILD_MCP_DENY]
+    if spec.get("mode") == "declared":
+        # A deny list: a server added to MCP later counts as allowed until the agent's file names it.
+        return [m for m in MCP if declared_effect(spec["rules"], MCP[m], "*") != "deny"]
     return spec["mcp"]
 
 
@@ -285,9 +333,10 @@ def marked(text, lines):
 # ---- agent map -------------------------------------------------------------
 
 MAP_AGENTS = ["build / plan", "general", "explore", "design", "career", "ai-research", "security",
-              "reverse-engineering", "3d-modeling", "second-opinion", "local-model"]
+              "reverse-engineering", "3d-modeling", "second-opinion", "local-model", "fcos-app-installer"]
 SUBAGENT_TARGETS = ["general", "explore", "evaluator", "metacognitive", "security-auditor",
-                    "threat-modeling-expert", "reverse-engineer", "malware-analyst", "firmware-analyst"]
+                    "threat-modeling-expert", "reverse-engineer", "malware-analyst", "firmware-analyst",
+                    *FOLDER_SUBAGENTS]
 
 
 def spec_of(map_name):
@@ -307,7 +356,7 @@ def map_data():
               ("Started by you with /, never shown to the model", USER_INVOKED)]
     for key, members in BUNDLES.items():
         title = BUNDLE_TITLES[key]
-        if key in NATIVE_PLUGINS:
+        if key in NATIVE_PLUGINS or key in FOLDER_ONLY_BUNDLES:
             groups.append((title, members))
             continue
         absent = [s for s in members if s not in installed]
@@ -333,6 +382,8 @@ def map_data():
         if agent in ("general", "explore") or agent == target:
             return False  # OpenCode's general and explore can't launch subagents.
         spec = spec_of(agent)
+        if target in FOLDER_SUBAGENTS:
+            return bool(spec.get("subagents")) and target in spec["subagents"]
         if spec.get("mode") == "deny-specialists" or spec.get("subagents") is None:
             return True
         return target in spec["subagents"]

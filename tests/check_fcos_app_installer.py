@@ -21,6 +21,10 @@ ROOT = Path(__file__).resolve().parents[1]
 FOLDER = ROOT / "agents" / "fcos-app-installer"
 SKILLS = ["adapter-duckdns", "adapter-generic", "adapter-opnsense", "adapter-proxmox", "adapter-truenas",
           "researching-apps-for-self-hosting"]
+COMPANION_SKILLS = ["attack-tree-construction", "sast-configuration", "security-best-practices",
+                    "security-requirement-extraction", "stride-analysis-patterns", "threat-mitigation-mapping"]
+COMPANION_AGENTS = sorted(["adapter-drafter", "evaluator", "explore", "fcos-app-installer", "metacognitive",
+                           "plan", "second-opinion", "security", "security-auditor", "threat-modeling-expert"])
 problems = []
 
 
@@ -55,9 +59,13 @@ def main(argv):
     check((target / "AGENTS.md").is_file(), "the rules are in AGENTS.md")
     check(not (target / ".opencode" / "opencode.json").exists(), "no opencode.json (no instructions list)")
     found = sorted(p.parent.name for p in (target / ".opencode" / "skills").rglob("SKILL.md"))
-    check(found == SKILLS, "the six skills are siblings under .opencode/skills")
-    check(all((target / ".opencode" / "skills" / s / "SKILL.md").parent.parent == target / ".opencode" / "skills"
-              for s in SKILLS), "every skill is a direct child of the skills folder")
+    check(set(SKILLS) <= set(found), "the six skills are siblings under .opencode/skills")
+    check(set(found) - set(SKILLS) == set(COMPANION_SKILLS), "the only other skills are the security bundle's")
+    agents = sorted(p.stem for p in (target / ".opencode" / "agents").glob("*.md"))
+    check(agents == COMPANION_AGENTS, "the agents are the two own ones and the companions")
+    check(all(p.parent.parent == target / ".opencode" / "skills"
+              for p in (target / ".opencode" / "skills").rglob("SKILL.md")),
+          "every skill is a direct child of the skills folder")
 
     for name in ("fcos-app-installer", "adapter-drafter"):
         before_meta, before_body = split(FOLDER / "subagents" / f"{name}.md")

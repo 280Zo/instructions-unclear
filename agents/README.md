@@ -21,7 +21,7 @@ A profile installs into one folder you choose, not your home folder. To install 
 
 Every installed skill's description is sent with every request, unless the agent can't use it. The `default` group installs about 200 skills; the AI research skills alone add about 7,000 tokens. In OpenCode, each agent therefore lists the skills, MCP servers and subagents it may use, and OpenCode leaves the rest out of what the model sees and blocks calls to them (checked on OpenCode 2.1.3). The [root README](../README.md)'s hero image shows how many skills each agent sees; the [interactive map](https://280zo.github.io/instructions-unclear/agents-map.html) ([source](../docs/agents-map.html)) lists every skill, server and subagent.
 
-Every agent gets the Superpowers skills, `package-management`, Exa's `search` and `exa-agent`, OpenCode's built-in `opencode` skill, the user-invoked `handoff`, `teach` and `wait-what`, and the Exa and PMB servers; all but `second-opinion` also get Docling.
+Every agent but `fcos-app-installer` gets the Superpowers skills, `package-management`, Exa's `search` and `exa-agent`, OpenCode's built-in `opencode` skill, the user-invoked `handoff`, `teach` and `wait-what`, and the Exa and PMB servers; all but `second-opinion` also get Docling. `fcos-app-installer` keeps a shorter list of its own (last row), with no PMB or Docling, so its private values can't be copied out through memory or document tools.
 
 | Agent | Own skills | Extra MCP | Can start |
 |---|---|---|---|
@@ -34,6 +34,7 @@ Every agent gets the Superpowers skills, `package-management`, Exa's `search` an
 | `3d-modeling` | Report, documents, visuals, browser | FreeCAD | `general`, `explore` |
 | `second-opinion` | Shared skills only | | `evaluator`, `metacognitive`, `general`, `explore` |
 | `local-model` | Humanizer, report | | any agent |
+| `fcos-app-installer` | Its six adapter and research skills, `systematic-debugging`, `verification-before-completion`, the Docker patterns and guardrails, `opencode`, `package-management`, `search`, `exa-agent` | Exa only | `adapter-drafter`, `second-opinion`, `security`, `plan`, `explore` |
 
 `build`, `plan`, `general` and `explore` are OpenCode's own agents. Their files only add deny rules, so OpenCode keeps each built-in agent's prompt and policy. OpenCode's `explore` already denies skills and MCP tools; its file repeats those denials in case a later release loosens the built-in policy. They install only for OpenCode, the one tool that has these agents and can filter skills.
 
@@ -67,7 +68,7 @@ npx rulesync@41.0.0 generate --config groups/default.jsonc --global
 
 It needs rulesync 41 or later. Older releases add a `name:` field that makes OpenCode 2.1.3 drop every agent permission without warning. ZAP, ReVa, radare2, FreeCAD, Presenton, Podman and codebase-memory are written switched off. REA isn't installed globally because it starts switched on; use it in a folder made with the [`reverse_engineering` group](../groups/README.md#reverse_engineering).
 
-Other groups install agents with their sets: `infosec` and `work` include `agents/security`, so they also get the `security` agent; `reverse_engineering` gets the `reverse-engineering` agent. `work` and `writing_reporting` also include `second-opinion`, and `work` includes `local-model`. The `design`, `career`, `ai-research`, `3d-modeling`, `build`, `plan`, `general` and `explore` folders are in `default` only.
+Other groups install agents with their sets: `infosec` and `work` include `agents/security`, so they also get the `security` agent; `reverse_engineering` gets the `reverse-engineering` agent. `work` and `writing_reporting` also include `second-opinion`, and `work` includes `local-model`. The `design`, `career`, `ai-research`, `3d-modeling`, `build`, `plan`, `general` and `explore` folders are in `default` only, with one exception: the OpenCode-only `fcos_app_installer` group includes `plan` and `explore` (and `second-opinion` and `security`), because the FCOS app installer may start them.
 
 ## Use
 
@@ -80,6 +81,7 @@ Other groups install agents with their sets: `infosec` and `work` include `agent
 - **Delegated work uses the child's permissions.** A specialist that hands work to `general` gets build's skills and tools in that child. The custom subagents `security-auditor`, `threat-modeling-expert`, `reverse-engineer`, `malware-analyst`, `firmware-analyst`, `evaluator` and `metacognitive` have no skill or MCP filter. Hand specialist work to the specialist itself.
 - **Agent allows win over your global denies** in OpenCode, because agent rules come after global rules. To block something everywhere, use an OpenCode [policy](https://opencode.ai/v2/docs/permissions/), which runs after these rules.
 - **Only listed MCP servers are filtered.** A server you add outside this repo is open to every agent until you add it to `MCP` in `generate.py`.
+- **`fcos-app-installer`'s MCP filter is a deny list too.** Its file names the servers it blocks; a server added later is allowed until it is named there and in `MCP`. `tests/test_opencode_agents.py` fails when `MCP` gains a server the file doesn't name, so the two stay in step.
 - **Only listed plugins are filtered.** Skills from a plugin not in `NATIVE_PLUGINS` (or, for Superpowers, `SUPERPOWERS`) reach `build`, `plan` and `general` in every request, and no specialist can load them.
 - A real model can still ask for a skill by name; OpenCode then denies the call.
 
@@ -108,7 +110,7 @@ The tests fail when the image is out of date, so forgetting shows up there. To p
 
 ### Install
 
-Use the `default` group as above. Don't add the per-agent folders (`build`, `plan`, `general`, `explore`, `design`, `career`, `ai-research`, `3d-modeling`) to other groups: `work` also targets Copilot, which can't filter skills. To verify in OpenCode, ask the user to open `/agents` in a new session and check that the six specialists, `build`, `plan`, `second-opinion` and `local-model` appear, then run [the runtime check](../tests/README.md#opencode-permission-regression) instead of asking a model which skills it has. For other tools, the runtime check only confirms the generated files.
+Use the `default` group as above. Don't add the per-agent folders (`build`, `plan`, `general`, `explore`, `design`, `career`, `ai-research`, `3d-modeling`) to other groups: `work` also targets Copilot, which can't filter skills. The OpenCode-only `fcos_app_installer` group is the one exception. To verify in OpenCode, ask the user to open `/agents` in a new session and check that the six specialists, `build`, `plan`, `second-opinion` and `local-model` appear, then run [the runtime check](../tests/README.md#opencode-permission-regression) instead of asking a model which skills it has. For other tools, the runtime check only confirms the generated files.
 
 ### Remove
 
@@ -116,7 +118,7 @@ Follow [Removing or replacing a component](../AGENTS.md#removing-or-replacing-a-
 
 ### Update
 
-[`generate.py`](generate.py) writes the six specialists, the four OpenCode files, the marked blocks in `second-opinion` and `local-model`, the root README hero (`docs/hero-light.svg`, `docs/hero-dark.svg`, drawn by [`hero.py`](hero.py)) and `docs/agents-map.html`. `SPECIALISTS` holds each agent's description, instructions, skill bundles, MCP servers and subagents; `BUNDLES` lists skill groups, and the specialist bundles are read from their skill folders. After changing the manifest, adding or removing a skill folder, or adding an MCP server:
+[`generate.py`](generate.py) writes the six specialists, the four OpenCode files, the marked blocks in `second-opinion` and `local-model`, the root README hero (`docs/hero-light.svg`, `docs/hero-dark.svg`, drawn by [`hero.py`](hero.py)) and `docs/agents-map.html`. `SPECIALISTS` holds each agent's description, instructions, skill bundles, MCP servers and subagents; `BUNDLES` lists skill groups, and the specialist bundles are read from their skill folders. `DECLARED` names agents whose permission list is hand-written in their own file (`fcos-app-installer`): the map reads their skills, servers and subagents from that file, and nothing is written to it. After changing the manifest, adding or removing a skill folder, or adding an MCP server:
 
 ```bash
 python3 agents/generate.py

@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tests"))
 
 from gitfree import folder_outside_any_checkout, in_a_checkout, without_git_variables  # noqa: E402
+from layout import SKILLS_DIR  # noqa: E402
 from publish_check import check_text  # noqa: E402
 from workspace import init_workspace  # noqa: E402
 
@@ -106,6 +107,47 @@ class WorkspaceSourceTests(unittest.TestCase):
 
     def test_missing_folder_refused(self):
         self.assertEqual(self.run_check(str(self.tmp / "missing")).returncode, 2)
+
+    def put(self, folder: Path, relative: str, text: str) -> None:
+        path = folder / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+
+    def test_companion_files_get_only_the_workspace_scan(self):
+        # Owner, 2026-11-04: rulesync also installs companion agents (second-opinion, security, plan,
+        # explore) into this folder. Their upstream commands and skills hold example secrets; the
+        # toolkit's own files do not get that pass, and nothing gets one for a workspace value.
+        folder = self.plain_folder()
+        example = j("gateway: 10", ".1.2.3\n")
+        self.put(folder, ".opencode/commands/security-sast.md", example)
+        self.put(folder, ".opencode/agents/security-auditor.md", example)
+        self.put(folder, f"{SKILLS_DIR}/security-best-practices/SKILL.md", example)
+        self.assertEqual(self.run_check(str(folder)).returncode, 0)
+        for own in (".opencode/commands/add-service.md", ".opencode/agents/fcos-app-installer.md",
+                    ".opencode/agents/adapter-drafter.md", f"{SKILLS_DIR}/adapter-proxmox/SKILL.md",
+                    f"{SKILLS_DIR}/adapter-newone/notes.md",
+                    f"{SKILLS_DIR}/researching-apps-for-self-hosting/SKILL.md", "tools/x.py", "AGENTS.md"):
+            with self.subTest(own=own):
+                self.put(folder, own, example)
+                result = self.run_check(str(folder))
+                self.assertEqual(result.returncode, 1, result.stdout)
+                self.assertIn(own, result.stdout)
+                (folder / own).unlink()
+        self.put(folder, ".opencode/commands/security-sast.md", f"runs on {self.secret}\n")
+        result = self.run_check(str(folder), workspace=self.make_workspace())
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("value from workspace", result.stdout)
+
+    def test_a_companion_lookalike_outside_the_installed_places_is_scanned(self):
+        folder = self.plain_folder()
+        example = j("gateway: 10", ".1.2.3\n")
+        for path in ("commands/security-sast.md", ".opencode/other/security-sast.md",
+                     ".opencode/commands/nested/x.md", f"{SKILLS_DIR}/SKILL.md"):
+            with self.subTest(path=path):
+                self.put(folder, path, example)
+                result = self.run_check(str(folder))
+                self.assertEqual(result.returncode, 1, result.stdout)
+                (folder / path).unlink()
 
     def plain_folder(self, name="plain") -> Path:
         # Needs a folder with no git checkout around it, and TMPDIR may be inside one: look elsewhere.

@@ -427,12 +427,26 @@ opencode:
     - action: question
       resource: "*"
       effect: allow
-    # Subagents: only the adapter drafter (owner, 2026-11-04).
+    # Subagents: the adapter drafter and the companions the folder group installs
+    # (owner, 2026-11-04): a second opinion, a security review, and OpenCode's
+    # read-only plan and explore.
     - action: subagent
       resource: "*"
       effect: deny
     - action: subagent
       resource: "adapter-drafter"
+      effect: allow
+    - action: subagent
+      resource: "second-opinion"
+      effect: allow
+    - action: subagent
+      resource: "security"
+      effect: allow
+    - action: subagent
+      resource: "plan"
+      effect: allow
+    - action: subagent
+      resource: "explore"
       effect: allow
     # Skills: its own and an approved list only (owner, 2026-11-04), so the
     # descriptions of every other installed skill aren't sent with each request.

@@ -24,6 +24,10 @@ Two kinds of rules:
     Placeholders are allowed: 192.0.2.x, 198.51.100.x, 203.0.113.x, and
     keys or hashes containing EXAMPLE.
 
+The companion agents rulesync installs beside the toolkit (second-opinion, security, plan,
+explore) bring upstream commands, agents and skills that hold example secrets. Those files get the
+workspace-values rule only (tools/layout.py, is_companion); the toolkit's own files get both.
+
 Hits print as file:line: rule, never the matched value. Exit 1 on any hit.
 """
 
@@ -34,6 +38,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from layout import is_companion  # noqa: E402
 from secret_scan import scan_text as secret_lines  # noqa: E402
 from workspace import WorkspaceError, WorkspaceNotSet, git_env, private_values, resolve_workspace  # noqa: E402
 
@@ -49,7 +54,9 @@ RULES = [
     ("private key", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")),
 ]
 
-def check_text(text: str, private: set[str]) -> list[str]:
+def check_text(text: str, private: set[str], generic: bool = True) -> list[str]:
+    """generic=False is for a companion agent's upstream file (tools/layout.py is_companion): only
+    the workspace's own values are looked for in it."""
     hits = []
     lowered = text.lower()
     for value in private:
@@ -57,6 +64,8 @@ def check_text(text: str, private: set[str]) -> list[str]:
             for number, line in enumerate(text.splitlines(), start=1):
                 if value.lower() in line.lower():
                     hits.append(f"{number}: value from workspace")
+    if not generic:
+        return sorted(set(hits), key=lambda h: int(h.split(":", 1)[0]))
     for number, line in enumerate(text.splitlines(), start=1):
         for name, pattern in RULES:
             if pattern.search(line):
@@ -176,7 +185,7 @@ def main(argv: list[str]) -> int:
         except OSError:  # a file that can't be read can't be cleared
             hits.append(f"{shown}: unreadable (not checked)")
             continue
-        hits += [f"{shown}:{hit}" for hit in check_text(text, private)]
+        hits += [f"{shown}:{hit}" for hit in check_text(text, private, generic=not is_companion(path.relative_to(root)))]
     for hit in hits:
         print(hit)
     count = f"{len(files)} file" + ("" if len(files) == 1 else "s")

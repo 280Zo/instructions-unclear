@@ -199,12 +199,19 @@ class AgentTests(unittest.TestCase):
     def test_other_groups_keep_their_agents(self):
         # Only default gets the per-agent folders.
         # The security and reverse-engineering agents travel with their sets.
+        # An OpenCode-only folder group may carry the restrictions for OpenCode's own plan and explore
+        # agents (the FCOS app installer's companions): the rule is there to keep them out of groups
+        # that also target Copilot, which cannot filter skills.
+        companions = {"fcos_app_installer": {"plan", "explore"}}
         for group in ROOT.glob("groups/*.jsonc"):
             if group.stem == "default":
                 continue
-            roots = read_jsonc(group)["inputRoots"]
+            config = read_jsonc(group)
             for name in OWN_FOLDERS:
-                self.assertNotIn(f"agents/{name}", roots, group.stem)
+                if name in companions.get(group.stem, ()):
+                    self.assertEqual(config["targets"], ["opencode"], group.stem)
+                    continue
+                self.assertNotIn(f"agents/{name}", config["inputRoots"], group.stem)
         for group, folder in [("work", "security"), ("infosec", "security"),
                               ("reverse_engineering", "reverse-engineering")]:
             self.assertIn(f"agents/{folder}", read_jsonc(ROOT / f"groups/{group}.jsonc")["inputRoots"])
@@ -229,9 +236,73 @@ class AgentTests(unittest.TestCase):
         data = json.loads(re.search(r"const DATA = (.*?);\nconst map", page, re.S)[1])
         self.assertEqual(data["agents"], generate.MAP_AGENTS)
         superpowers = next(g for g in data["skills"] if g["title"].startswith("Superpowers"))
-        self.assertEqual(len(superpowers["agents"]), len(generate.MAP_AGENTS) - 1)  # all but explore
+        # All but explore, and the FCOS app installer, which loads two of the fifteen.
+        self.assertEqual(len(superpowers["agents"]), len(generate.MAP_AGENTS) - 2)
         zap = next(g for g in data["mcp"] if g["title"] == "zap")
         self.assertEqual(zap["agents"], ["security"])
+
+
+class FcosAppInstallerMapTests(unittest.TestCase):
+    """The FCOS app installer is on the map (not in the hero) with the lists its own source declares.
+
+    Its permission lists are hand-written in agents/fcos-app-installer/subagents/fcos-app-installer.md;
+    generate.py reads them from there (generate.DECLARED), so the map cannot drift from the agent."""
+
+    NAME = "fcos-app-installer"
+    SKILLS = ["adapter-duckdns", "adapter-generic", "adapter-opnsense", "adapter-proxmox", "adapter-truenas",
+              "researching-apps-for-self-hosting"]
+
+    def test_it_is_declared_and_on_the_map_but_not_generated(self):
+        self.assertEqual(generate.DECLARED, {self.NAME: "agents/fcos-app-installer/subagents/fcos-app-installer.md"})
+        self.assertIn(self.NAME, generate.MAP_AGENTS)
+        self.assertNotIn(self.NAME, generate.SPECIALISTS)
+        self.assertNotIn(generate.DECLARED[self.NAME], generate.MARKED)
+        self.assertNotIn(generate.DECLARED[self.NAME], generate.outputs())  # its file is the source of truth
+        self.assertNotIn(self.NAME, [name for name, _kind, _tag in generate.HERO_AGENTS])  # no hero card
+
+    def test_the_map_reads_the_skills_it_may_load_from_its_rules(self):
+        allowed = generate.allowed_skills(generate.spec_of(self.NAME), set(default_skill_ids()))
+        self.assertTrue(set(self.SKILLS) <= allowed)
+        for skill in ("opencode", "package-management", "search", "exa-agent", "systematic-debugging",
+                      "verification-before-completion", "docker-compose-patterns", "docker-destructive-guardrails"):
+            self.assertIn(skill, allowed)
+        for skill in ("eli5", "brainstorming", "frontend-design", "humanizer", "resume-tailor"):
+            self.assertNotIn(skill, allowed)
+
+    def test_the_map_reads_the_servers_and_subagents_too(self):
+        spec = generate.spec_of(self.NAME)
+        self.assertEqual(generate.allowed_mcp(spec), ["exa"])  # a deny list; Exa stays for research
+        self.assertEqual(sorted(spec["subagents"]),
+                         ["adapter-drafter", "explore", "plan", "second-opinion", "security"])
+
+    def test_its_skills_are_a_folder_group_bundle_only_it_may_load(self):
+        data = generate.map_data()
+        group = next(g for g in data["skills"] if g["title"].startswith("FCOS app installer skills"))
+        self.assertIn("fcos_app_installer", group["title"])
+        self.assertIn("not default", group["title"])
+        self.assertEqual(sorted(group["items"]), self.SKILLS)
+        self.assertEqual(group["agents"], [self.NAME])
+        # The everyday agents never see them, even in the project folder that installs them.
+        for name in BUILTINS:
+            head, _ = frontmatter(agent_file(name))
+            for skill in self.SKILLS:
+                self.assertIn(f'{{action: "skill", resource: "{skill}", effect: deny}}', head, name)
+
+    def test_the_helper_and_the_companions_appear_as_subagents_only_it_starts(self):
+        data = generate.map_data()
+        by_title = {g["title"]: g for g in data["subagents"]}
+        self.assertEqual(by_title["adapter-drafter"]["agents"], [self.NAME])
+        for companion in ("second-opinion", "security", "plan", "explore"):
+            self.assertIn(self.NAME, [a for a in generate.MAP_AGENTS if a == self.NAME and companion in
+                                      generate.spec_of(self.NAME)["subagents"]])
+
+    def test_it_alone_among_agents_reaches_exa_and_nothing_else_beyond_the_shared_tools(self):
+        data = generate.map_data()
+        exa = next(g for g in data["mcp"] if g["title"] == "exa")
+        self.assertIn(self.NAME, exa["agents"])
+        for server in ("docling", "pmb", "podman", "zap", "freecad", "presenton"):
+            group = next(g for g in data["mcp"] if g["title"] == server)
+            self.assertNotIn(self.NAME, group["agents"], server)
 
 
 if __name__ == "__main__":

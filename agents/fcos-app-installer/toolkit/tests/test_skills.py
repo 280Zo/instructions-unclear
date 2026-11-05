@@ -16,7 +16,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 
-from layout import SKILLS  # noqa: E402
+from layout import SKILLS, is_own_skill  # noqa: E402
 from adapters import ROLE_STEPS, AdapterError, load_adapter  # noqa: E402
 
 NAME = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -33,7 +33,8 @@ def frontmatter(path: Path) -> tuple[dict, str]:
 
 class SkillFormatTests(unittest.TestCase):
     def test_every_skill_follows_the_spec(self):
-        skills = sorted(SKILLS.glob("*/SKILL.md"))
+        # The toolkit's own skills; companion agents' upstream skills sit beside them (tools/layout.py).
+        skills = sorted(p for p in SKILLS.glob("*/SKILL.md") if is_own_skill(p.parent.name))
         self.assertGreaterEqual(len(skills), 5)
         for path in skills:
             with self.subTest(skill=path.parent.name):
