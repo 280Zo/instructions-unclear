@@ -254,7 +254,7 @@ def _volume(value, label: str) -> str:
     return value
 
 
-# Every VM setting the agent must decide and explain (owner rule 2026-10-31):
+# Every VM setting the agent must decide and explain:
 # vm.yaml `settings:` holds each as {use, why, source}; none may be left out,
 # and each is sent to Proxmox explicitly. Values are checked here.
 # CPU flags allowed for a VM (Proxmox VM chapter, "VM-specific flags must be
@@ -572,7 +572,7 @@ def check_network(spec: dict, host: str, cfg: dict, interfaces: list) -> tuple[l
     warnings: list[str] = []
     name = spec.get("bridge")
     allowed_bridge = cfg.get("bridge")
-    # forbidden_bridges is optional and never asked (owner decision 2026-10-31):
+    # forbidden_bridges is optional and never asked:
     # hosts.<host>.bridge plus the token's one-bridge grant already refuse every
     # other network. A list that is saved is still honored.
     forbidden = cfg.get("forbidden_bridges") or []

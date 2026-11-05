@@ -1,4 +1,4 @@
-"""Owner, 2026-11-02: facts about software the agent doesn't write come from its
+"""Facts about software the agent doesn't write come from its
 official docs or source, never from memory, and are recorded with the source."""
 import re
 import unittest
@@ -26,7 +26,7 @@ class SourceTests(unittest.TestCase):
                 self.assertTrue(re.search(r"https://", source) or source.startswith("Tested on"), source)
 
     def test_pushed_blueprints_are_applied_explicitly(self):
-        # Trial 2026-11-02: Authentik's watcher only reacts to created/modified files
+        # Authentik's watcher only reacts to created/modified files
         # (authentik/blueprints/v1/tasks.py); the push renames a temp file into place.
         guide = (ROOT / "docs" / "guide" / "03-add-a-service.md").read_text()
         # Review: ak apply_blueprint never registers a new file, so the outpost file's
@@ -49,7 +49,7 @@ class SourceTests(unittest.TestCase):
                 # The login page's name comes from the site file (edge.authentik.host), e.g. login.<domain>.
                 self.assertNotIn("auth.<domain>", text)
                 self.assertNotIn("auth.example.duckdns.org", text)
-                # The owner's machine is a desktop (owner, 2026-11-01).
+                # The owner's machine is a desktop.
                 self.assertNotIn("laptop", text)
         edge = pages["06-edge-vm.md"]
         # docs.goauthentik.io/users-sources/user/user-interface/: gear icon > Credentials > MFA Devices.

@@ -1,4 +1,4 @@
-"""tools/check_requirements.py: what the toolkit needs on the desktop (owner, 2026-11-04)."""
+"""tools/check_requirements.py: what the toolkit needs on the desktop."""
 import io
 import re
 import sys

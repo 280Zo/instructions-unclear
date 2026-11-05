@@ -1,4 +1,4 @@
-"""Guide 10: the trial run after installing the toolkit on a machine (owner, 2026-11-04).
+"""Guide 10: the trial run after installing the toolkit on a machine.
 The tests check files; these steps check what only a live OpenCode can show."""
 import sys
 import unittest
@@ -22,7 +22,7 @@ class TrialRunTests(unittest.TestCase):
                 self.assertIn(needle, text)
 
     def test_live_checks_are_actions_not_questions(self):
-        # General review, 2026-11-04: a model can answer "which skills can you load?" from memory.
+        # A model can answer "which skills can you load?" from memory.
         # Each check makes it do something whose result the owner can see.
         section = PAGE.read_text().split("## 10.2", 1)[1].split("## 10.3", 1)[0]
         self.assertNotIn("Which skills can you load", section)

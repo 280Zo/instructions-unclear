@@ -285,11 +285,11 @@ def _blueprint(text):
 
 
 class AccessGroupTests(GenCase):
-    """Owner, 2026-11-01: an app with no bindings is open to every Authentik user
+    """An app with no bindings is open to every Authentik user
     (docs.goauthentik.io/add-secure-apps/applications/manage_apps/); `groups` binds it."""
 
     def test_app_rules_never_create_groups(self):
-        # Review 2026-11-02: two rules files creating the same group race on its unique name;
+        # Two rules files creating the same group race on its unique name;
         # groups and bindings live only in the login front end's access.yaml.
         spec = spec_fixture("monica")
         spec["groups"] = ["family", "guests"]
@@ -332,7 +332,7 @@ class AccessGroupTests(GenCase):
 
 
 class SectionTests(GenCase):
-    """Owner, 2026-11-03: apps grouped by section on Authentik's dashboard. The dashboard draws each
+    """Apps grouped by section on Authentik's dashboard. The dashboard draws each
     application's `group` as a heading over its apps, all on one page (authentik 2026.8.5
     web/src/user/LibraryPage/ApplicationList.ts; core/models.py Application.group)."""
 
@@ -356,7 +356,7 @@ class SectionTests(GenCase):
 
 
 class RedirectTests(GenCase):
-    """Trial 2026-11-02: Monica's public/.htaccess redirects /.well-known/carddav with an
+    """Monica's public/.htaccess redirects /.well-known/carddav with an
     Apache rewrite that builds http:// behind the proxy; Traefik answers these paths itself
     with https (redirectRegex: doc.traefik.io .../middlewares/redirectregex/)."""
 
@@ -1068,7 +1068,7 @@ class BackupTests(GenCase):
 
 
 class OwnerTablesTests(GenCase):
-    """Owner, 2026-11-04: several items of one kind (folders, secrets) are one table, one row each."""
+    """Several items of one kind (folders, secrets) are one table, one row each."""
 
     def test_file_server_folders_are_one_table(self):
         site = copy.deepcopy(SITE)
@@ -1106,7 +1106,7 @@ class OwnerTablesTests(GenCase):
 
 
 class BackupsReportTests(GenCase):
-    """Owner, 2026-11-04: the final report says how backups work, when they run and how to restore."""
+    """The final report says how backups work, when they run and how to restore."""
 
     def test_backups_report_names_what_when_where_and_restore(self):
         text = (self.gen("monica") / "backups.md").read_text()

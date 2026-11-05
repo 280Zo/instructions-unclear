@@ -134,7 +134,7 @@ class AdapterTests(unittest.TestCase):
             self.assertIn("--host-key", line)
 
     def test_token_is_stored_in_a_step_of_its_own(self):
-        # Owner, 2026-11-04: the store command is its own step in the agent's answer, not
+        # The store command is its own step in the agent's answer, not
         # part of the setup script's output.
         adapter = load_adapter("virtualization", "proxmox")
         setup = render_step(adapter, "create_api_access", every_value(adapter, "create_api_access"))
@@ -340,7 +340,7 @@ class AdapterTests(unittest.TestCase):
         self.assertIn("DISCOVER_SHA256", result.stdout)
 
     def test_draft_needs_a_real_workspace_outside_any_skill_folder(self):
-        # Whole-branch review, 2026-11-04: a draft written into a skill folder would become a
+        # A draft written into a skill folder would become a
         # live skill before anyone reviewed it.
         tool = [sys.executable, str(ROOT / "tools" / "adapters.py")]
         recorded = Path(tempfile.mkdtemp(dir=SCRATCH)) / "r.json"
@@ -467,7 +467,7 @@ class AdapterTests(unittest.TestCase):
         for line in runs:
             self.assertIn("--create-pool", line)
         self.assertIn("created if it doesn't exist", teardown)
-        # Owner, 2026-11-04: the installs always move to pool backrooms, so nothing is asked.
+        # The installs always move to pool backrooms, so nothing is asked.
         for line in runs:
             self.assertIn("--move-to backrooms --create-pool", line)
         self.assertNotIn("KEEP_POOL", adapter["owner_steps"]["teardown_api_access"]["uses"])

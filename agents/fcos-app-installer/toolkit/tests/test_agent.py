@@ -101,7 +101,7 @@ class AgentTests(unittest.TestCase):
             self.assertIn(needle, text)
 
     def test_question_rules_from_the_trial_run(self):
-        # Owner, 2026-10-31: the only text box is the tool's own "Other" entry; sizes show
+        # The only text box is the tool's own "Other" entry; sizes show
         # what's free with every VM running, the official figures, and the lowest safe amount.
         text = " ".join(body(self.text).split())  # wording may wrap across lines
         self.assertIn('pick "Other" and type', text)
@@ -115,7 +115,7 @@ class AgentTests(unittest.TestCase):
             self.assertIn(needle, questions)
 
     def test_workspace_folders_named_fcos_are_open_but_secrets_never(self):
-        # Owner decision 2026-10-31: any folder whose name contains "fcos-".
+        # Any folder whose name contains "fcos-".
         for ws in ("/home/owner/fcos-workspace", "/home/owner/AI/fcos-trial"):
             with self.subTest(ws=ws):
                 self.assertEqual(effect(self.text, "external_directory", f"{ws}/site.yaml"), "allow")
@@ -185,7 +185,7 @@ class AgentTests(unittest.TestCase):
         self.assertNotRegex(text, r"`python3 tools/workspace\.py`")
 
     def test_search_tool_asks(self):
-        # The built-in search could reach secrets/ through its file filter; owner decision 2026-10-30.
+        # The built-in search could reach secrets/ through its file filter.
         for pattern in ("token", "*", "PVEAPIToken"):
             with self.subTest(pattern=pattern):
                 self.assertEqual(effect(self.text, "grep", pattern), "ask")
@@ -233,7 +233,7 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(effect(self.text, "edit", f"{SKILLS_DIR}/adapter-proxmox/scripts/lib.sh"), "ask")
         self.assertEqual(effect(self.text, "edit", f"/home/x/AI/toolkit/{SKILLS_DIR}/a/SKILL.md"), "ask")
 
-    # Owner, 2026-11-04: only its own skills plus an approved list, so the others' descriptions
+    # Only its own skills plus an approved list, so the others' descriptions
     # aren't sent with every request; MCP servers it doesn't need are denied (Exa stays, for research).
     ALLOWED_SKILLS = ("adapter-proxmox", "adapter-generic", "researching-apps-for-self-hosting", "opencode",
                       "package-management", "search", "exa-agent", "docker-compose-patterns",
@@ -250,7 +250,7 @@ class AgentTests(unittest.TestCase):
     def test_overrides_of_global_rules_are_short_and_cover_the_clashes(self):
         # Global AGENTS.md always loads and can't be switched off by a folder (OpenCode V2
         # Instructions: "combined rather than used as overrides"), so the clashes are overridden
-        # here, briefly (owner, 2026-11-04: not a lot of tokens).
+        # here, briefly (not a lot of tokens).
         prompt = AGENT.read_text().split("\n---\n", 1)[1]
         section = prompt.split("## Overrides of global rules", 1)[1].split("\n## ", 1)[0]
         lines = [l for l in section.strip().splitlines() if l.strip()]
@@ -271,7 +271,7 @@ class AgentTests(unittest.TestCase):
             self.assertIn(needle, prompt)
 
     def test_relative_secret_paths_are_denied_too(self):
-        # Whole-branch review, 2026-11-04: V2 reads inside the location use relative paths,
+        # V2 reads inside the location use relative paths,
         # which "*/secrets/*" doesn't match.
         for action, path in (("read", "secrets/agent-ssh/edge/id_ed25519"), ("read", "secrets"),
                              ("edit", "secrets/x.token"), ("edit", "secrets")):
@@ -287,7 +287,7 @@ class AgentTests(unittest.TestCase):
         self.assertIn("Docling", section)
 
     def test_file_name_search_stays_out_of_secrets(self):
-        # General review, 2026-11-04: glob had no rule, so it could list secret file names.
+        # Glob had no rule, so it could list secret file names.
         # OpenCode V2 matches glob rules against the requested pattern (Permissions docs).
         for pattern in ("**/secrets/*", "secrets/**", "/home/owner/fcos-installs/home/secrets/*", "**/*.token"):
             with self.subTest(pattern=pattern):
@@ -365,7 +365,7 @@ class AgentTests(unittest.TestCase):
 
 
 class ReviewFixTests(unittest.TestCase):
-    """Gaps found in review (2026-11-04) in the hand-written permission list and its prompt."""
+    """Gaps found in review in the hand-written permission list and its prompt."""
 
     def setUp(self):
         self.text = AGENT.read_text()
@@ -392,7 +392,7 @@ class ReviewFixTests(unittest.TestCase):
     def test_it_may_start_the_adapter_drafter_and_nothing_else(self):
         # A subagent runs with its own permissions, not this agent's: explore can run ssh and read
         # secrets/, security can edit the host scripts and their checksum list, and second-opinion
-        # and plan are primary agents that cannot be started at all (review 2026-11-05).
+        # and plan are primary agents that cannot be started at all.
         self.assertEqual(effect(self.text, "subagent", "adapter-drafter"), "allow")
         for name in ("second-opinion", "security", "plan", "explore", "general", "evaluator", "metacognitive",
                      "security-auditor", "threat-modeling-expert", "build"):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The agent's own setup key for one VM, used while it sets services up, then revoked.
 
-Owner decision 2026-10-31: the agent never uses the owner's SSH key. It gets a
+The agent never uses the owner's SSH key. It gets a
 separate key that the owner adds beside their own, and removes it when the
 services work:
 
@@ -48,7 +48,7 @@ USER = re.compile(r"^[a-z_][a-z0-9_-]{0,31}$")
 PUBKEY = re.compile(r"^ssh-ed25519 [A-Za-z0-9+/=]+ fcos-agent-setup-[a-z0-9-]+$")
 VM_KEY_FILE = "~/.ssh/authorized_keys.d/fcos-agent"
 UNIT = re.compile(r"^[a-z0-9][a-z0-9@_.-]{0,120}\.service$")
-# Owner, 2026-11-04: an app printed a generated secret into its log at first start, and a
+# An app printed a generated secret into its log at first start, and a
 # log check showed it to the agent. Logs go through `logs` (redacted); these reads are refused.
 DIRECT_READS = re.compile(r"\bjournalctl\b|\b(?:podman|docker)\b[^|;&]*\blogs\b|\bsecret\s+inspect\b"
                           r"|--showsecret|\bprintenv\b|(?:^|[\s;&|(])env(?:\s|$)|/environ\b|\.log\b"

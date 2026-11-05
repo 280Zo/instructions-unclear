@@ -1,4 +1,4 @@
-"""The adapter-drafter subagent (owner, 2026-11-04): researches a product that has no adapter
+"""The adapter-drafter subagent: researches a product that has no adapter
 skill and drafts one from what the owner did, into the workspace only."""
 import sys
 import unittest
@@ -59,7 +59,6 @@ class DrafterTests(unittest.TestCase):
         self.assertEqual(effect(self.text, "skill", "brainstorming"), "deny")
 
     def test_same_secret_and_folder_guards_as_the_main_agent(self):
-        # Whole-branch review, 2026-11-04.
         for action, path in (("read", "secrets/x"), ("read", "secrets"), ("read", f"{WS}/secrets"),
                              ("read", "notes/x.md"), ("edit", "secrets/x")):
             with self.subTest(action=action, path=path):

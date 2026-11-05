@@ -45,7 +45,7 @@ SAMPLE = {
 
 
 # FCOS's own layout links (read on the trial VM 2026-11-02; ostree layout): every
-# run of a generated script happens in a tree shaped like this (owner rule 2026-11-02).
+# run of a generated script happens in a tree shaped like this.
 FCOS_LINKS = {"usr/local": "../var/usrlocal", "home": "var/home", "mnt": "var/mnt", "opt": "var/opt",
               "srv": "var/srv", "root": "var/roothome"}
 
@@ -75,7 +75,7 @@ class IgnToScriptTests(unittest.TestCase):
         self.assertIn("newdir 0750 3101:3101 /var/lib/appdata/opencode", self.script)
 
     def test_existing_directory_keeps_its_owner_and_mode(self):
-        # Trial 2026-11-02: MariaDB had taken over its data folder; re-applying the
+        # MariaDB had taken over its data folder; re-applying the
         # fragment's owner on a push locked it out. Ignition only sets them on creation.
         with tempfile.TemporaryDirectory() as root:
             data = Path(root, "var/lib/appdata/opencode")
@@ -96,7 +96,7 @@ class IgnToScriptTests(unittest.TestCase):
             self.assertIn(f"skip: chown -h 3101:3101 {data}", result.stdout)
 
     def test_fcos_layout_links_are_followed(self):
-        # Trial 2026-11-02: on FCOS /usr/local is a symlink to ../var/usrlocal (owned by root),
+        # On FCOS /usr/local is a symlink to ../var/usrlocal (owned by root),
         # so every /usr/local/bin file was refused.
         with tempfile.TemporaryDirectory() as root:
             Path(root, "usr").mkdir()
@@ -111,7 +111,7 @@ class IgnToScriptTests(unittest.TestCase):
             self.assertTrue(Path(root, "var/usrlocal/lib/x").is_dir())
 
     def test_declared_folders_come_first_across_fragments(self):
-        # Review 2026-11-02: a later fragment's declared folder must not be pre-created
+        # A later fragment's declared folder must not be pre-created
         # (root, 0755) by an earlier fragment's file and then "kept".
         a = {"storage": {"files": [{"path": "/var/lib/appdata/x/sub/f", "overwrite": True, "contents": data_url("1")}]}}
         b = {"storage": {"directories": [{"path": "/var/lib/appdata/x", "mode": 0o750,
@@ -183,7 +183,7 @@ class IgnToScriptTests(unittest.TestCase):
                               env={"PATH": "/usr/bin:/bin", "IGN_DRY_RUN": "1", "IGN_TEST_RUNNER_UID": "0"})
 
     def test_writes_inside_a_service_folder_happen_as_that_account(self):
-        # Review 2026-11-02: root writing by path into a folder a service owns can be raced
+        # Root writing by path into a folder a service owns can be raced
         # with a planted symlink; writing as the owner limits it to what the owner can write.
         import os
         me = f"{os.getuid()}:{os.getgid()}"

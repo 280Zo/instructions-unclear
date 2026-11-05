@@ -55,7 +55,7 @@ safe() {
 # Who writes: root (the runner) only where every existing folder on the way is
 # the runner's and writable by nobody else. Inside a folder a service account
 # owns, that account writes (setpriv), so a symlink it plants in the meantime
-# can only reach what it could write anyway (review 2026-11-02).
+# can only reach what it could write anyway.
 # IGN_TEST_RUNNER_UID is for the tests only: it makes the test user's folders
 # count as a service's.
 RUNNER_UID="${IGN_TEST_RUNNER_UID:-$(id -u)}"

@@ -3,7 +3,7 @@
 
 Usage: install_notes.py <workspace> [--note "<one line>"]
 
-Owner, 2026-11-04: every service deployment leaves notes for the next one. The
+Every service deployment leaves notes for the next one. The
 file is rebuilt from site.yaml and services/*/service.yaml after every service,
 so it never drifts from them. Only the part between the notes markers is kept
 as it is: things a spec can't hold, added with --note (one line each). The

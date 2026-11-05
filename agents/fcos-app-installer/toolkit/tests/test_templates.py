@@ -109,7 +109,7 @@ class FirewallTests(unittest.TestCase):
         self.assertIn('include "/etc/nftables.d/*.nft"', text)
 
     def test_firewall_takes_several_networks(self):
-        # Owner, 2026-10-31 (trial run): the web ports open to two networks.
+        # The web ports open to two networks.
         two = dict(values("ai-vm"), LAN_CIDR="192.0.2.0/24, 198.51.100.0/24")
         text = render((TEMPLATES / "base" / "firewall.bu.tmpl").read_text(), two)
         self.assertIn("tcp dport @lan_tcp ip saddr { 192.0.2.0/24, 198.51.100.0/24 } accept", text)

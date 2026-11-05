@@ -212,7 +212,7 @@ class SetupTests(HostScriptCase):
         self.assertEqual(sorted(map(tuple, acls_for())), sorted(map(tuple, self.read_state()["acls"])))
 
     def test_secret_printed_once_and_nothing_else_to_run(self):
-        # Owner, 2026-11-04: the script's output holds the secret and no command; storing it is
+        # The script's output holds the secret and no command; storing it is
         # the agent's next step (adapter step store_api_token), shown on its own.
         result = self.setup()
         out = result.stdout

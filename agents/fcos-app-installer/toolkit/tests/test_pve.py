@@ -83,7 +83,7 @@ def setting(value):
     return {"use": value, "why": "example reason", "source": "example source"}
 
 
-# Every VM setting the agent must decide (owner rule 2026-10-31), example values.
+# Every VM setting the agent must decide, example values.
 SETTINGS = {
     "cpu": "host", "cpu_flags": [], "sockets": 1, "numa": False, "cpuunits": 100, "cpulimit": 0,
     "balloon": "on", "allow_ksm": True, "bios": "seabios", "machine": "pc", "disk_cache": "none",
@@ -282,7 +282,7 @@ class NetworkCheckTests(unittest.TestCase):
         # Without hosts.<key>.bridge the agent can't tell which network is allowed.
         problems, warnings = self.check({"bridge": "vmbr0"}, host={})
         self.assertTrue(any("which network" in p for p in problems), problems)
-        # Owner decision 2026-10-31: no "never use" question; its absence is no warning.
+        # No "never use" question; its absence is no warning.
         self.assertEqual(self.check({}, host={"bridge": "vmbr9"}), ([], []))
 
     def test_messages_are_plain_with_the_key_at_the_end(self):
@@ -787,8 +787,8 @@ class CommandTests(PveCase):
         self.assertIn("after the create", out)
 
     def test_rights_a_setting_needs_are_checked_before_any_write(self):
-        # qemu-server check_vm_modify_config_perm: 'startup' needs Sys.Modify on / (trial run 2026-10-31:
-        # the create was refused after the config disc had been uploaded).
+        # qemu-server check_vm_modify_config_perm: 'startup' needs Sys.Modify on /:
+        # the create was refused after the config disc had been uploaded.
         spec = SPEC_ISO.replace("startup_order:\n    use: null", "startup_order:\n    use: 2")
         self.assertNotEqual(spec, SPEC_ISO)
         (self.ws / "vms" / "edge" / "vm.yaml").write_text(spec)

@@ -1,4 +1,4 @@
-"""tools/appapi.py: the agent's temporary API access to an app (owner, 2026-11-02).
+"""tools/appapi.py: the agent's temporary API access to an app.
 The owner creates a time-limited token in the app, stores it from a hidden prompt
 into secrets/, and deletes it in the app at the end. The agent never sees it."""
 import http.server
@@ -123,7 +123,7 @@ class AppApiTests(unittest.TestCase):
         self.assertIn("200", out)
 
     def test_secrets_in_the_answer_are_hidden(self):
-        # Owner, 2026-11-04: an API answer (e.g. a new OAuth client) can carry a secret.
+        # An API answer (e.g. a new OAuth client) can carry a secret.
         self.store()
         code, out, err = self.run_tool("call", "monica", "GET", "/api/oauth")
         self.assertEqual(code, 0, err)

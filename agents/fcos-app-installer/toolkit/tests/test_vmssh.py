@@ -1,4 +1,4 @@
-"""tools/vmssh.py: the agent's own, revocable setup key for a VM (owner decision 2026-10-31).
+"""tools/vmssh.py: the agent's own, revocable setup key for a VM.
 
 The real ssh, ssh-keygen and ssh-keyscan are replaced by stubs on PATH that log
 their arguments; nothing here reaches a real machine or the owner's keys.
@@ -226,7 +226,7 @@ class VmSshTests(unittest.TestCase):
                 self.assertNotEqual(code, 0)  # 2 when the parser refuses an option-like name
         self.assertEqual(self.calls(), [])
 
-    # secrets never reach the agent (owner, 2026-11-04: an app printed a secret into its log)
+    # secrets never reach the agent (an app printed a secret into its log)
 
     def test_run_output_is_redacted(self):
         self.setup_key()
@@ -359,7 +359,7 @@ class GuideTests(unittest.TestCase):
 
 
 class UserManagerTests(unittest.TestCase):
-    """Trial 2026-11-01: from a non-interactive ssh session, 'systemctl --user -M <svc>@' hands sshd's
+    """From a non-interactive ssh session, 'systemctl --user -M <svc>@' hands sshd's
     stderr pipe to a bridge unit; SELinux forbids dbus-broker (system_dbusd_t) to pass an
     sshd_session_t fifo (a silenced denial) and the bus drops the call. The agent's commands use
     the service user's own bus instead."""
@@ -403,7 +403,7 @@ class UserManagerTests(unittest.TestCase):
 
 
 class DesktopRouteTests(unittest.TestCase):
-    """Trial 2026-11-01: the owner's desktop had a leg on the VM's own network, reached the VM
+    """The owner's desktop had a leg on the VM's own network, reached the VM
     directly from an address the VM's firewall doesn't allow, and the temporary fix (a route via
     the router) was lost on restart. The install gives a permanent route as an owner step."""
 

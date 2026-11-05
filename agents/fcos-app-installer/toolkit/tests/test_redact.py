@@ -1,4 +1,4 @@
-"""tools/redact.py: what hides secrets in everything the agent reads (owner, 2026-11-04).
+"""tools/redact.py: what hides secrets in everything the agent reads.
 
 A real install showed the agent an OAuth client secret that an app printed into its
 log at first start. Every tool whose output the agent reads passes it through here.

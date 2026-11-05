@@ -270,7 +270,7 @@ class PrivateValueTests(TempHome):
 
     def test_only_identifying_spec_fields_count(self):
         # A public app's image, folders and settings are not private; its web
-        # name, titles and file-server paths can be (owner decision 2026-10-31).
+        # name, titles and file-server paths can be private.
         ws = self.make()
         svc = ws / "services" / "app"
         svc.mkdir(parents=True)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Provider adapters: the owner's steps for systems the agent never touches.
 
-Each provider is a skill, adapter-<provider>/ in the skills folder (tools/layout.py; owner 2026-11-04): SKILL.md
+Each provider is a skill, adapter-<provider>/ in the skills folder (tools/layout.py): SKILL.md
 says what the product is and when to use it, adapter.yaml holds its steps, and
 scripts/ any host scripts. This tool is the one renderer for every adapter skill.
 adapter.yaml:
@@ -534,7 +534,7 @@ def main(argv: list[str]) -> int:
         text = draft_adapter(args.role, args.provider, recorded)
         ws = resolve_workspace(args.workspace)
         # A draft must land in a real workspace, never in a folder OpenCode loads skills from:
-        # there an unreviewed draft would become a live skill (whole-branch review, 2026-11-04).
+        # there an unreviewed draft would become a live skill.
         if not (ws / "site.yaml").is_file():
             raise AdapterError(f"{ws} has no site.yaml: drafts go into an install's workspace")
         if "skills" in ws.parts or any(p in (".agents", ".opencode", ".claude") for p in ws.parts):

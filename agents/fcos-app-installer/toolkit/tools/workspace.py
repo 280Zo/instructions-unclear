@@ -185,7 +185,7 @@ SPEC_IDENTIFYING = ("hostname", "title", "description", "login_reason", "accepte
 
 
 def _identifying(spec) -> list:
-    """The parts of an app spec that can identify the owner (owner decision 2026-10-31)."""
+    """The parts of an app spec that can identify the owner."""
     if not isinstance(spec, dict):
         return []
     own = str(spec.get("name", "")).lower()

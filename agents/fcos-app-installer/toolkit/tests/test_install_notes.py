@@ -1,5 +1,5 @@
 """tools/install_notes.py: <workspace>/AGENTS.md, what exists in an install and how a new
-service hooks into it (owner, 2026-11-04)."""
+service hooks into it."""
 import copy
 import shutil
 import subprocess

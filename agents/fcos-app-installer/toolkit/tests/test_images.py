@@ -1,4 +1,4 @@
-"""The desktop-side container images (owner, 2026-11-04): pinned by tag and digest in one file,
+"""The desktop-side container images: pinned by tag and digest in one file,
 never pulled by a tool, and checked for updates by tools/check_updates.py."""
 import io
 import json
@@ -44,7 +44,7 @@ class PinTests(unittest.TestCase):
 
 
 class MissingPinTests(unittest.TestCase):
-    """Whole-branch review, 2026-11-04: a missing pin made the scripts exit without a word."""
+    """A missing pin made the scripts exit without a word."""
 
     def test_missing_pin_says_so(self):
         import shutil

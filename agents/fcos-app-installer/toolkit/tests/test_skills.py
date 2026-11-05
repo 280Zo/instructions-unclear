@@ -1,4 +1,4 @@
-"""The toolkit's skills (<skills folder>/<id>/SKILL.md, owner 2026-11-04).
+"""The toolkit's skills (<skills folder>/<id>/SKILL.md).
 
 Format: the Agent Skills specification (agentskills.io/specification) and OpenCode V2
 (opencode.ai/v2/docs/skills): name 1-64 lowercase letters, digits and single hyphens,
@@ -94,7 +94,7 @@ class AdapterSkillTests(unittest.TestCase):
 
 
 class AppResearchSkillTests(unittest.TestCase):
-    """Owner, 2026-11-04: researching an app is a portable skill; guide 3.2 maps its facts to the spec."""
+    """Researching an app is a portable skill; guide 3.2 maps its facts to the spec."""
 
     SKILL = SKILLS / "researching-apps-for-self-hosting" / "SKILL.md"
 

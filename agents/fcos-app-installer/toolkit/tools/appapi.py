@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The agent's temporary API access to an app (owner decision 2026-11-02).
+"""The agent's temporary API access to an app.
 
 The owner creates a time-limited admin token in the app itself (its official
 docs say how), stores it from a hidden prompt, and deletes it in the app when
@@ -165,7 +165,7 @@ def cmd_call(ws: Path, site: dict, args) -> int:
         print(f"redirect to {location!r} not followed (it would carry the token)")
     for form in (material, urllib.parse.quote(material, safe="")):
         text = text.replace(form, "<token>")
-    # Owner, 2026-11-04: an answer can carry a secret (a new OAuth client's, say); hide it.
+    # An answer can carry a secret (a new OAuth client's, say); hide it.
     try:
         print(json.dumps(redact_json(json.loads(text)), indent=2))
     except ValueError:

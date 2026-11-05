@@ -24,7 +24,7 @@ opencode:
       resource: "bash tools/*"
       effect: allow
     # VMs only through tools/vmssh.py with the agent's own revocable key; plain
-    # ssh could use the owner's key or ssh-agent (owner decision 2026-10-31).
+    # ssh could use the owner's key or ssh-agent.
     - action: shell
       resource: "ssh *"
       effect: deny
@@ -192,7 +192,7 @@ opencode:
       resource: "rg *--no-ignore*"
       effect: deny
     # Logs only through tools/vmssh.py logs (redacted); no environment or secret
-    # store is read (owner, 2026-11-04: an app printed a secret into its log).
+    # store is read (an app printed a secret into its log).
     # vmssh.py run refuses these too; these rules are the second guard.
     - action: shell
       resource: "*journalctl*"
@@ -224,7 +224,7 @@ opencode:
       effect: deny
     # SSH anywhere in a line (chained after an allowed command, env/command
     # prefixes, absolute paths, git's ssh hooks, the owner's agent socket):
-    # VMs only through tools/vmssh.py (owner decision 2026-10-31).
+    # VMs only through tools/vmssh.py.
     - action: shell
       resource: "*ssh *"
       effect: deny
@@ -341,7 +341,7 @@ opencode:
       resource: ".git/*"
       effect: deny
     # "python3 tools/*" runs from any working directory, so no folder the agent
-    # writes freely may hold a tools/ script (review 2026-10-31).
+    # writes freely may hold a tools/ script.
     - action: edit
       resource: "*/tools/*"
       effect: ask
@@ -352,7 +352,7 @@ opencode:
       resource: "*/secrets/*"
       effect: deny
     # The agent folder comes after the tools/ ask, so ".opencode/agents/tools/x" is denied, not
-    # asked (review 2026-11-04). Skills, below, are the owner's to approve.
+    # asked. Skills, below, are the owner's to approve.
     - action: edit
       resource: ".opencode/*"
       effect: deny
@@ -380,7 +380,7 @@ opencode:
       resource: "*/secrets/*"
       effect: deny
     # Reads and edits inside the location use relative paths, which "*/secrets/*"
-    # doesn't match (whole-branch review, 2026-11-04).
+    # doesn't match.
     - action: read
       resource: "secrets/*"
       effect: deny
@@ -439,17 +439,17 @@ opencode:
     - action: question
       resource: "*"
       effect: allow
-    # Subagents: only the adapter drafter (owner, 2026-11-04). A subagent runs with its own
+    # Subagents: only the adapter drafter. A subagent runs with its own
     # permissions, not this agent's: explore can run ssh and read secrets/, security can edit the host
     # scripts and their checksum list, and second-opinion and plan are primary agents that cannot be
-    # started as subagents at all (review 2026-11-05). The folder group installs no other agent.
+    # started as subagents at all. The folder group installs no other agent.
     - action: subagent
       resource: "*"
       effect: deny
     - action: subagent
       resource: "adapter-drafter"
       effect: allow
-    # Skills: its own and an approved list only (owner, 2026-11-04), so the
+    # Skills: its own and an approved list only, so the
     # descriptions of every other installed skill aren't sent with each request.
     - action: skill
       resource: "*"
@@ -519,7 +519,7 @@ opencode:
       resource: "*"
       effect: deny
     # The built-in search asks every time: a file filter could reach secrets/
-    # past .ignore (owner decision 2026-10-30).
+    # past .ignore.
     - action: grep
       resource: "*"
       effect: ask
@@ -637,7 +637,7 @@ exact wording, options and what each answer fills are in
   those facts.
 - A recommendation must be justified by the installed software's real
   requirements and the actual hardware, and say why.
-- Every VM setting matters (owner, 2026-10-31): before creating a VM, research
+- Every VM setting matters: before creating a VM, research
   the hardware (discovery) and the official guidance (Proxmox VE VM chapter,
   FCOS Proxmox guide, the apps' requirements), decide every setting in
   `vm.yaml` `settings:` with why and source (guide 2.3), and show the owner
@@ -681,7 +681,7 @@ Before `create`, show the dry run (`--dry-run`) and ask. Start a new VM only
 after the owner reports its address reserved (guide 2.6-2.7). Deleting, disk
 swaps and anything needing root are owner steps from the adapter.
 
-**Facts come from official sources, never from memory (owner, 2026-11-02).**
+**Facts come from official sources, never from memory.**
 Anything about software you don't write (the OS, the hypervisor, the router,
 Authentik, each app), including where something is in an app's menus, is read
 in its official docs or source first, and every fact a guide page, template or

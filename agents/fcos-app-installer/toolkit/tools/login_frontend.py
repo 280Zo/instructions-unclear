@@ -145,7 +145,7 @@ RESERVED_USERS = {"akadmin"}
 
 
 def _people(site: dict) -> list[dict]:
-    """site.yaml people: local Authentik users (owner, 2026-11-02: no email, no self sign-up).
+    """site.yaml people: local Authentik users (no email, no self sign-up).
     Each {username, name, groups}; passwords are set by the owner in Authentik."""
     people = site.get("people")
     if people is None:
@@ -176,8 +176,8 @@ def _people(site: dict) -> list[dict]:
 
 
 def _signup(site: dict) -> dict | None:
-    """site.yaml signup: {group, approve?}: a sign-up page for anyone who can reach the login page
-    (owner, 2026-11-03), no email; new accounts land in `group`, inactive until approved if approve."""
+    """site.yaml signup: {group, approve?}: a sign-up page for anyone who can reach the login page,
+    no email; new accounts land in `group`, inactive until approved if approve."""
     signup = site.get("signup")
     if signup is None:
         return None
@@ -188,7 +188,7 @@ def _signup(site: dict) -> dict | None:
     return signup
 
 
-# Sign in with an existing account (owner, 2026-11-03). The client id is not secret; the
+# Sign in with an existing account. The client id is not secret; the
 # secret reaches the worker as an environment variable from a Podman secret (!Env).
 SOURCE_TYPES = {
     "google": {"secret": "authentik_google_secret", "env": "SOURCE_GOOGLE_SECRET", "how": "prompt",
@@ -315,7 +315,7 @@ def _identification_entry(signup: dict, sources: dict) -> list[str]:
 
 def _signup_blueprint(signup: dict, sources: dict) -> str:
     """The sign-up page and sign-in sources, apart from access.yaml: a failure here (a secret
-    not created yet) must never roll back the app bindings (review 2026-11-03)."""
+    not created yet) must never roll back the app bindings."""
     out = ["# Sign-up page and sign-in with an existing account. Written by tools/login_frontend.py.",
            "# access.yaml (groups) is applied first.", "version: 1", "metadata:", "  name: signup",
            "  labels:", '    blueprints.goauthentik.io/instantiate: "true"', "entries:",
@@ -450,7 +450,7 @@ def generate_login_frontend(site: dict, services: list, out, icon_dirs: dict | N
         files["rendered/files/access.blueprint.yaml"] = _access_blueprint(people, routed, signup, sources)
         entries.append(_file_entry(f"{blueprints}/access.yaml", "files/access.blueprint.yaml", a_uid, a_gid))
     if "user_pictures" in site:
-        # Owner, 2026-11-03: not a built-in Authentik feature, and a picture stored as a user
+        # Not a built-in Authentik feature, and a picture stored as a user
         # attribute ends up in the outpost's sign-out link (the ID token in id_token_hint).
         raise SpecError("site.yaml: user_pictures was removed (uploaded pictures would end up in the "
                         "sign-out link); delete the line. Pictures follow Authentik's Avatars setting.")

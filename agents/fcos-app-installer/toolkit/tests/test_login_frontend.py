@@ -371,7 +371,7 @@ if __name__ == "__main__":
 
 
 class PeopleAndIconTests(FrontendCase):
-    """Owner, 2026-11-02: users are created locally (no email, no outside connection);
+    """Users are created locally (no email, no outside connection);
     groups decide which apps each person gets; app logos are stored on the VM."""
 
     def people_site(self, people):
@@ -491,7 +491,7 @@ class PeopleAndIconTests(FrontendCase):
 
 
 class SignupTests(FrontendCase):
-    """Owner, 2026-11-03: anyone who can reach the login page may create an account (no email,
+    """Anyone who can reach the login page may create an account (no email,
     nothing outside), landing in a default group. Official example: blueprints/example/
     flows-enrollment-2-stage.yaml; fields from authentik 2026.8.5 stages/user_write/models.py
     (create_users_group) and stages/identification/models.py (enrollment_flow)."""
@@ -563,7 +563,7 @@ class SignupTests(FrontendCase):
 
 
 class SigninSourceTests(FrontendCase):
-    """Owner, 2026-11-03: sign in with an existing Google or Apple account (OAuth 2.0 / OIDC);
+    """Sign in with an existing Google or Apple account (OAuth 2.0 / OIDC);
     no mail is ever sent. Authentik 2026.8.5: sources/oauth/models.py (provider_type,
     consumer_key, consumer_secret), blueprints/default/flow-default-source-enrollment.yaml,
     blueprint tag !Env; docs social-logins/google/cloud and apple."""
@@ -620,7 +620,7 @@ class SigninSourceTests(FrontendCase):
 
 
 class NoProfilePictureTests(FrontendCase):
-    """Owner, 2026-11-03: no uploaded pictures. Authentik has no built-in upload page, and a picture
+    """No uploaded pictures. Authentik has no built-in upload page, and a picture
     stored as a user attribute lands in the ID token (proxy scope ak_proxy, include_claims_in_id_token),
     which the outpost's sign-out puts into its redirect URL (proxyv2/application/application.go,
     handleSignOut, id_token_hint). The Avatars setting stays the owner's choice in the admin interface."""

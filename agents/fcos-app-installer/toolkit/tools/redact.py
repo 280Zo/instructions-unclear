@@ -1,4 +1,4 @@
-"""Hide secrets in text the agent reads (owner, 2026-11-04).
+"""Hide secrets in text the agent reads.
 
 Every tool whose output reaches the agent (tools/vmssh.py run and logs,
 tools/appapi.py call) passes it through here. It hides:

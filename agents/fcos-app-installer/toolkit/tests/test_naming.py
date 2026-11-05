@@ -1,4 +1,4 @@
-"""The agent's name (owner, 2026-11-04): fcos-app-installer, everywhere."""
+"""The agent's name: fcos-app-installer, everywhere."""
 import sys
 import unittest
 from pathlib import Path

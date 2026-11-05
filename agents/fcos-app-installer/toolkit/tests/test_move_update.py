@@ -1,5 +1,4 @@
-"""Guide 11 (moving, updating, a service's new release line) and the README's safety notes
-(owner and general review, 2026-11-04)."""
+"""Guide 11 (moving, updating, a service's new release line) and the README's safety notes."""
 import unittest
 from pathlib import Path
 

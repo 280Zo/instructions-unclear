@@ -1,4 +1,4 @@
-"""The toolkit's rules (owner 2026-11-04): the parts of the agent's instructions that don't depend
+"""The toolkit's rules: the parts of the agent's instructions that don't depend
 on the OS, loaded for every agent started in this folder.
 
 The rule sources (rules/ in the repository) are written by rulesync into this folder's AGENTS.md,
