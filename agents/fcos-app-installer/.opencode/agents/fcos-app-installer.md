@@ -257,18 +257,19 @@ permissions:
     resource: "python3 tools/login_frontend.py *tools*"
     effect: deny
   # The skills hold host scripts the owner runs as root (review of ff605b1): no
-  # shell write into .agents/, and edits there always ask (below).
+  # shell write into .opencode/ (the agents, commands and skills), and edits to
+  # the skills always ask (below).
   - action: shell
-    resource: "*>*.agents/*"
+    resource: "*>*.opencode/*"
     effect: deny
   - action: shell
-    resource: "*tee *.agents/*"
+    resource: "*tee *.opencode/*"
     effect: deny
   - action: shell
-    resource: "python3 tools/*.agents/*"
+    resource: "python3 tools/*.opencode/*"
     effect: deny
   - action: shell
-    resource: "bash tools/*.agents/*"
+    resource: "bash tools/*.opencode/*"
     effect: deny
   # Files: its own work in the workspace and /tmp/opencode freely; templates,
   # tools, adapters, specs and the guide need the owner's OK; secrets, private
@@ -334,10 +335,10 @@ permissions:
     resource: "*/secrets/*"
     effect: deny
   - action: edit
-    resource: ".agents/*"
+    resource: ".opencode/skills/*"
     effect: ask
   - action: edit
-    resource: "*/.agents/*"
+    resource: "*/.opencode/skills/*"
     effect: ask
   - action: read
     resource: "*/secrets/*"
@@ -689,7 +690,7 @@ published file.
 
 ## Templates, tools, adapters and the guide
 
-Don't change `templates/`, `tools/`, `.agents/skills/`, `specs/`, `tests/` or
+Don't change `templates/`, `tools/`, `.opencode/skills/`, `specs/`, `tests/` or
 `docs/guide/` during an install. If one is wrong or missing something, stop and
 describe the change. If the owner agrees, make it with a failing test first,
 then run `python3 -m unittest discover tests` and both fixture validations

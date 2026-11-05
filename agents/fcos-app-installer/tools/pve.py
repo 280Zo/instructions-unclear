@@ -37,6 +37,7 @@ import urllib.request
 from pathlib import Path
 
 import workspace
+from layout import SKILLS_DIR
 from workspace import WorkspaceError
 
 POOL = "fcos-agent"
@@ -686,7 +687,7 @@ def pool_members(client: PveClient) -> dict[int, dict]:
         if isinstance(data, list) else None
     if entry is None or not isinstance(entry.get("members"), list):
         raise PveError(f"this token cannot read pool {POOL}'s member list (it needs Pool.Audit on "
-                       f"/pool/{POOL}); re-run .agents/skills/adapter-proxmox/scripts/setup-agent-access.sh")
+                       f"/pool/{POOL}); re-run {SKILLS_DIR}/adapter-proxmox/scripts/setup-agent-access.sh")
     members = {}
     for item in entry["members"]:
         if isinstance(item, dict) and item.get("type") == "qemu" and isinstance(item.get("vmid"), int):

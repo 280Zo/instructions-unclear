@@ -182,5 +182,5 @@ read, and write one draft.
 
 Report back: the draft's folder, each step with its documentation link (or the
 gap and its label), and anything the owner must confirm before the draft is
-moved into `.agents/skills/`. Never include a secret or a real value from the
+moved into `.opencode/skills/`. Never include a secret or a real value from the
 workspace beyond what the draft itself needs.

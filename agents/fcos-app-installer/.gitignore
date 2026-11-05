@@ -17,6 +17,7 @@
 /.opencode/*
 !/.opencode/agents/
 !/.opencode/commands/
+!/.opencode/skills/
 # The project config that loads rules/*.md (the global gitignore excludes a root opencode.json).
 !/.opencode/opencode.json
 

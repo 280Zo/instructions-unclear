@@ -16,8 +16,9 @@ sys.path.insert(0, str(ROOT / "tools"))
 
 from adapters import (ROLE_STEPS, AdapterError, draft_adapter, load_adapter,  # noqa: E402
                       render_step)
+from layout import SKILLS, SKILLS_DIR  # noqa: E402
 
-ADAPTERS = ROOT / ".agents" / "skills"
+ADAPTERS = SKILLS
 PROXMOX = ADAPTERS / "adapter-proxmox"
 SCRATCH = "/tmp/opencode" if os.path.isdir("/tmp/opencode") else None
 KNOWN = {"virtualization": "proxmox", "router_firewall": "opnsense", "file_server": "truenas",
@@ -273,7 +274,7 @@ class AdapterTests(unittest.TestCase):
                             '"uses": ["VM_IP"]}]')
         base = Path(tempfile.mkdtemp(dir=SCRATCH))
         self.addCleanup(shutil.rmtree, base, True)
-        for ws, needle in ((base / "no-site", "site.yaml"), (base / ".agents" / "skills", "skill"),
+        for ws, needle in ((base / "no-site", "site.yaml"), (base / SKILLS_DIR, "skill"),
                            (base / ".config" / "opencode" / "skills", "skill")):
             ws.mkdir(parents=True)
             if needle == "skill":

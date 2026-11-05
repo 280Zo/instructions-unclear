@@ -3,14 +3,18 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SETUP = ROOT / ".agents" / "skills" / "adapter-proxmox" / "scripts" / "setup-agent-access.sh"
-TEARDOWN = ROOT / ".agents" / "skills" / "adapter-proxmox" / "scripts" / "teardown-agent-access.sh"
-LIB = ROOT / ".agents" / "skills" / "adapter-proxmox" / "scripts" / "lib.sh"
+sys.path.insert(0, str(ROOT / "tools"))
+from layout import SKILLS  # noqa: E402
+
+SETUP = SKILLS / "adapter-proxmox" / "scripts" / "setup-agent-access.sh"
+TEARDOWN = SKILLS / "adapter-proxmox" / "scripts" / "teardown-agent-access.sh"
+LIB = SKILLS / "adapter-proxmox" / "scripts" / "lib.sh"
 STUBS = ROOT / "tests" / "stubs"
 
 PRIVS = ("VM.Allocate VM.Audit VM.PowerMgmt VM.Config.CPU VM.Config.Memory VM.Config.Disk "
@@ -628,7 +632,7 @@ class TeardownTests(HostScriptCase):
         self.assertEqual([], self.calls())
 
 
-DISCOVER = ROOT / ".agents" / "skills" / "adapter-proxmox" / "scripts" / "discover-host.sh"
+DISCOVER = SKILLS / "adapter-proxmox" / "scripts" / "discover-host.sh"
 
 DISCOVERY_STATE = {
     "storages": ["local", "local-lvm", "nas"],

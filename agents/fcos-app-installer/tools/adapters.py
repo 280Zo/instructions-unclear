@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Provider adapters: the owner's steps for systems the agent never touches.
 
-Each provider is a skill, .agents/skills/adapter-<provider>/ (owner 2026-11-04): SKILL.md
+Each provider is a skill, adapter-<provider>/ in the skills folder (tools/layout.py; owner 2026-11-04): SKILL.md
 says what the product is and when to use it, adapter.yaml holds its steps, and
 scripts/ any host scripts. This tool is the one renderer for every adapter skill.
 adapter.yaml:
@@ -46,10 +46,11 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from layout import SKILLS, SKILLS_DIR  # noqa: E402
 from render import RenderError, render  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
-ADAPTERS = REPO / ".agents" / "skills"
+ADAPTERS = SKILLS
 ROLE_STEPS = {
     "virtualization": ["download_image", "copy_ignition_snippet", "rebuild_os_disk", "create_api_access"],
     "router_firewall": ["reserve_ip", "dns_wildcard", "allow_flows"],
@@ -432,7 +433,7 @@ def _check_host_key(values: dict) -> None:
 
 SKILL_TEMPLATE = """---
 name: adapter-{provider}
-description: "DRAFT owner steps for {provider} in the {role} role of the fcos-app-installer toolkit. Use when the owner's {role} is {provider}. Review every step against {provider}'s official documentation before moving this skill into .agents/skills/."
+description: "DRAFT owner steps for {provider} in the {role} role of the fcos-app-installer toolkit. Use when the owner's {role} is {provider}. Review every step against {provider}'s official documentation before moving this skill into {skills_dir}/."
 license: MIT
 compatibility: Needs the fcos-app-installer toolkit; tools/adapters.py renders the steps.
 ---
@@ -441,7 +442,7 @@ compatibility: Needs the fcos-app-installer toolkit; tools/adapters.py renders t
 
 Drafted from the steps the owner actually did. Before use: check each step and
 menu name against {provider}'s official documentation, add the links to
-`docs:` in adapter.yaml and below, then move this folder into `.agents/skills/`.
+`docs:` in adapter.yaml and below, then move this folder into `{skills_dir}/`.
 
 Render a step with every value filled in, never by hand:
 
@@ -452,17 +453,27 @@ python3 tools/adapters.py render --role {role} --provider {provider} --step <id>
 """
 
 
-TEST_TEMPLATE = '''"""Checks the drafted adapter loads and every role step renders."""
+TEST_TEMPLATE = '''"""Checks the drafted adapter loads and every role step renders.
+
+Run it with FCOS_AGENT_ROOT set to the toolkit's folder, or after moving this folder into the
+toolkit's {skills_dir}/ (the toolkit's one setting, tools/layout.py).
+"""
 import os
 import sys
 from pathlib import Path
 
-ROOT = Path({repo!r})
+HERE = Path(__file__).resolve().parent
+SKILLS_DIR = Path({skills_dir!r})
+if os.environ.get("FCOS_AGENT_ROOT"):
+    ROOT = Path(os.environ["FCOS_AGENT_ROOT"])
+elif HERE.parent.parts[-len(SKILLS_DIR.parts):] == SKILLS_DIR.parts:
+    ROOT = HERE.parent.parents[len(SKILLS_DIR.parts) - 1]
+else:
+    sys.exit("set FCOS_AGENT_ROOT to the toolkit's folder, or move this folder into its " + str(SKILLS_DIR))
 sys.path.insert(0, str(ROOT / "tools"))
 from adapters import ROLE_STEPS, derived_keys, example_value, load_adapter, render_step  # noqa: E402
 
-HERE = Path(__file__).resolve().parent.parent
-adapter = load_adapter({role!r}, {provider!r}, root=HERE)
+adapter = load_adapter({role!r}, {provider!r}, root=HERE.parent)
 assert not adapter["generic"]
 for step in ROLE_STEPS[{role!r}]:
     uses = adapter["owner_steps"][step].get("uses", [])
@@ -520,10 +531,10 @@ def main(argv: list[str]) -> int:
         folder = ws / "adapters-draft" / f"adapter-{args.provider}"
         folder.mkdir(parents=True, exist_ok=True)
         (folder / "adapter.yaml").write_text(text, encoding="utf-8")
-        (folder / "SKILL.md").write_text(SKILL_TEMPLATE.format(role=args.role, provider=args.provider),
-                                         encoding="utf-8")
+        (folder / "SKILL.md").write_text(
+            SKILL_TEMPLATE.format(role=args.role, provider=args.provider, skills_dir=SKILLS_DIR), encoding="utf-8")
         (folder / f"test_{args.provider.replace('-', '_')}.py").write_text(
-            TEST_TEMPLATE.format(repo=str(REPO), role=args.role, provider=args.provider), encoding="utf-8")
+            TEST_TEMPLATE.format(skills_dir=SKILLS_DIR, role=args.role, provider=args.provider), encoding="utf-8")
         print(folder / "adapter.yaml")
     except (AdapterError, OSError, ValueError, WorkspaceError) as error:
         print(f"adapters: {error}", file=sys.stderr)

@@ -1,9 +1,13 @@
 """Guide 10: the trial run after installing the toolkit on a machine (owner, 2026-11-04).
 The tests check files; these steps check what only a live OpenCode can show."""
+import sys
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools"))
+from layout import SKILLS_DIR  # noqa: E402
+
 PAGE = ROOT / "docs" / "guide" / "10-trial-run.md"
 
 
@@ -27,7 +31,7 @@ class TrialRunTests(unittest.TestCase):
                        "Run `ssh localhost true`", "no file read", "Start the `adapter-drafter` subagent",
                        # Whole-branch review: the tests' rule matcher is a stand-in for OpenCode's,
                        # so the rules that depend on how OpenCode splits a command are checked live.
-                       "> .agents/skills/x.md", "--workspace ~/.agents/skills"):
+                       f"> {SKILLS_DIR}/x.md", f"--workspace ~/{SKILLS_DIR}"):
             with self.subTest(needle=needle):
                 self.assertIn(needle.lower(), text.lower())
 
@@ -38,7 +42,7 @@ class TrialRunTests(unittest.TestCase):
     def test_readme_layout_names_every_top_folder(self):
         readme = (ROOT / "README.md").read_text()
         layout = readme.split("## Layout", 1)[1]
-        for folder in ("`.opencode/`", "`.agents/skills/`", "`rules/`", "`docs/guide/`", "`schemas/`",
+        for folder in ("`.opencode/`", f"`{SKILLS_DIR}/`", "`rules/`", "`docs/guide/`", "`schemas/`",
                        "`specs/login-frontend/`", "`templates/`", "`tools/`", "`tests/`"):
             with self.subTest(folder=folder):
                 self.assertIn(folder, layout)

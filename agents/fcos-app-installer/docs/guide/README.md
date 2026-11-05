@@ -33,7 +33,7 @@ what the agent may do through an API, and links to its official docs. A
 product without an adapter gets the general steps from the skill `adapter-generic`,
 and the agent offers to draft an adapter from what the owner actually did
 (the `adapter-drafter` subagent, with `tools/adapters.py draft`). Each adapter is
-a skill, `.agents/skills/adapter-<product>/`: `SKILL.md` says what the product is and when
+a skill, `.opencode/skills/adapter-<product>/`: `SKILL.md` says what the product is and when
 to use it, `adapter.yaml` holds the steps, `scripts/` its host scripts, and
 `tools/adapters.py` is the one renderer for all of them.
 

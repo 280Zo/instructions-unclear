@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tests"))
 
-from test_agent import body, effect, frontmatter  # noqa: E402
+from test_agent import SKILLS_DIR, body, effect, frontmatter  # noqa: E402
 
 DRAFTER = ROOT / ".opencode" / "agents" / "adapter-drafter.md"
 WS = "/home/owner/fcos-workspace"
@@ -37,7 +37,7 @@ class DrafterTests(unittest.TestCase):
         for path in (f"{WS}/adapters-draft/adapter-synology/SKILL.md", "/tmp/opencode/recorded.json"):
             with self.subTest(path=path):
                 self.assertEqual(effect(self.text, "edit", path), "allow")
-        for path in (".agents/skills/adapter-proxmox/adapter.yaml", "tools/adapters.py", f"{WS}/site.yaml",
+        for path in (f"{SKILLS_DIR}/adapter-proxmox/adapter.yaml", "tools/adapters.py", f"{WS}/site.yaml",
                      ".opencode/agents/fcos-app-installer.md", f"{WS}/secrets/x.token"):
             with self.subTest(path=path):
                 self.assertEqual(effect(self.text, "edit", path), "deny")

@@ -1,4 +1,4 @@
-"""The toolkit's skills (.agents/skills/<id>/SKILL.md, owner 2026-11-04).
+"""The toolkit's skills (<skills folder>/<id>/SKILL.md, owner 2026-11-04).
 
 Format: the Agent Skills specification (agentskills.io/specification) and OpenCode V2
 (opencode.ai/v2/docs/skills): name 1-64 lowercase letters, digits and single hyphens,
@@ -14,9 +14,9 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILLS = ROOT / ".agents" / "skills"
 sys.path.insert(0, str(ROOT / "tools"))
 
+from layout import SKILLS  # noqa: E402
 from adapters import ROLE_STEPS, AdapterError, load_adapter  # noqa: E402
 
 NAME = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")

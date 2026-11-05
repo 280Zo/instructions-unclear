@@ -5,7 +5,7 @@ step that runs on the server is **[Owner]**: the agent never runs commands
 there. The agent shows each step from the virtualization adapter with the
 server's values filled in.
 
-**Providers.** For Proxmox VE the steps are in the skill `adapter-proxmox` (`.agents/skills/adapter-proxmox/`);
+**Providers.** For Proxmox VE the steps are in the skill `adapter-proxmox` (`.opencode/skills/adapter-proxmox/`);
 the setup and teardown scripts are in its `scripts/` and the agent
 uses the token through `tools/pve.py`. For another platform the agent shows
 the general steps from the skill `adapter-generic`.

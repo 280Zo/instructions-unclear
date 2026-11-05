@@ -1,8 +1,12 @@
 import re
+import sys
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "tools"))
+from layout import SKILLS_DIR  # noqa: E402
+
 AGENT = ROOT / ".opencode" / "agents" / "fcos-app-installer.md"
 COMMAND = ROOT / ".opencode" / "commands" / "add-service.md"
 
@@ -218,14 +222,14 @@ class AgentTests(unittest.TestCase):
 
     def test_no_shell_writes_into_the_skills(self):
         # Review of ff605b1: the owner runs the skills' host scripts as root.
-        for command in ("python3 tools/render.py t v > .agents/skills/adapter-proxmox/scripts/lib.sh",
-                        "python3 tools/render.py t v >.agents/skills/x/SKILL.md",
-                        "python3 tools/x.py | tee .agents/skills/x/adapter.yaml",
-                        "python3 tools/gen_service.py s site .agents/skills/x"):
+        for command in (f"python3 tools/render.py t v > {SKILLS_DIR}/adapter-proxmox/scripts/lib.sh",
+                        f"python3 tools/render.py t v >{SKILLS_DIR}/x/SKILL.md",
+                        f"python3 tools/x.py | tee {SKILLS_DIR}/x/adapter.yaml",
+                        f"python3 tools/gen_service.py s site {SKILLS_DIR}/x"):
             with self.subTest(command=command):
                 self.assertEqual(effect(self.text, "shell", command), "deny")
-        self.assertEqual(effect(self.text, "edit", ".agents/skills/adapter-proxmox/scripts/lib.sh"), "ask")
-        self.assertEqual(effect(self.text, "edit", "/home/x/AI/Proxmox/.agents/skills/a/SKILL.md"), "ask")
+        self.assertEqual(effect(self.text, "edit", f"{SKILLS_DIR}/adapter-proxmox/scripts/lib.sh"), "ask")
+        self.assertEqual(effect(self.text, "edit", f"/home/x/AI/toolkit/{SKILLS_DIR}/a/SKILL.md"), "ask")
 
     # Owner, 2026-11-04: only its own skills plus an approved list, so the others' descriptions
     # aren't sent with every request; MCP servers it doesn't need are denied (Exa stays, for research).
@@ -320,7 +324,7 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(effect(self.text, "edit", "notes/x.md"), "deny")
         self.assertEqual(effect(self.text, "edit", ".opencode/agents/fcos-app-installer.md"), "deny")
         for path in ("templates/base/firewall.bu.tmpl", "tools/render.py", "docs/guide/03-add-a-service.md",
-                     ".agents/skills/adapter-proxmox/adapter.yaml", "specs/login-frontend/traefik.yaml"):
+                     f"{SKILLS_DIR}/adapter-proxmox/adapter.yaml", "specs/login-frontend/traefik.yaml"):
             with self.subTest(path=path):
                 self.assertEqual(effect(self.text, "edit", path), "ask")
 

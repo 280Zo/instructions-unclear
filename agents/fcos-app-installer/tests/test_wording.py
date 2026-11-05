@@ -2,7 +2,7 @@
 
 - Questions are plain language: no config keys, field paths or internal names.
 - The procedure pages are provider-neutral: provider commands and names live in
-  the adapter skills (.agents/skills/adapter-*). A paragraph that starts with **Providers.** may name providers and
+  the adapter skills (adapter-* in the skills folder). A paragraph that starts with **Providers.** may name providers and
   link their adapters. research-notes.md is exempt: it cites provider sources.
 - Real values live in the private workspace, never in a repo config.yaml or vms/.
 """

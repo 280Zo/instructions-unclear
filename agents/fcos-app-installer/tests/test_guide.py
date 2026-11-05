@@ -1,8 +1,12 @@
 import re
+import sys
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "tools"))
+from layout import SKILLS  # noqa: E402
+
 GUIDE = ROOT / "docs" / "guide"
 
 
@@ -27,7 +31,7 @@ class GuideTests(unittest.TestCase):
     def test_rebuild_unlinks_only_old_os_disk(self):
         # The commands moved to the virtualization adapter (provider-neutral guide).
         self.assertIn("rebuild_os_disk", page("05-rebuild-a-vm.md"))
-        adapter = (ROOT / ".agents" / "skills" / "adapter-proxmox" / "adapter.yaml").read_text()
+        adapter = (SKILLS / "adapter-proxmox" / "adapter.yaml").read_text()
         self.assertNotIn("--idlist unused0", adapter)
         self.assertIn('--idlist "$SLOT"', adapter)
 

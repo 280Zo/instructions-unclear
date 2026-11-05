@@ -19,6 +19,9 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from layout import SKILLS  # noqa: E402
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 EXAMPLE = REPO_ROOT / "site.example.yaml"
 SKIP_VALUE = re.compile(r"(?i)^(?:\d+(?:\.\d+)?|true|false|null|none|ask|yes|no)$")
@@ -164,8 +167,8 @@ def private_values(ws: Path) -> set[str]:
     """Every scalar in site.yaml and the service specs worth protecting."""
     ws = Path(ws)
     public = EXAMPLE.read_text(encoding="utf-8") if EXAMPLE.exists() else ""
-    # Exact names of the adapters the agent ships (.agents/skills/adapter-<name>/) are public.
-    shipped = {p.parent.name.removeprefix("adapter-") for p in (REPO_ROOT / ".agents" / "skills").glob("adapter-*/adapter.yaml")}
+    # Exact names of the adapters the agent ships (adapter-<name>/ in the skills folder) are public.
+    shipped = {p.parent.name.removeprefix("adapter-") for p in SKILLS.glob("adapter-*/adapter.yaml")}
     files = [ws / "site.yaml", *sorted((ws / "services").glob("*/service.yaml")),
              *sorted((ws / "vms").glob("*/vm.yaml"))]
     values = set()

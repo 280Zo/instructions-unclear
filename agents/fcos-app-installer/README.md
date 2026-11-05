@@ -23,7 +23,7 @@ router, your file server, your DNS provider, and anything involving a secret.
 - A virtualization platform, a router, a file server with NFS, and a DNS
   provider for Let's Encrypt DNS-01 (DuckDNS only today: the login front end's
   Traefik settings name it; another provider needs that changed). Each has an adapter
-  skill in `.agents/skills/adapter-<product>/` with the steps you do yourself; a product without one gets
+  skill in `.opencode/skills/adapter-<product>/` with the steps you do yourself; a product without one gets
   general steps, and the agent can draft an adapter as you go.
 
 ## Install
@@ -58,7 +58,7 @@ placeholder.
 
 The agent never runs commands on your servers. For Proxmox VE you run one
 script as root on each server, after checking its checksum:
-`.agents/skills/adapter-proxmox/scripts/setup-agent-access.sh --storage <id> --bridge <name> --iso-storage <id>`
+`.opencode/skills/adapter-proxmox/scripts/setup-agent-access.sh --storage <id> --bridge <name> --iso-storage <id>`
 (run it with `--check` first). It creates a pool, a limited role, a user and a
 token. The token can only see and manage VMs in its pool, use one disk
 storage, one bridge, and upload config discs. `tools/pve.py`, the only way
@@ -175,7 +175,7 @@ address, real domain or email, SSH key, password hash or secret-looking value.
 | Folder | Holds |
 |---|---|
 | `.opencode/` | the agents (`fcos-app-installer`, the main one for Fedora CoreOS; `adapter-drafter`, its helper that drafts adapters), the `/add-service` command, and `opencode.json`, which loads `rules/` |
-| `.agents/skills/` | skills: one adapter per provider (its owner steps, notes and host scripts), the generic fallback, and `researching-apps-for-self-hosting` |
+| `.opencode/skills/` | skills: one adapter per provider (its owner steps, notes and host scripts), the generic fallback, and `researching-apps-for-self-hosting` |
 | `rules/` | rules that don't depend on the OS: how owner steps are given, how secrets and private values are handled |
 | `docs/guide/` | the procedure, provider-neutral |
 | `schemas/` | the service spec's field reference |
