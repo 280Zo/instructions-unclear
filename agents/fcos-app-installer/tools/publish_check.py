@@ -79,39 +79,51 @@ def _in_checkout(root: Path) -> bool:
     return done.returncode == 0 and done.stdout.strip() == "true"
 
 
-def _walk(root: Path) -> list[Path]:
+def _walk(root: Path, unreadable: list[Path] | None = None) -> list[Path]:
     """Every file under root, for a folder that isn't a git checkout (an installed copy of the
     toolkit). Git's own folder and Python caches are skipped, and links are never followed, so
-    nothing outside root is read."""
+    nothing outside root is read. A folder that cannot be opened is added to `unreadable`."""
     found = []
-    for base, dirs, names in os.walk(root, followlinks=False):
+
+    def failed(error: OSError) -> None:
+        if unreadable is not None and error.filename:
+            unreadable.append(Path(os.fsdecode(error.filename)))
+
+    for base, dirs, names in os.walk(root, followlinks=False, onerror=failed):
         dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS and not (Path(base) / d).is_symlink())
         found += [Path(base) / n for n in sorted(names) if not (Path(base) / n).is_symlink()]
     return found
 
 
-def published_files(root: Path) -> tuple[list[Path], str]:
-    """What would be published from root, and how it was found. Inside a git checkout (possibly a
-    larger one that holds the toolkit as one folder) that is git's own list for root alone, files
-    outside root being that checkout's business ("git list"); in a plain folder it is every file in
-    it ("walked"). If git fails the walk is used too: scanning more, git-ignored files included, is
-    the safe direction. File names are bytes on this system, so they are decoded without loss."""
+def published_files(root: Path) -> tuple[list[Path], str, list[Path]]:
+    """What would be published from root, how it was found, and the folders that could not be
+    opened. Inside a git checkout (possibly a larger one that holds the toolkit as one folder) the
+    files are git's own list for root alone, files outside root being that checkout's business
+    ("git list"); in a plain folder they are every file in it ("walked"). If git fails the walk is
+    used too: scanning more, git-ignored files included, is the safe direction. File names are
+    bytes on this system, so they are decoded without loss. Git skips a folder it cannot open
+    without saying so on stdout, so the folders are always found by a walk of their own: one that
+    cannot be opened could hold anything, and counts as a hit."""
+    unreadable: list[Path] = []
+    walked = _walk(root, unreadable)
     if not _in_checkout(root):
-        return _walk(root), "walked"
+        return walked, "walked", unreadable
     try:
         out, tracked_but_ignored = (subprocess.run(
             ["git", "ls-files", *flags, "--exclude-standard", "-z"], cwd=root, capture_output=True,
             check=True, env=git_env(), timeout=120).stdout for flags in (("--cached", "--others"),
                                                                       ("--cached", "--ignored")))
     except (OSError, subprocess.SubprocessError):
-        return _walk(root), "walked"
+        return walked, "walked", unreadable
     names = {os.fsdecode(p) for p in (out + b"\0" + tracked_but_ignored).split(b"\0") if p}
-    return [root / name for name in sorted(names)], "git list"
+    return [root / name for name in sorted(names)], "git list", unreadable
 
 
 def _shown(path: Path) -> str:
-    """A path for the output: names that are not valid UTF-8 are shown escaped, never crash printing."""
-    return str(path).encode("utf-8", "backslashreplace").decode("utf-8")
+    """A path for the output: names that are not valid UTF-8 are shown escaped, and so are newlines
+    and other control characters, so a file name can neither crash printing nor forge a line."""
+    text = str(path).encode("utf-8", "backslashreplace").decode("utf-8")
+    return "".join(c if c.isprintable() else c.encode("unicode_escape").decode("ascii") for c in text)
 
 
 TOOLKIT = Path(__file__).resolve().parent.parent
@@ -127,10 +139,11 @@ def main(argv: list[str]) -> int:
     if not root.is_dir():
         print(f"publish_check: {root} is not a folder", file=sys.stderr)
         return 2
-    listed, how = published_files(root)
-    # A link is never read: its target may be outside the folder, and git publishes only the link.
+    listed, how, unreadable = published_files(root)
+    # A link is never read, in either mode: its target may be outside the folder, and git publishes
+    # only the link itself.
     files = [p for p in listed if p.is_file() and not p.is_symlink()]
-    if not files:
+    if not files and not unreadable:
         print(f"publish_check: nothing to scan in {root} (every file is git-ignored, or the folder is empty); "
               "a scan that reads no file proves nothing", file=sys.stderr)
         return 2
@@ -149,7 +162,10 @@ def main(argv: list[str]) -> int:
     except WorkspaceError as exc:
         print(f"publish_check: {exc}", file=sys.stderr)
         return 2
-    hits = []
+    hits = [f"{_shown(folder.relative_to(root))}: unreadable folder (not checked)" for folder in unreadable
+            if folder != root and root in folder.parents]
+    if root in unreadable:
+        hits.append(".: unreadable folder (not checked)")
     for path in files:
         shown = _shown(path.relative_to(root))
         try:

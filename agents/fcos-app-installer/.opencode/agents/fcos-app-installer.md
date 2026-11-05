@@ -257,19 +257,15 @@ permissions:
     resource: "python3 tools/login_frontend.py *tools*"
     effect: deny
   # The skills hold host scripts the owner runs as root (review of ff605b1). No
-  # shell command may name .opencode/ (the agents, commands and skills) at all:
-  # an allowed first word (git status, dig, sha256sum) could otherwise chain a
-  # write behind it (review of the skills-setting commit). The agent reads those
-  # files with its read tool; edits to the skills always ask (below). The dot
-  # keeps this apart from /tmp/opencode/, the scratch folder.
+  # shell command may contain ".opencode" (the agents, commands and skills): an
+  # allowed first word (git status, dig, sha256sum) could otherwise chain a write
+  # behind it, with any separator right after the name (reviews of the skills
+  # commits). The agent reads those files with its read tool; edits to the skills
+  # always ask (below). The dot keeps this apart from /tmp/opencode/, the scratch
+  # folder. A guard rail, not a wall: the shell expands wildcards, quotes and
+  # variables after these rules have matched (README).
   - action: shell
-    resource: "*.opencode/*"
-    effect: deny
-  - action: shell
-    resource: "*.opencode *"
-    effect: deny
-  - action: shell
-    resource: "*.opencode"
+    resource: "*.opencode*"
     effect: deny
   # The pinned list of host-script checksums is the one file the agent must never write: a changed
   # script plus a matching list would pass. No shell command may name it, its extension, or the
@@ -359,6 +355,11 @@ permissions:
     effect: deny
   - action: edit
     resource: "*host-scripts.sha256"
+    effect: deny
+  # A path that climbs out of a folder ("skills/../agents/...") must not borrow the rule of the
+  # folder it starts in; the agent never needs one.
+  - action: edit
+    resource: "*..*"
     effect: deny
   - action: read
     resource: "*/secrets/*"
@@ -730,7 +731,10 @@ install's files live in the workspace, which is not a repository you commit
 to. Before proposing a commit, run `python3 tools/publish_check.py` and
 `python3 -m unittest discover tests`; both must pass. Show the owner the exact
 command, message, file list and a summary, and commit only after they say yes.
-Never push.
+Never push. Shell commands may not name `.opencode/` (the rules deny any
+command containing it), so stage a change to the adapters or to your own files
+with `git add -A`, which names no path, and say so in the file list you show;
+`git diff` and `git status` without a path show the same files.
 
 ## Final report
 

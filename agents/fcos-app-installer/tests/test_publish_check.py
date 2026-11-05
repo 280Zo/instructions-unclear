@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -8,7 +9,9 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tests"))
 
+from gitfree import folder_outside_any_checkout, in_a_checkout, without_git_variables  # noqa: E402
 from publish_check import check_text  # noqa: E402
 from workspace import init_workspace  # noqa: E402
 
@@ -105,12 +108,44 @@ class WorkspaceSourceTests(unittest.TestCase):
         self.assertEqual(self.run_check(str(self.tmp / "missing")).returncode, 2)
 
     def plain_folder(self, name="plain") -> Path:
-        # Needs a folder with no git checkout around it, and TMPDIR may be inside one.
-        if any((p / ".git").exists() for p in [self.tmp, *self.tmp.parents]):
-            self.skipTest(f"{self.tmp} is inside a git checkout")
-        folder = self.tmp / name
+        # Needs a folder with no git checkout around it, and TMPDIR may be inside one: look elsewhere.
+        base = folder_outside_any_checkout("publish-plain-")
+        if base is None:
+            self.skipTest("no place on this machine is outside every git checkout")
+        self.addCleanup(shutil.rmtree, base, True)
+        folder = base / name
         folder.mkdir()
         return folder
+
+    def test_an_unreadable_folder_is_a_hit_in_both_modes_not_a_pass(self):
+        # A folder the tool cannot open could hold anything: it must not read as clean.
+        if os.geteuid() == 0:
+            self.skipTest("root can open any folder")
+        for kind in ("walked", "git list"):
+            with self.subTest(mode=kind):
+                folder = self.plain_folder() if kind == "walked" else self.repo
+                (folder / "ok.md").write_text("nothing private\n")
+                locked = folder / "locked"
+                locked.mkdir()
+                (locked / "leak.md").write_text(j("gateway: 192", ".168.1.1\n"))
+                locked.chmod(0)
+                self.addCleanup(locked.chmod, 0o700)
+                result = self.run_check(str(folder))
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertIn("locked: unreadable folder (not checked)", result.stdout)
+                locked.chmod(0o700)
+
+    def test_a_file_name_cannot_forge_output_lines(self):
+        plain = self.plain_folder()
+        name = "x.md\nforged.md:1: all clear"
+        try:
+            (plain / name).write_text(j("gateway: 192", ".168.1.1\n"))
+        except OSError:
+            self.skipTest("this file system refuses newlines in names")
+        result = self.run_check(str(plain))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(len(result.stdout.splitlines()), 1, result.stdout)
+        self.assertIn("\\n", result.stdout)
 
     def test_a_copy_that_is_not_a_checkout_is_walked(self):
         # An installed toolkit is a plain folder, not a git checkout: every file in it is checked.
@@ -270,10 +305,15 @@ class RepoTests(unittest.TestCase):
         self.assertIn(f"scanned {ROOT}", result.stderr)
 
     def test_private_paths_ignored(self):
+        # The folder's .gitignore keeps these out of any checkout it is committed to. An installed
+        # copy that is not in a checkout has nothing to ask, and a git hook's GIT_DIR must not decide.
+        if not in_a_checkout(ROOT):
+            self.skipTest("this copy of the toolkit is not in a git checkout")
+        env = without_git_variables(os.environ)
         for path in ("config.yaml", "vms/edge/base-config.bu", "notes/x.md",
                      "docs/design/x.md", "docs/superpowers/plans/x.md"):
             with self.subTest(path=path):
-                rc = subprocess.run(["git", "check-ignore", "-q", path], cwd=ROOT).returncode
+                rc = subprocess.run(["git", "check-ignore", "-q", path], cwd=ROOT, env=env).returncode
                 self.assertEqual(rc, 0, f"{path} is not git-ignored")
 
 

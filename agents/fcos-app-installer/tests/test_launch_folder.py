@@ -120,8 +120,16 @@ class LaunchFolderTests(unittest.TestCase):
         install = " ".join(readme.split("## Install", 1)[1].split("\n## ", 1)[0].split())
         self.assertNotIn("project folder", install)
         self.assertIn("toolkit's folder", install)
-        # OpenCode searches the rules glob (and AGENTS.md) from the launch folder up to the git root.
-        self.assertIn("searched upward", readme)
+        # The install must not send you to run the toolkit inside a clone of another repository: that
+        # clone's own AGENTS.md and rules/ would load into every session (research-notes row 23).
+        self.assertNotIn("Clone this repository", install)
+        self.assertIn("folder of its own", install)
+        # OpenCode searches the rules glob (and AGENTS.md) from the launch folder upward: to the git
+        # root, or to the home folder when the launch folder is under it. Skills too.
+        segment = " ".join(readme.split("(searched upward", 1)[1].split("Earlier 2.0", 1)[0].split())
+        for needle in ("git root", "home folder", "skills"):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, segment)
 
     def test_the_guide_tells_a_person_where_to_run_its_commands(self):
         guide = " ".join((ROOT / "docs" / "guide" / "README.md").read_text().split())
@@ -132,6 +140,9 @@ class LaunchFolderTests(unittest.TestCase):
         notes = " ".join((ROOT / "docs" / "guide" / "research-notes.md").read_text().split())
         self.assertIn("globUp", notes)
         self.assertIn("v2.1.3/packages/core/src/config/plugin/instruction.ts", notes)
+        row = notes.split("| 23 |", 1)[1]
+        self.assertIn("home folder", row)  # AGENTS.md stops at home, not the git root, under home
+        self.assertIn("opencode.ai/v2/docs/skills", row)  # project skills are searched upward as well
 
 
 class CheckRequirementsLaunchFolderTests(unittest.TestCase):

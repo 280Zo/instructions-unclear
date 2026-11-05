@@ -15,11 +15,14 @@ router, your file server, your DNS provider, and anything involving a secret.
   folder, the one that holds `tools/`, `rules/` and `.opencode/`: the agent's
   allow rules, guard rules and rule files are all relative to it, and
   `python3 tools/check_requirements.py` fails when you start anywhere else.
-  OpenCode loads the `rules/*.md` glob from `opencode.json`, and any
-  `AGENTS.md`, from that folder and every folder above it up to the git root
-  (searched upward, see `docs/guide/research-notes.md`), so keep the toolkit in
-  a folder of its own, outside any other checkout: otherwise that checkout's own
-  `rules/*.md` and `AGENTS.md` files load into every session.
+  OpenCode loads the `rules/*.md` glob from `opencode.json`, and every
+  `AGENTS.md`, from that folder and each folder above it (searched upward) up
+  to the git root, or up to your home folder when the toolkit is under it;
+  project skills are searched upward the same way (see
+  `docs/guide/research-notes.md`). Keep the toolkit in a folder of its own,
+  outside any other checkout and outside folders that hold their own
+  `AGENTS.md`, `rules/` or skills: otherwise those files load into every
+  session.
   Earlier 2.0 releases ignore the config's `instructions` list, so the rules in
   `rules/` wouldn't load (fixed in 2.0.30), and the agents' skill and subagent
   filters were tested on 2.1.3.
@@ -38,8 +41,10 @@ router, your file server, your DNS provider, and anything involving a secret.
 
 ## Install
 
-1. Clone this repository and start OpenCode in the toolkit's folder inside it
-   (the one holding `tools/`).
+1. Put the toolkit in a folder of its own, outside any other git checkout, and
+   start OpenCode in the toolkit's folder (the one holding `tools/`). Don't run
+   it from inside a clone of another repository: that repository's own
+   `AGENTS.md` and `rules/` would load into every session.
 2. The agent and its command live in `.opencode/` (`agents/fcos-app-installer.md`,
    `commands/add-service.md`); OpenCode picks them up from the folder it is
    started in.
@@ -56,7 +61,9 @@ folder and outside any git checkout that holds it, by default
 `tools/workspace.py` refuses a folder inside either. It asks git for the
 checkout's top level; if git can't answer (not installed, or it refuses a
 checkout another user owns), it looks for a `.git` above the toolkit instead.
-A toolkit that is in no checkout is guarded at its own folder only.
+It guards the nearest checkout: with nested checkouts, a folder in the outer
+one but outside the inner one is allowed. A toolkit that is in no checkout is
+guarded at its own folder only.
 
 ```
 <workspace>/

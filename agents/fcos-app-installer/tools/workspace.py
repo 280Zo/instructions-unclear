@@ -9,8 +9,9 @@ Usage:
 The workspace is found, in order, from an explicit path, the FCOS_WORKSPACE
 environment variable, then the path remembered in
 ~/.config/fcos-agent/workspace. It must never be inside the toolkit's folder or
-anywhere in the git checkout that folder belongs to (git rev-parse
---show-toplevel; without git, only the toolkit's folder), so private files
+anywhere in the nearest git checkout that folder belongs to (git rev-parse
+--show-toplevel, or, when git can't answer, the nearest .git above the folder;
+a toolkit in no checkout is guarded at its own folder), so private files
 can't become publishable. Secret files are only ever listed by path
 (existence flags), never read.
 """

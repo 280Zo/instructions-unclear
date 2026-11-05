@@ -90,7 +90,8 @@ class SiblingSkillTests(unittest.TestCase):
         self.assertEqual(loose, [])
 
     def test_no_other_project_skill_source_exists(self):
-        for source in PROJECT_SKILL_SOURCES - {Path(sys.modules["layout"].SKILLS_DIR).as_posix()}:
+        import layout
+        for source in PROJECT_SKILL_SOURCES - {Path(layout.SKILLS_DIR).as_posix()}:
             with self.subTest(source=source):
                 self.assertFalse((ROOT / source).exists())
 

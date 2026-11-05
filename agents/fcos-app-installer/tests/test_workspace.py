@@ -2,6 +2,7 @@ import contextlib
 import io
 import json
 import os
+import shutil
 import stat
 import subprocess
 import sys
@@ -14,6 +15,9 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tests"))
+
+from gitfree import folder_outside_any_checkout  # noqa: E402
 
 import workspace  # noqa: E402
 from workspace import (WorkspaceError, init_workspace, load_service, load_site,  # noqa: E402
@@ -42,11 +46,6 @@ class TempHome(unittest.TestCase):
         patcher = mock.patch.dict(os.environ, env, clear=True)
         patcher.start()
         self.addCleanup(patcher.stop)
-
-    def skip_if_tmp_is_in_a_checkout(self):
-        """Some tests need a folder with no git checkout around it; TMPDIR may be inside one."""
-        if any((p / ".git").exists() for p in [self.tmp, *self.tmp.parents]):
-            self.skipTest(f"{self.tmp} is inside a git checkout")
 
     @property
     def remembered(self) -> Path:
@@ -149,10 +148,10 @@ class EnclosingCheckoutTests(TempHome):
     def test_a_toolkit_outside_any_checkout_guards_its_own_folder(self):
         # A copy that is a plain folder (the installed toolkit) has no checkout around it.
         # Needs a TMPDIR outside every checkout; the sibling "big" repo is a separate tree.
-        plain_root = Path(tempfile.mkdtemp(prefix="plain-", dir="/tmp/opencode" if os.path.isdir("/tmp/opencode") else None))
-        self.addCleanup(__import__("shutil").rmtree, plain_root, True)
-        if any((p / ".git").exists() for p in [plain_root, *plain_root.parents]):
-            self.skipTest(f"{plain_root} is inside a git checkout")
+        plain_root = folder_outside_any_checkout("workspace-plain-")
+        if plain_root is None:
+            self.skipTest("no place on this machine is outside every git checkout")
+        self.addCleanup(shutil.rmtree, plain_root, True)
         plain = plain_root / "toolkit"
         plain.mkdir()
         with mock.patch.object(workspace, "REPO_ROOT", plain):
@@ -202,6 +201,11 @@ class EnclosingCheckoutTests(TempHome):
         with mock.patch.object(workspace, "REPO_ROOT", toolkit), mock.patch.dict(os.environ, {"PATH": str(empty)}):
             with self.assertRaises(WorkspaceError):
                 resolve_workspace(str(linked / "ws"))
+
+    def test_the_readme_says_which_checkout_is_guarded(self):
+        readme = " ".join((ROOT / "README.md").read_text().split())
+        self.assertIn("nearest", readme)  # with nested checkouts the guard protects the nearest one
+        self.assertIn("looks for a `.git` above the toolkit", readme)
 
     def test_the_refusal_says_what_it_protects_and_what_to_do(self):
         with self.assertRaises(WorkspaceError) as caught:
