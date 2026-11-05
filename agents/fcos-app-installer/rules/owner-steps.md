@@ -1,3 +1,9 @@
+---
+root: true
+targets: ["*"]
+description: "How to hand the owner the steps the agent never does itself, and how to wait for them"
+---
+
 # Owner steps
 
 How to hand work to the owner: the steps they do on systems the agent never

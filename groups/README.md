@@ -12,13 +12,14 @@ Saved selections, so you don't have to name every folder. Run every command from
 | [`career`](#career) | A folder you choose | 22 career skills, the interview coach and 4 career-workspace skills, including the application starter. The `career` agent comes with `default` |
 | [`reverse_engineering`](#reverse_engineering) | A folder you choose | REA, RE agents and disabled ReVa/radare2 MCPs; IoTHackBot is native-owned |
 | [`design`](#design) | A folder you choose | 19 design skills (graphics, brand, palettes, typography, design systems, critique) plus `anatomy` |
+| [`fcos_app_installer`](#fcos_app_installer) | A folder you choose | The FCOS app installer agent and its helper, the `/add-service` command, 6 skills and 2 rules; `install.py` places the toolkit's own files |
 
 ## How they behave
 
 - **Home-folder groups** (`default`, `work`, `writing_reporting`) replace your tool's whole rules file with that group's rules. Skills, agents and commands are added or overwritten by name; nothing else is deleted, so switching to a smaller group leaves the extra skills in place.
 - `default` and `work` also replace your tool's MCP server list. `writing_reporting` leaves it alone.
 - `infosec` and `reverse_engineering` write their selected MCP sets into the chosen folder. Generate a combined selection in one run if you need both; sequential runs can replace the earlier MCP set. New ZAP/ReVa/radare2 connections are disabled, and generated configuration contains environment references rather than key values.
-- **Folder groups** (`infosec`, `ai_research`, `career`, `reverse_engineering`, `design`) install into one folder and load only when you start your tool there. Never add `--global` to them.
+- **Folder groups** (`infosec`, `ai_research`, `career`, `reverse_engineering`, `design`, `fcos_app_installer`) install into one folder and load only when you start your tool there. Never add `--global` to them.
 - Add `--dry-run` to any command to list what it would write without writing anything.
 - None of them installs the programs a skill or MCP server uses. See each folder's README for that.
 - Codebase-memory's complete integration belongs to its upstream installer: apply it after rulesync, as its [verified ordering requirement](../mcp-servers/codebase-memory/README.md) explains. The repo ships no extracted skill.
@@ -153,6 +154,16 @@ The 19 skills from [`skills/designskills`](../skills/designskills/), including `
 ```bash
 mkdir -p ~/AI/design
 npx rulesync@41.0.0 generate --config groups/design.jsonc --output-roots ~/AI/design
+```
+
+## fcos_app_installer
+
+The [FCOS app installer](../agents/fcos-app-installer/): the `fcos-app-installer` agent and its `adapter-drafter` helper, the `/add-service` command, 6 skills (the provider adapters and `researching-apps-for-self-hosting`) and 2 rules, which rulesync writes into the folder's `AGENTS.md`. rulesync can't place the toolkit's own files (`tools/`, `templates/`, `docs/`, `tests/` and the rest), so [`install.py`](../agents/fcos-app-installer/install.py) copies those first; it lists what it would do unless you add `--apply`. The folder must be one of its own, outside any git checkout. Only OpenCode enforces the agent's permission list; other tools get its instructions without those guard rails, and the tools read the skills where OpenCode keeps them, so keep `opencode` in `--targets`. Writes no MCP settings. Not part of `default`.
+
+```bash
+python3 agents/fcos-app-installer/install.py ~/AI/fcos-app-installer
+python3 agents/fcos-app-installer/install.py ~/AI/fcos-app-installer --apply
+npx rulesync@41.0.0 generate --config groups/fcos_app_installer.jsonc --output-roots ~/AI/fcos-app-installer
 ```
 
 ## Other tools

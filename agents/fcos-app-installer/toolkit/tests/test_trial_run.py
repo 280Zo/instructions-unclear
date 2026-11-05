@@ -14,7 +14,7 @@ PAGE = ROOT / "docs" / "guide" / "10-trial-run.md"
 class TrialRunTests(unittest.TestCase):
     def test_live_checks_are_listed(self):
         text = " ".join(PAGE.read_text().split())
-        for needle in ("rules/owner-steps.md", "Commands in full, in the message", "adapter-drafter",
+        for needle in ("AGENTS.md", "Commands in full, in the message", "adapter-drafter",
                        "adapter-proxmox", "researching-apps-for-self-hosting", "python3 -m unittest discover tests",
                        "store_api_token", "file-server.md", "secrets.md", "AGENTS.md", "backups.md",
                        "vmssh.py logs", "[hidden]", "backrooms", "revoke", "Report back"):
@@ -42,7 +42,7 @@ class TrialRunTests(unittest.TestCase):
     def test_readme_layout_names_every_top_folder(self):
         readme = (ROOT / "README.md").read_text()
         layout = readme.split("## Layout", 1)[1]
-        for folder in ("`.opencode/`", f"`{SKILLS_DIR}/`", "`rules/`", "`docs/guide/`", "`schemas/`",
+        for folder in ("`.opencode/`", f"`{SKILLS_DIR}/`", "`AGENTS.md`", "`docs/guide/`", "`schemas/`",
                        "`specs/login-frontend/`", "`templates/`", "`tools/`", "`tests/`"):
             with self.subTest(folder=folder):
                 self.assertIn(folder, layout)

@@ -1,3 +1,9 @@
+---
+root: true
+targets: ["*"]
+description: "Never ask for, read, print or store a secret or a real value; keep real values in the private workspace"
+---
+
 # Secrets and private values
 
 How secrets and the owner's real values are handled. Owner, 2026-11-04.

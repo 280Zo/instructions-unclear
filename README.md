@@ -167,6 +167,7 @@ The secure-coding rule ships inside [`agents/security`](agents/security/).
 | [`agents/build`](agents/build/), [`plan`](agents/plan/), [`general`](agents/general/), [`explore`](agents/explore/) | Restrictions for OpenCode's own agents of these names, so they don't see the specialist skills |
 | [`agents/second-opinion`](agents/second-opinion/) | `second-opinion` reviews how the session is going; `evaluator` and `metacognitive` check answers and reasoning                                                           |
 | [`agents/local-model`](agents/local-model/)       | Small working turns, scoped delegation and safe pause/resume handoffs for local models or fragile connections                                                            |
+| [`agents/fcos-app-installer`](agents/fcos-app-installer/) | Builds Fedora CoreOS VMs on Proxmox and adds services behind one login page, with the toolkit it runs; a profile for a folder of its own (`fcos_app_installer` group), not part of the default install |
 | [`agents/security`](agents/security/)             | The `security` agent plus one security bundle owned by this repo: secure-coding rule, security auditor and threat-modeling agents, 6 skills and 4 commands; included in the default global install |
 
 </details>

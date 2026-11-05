@@ -108,8 +108,8 @@ class HonestWordingTests(unittest.TestCase):
         section = self.readme_section()
         self.assertIn("host-s*", section)
         self.assertNotRegex(section, r"(?i)spellings of the name included")
-        comment = AGENT.read_text().split("The pinned list of host-script checksums", 1)[1].split("action: shell", 1)[0]
-        self.assertIn("avoid all three", " ".join(comment.split()))
+        # The rule's own comment says the same; comments are not in the file rulesync writes, so the
+        # repository's tests/test_fcos_app_installer.py checks that one in the source.
 
 
 class AgentGuardsTheListTests(unittest.TestCase):

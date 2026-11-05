@@ -3,14 +3,11 @@
 
 Usage: check_requirements.py
 
-- OpenCode 2.1.3 or newer. Earlier V2 releases (2.0.0-2.0.29) parse the config's
-  `instructions` list but never load it, so rules/*.md would silently be missing
-  (anomalyco/opencode issue #51341; the loader is in 2.0.30 and later), and the
-  agents' skill and subagent filters were tested on 2.1.3.
+- OpenCode 2.1.3 or newer: the agents' skill and subagent filters were tested on 2.1.3.
 - Python 3 with PyYAML: every tool reads YAML.
 - podman or docker: the build checks run Butane and Podman in containers.
 - launch folder: OpenCode must be started in the toolkit's folder. The agent's allow rules
-  (python3 tools/*), its guard rules and the rules/ it loads are relative to that folder.
+  (python3 tools/*), its guard rules and the AGENTS.md it loads are relative to that folder.
 
 Exits 0 when everything is there, 1 otherwise, with one line per item.
 """

@@ -1,6 +1,8 @@
 ---
-description: Add a service to a Fedora CoreOS VM following docs/guide (args: <service>)
-agent: fcos-app-installer
+description: "Add a service to a Fedora CoreOS VM following docs/guide (args: <service>)"
+targets: ["*"]
+opencode:
+  agent: fcos-app-installer
 ---
 
 Add the service "$1", following docs/guide/03-add-a-service.md. Start with the

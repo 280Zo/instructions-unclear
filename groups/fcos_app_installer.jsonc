@@ -1,0 +1,10 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
+  // Folder-scoped: the FCOS app installer agent, its helper, its command, its skills and its
+  // rules. The toolkit's own files are placed by agents/fcos-app-installer/install.py.
+  // Run from the repo root with --output-roots <folder>. Never --global.
+  "targets": ["opencode"],
+  "features": ["rules", "subagents", "commands", "skills"],
+  "delete": false,
+  "inputRoots": ["agents/fcos-app-installer"]
+}

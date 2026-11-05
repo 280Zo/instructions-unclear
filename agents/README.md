@@ -12,6 +12,7 @@ One folder per agent or agent set, each with the skills, rules and commands that
 | [`reverse-engineering`](reverse-engineering/) | The `reverse-engineering` agent plus reverse-engineer, firmware and malware agents and 4 skills. Profile; also installed by default |
 | [`second-opinion`](second-opinion/) | `second-opinion`, `evaluator` and `metacognitive`: a second check on the main agent's work. Installed by default |
 | [`local-model`](local-model/) | Small working increments, scoped delegation and fast safe pause/resume handoffs. Installed by default; use as primary or delegated worker |
+| [`fcos-app-installer`](fcos-app-installer/) | Builds Fedora CoreOS VMs on Proxmox and adds services to them, with the toolkit it runs. A profile: installs into a folder you choose (the `fcos_app_installer` group), not part of `default` |
 | [`build`](build/), [`plan`](plan/), [`general`](general/), [`explore`](explore/) | Restrictions for OpenCode's own agents of these names, so they don't see the specialist skills. Installed by default, for OpenCode only |
 
 A profile installs into one folder you choose, not your home folder. To install several profiles into the same folder, run each one's command with the same `--output-roots`.

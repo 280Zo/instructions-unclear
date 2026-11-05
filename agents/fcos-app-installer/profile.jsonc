@@ -1,0 +1,9 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
+  // FCOS app installer profile. Run from the repo root with --output-roots pointing at the
+  // folder you start OpenCode in. See this folder's README. Never run this with --global.
+  "targets": ["opencode"],
+  "features": ["rules", "subagents", "commands", "skills"],
+  "delete": false,
+  "inputRoots": ["agents/fcos-app-installer"]
+}

@@ -1,13 +1,12 @@
 """OpenCode is started in the toolkit's own folder, and everything resolves from there.
 
 The agent's allow rules (python3 tools/*, bash tools/*), its guard rules, the commands in the
-prompts and the guide, and opencode.json's `instructions` are all relative paths. They hold
-only when the launch folder is the folder that holds tools/, rules/, docs/ and .opencode/.
-These tests read that installed layout and check every such path against it. They assert the
-allow rules; the deny and ask rules are in test_agent.py and test_guard_rules.py.
+prompts and the guide, and the AGENTS.md OpenCode loads are all relative to the folder it is
+started in. They hold only when the launch folder is the folder that holds tools/, AGENTS.md,
+docs/ and .opencode/. These tests read that installed layout and check every such path against
+it. They assert the allow rules; the deny and ask rules are in test_agent.py and
+test_guard_rules.py.
 """
-import fnmatch
-import json
 import os
 import re
 import subprocess
@@ -38,8 +37,8 @@ REFUSED_EXAMPLES = {f"{SKILLS_DIR}/x.md"}
 
 def instruction_files():
     folders = [ROOT / ".opencode" / "agents", ROOT / ".opencode" / "commands", SKILLS,
-               ROOT / "rules", ROOT / "docs" / "guide"]
-    files = [ROOT / "README.md"]
+               ROOT / "docs" / "guide"]
+    files = [ROOT / "README.md", ROOT / "AGENTS.md"]
     for folder in folders:
         files += sorted(p for p in folder.rglob("*") if p.is_file() and p.suffix in {".md", ".yaml"})
     # The tools quote paths and commands in their messages and usage text too.
@@ -68,14 +67,11 @@ class LaunchFolderTests(unittest.TestCase):
                     self.assertTrue((ROOT / named).is_file())
         self.assertGreater(seen, 30)
 
-    def test_the_instruction_globs_match_rule_files_from_the_launch_folder(self):
-        config = json.loads((ROOT / ".opencode" / "opencode.json").read_text())
-        self.assertTrue(config["instructions"])
-        for pattern in config["instructions"]:
-            with self.subTest(pattern=pattern):
-                self.assertFalse(pattern.startswith("/") or pattern.startswith(".."), pattern)
-                matched = [p for p in ROOT.rglob("*.md") if fnmatch.fnmatch(str(p.relative_to(ROOT)), pattern)]
-                self.assertTrue(matched)
+    def test_the_rules_file_is_in_the_launch_folder(self):
+        # OpenCode loads AGENTS.md from the folder it is started in (and above); rulesync writes the
+        # toolkit's rules there. A path to a rules/ file would not resolve: that folder stays in the repo.
+        self.assertTrue((ROOT / "AGENTS.md").is_file())
+        self.assertFalse((ROOT / "rules").exists())
 
     def test_the_allow_rules_are_relative_to_the_launch_folder(self):
         text = (ROOT / ".opencode" / "agents" / "fcos-app-installer.md").read_text()
@@ -121,15 +117,18 @@ class LaunchFolderTests(unittest.TestCase):
         self.assertNotIn("project folder", install)
         self.assertIn("toolkit's folder", install)
         # The install must not send you to run the toolkit inside a clone of another repository: that
-        # clone's own AGENTS.md and rules/ would load into every session (research-notes row 23).
+        # clone's own AGENTS.md and skills would load into every session (research-notes row 23).
         self.assertNotIn("Clone this repository", install)
         self.assertIn("folder of its own", install)
-        # OpenCode searches the rules glob (and AGENTS.md) from the launch folder upward: to the git
-        # root, or to the home folder when the launch folder is under it. Skills too.
-        segment = " ".join(readme.split("(searched upward", 1)[1].split("Earlier 2.0", 1)[0].split())
+        # OpenCode searches AGENTS.md and project skills from the launch folder upward: to the git
+        # root, or to the home folder when the launch folder is under it.
+        segment = " ".join(readme.split("(searched upward", 1)[1].split("The agents' skill and subagent", 1)[0].split())
         for needle in ("git root", "home folder", "skills"):
             with self.subTest(needle=needle):
                 self.assertIn(needle, segment)
+        # The rules are no longer loaded through the config's instructions list.
+        self.assertNotIn("opencode.json", readme)
+        self.assertNotIn("`instructions`", readme)
 
     def test_the_guide_tells_a_person_where_to_run_its_commands(self):
         guide = " ".join((ROOT / "docs" / "guide" / "README.md").read_text().split())

@@ -1,9 +1,13 @@
 """The agent's name (owner, 2026-11-04): fcos-app-installer, everywhere."""
-import subprocess
+import sys
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools"))
+
+from publish_check import published_files  # noqa: E402
+
 OLD = "fcos-" + "service"  # split so this file doesn't match itself
 
 
@@ -14,9 +18,9 @@ class NamingTests(unittest.TestCase):
         self.assertIn("agent: fcos-app-installer", (ROOT / ".opencode" / "commands" / "add-service.md").read_text())
 
     def test_old_name_is_gone_from_published_files(self):
-        files = subprocess.run(["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard"],
-                               capture_output=True, text=True, check=True).stdout.split()
-        hits = [f for f in files if (ROOT / f).is_file() and OLD in (ROOT / f).read_text(errors="ignore")]
+        # The files this folder would publish: git's list in a checkout, every file in a plain copy.
+        files, _how, _unreadable = published_files(ROOT)
+        hits = [str(f.relative_to(ROOT)) for f in files if f.is_file() and OLD in f.read_text(errors="ignore")]
         self.assertEqual(hits, [])
 
 

@@ -3,6 +3,8 @@ import sys
 import unittest
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 from layout import SKILLS_DIR  # noqa: E402
@@ -19,11 +21,10 @@ def frontmatter(text: str) -> str:
 
 
 def rules(text: str) -> list[tuple[str, str, str]]:
-    """(action, resource, effect) in order, from the YAML permission list."""
-    found = re.findall(
-        r'- action: (\S+)\n\s+resource: "([^"]*)"\n\s+effect: (\S+)', frontmatter(text))
-    # YAML drops the quotes around "pmb_*", and a double-quoted "\n" is a newline.
-    return [(a.strip('"'), r.replace("\\n", "\n").replace("\\r", "\r"), e) for a, r, e in found]
+    """(action, resource, effect) in order, from the YAML permission list. Parsed as YAML, not
+    matched as text: rulesync writes the file its own way (quotes, folding, no comments)."""
+    permissions = yaml.safe_load(frontmatter(text))["permissions"]
+    return [(rule["action"], rule["resource"], rule["effect"]) for rule in permissions]
 
 
 def effect(text: str, action: str, resource: str) -> str:
@@ -42,9 +43,9 @@ def effect(text: str, action: str, resource: str) -> str:
 
 
 def body(text: str) -> str:
-    """The agent's instructions as the model gets them: the prompt plus the rule files
-    opencode.json loads for this folder (tests/test_rules.py checks that it loads them)."""
-    rules_text = "\n".join(p.read_text() for p in sorted((ROOT / "rules").glob("*.md")))
+    """The agent's instructions as the model gets them: the prompt plus the folder's AGENTS.md,
+    where rulesync puts the rule files (tests/test_rules.py checks what is in it)."""
+    rules_text = (ROOT / "AGENTS.md").read_text()
     return text.split("\n---\n", 1)[1] + "\n" + " ".join(rules_text.split())
 
 

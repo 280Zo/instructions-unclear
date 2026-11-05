@@ -14,6 +14,8 @@ These stdlib tests check collection completeness, native plugin resource paths, 
 
 `test_opencode_agents.py` checks that every file `agents/generate.py` writes is current: the six specialists, the `build`, `plan`, `general` and `explore` files, the blocks in `second-opinion` and `local-model`, the README hero (both SVGs, which must be accessible images with no external fonts or links) and `docs/agents-map.html`. It also checks one file per agent folder with no leftover `.portable` files, that specialists carry their instructions and matching Claude Code MCP denies for every tool, and that the four OpenCode-only files have empty bodies and only deny. It confirms that specialists start from a skill deny, that agent file names are unique across `default`, and that every repo MCP server has a permission pattern. It verifies that `default` installs every agent's skills once without REA.
 
+`test_fcos_app_installer.py` checks the FCOS app installer's packaging (`agents/fcos-app-installer/`): the installer script (a dry run writes nothing; `--apply` copies a fixed list of files with their modes; it never deletes, never follows links and refuses anything that looks like a secret or isn't on its list; targets inside the installer's own repository are refused, other checkouts get a warning), the rulesync sources (agent, command, rules and skills have the source format and only the fields this repo allows), the profile and group, and that the new folder is listed where AGENTS.md says it must be. The frontmatter checks skip when PyYAML is missing, so the rest stays standard-library only. The toolkit's own 700-odd tests live in its `toolkit/tests/` and run in an installed folder, not here: `check_fcos_app_installer.py` is the opt-in check that installs for real (see below).
+
 `test_user_invoked_skills.py` checks that `handoff`, `teach` and `wait-what` are separate folders with all their supporting files, keep their invocation fields in tool sections, and are selected, routed and licensed.
 
 `test_documents_skill.py` runs the packaged `documents` validator on its four bundled fixtures (PDF, DOCX, XLSX, PPTX) and checks that the complete family skill and its references are present in the groups that select it. It does not render documents or need Python libraries beyond the standard library.
@@ -63,6 +65,12 @@ Checked with OpenCode 2.1.3. Every list matched exactly; counts are repo skills 
 | `ai-research` | 107 | `second-opinion` / `local-model` | 3 / 5 |
 
 Design and security were denied `resume-tailor` and `binary-triage`, and build was denied `typography`. Career, reverse-engineering and ai-research loaded `resume-tailor`, `binary-triage` and `humanizer`. Security loaded the Trail of Bits skill and reverse-engineering the IoTHackBot skill; build was denied the first and security the second. Security reached the ZAP stub, build reached the codebase-memory stub, and 3d-modeling reached the FreeCAD stub; design and build were blocked from servers they don't list, and those servers were absent from their Code Mode catalogs. Design couldn't delegate to `security-auditor` and career couldn't delegate to `evaluator`; security, build and second-opinion delegated to `security-auditor`, `career` and `evaluator`. Real MCP backends weren't started. File counts matched; differences were confined to OpenCode agent frontmatter and MCP config. A synthetic V2 config retained shared MCP timeouts and unrelated settings while its server list was replaced.
+
+`check_fcos_app_installer.py` is the opt-in check for the FCOS app installer. It uses an already-downloaded rulesync CLI, installs the toolkit's files with `install.py`, adds rulesync's output for `groups/fcos_app_installer.jsonc` into a new folder under `/tmp/opencode`, and checks that the agents' permission lists, instructions and modes, the command's agent, and the six sibling skills came through unchanged. It then runs the toolkit's whole test suite in that installed folder, the layout those tests are written for (a few minutes), and leaves the folder in place:
+
+```fish
+python3 tests/check_fcos_app_installer.py "$cli41"
+```
 
 ## Origin
 

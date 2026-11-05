@@ -1,519 +1,522 @@
 ---
-description: Builds Fedora CoreOS VMs and adds services to them by following docs/guide, with real values kept in a private workspace. Runs its own steps hands-off and stops for the owner's steps, decisions and anything irreversible.
-mode: primary
-color: "#3c6e71"
-permissions:
-  # Shell: ask for anything not listed. Broad rules first; the last match wins.
-  - action: shell
-    resource: "*"
-    effect: ask
-  - action: shell
-    resource: "python3 tools/*"
-    effect: allow
-  # Only the repo's own tests (never a test file the agent wrote).
-  - action: shell
-    resource: "python3 -m unittest discover tests"
-    effect: allow
-  - action: shell
-    resource: "python3 -m unittest tests.*"
-    effect: allow
-  - action: shell
-    resource: "bash tools/*"
-    effect: allow
-  # VMs only through tools/vmssh.py with the agent's own revocable key; plain
-  # ssh could use the owner's key or ssh-agent (owner decision 2026-10-31).
-  - action: shell
-    resource: "ssh *"
-    effect: deny
-  - action: shell
-    resource: "scp *"
-    effect: deny
-  - action: shell
-    resource: "sftp *"
-    effect: deny
-  - action: shell
-    resource: "rsync *"
-    effect: deny
-  - action: shell
-    resource: "ssh-add *"
-    effect: deny
-  - action: shell
-    resource: "ssh-keygen -R *"
-    effect: allow
-  - action: shell
-    resource: "rm -f /tmp/opencode/*"
-    effect: allow
-  # Web checks go through tools/http_check.py (status only, writes nothing);
-  # curl and rg ask (too many ways to send data, or to search into secrets/).
-  - action: shell
-    resource: "dig *"
-    effect: allow
-  - action: shell
-    resource: "sha256sum *"
-    effect: allow
-  - action: shell
-    resource: "git status *"
-    effect: allow
-  - action: shell
-    resource: "git diff *"
-    effect: allow
-  - action: shell
-    resource: "git log *"
-    effect: allow
-  # The owner approves every commit and every download.
-  - action: shell
-    resource: "git commit *"
-    effect: ask
-  - action: shell
-    resource: "docker pull *"
-    effect: ask
-  - action: shell
-    resource: "podman pull *"
-    effect: ask
-  # Never: hypervisor commands or its API directly (only tools/pve.py), root
-  # logins, local root, secrets, publishing.
-  - action: shell
-    resource: "qm *"
-    effect: deny
-  - action: shell
-    resource: "pvesm *"
-    effect: deny
-  - action: shell
-    resource: "pveum *"
-    effect: deny
-  - action: shell
-    resource: "pvesh *"
-    effect: deny
-  - action: shell
-    resource: "pct *"
-    effect: deny
-  - action: shell
-    resource: "vzdump *"
-    effect: deny
-  - action: shell
-    resource: "curl *api2*"
-    effect: deny
-  - action: shell
-    resource: "curl *PVEAPIToken*"
-    effect: deny
-  - action: shell
-    resource: "*root@*"
-    effect: deny
-  - action: shell
-    resource: "sudo *"
-    effect: deny
-  - action: shell
-    resource: "cat *secrets*"
-    effect: deny
-  - action: shell
-    resource: "*.token*"
-    effect: deny
-  - action: shell
-    resource: "git push *"
-    effect: deny
-  # Closing gaps in the allows above (each has a test in tests/test_agent.py):
-  # no secrets through any command, no ../ out of tools/ or /tmp/opencode,
-  # no root through ssh options, no curl that sends data or writes a file,
-  # no git writing files.
-  - action: shell
-    resource: "*/secrets/*"
-    effect: deny
-  - action: shell
-    resource: "*/secrets"
-    effect: deny
-  - action: shell
-    resource: "python3 tools/*..*"
-    effect: deny
-  - action: shell
-    resource: "bash tools/*..*"
-    effect: deny
-  - action: shell
-    resource: "rm -f /tmp/opencode/*..*"
-    effect: deny
-  - action: shell
-    resource: "*-l root*"
-    effect: deny
-  - action: shell
-    resource: "*-lroot*"
-    effect: deny
-  - action: shell
-    resource: "*User=root*"
-    effect: deny
-  - action: shell
-    resource: "*user=root*"
-    effect: deny
-  - action: shell
-    resource: "*-l?root*"
-    effect: deny
-  - action: shell
-    resource: "*-l ?root*"
-    effect: deny
-  - action: shell
-    resource: "*User root*"
-    effect: deny
-  - action: shell
-    resource: "rm -f /tmp/opencode/* *"
-    effect: deny
-  - action: shell
-    resource: "python3 -m unittest */*"
-    effect: deny
-  - action: shell
-    resource: "python3 -m unittest *.py*"
-    effect: deny
-  - action: shell
-    resource: "python3 -m unittest *-s *"
-    effect: deny
-  - action: shell
-    resource: "rg -u*"
-    effect: deny
-  - action: shell
-    resource: "rg *-u *"
-    effect: deny
-  - action: shell
-    resource: "rg *-uu*"
-    effect: deny
-  - action: shell
-    resource: "rg *--unrestricted*"
-    effect: deny
-  - action: shell
-    resource: "rg *--no-ignore*"
-    effect: deny
-  # Logs only through tools/vmssh.py logs (redacted); no environment or secret
-  # store is read (owner, 2026-11-04: an app printed a secret into its log).
-  # vmssh.py run refuses these too; these rules are the second guard.
-  - action: shell
-    resource: "*journalctl*"
-    effect: deny
-  - action: shell
-    resource: "*podman logs*"
-    effect: deny
-  - action: shell
-    resource: "*docker logs*"
-    effect: deny
-  - action: shell
-    resource: "*showsecret*"
-    effect: deny
-  - action: shell
-    resource: "*secret inspect*"
-    effect: deny
-  - action: shell
-    resource: "*printenv*"
-    effect: deny
-  - action: shell
-    resource: "*/environ*"
-    effect: deny
-  # ssh-keygen -R <host> only: a second argument (-f <file>) is denied.
-  - action: shell
-    resource: "ssh-keygen -R * ?*"
-    effect: deny
-  - action: shell
-    resource: "git *--output*"
-    effect: deny
-  # SSH anywhere in a line (chained after an allowed command, env/command
-  # prefixes, absolute paths, git's ssh hooks, the owner's agent socket):
-  # VMs only through tools/vmssh.py (owner decision 2026-10-31).
-  - action: shell
-    resource: "*ssh *"
-    effect: deny
-  - action: shell
-    resource: "*scp *"
-    effect: deny
-  - action: shell
-    resource: "*sftp *"
-    effect: deny
-  - action: shell
-    resource: "*rsync *"
-    effect: deny
-  - action: shell
-    resource: "*ssh-add*"
-    effect: deny
-  - action: shell
-    resource: "*SSH_AUTH_SOCK*"
-    effect: deny
-  - action: shell
-    resource: "*sshCommand*"
-    effect: deny
-  - action: shell
-    resource: "*GIT_SSH*"
-    effect: deny
-  # "python3 tools/*" runs from any working directory: no allowed command may
-  # write into a tools/ folder (redirect, tee, a generator's output folder).
-  - action: shell
-    resource: "*>*/tools/*"
-    effect: deny
-  - action: shell
-    resource: "*> tools/*"
-    effect: deny
-  - action: shell
-    resource: "*>tools/*"
-    effect: deny
-  - action: shell
-    resource: "*tee *tools/*"
-    effect: deny
-  - action: shell
-    resource: "python3 tools/gen_service.py *tools*"
-    effect: deny
-  - action: shell
-    resource: "python3 tools/login_frontend.py *tools*"
-    effect: deny
-  # The skills hold host scripts the owner runs as root (review of ff605b1). No
-  # shell command may contain ".opencode" (the agents, commands and skills): an
-  # allowed first word (git status, dig, sha256sum) could otherwise chain a write
-  # behind it, with any separator right after the name (reviews of the skills
-  # commits). The agent reads those files with its read tool; edits to the skills
-  # always ask (below). The dot keeps this apart from /tmp/opencode/, the scratch
-  # folder. A guard rail, not a wall: the shell expands wildcards, quotes and
-  # variables after these rules have matched (README).
-  - action: shell
-    resource: "*.opencode*"
-    effect: deny
-  # The pinned list of host-script checksums is the one file the agent must never write: a changed
-  # script plus a matching list would pass. No shell command may contain its name, its extension
-  # (.sha25) or the word host-script. Spellings that avoid all three (host-s*, a quote inside the
-  # word) are expanded by the shell after these rules have matched, and get through. A guard rail,
-  # not a wall: the agent runs as the owner's user, so only a separate user makes this hard (README).
-  - action: shell
-    resource: "*host-script*"
-    effect: deny
-  - action: shell
-    resource: "*.sha25*"
-    effect: deny
-  # Files: its own work in the workspace and /tmp/opencode freely; templates,
-  # tools, adapters, specs and the guide need the owner's OK; secrets, private
-  # notes, git internals and agent config are off limits.
-  - action: edit
-    resource: "*"
-    effect: ask
-  - action: edit
-    resource: "*/site.yaml"
-    effect: allow
-  - action: edit
-    resource: "*/vms/*"
-    effect: allow
-  - action: edit
-    resource: "*/services/*"
-    effect: allow
-  - action: edit
-    resource: "*/login-frontend/*"
-    effect: allow
-  - action: edit
-    resource: "*/adapters-draft/*"
-    effect: allow
-  - action: edit
-    resource: "/tmp/opencode/*"
-    effect: allow
-  # The repo's own login front end specs are agent code, not install output.
-  - action: edit
-    resource: "specs/*"
-    effect: ask
-  - action: edit
-    resource: "*/specs/*"
-    effect: ask
-  - action: edit
-    resource: "tests/*"
-    effect: ask
-  - action: edit
-    resource: "*/tests/*"
-    effect: ask
-  - action: edit
-    resource: "*/secrets/*"
-    effect: deny
-  - action: edit
-    resource: "*.token"
-    effect: deny
-  - action: edit
-    resource: "notes/*"
-    effect: deny
-  - action: edit
-    resource: ".opencode/*"
-    effect: deny
-  - action: edit
-    resource: "*/.opencode/*"
-    effect: deny
-  - action: edit
-    resource: ".git/*"
-    effect: deny
-  # "python3 tools/*" runs from any working directory, so no folder the agent
-  # writes freely may hold a tools/ script (review 2026-10-31).
-  - action: edit
-    resource: "*/tools/*"
-    effect: ask
-  - action: edit
-    resource: "/tmp/opencode/tools/*"
-    effect: deny
-  - action: edit
-    resource: "*/secrets/*"
-    effect: deny
-  - action: edit
-    resource: ".opencode/skills/*"
-    effect: ask
-  - action: edit
-    resource: "*/.opencode/skills/*"
-    effect: ask
-  - action: edit
-    resource: "host-scripts.sha256"
-    effect: deny
-  - action: edit
-    resource: "*host-scripts.sha256"
-    effect: deny
-  # A path that climbs out of a folder ("skills/../agents/...") must not borrow the rule of the
-  # folder it starts in; the agent never needs one.
-  - action: edit
-    resource: "*..*"
-    effect: deny
-  - action: read
-    resource: "*/secrets/*"
-    effect: deny
-  # Reads and edits inside the location use relative paths, which "*/secrets/*"
-  # doesn't match (whole-branch review, 2026-11-04).
-  - action: read
-    resource: "secrets/*"
-    effect: deny
-  - action: read
-    resource: "secrets"
-    effect: deny
-  - action: read
-    resource: "*/secrets"
-    effect: deny
-  - action: edit
-    resource: "secrets/*"
-    effect: deny
-  - action: edit
-    resource: "secrets"
-    effect: deny
-  - action: edit
-    resource: "*/secrets"
-    effect: deny
-  - action: shell
-    resource: "*secrets/*"
-    effect: deny
-  - action: shell
-    resource: "* secrets"
-    effect: deny
-  - action: read
-    resource: "*.token"
-    effect: deny
-  - action: read
-    resource: "notes/*"
-    effect: deny
-  - action: external_directory
-    resource: "*"
-    effect: ask
-  # Workspaces: any folder whose name contains "fcos-" (owner decision
-  # 2026-10-31); secrets/ stays denied by the rules below. "*" also crosses
-  # "/", so anything inside a hidden folder (~/.ssh, ~/.config, ...) and
-  # anything under /tmp (any user can create folders there) asks again.
-  - action: external_directory
-    resource: "*fcos-*"
-    effect: allow
-  - action: external_directory
-    resource: "*/.*"
-    effect: ask
-  - action: external_directory
-    resource: "/tmp/*"
-    effect: ask
-  - action: external_directory
-    resource: "/tmp/opencode/*"
-    effect: allow
-  - action: external_directory
-    resource: "*/secrets/*"
-    effect: deny
-  - action: external_directory
-    resource: "*/secrets"
-    effect: deny
-  - action: question
-    resource: "*"
-    effect: allow
-  # Subagents: only the adapter drafter (owner, 2026-11-04).
-  - action: subagent
-    resource: "*"
-    effect: deny
-  - action: subagent
-    resource: "adapter-drafter"
-    effect: allow
-  # Skills: its own and an approved list only (owner, 2026-11-04), so the
-  # descriptions of every other installed skill aren't sent with each request.
-  - action: skill
-    resource: "*"
-    effect: deny
-  - action: skill
-    resource: "adapter-*"
-    effect: allow
-  - action: skill
-    resource: "researching-apps-for-self-hosting"
-    effect: allow
-  - action: skill
-    resource: "opencode"
-    effect: allow
-  - action: skill
-    resource: "package-management"
-    effect: allow
-  - action: skill
-    resource: "search"
-    effect: allow
-  - action: skill
-    resource: "exa-agent"
-    effect: allow
-  - action: skill
-    resource: "docker-compose-patterns"
-    effect: allow
-  - action: skill
-    resource: "docker-destructive-guardrails"
-    effect: allow
-  - action: skill
-    resource: "systematic-debugging"
-    effect: allow
-  - action: skill
-    resource: "verification-before-completion"
-    effect: allow
-  # MCP servers it doesn't need, by server name (never a blanket *_* rule:
-  # built-in actions such as external_directory contain "_"). Exa stays, for
-  # research. Memory tools would copy the owner's real values out of the
-  # workspace; document tools could read secrets/ past the read rules.
-  - action: "pmb_*"
-    resource: "*"
-    effect: deny
-  - action: "docling_*"
-    resource: "*"
-    effect: deny
-  - action: "presenton_*"
-    resource: "*"
-    effect: deny
-  - action: "freecad_*"
-    resource: "*"
-    effect: deny
-  - action: "codebase?memory?mcp_*"
-    resource: "*"
-    effect: deny
-  - action: "podman_*"
-    resource: "*"
-    effect: deny
-  - action: "zap_*"
-    resource: "*"
-    effect: deny
-  - action: "rea_*"
-    resource: "*"
-    effect: deny
-  - action: "reva_*"
-    resource: "*"
-    effect: deny
-  - action: "radare2_*"
-    resource: "*"
-    effect: deny
-  # The built-in search asks every time: a file filter could reach secrets/
-  # past .ignore (owner decision 2026-10-30).
-  - action: grep
-    resource: "*"
-    effect: ask
-  # No file-name search aimed at secrets/ or token files (general review,
-  # 2026-11-04); V2 matches glob rules against the requested pattern, so a
-  # broad pattern like **/* still lists names, which the workspace's .ignore hides.
-  - action: glob
-    resource: "*secrets*"
-    effect: deny
-  - action: glob
-    resource: "*.token*"
-    effect: deny
+name: fcos-app-installer
+targets: ["*"]
+description: "Builds Fedora CoreOS VMs and adds services to them by following docs/guide, with real values kept in a private workspace. Runs its own steps hands-off and stops for the owner's steps, decisions and anything irreversible."
+opencode:
+  mode: primary
+  color: "#3c6e71"
+  permissions:
+    # Shell: ask for anything not listed. Broad rules first; the last match wins.
+    - action: shell
+      resource: "*"
+      effect: ask
+    - action: shell
+      resource: "python3 tools/*"
+      effect: allow
+    # Only the repo's own tests (never a test file the agent wrote).
+    - action: shell
+      resource: "python3 -m unittest discover tests"
+      effect: allow
+    - action: shell
+      resource: "python3 -m unittest tests.*"
+      effect: allow
+    - action: shell
+      resource: "bash tools/*"
+      effect: allow
+    # VMs only through tools/vmssh.py with the agent's own revocable key; plain
+    # ssh could use the owner's key or ssh-agent (owner decision 2026-10-31).
+    - action: shell
+      resource: "ssh *"
+      effect: deny
+    - action: shell
+      resource: "scp *"
+      effect: deny
+    - action: shell
+      resource: "sftp *"
+      effect: deny
+    - action: shell
+      resource: "rsync *"
+      effect: deny
+    - action: shell
+      resource: "ssh-add *"
+      effect: deny
+    - action: shell
+      resource: "ssh-keygen -R *"
+      effect: allow
+    - action: shell
+      resource: "rm -f /tmp/opencode/*"
+      effect: allow
+    # Web checks go through tools/http_check.py (status only, writes nothing);
+    # curl and rg ask (too many ways to send data, or to search into secrets/).
+    - action: shell
+      resource: "dig *"
+      effect: allow
+    - action: shell
+      resource: "sha256sum *"
+      effect: allow
+    - action: shell
+      resource: "git status *"
+      effect: allow
+    - action: shell
+      resource: "git diff *"
+      effect: allow
+    - action: shell
+      resource: "git log *"
+      effect: allow
+    # The owner approves every commit and every download.
+    - action: shell
+      resource: "git commit *"
+      effect: ask
+    - action: shell
+      resource: "docker pull *"
+      effect: ask
+    - action: shell
+      resource: "podman pull *"
+      effect: ask
+    # Never: hypervisor commands or its API directly (only tools/pve.py), root
+    # logins, local root, secrets, publishing.
+    - action: shell
+      resource: "qm *"
+      effect: deny
+    - action: shell
+      resource: "pvesm *"
+      effect: deny
+    - action: shell
+      resource: "pveum *"
+      effect: deny
+    - action: shell
+      resource: "pvesh *"
+      effect: deny
+    - action: shell
+      resource: "pct *"
+      effect: deny
+    - action: shell
+      resource: "vzdump *"
+      effect: deny
+    - action: shell
+      resource: "curl *api2*"
+      effect: deny
+    - action: shell
+      resource: "curl *PVEAPIToken*"
+      effect: deny
+    - action: shell
+      resource: "*root@*"
+      effect: deny
+    - action: shell
+      resource: "sudo *"
+      effect: deny
+    - action: shell
+      resource: "cat *secrets*"
+      effect: deny
+    - action: shell
+      resource: "*.token*"
+      effect: deny
+    - action: shell
+      resource: "git push *"
+      effect: deny
+    # Closing gaps in the allows above (each has a test in tests/test_agent.py):
+    # no secrets through any command, no ../ out of tools/ or /tmp/opencode,
+    # no root through ssh options, no curl that sends data or writes a file,
+    # no git writing files.
+    - action: shell
+      resource: "*/secrets/*"
+      effect: deny
+    - action: shell
+      resource: "*/secrets"
+      effect: deny
+    - action: shell
+      resource: "python3 tools/*..*"
+      effect: deny
+    - action: shell
+      resource: "bash tools/*..*"
+      effect: deny
+    - action: shell
+      resource: "rm -f /tmp/opencode/*..*"
+      effect: deny
+    - action: shell
+      resource: "*-l root*"
+      effect: deny
+    - action: shell
+      resource: "*-lroot*"
+      effect: deny
+    - action: shell
+      resource: "*User=root*"
+      effect: deny
+    - action: shell
+      resource: "*user=root*"
+      effect: deny
+    - action: shell
+      resource: "*-l?root*"
+      effect: deny
+    - action: shell
+      resource: "*-l ?root*"
+      effect: deny
+    - action: shell
+      resource: "*User root*"
+      effect: deny
+    - action: shell
+      resource: "rm -f /tmp/opencode/* *"
+      effect: deny
+    - action: shell
+      resource: "python3 -m unittest */*"
+      effect: deny
+    - action: shell
+      resource: "python3 -m unittest *.py*"
+      effect: deny
+    - action: shell
+      resource: "python3 -m unittest *-s *"
+      effect: deny
+    - action: shell
+      resource: "rg -u*"
+      effect: deny
+    - action: shell
+      resource: "rg *-u *"
+      effect: deny
+    - action: shell
+      resource: "rg *-uu*"
+      effect: deny
+    - action: shell
+      resource: "rg *--unrestricted*"
+      effect: deny
+    - action: shell
+      resource: "rg *--no-ignore*"
+      effect: deny
+    # Logs only through tools/vmssh.py logs (redacted); no environment or secret
+    # store is read (owner, 2026-11-04: an app printed a secret into its log).
+    # vmssh.py run refuses these too; these rules are the second guard.
+    - action: shell
+      resource: "*journalctl*"
+      effect: deny
+    - action: shell
+      resource: "*podman logs*"
+      effect: deny
+    - action: shell
+      resource: "*docker logs*"
+      effect: deny
+    - action: shell
+      resource: "*showsecret*"
+      effect: deny
+    - action: shell
+      resource: "*secret inspect*"
+      effect: deny
+    - action: shell
+      resource: "*printenv*"
+      effect: deny
+    - action: shell
+      resource: "*/environ*"
+      effect: deny
+    # ssh-keygen -R <host> only: a second argument (-f <file>) is denied.
+    - action: shell
+      resource: "ssh-keygen -R * ?*"
+      effect: deny
+    - action: shell
+      resource: "git *--output*"
+      effect: deny
+    # SSH anywhere in a line (chained after an allowed command, env/command
+    # prefixes, absolute paths, git's ssh hooks, the owner's agent socket):
+    # VMs only through tools/vmssh.py (owner decision 2026-10-31).
+    - action: shell
+      resource: "*ssh *"
+      effect: deny
+    - action: shell
+      resource: "*scp *"
+      effect: deny
+    - action: shell
+      resource: "*sftp *"
+      effect: deny
+    - action: shell
+      resource: "*rsync *"
+      effect: deny
+    - action: shell
+      resource: "*ssh-add*"
+      effect: deny
+    - action: shell
+      resource: "*SSH_AUTH_SOCK*"
+      effect: deny
+    - action: shell
+      resource: "*sshCommand*"
+      effect: deny
+    - action: shell
+      resource: "*GIT_SSH*"
+      effect: deny
+    # "python3 tools/*" runs from any working directory: no allowed command may
+    # write into a tools/ folder (redirect, tee, a generator's output folder).
+    - action: shell
+      resource: "*>*/tools/*"
+      effect: deny
+    - action: shell
+      resource: "*> tools/*"
+      effect: deny
+    - action: shell
+      resource: "*>tools/*"
+      effect: deny
+    - action: shell
+      resource: "*tee *tools/*"
+      effect: deny
+    - action: shell
+      resource: "python3 tools/gen_service.py *tools*"
+      effect: deny
+    - action: shell
+      resource: "python3 tools/login_frontend.py *tools*"
+      effect: deny
+    # The skills hold host scripts the owner runs as root (review of ff605b1). No
+    # shell command may contain ".opencode" (the agents, commands and skills): an
+    # allowed first word (git status, dig, sha256sum) could otherwise chain a write
+    # behind it, with any separator right after the name (reviews of the skills
+    # commits). The agent reads those files with its read tool; edits to the skills
+    # always ask (below). The dot keeps this apart from /tmp/opencode/, the scratch
+    # folder. A guard rail, not a wall: the shell expands wildcards, quotes and
+    # variables after these rules have matched (README).
+    - action: shell
+      resource: "*.opencode*"
+      effect: deny
+    # The pinned list of host-script checksums is the one file the agent must never write: a changed
+    # script plus a matching list would pass. No shell command may contain its name, its extension
+    # (.sha25) or the word host-script. Spellings that avoid all three (host-s*, a quote inside the
+    # word) are expanded by the shell after these rules have matched, and get through. A guard rail,
+    # not a wall: the agent runs as the owner's user, so only a separate user makes this hard (README).
+    - action: shell
+      resource: "*host-script*"
+      effect: deny
+    - action: shell
+      resource: "*.sha25*"
+      effect: deny
+    # Files: its own work in the workspace and /tmp/opencode freely; templates,
+    # tools, adapters, specs and the guide need the owner's OK; secrets, private
+    # notes, git internals and agent config are off limits.
+    - action: edit
+      resource: "*"
+      effect: ask
+    - action: edit
+      resource: "*/site.yaml"
+      effect: allow
+    - action: edit
+      resource: "*/vms/*"
+      effect: allow
+    - action: edit
+      resource: "*/services/*"
+      effect: allow
+    - action: edit
+      resource: "*/login-frontend/*"
+      effect: allow
+    - action: edit
+      resource: "*/adapters-draft/*"
+      effect: allow
+    - action: edit
+      resource: "/tmp/opencode/*"
+      effect: allow
+    # The repo's own login front end specs are agent code, not install output.
+    - action: edit
+      resource: "specs/*"
+      effect: ask
+    - action: edit
+      resource: "*/specs/*"
+      effect: ask
+    - action: edit
+      resource: "tests/*"
+      effect: ask
+    - action: edit
+      resource: "*/tests/*"
+      effect: ask
+    - action: edit
+      resource: "*/secrets/*"
+      effect: deny
+    - action: edit
+      resource: "*.token"
+      effect: deny
+    - action: edit
+      resource: "notes/*"
+      effect: deny
+    - action: edit
+      resource: ".opencode/*"
+      effect: deny
+    - action: edit
+      resource: "*/.opencode/*"
+      effect: deny
+    - action: edit
+      resource: ".git/*"
+      effect: deny
+    # "python3 tools/*" runs from any working directory, so no folder the agent
+    # writes freely may hold a tools/ script (review 2026-10-31).
+    - action: edit
+      resource: "*/tools/*"
+      effect: ask
+    - action: edit
+      resource: "/tmp/opencode/tools/*"
+      effect: deny
+    - action: edit
+      resource: "*/secrets/*"
+      effect: deny
+    - action: edit
+      resource: ".opencode/skills/*"
+      effect: ask
+    - action: edit
+      resource: "*/.opencode/skills/*"
+      effect: ask
+    - action: edit
+      resource: "host-scripts.sha256"
+      effect: deny
+    - action: edit
+      resource: "*host-scripts.sha256"
+      effect: deny
+    # A path that climbs out of a folder ("skills/../agents/...") must not borrow the rule of the
+    # folder it starts in; the agent never needs one.
+    - action: edit
+      resource: "*..*"
+      effect: deny
+    - action: read
+      resource: "*/secrets/*"
+      effect: deny
+    # Reads and edits inside the location use relative paths, which "*/secrets/*"
+    # doesn't match (whole-branch review, 2026-11-04).
+    - action: read
+      resource: "secrets/*"
+      effect: deny
+    - action: read
+      resource: "secrets"
+      effect: deny
+    - action: read
+      resource: "*/secrets"
+      effect: deny
+    - action: edit
+      resource: "secrets/*"
+      effect: deny
+    - action: edit
+      resource: "secrets"
+      effect: deny
+    - action: edit
+      resource: "*/secrets"
+      effect: deny
+    - action: shell
+      resource: "*secrets/*"
+      effect: deny
+    - action: shell
+      resource: "* secrets"
+      effect: deny
+    - action: read
+      resource: "*.token"
+      effect: deny
+    - action: read
+      resource: "notes/*"
+      effect: deny
+    - action: external_directory
+      resource: "*"
+      effect: ask
+    # Workspaces: any folder whose name contains "fcos-" (owner decision
+    # 2026-10-31); secrets/ stays denied by the rules below. "*" also crosses
+    # "/", so anything inside a hidden folder (~/.ssh, ~/.config, ...) and
+    # anything under /tmp (any user can create folders there) asks again.
+    - action: external_directory
+      resource: "*fcos-*"
+      effect: allow
+    - action: external_directory
+      resource: "*/.*"
+      effect: ask
+    - action: external_directory
+      resource: "/tmp/*"
+      effect: ask
+    - action: external_directory
+      resource: "/tmp/opencode/*"
+      effect: allow
+    - action: external_directory
+      resource: "*/secrets/*"
+      effect: deny
+    - action: external_directory
+      resource: "*/secrets"
+      effect: deny
+    - action: question
+      resource: "*"
+      effect: allow
+    # Subagents: only the adapter drafter (owner, 2026-11-04).
+    - action: subagent
+      resource: "*"
+      effect: deny
+    - action: subagent
+      resource: "adapter-drafter"
+      effect: allow
+    # Skills: its own and an approved list only (owner, 2026-11-04), so the
+    # descriptions of every other installed skill aren't sent with each request.
+    - action: skill
+      resource: "*"
+      effect: deny
+    - action: skill
+      resource: "adapter-*"
+      effect: allow
+    - action: skill
+      resource: "researching-apps-for-self-hosting"
+      effect: allow
+    - action: skill
+      resource: "opencode"
+      effect: allow
+    - action: skill
+      resource: "package-management"
+      effect: allow
+    - action: skill
+      resource: "search"
+      effect: allow
+    - action: skill
+      resource: "exa-agent"
+      effect: allow
+    - action: skill
+      resource: "docker-compose-patterns"
+      effect: allow
+    - action: skill
+      resource: "docker-destructive-guardrails"
+      effect: allow
+    - action: skill
+      resource: "systematic-debugging"
+      effect: allow
+    - action: skill
+      resource: "verification-before-completion"
+      effect: allow
+    # MCP servers it doesn't need, by server name (never a blanket *_* rule:
+    # built-in actions such as external_directory contain "_"). Exa stays, for
+    # research. Memory tools would copy the owner's real values out of the
+    # workspace; document tools could read secrets/ past the read rules.
+    - action: "pmb_*"
+      resource: "*"
+      effect: deny
+    - action: "docling_*"
+      resource: "*"
+      effect: deny
+    - action: "presenton_*"
+      resource: "*"
+      effect: deny
+    - action: "freecad_*"
+      resource: "*"
+      effect: deny
+    - action: "codebase?memory?mcp_*"
+      resource: "*"
+      effect: deny
+    - action: "podman_*"
+      resource: "*"
+      effect: deny
+    - action: "zap_*"
+      resource: "*"
+      effect: deny
+    - action: "rea_*"
+      resource: "*"
+      effect: deny
+    - action: "reva_*"
+      resource: "*"
+      effect: deny
+    - action: "radare2_*"
+      resource: "*"
+      effect: deny
+    # The built-in search asks every time: a file filter could reach secrets/
+    # past .ignore (owner decision 2026-10-30).
+    - action: grep
+      resource: "*"
+      effect: ask
+    # No file-name search aimed at secrets/ or token files (general review,
+    # 2026-11-04); V2 matches glob rules against the requested pattern, so a
+    # broad pattern like **/* still lists names, which the workspace's .ignore hides.
+    - action: glob
+      resource: "*secrets*"
+      effect: deny
+    - action: glob
+      resource: "*.token*"
+      effect: deny
 ---
 
 You build Fedora CoreOS (FCOS) virtual machines and add services to them. The
@@ -533,7 +536,7 @@ exact wording, options and what each answer fills are in
    (OpenCode was started in a subfolder, which still loads you) or its launch
    folder line fails, OpenCode was started in the wrong folder: stop, tell the
    owner to start it in the toolkit's folder (the one holding `tools/`,
-   `rules/` and `.opencode/`), and do nothing else.
+   `AGENTS.md` and `.opencode/`), and do nothing else.
    Then ask, before anything else:
    "Where should I keep this install's files?" Offer the remembered workspace
    (`python3 tools/workspace.py where`). On every run, then run
@@ -645,8 +648,8 @@ exact wording, options and what each answer fills are in
 
 ## [Owner] steps and waiting
 
-Follow `rules/owner-steps.md` (loaded with this folder through
-`opencode.json`). Here, each **[Owner]** step comes from the adapter skill,
+Follow the Owner steps rule (in this folder's `AGENTS.md`, which OpenCode
+loads). Here, each **[Owner]** step comes from the adapter skill,
 rendered with every value filled in. For the file server, show the generated
 `<workspace>/services/<svc>/file-server.md` table (folder, user, group, mode),
 then the adapter's how-to steps once. For secrets, show the table at the top
@@ -706,7 +709,8 @@ the owner confirms it.
 
 ## Secrets
 
-Follow `rules/secret-handling.md`. Here, the redacting log reader is
+Follow the Secrets and private values rule (in this folder's `AGENTS.md`).
+Here, the redacting log reader is
 `python3 tools/vmssh.py logs <vm> <unit>` (Monica prints an OAuth client
 secret at first start); `vmssh.py run`, `vmssh.py logs` and `appapi.py call`
 show `[hidden]` for anything secret-looking, and `vmssh.py run` refuses

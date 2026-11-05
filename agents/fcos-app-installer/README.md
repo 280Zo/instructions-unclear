@@ -12,20 +12,16 @@ router, your file server, your DNS provider, and anything involving a secret.
 ## What it needs
 
 - OpenCode 2.1.3 or newer on your desktop. Start OpenCode in the toolkit's
-  folder, the one that holds `tools/`, `rules/` and `.opencode/`: the agent's
-  allow rules, guard rules and rule files are all relative to it, and
+  folder, the one that holds `tools/`, `AGENTS.md` and `.opencode/`: the agent's
+  allow rules, guard rules and rules file are all relative to it, and
   `python3 tools/check_requirements.py` fails when you start anywhere else.
-  OpenCode loads the `rules/*.md` glob from `opencode.json`, and every
-  `AGENTS.md`, from that folder and each folder above it (searched upward) up
-  to the git root, or up to your home folder when the toolkit is under it;
-  project skills are searched upward the same way (see
-  `docs/guide/research-notes.md`). Keep the toolkit in a folder of its own,
-  outside any other checkout and outside folders that hold their own
-  `AGENTS.md`, `rules/` or skills: otherwise those files load into every
-  session.
-  Earlier 2.0 releases ignore the config's `instructions` list, so the rules in
-  `rules/` wouldn't load (fixed in 2.0.30), and the agents' skill and subagent
-  filters were tested on 2.1.3.
+  OpenCode loads every `AGENTS.md` (the toolkit's rules are the one in its
+  folder), and project skills, from that folder and each folder above it
+  (searched upward) up to the git root, or up to your home folder when the
+  toolkit is under it (see `docs/guide/research-notes.md`). Keep the toolkit in
+  a folder of its own, outside any other checkout and outside folders that hold
+  their own `AGENTS.md` or skills: otherwise those files load into every
+  session. The agents' skill and subagent filters were tested on OpenCode 2.1.3.
 - Python 3 with PyYAML. (git is optional for the tools: when it is installed,
   they ask it for the checkout around the toolkit; without it they look for a
   `.git` above the toolkit instead. The test suite does need git: some tests
@@ -42,15 +38,46 @@ router, your file server, your DNS provider, and anything involving a secret.
 
 ## Install
 
-1. Put the toolkit in a folder of its own, outside any other git checkout, and
-   start OpenCode in the toolkit's folder (the one holding `tools/`). Don't run
-   it from inside a clone of another repository: that repository's own
-   `AGENTS.md` and `rules/` would load into every session.
-2. The agent and its command live in `.opencode/` (`agents/fcos-app-installer.md`,
-   `commands/add-service.md`); OpenCode picks them up from the folder it is
-   started in.
-3. Run the checks in [`docs/guide/10-trial-run.md`](docs/guide/10-trial-run.md)
-   once: the tests, then that OpenCode loads the rules, skills and helper agent.
+These two steps run from the root of the instructions-unclear repository (the
+folder this README sits in, `agents/fcos-app-installer/`, is part of it). The
+toolkit goes into a folder of its own, outside any git checkout: a copy inside
+another repository would load that repository's own `AGENTS.md` and skills into
+every session. `~/AI/fcos-app-installer` stands for the folder you choose.
+
+1. Place the toolkit's own files (the ones rulesync can't place: `tools/`,
+   `templates/`, `docs/`, `tests/` and the rest). The first command only lists
+   what it would do:
+
+   ```fish
+   # desktop (fish), in the repository
+   python3 agents/fcos-app-installer/install.py ~/AI/fcos-app-installer
+   python3 agents/fcos-app-installer/install.py ~/AI/fcos-app-installer --apply
+   ```
+
+   It copies a fixed list of files, never deletes, and leaves your workspace
+   and your own files alone.
+2. Add the agent, its helper, the `/add-service` command, the skills and the
+   rules (`AGENTS.md`) with rulesync:
+
+   ```fish
+   # desktop (fish), in the repository
+   npx rulesync@41.0.0 generate --config groups/fcos_app_installer.jsonc --output-roots ~/AI/fcos-app-installer
+   ```
+
+   Only OpenCode enforces the agent's permission list. For another tool add
+   `--targets opencode,claudecode` (always keep `opencode`: the tools read the
+   skills where OpenCode keeps them); that tool gets the agent's instructions
+   without the guard rails.
+3. In the new folder, run the requirement check and the tests, then the checks
+   in [`docs/guide/10-trial-run.md`](docs/guide/10-trial-run.md) once (that
+   OpenCode loads the rules, skills and helper agent), and start OpenCode there:
+
+   ```fish
+   # desktop (fish)
+   cd ~/AI/fcos-app-installer
+   python3 tools/check_requirements.py
+   python3 -m unittest discover tests
+   ```
 4. Start with `/add-service <service>`; the agent asks which server and VM. On the first run it asks where
    to keep the workspace (below) and creates it with `tools/workspace.py`.
 
@@ -233,13 +260,23 @@ at all is an error, not a pass.
 
 | Folder | Holds |
 |---|---|
-| `.opencode/` | the agents (`fcos-app-installer`, the main one for Fedora CoreOS; `adapter-drafter`, its helper that drafts adapters), the `/add-service` command, and `opencode.json`, which loads `rules/` |
+| `.opencode/` | the agents (`fcos-app-installer`, the main one for Fedora CoreOS; `adapter-drafter`, its helper that drafts adapters) and the `/add-service` command, written by rulesync |
 | `.opencode/skills/` | skills: one adapter per provider (its owner steps, notes and host scripts), the generic fallback, and `researching-apps-for-self-hosting` |
 | `host-scripts.sha256` | the pinned checksum of every host script; the agent's rules keep it from editing this file |
-| `rules/` | rules that don't depend on the OS: how owner steps are given, how secrets and private values are handled |
+| `AGENTS.md` | rules that don't depend on the OS: how owner steps are given, how secrets and private values are handled; written by rulesync |
 | `docs/guide/` | the procedure, provider-neutral |
 | `schemas/` | the service spec's field reference |
 | `specs/login-frontend/` | Traefik and Authentik as service specs |
 | `templates/` | Butane and Quadlet building blocks |
 | `tools/` | the desktop-side tools |
 | `tests/` | tests, including the publish and wording checks |
+
+In the repository (`agents/fcos-app-installer/`), the same pieces are kept as
+rulesync sources and the toolkit's own files:
+
+| Folder or file | Holds |
+|---|---|
+| `subagents/`, `commands/`, `skills/`, `rules/` | the sources rulesync turns into `.opencode/agents/`, `.opencode/commands/`, `.opencode/skills/` and `AGENTS.md` |
+| `toolkit/` | the toolkit's own files: `tools/`, `templates/`, `docs/`, `schemas/`, `specs/`, `tests/`, `site.example.yaml`, `host-scripts.sha256` |
+| `install.py` | places `toolkit/` and this README into the folder you run the toolkit in |
+| `profile.jsonc` | the profile for rulesync; `groups/fcos_app_installer.jsonc` is the install group |
