@@ -25,8 +25,10 @@ Two kinds of rules:
     keys or hashes containing EXAMPLE.
 
 The companion agents rulesync installs beside the toolkit (second-opinion, security, plan,
-explore) bring upstream commands, agents and skills that hold example secrets. Those files get the
-workspace-values rule only (tools/layout.py, is_companion); the toolkit's own files get both.
+explore) bring upstream commands, agents and skills that hold example secrets. Exactly the files
+tools/layout.py lists (COMPANION_*, matched by exact name in the installed places) get the
+workspace-values rule only; every other file, a new file in those places included, gets both. With
+no workspace set, the companions' files are therefore not checked at all.
 
 Hits print as file:line: rule, never the matched value. Exit 1 on any hit.
 """
@@ -178,7 +180,7 @@ def main(argv: list[str]) -> int:
         source = "the workspace"
     except WorkspaceNotSet:
         private = set()
-        source = "no workspace set (generic rules only)"
+        source = "no workspace set (generic rules only, and none for the companion agents' files)"
     except WorkspaceError as exc:
         print(f"publish_check: {exc}", file=sys.stderr)
         return 2

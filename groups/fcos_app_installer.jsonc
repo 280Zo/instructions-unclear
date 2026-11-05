@@ -1,9 +1,10 @@
 {
   "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
   // Folder-scoped: the FCOS app installer agent, its helper, its command, its skills and its
-  // rules, plus the companions it may start: second-opinion (with evaluator and metacognitive),
-  // the security bundle and OpenCode's plan and explore restrictions. The toolkit's own files
-  // are placed by agents/fcos-app-installer/install.py.
+  // rules, plus companions for you to pick as main agents: second-opinion (with evaluator and
+  // metacognitive), the security bundle and OpenCode's plan and explore restrictions. The installer
+  // starts none of them (a subagent runs with its own permissions). The toolkit's own files are
+  // placed by agents/fcos-app-installer/install.py.
   // OpenCode only: plan and explore are OpenCode's own agents, and only OpenCode filters skills.
   // Run from the repo root with --output-roots <folder>. Never --global.
   "targets": ["opencode"],

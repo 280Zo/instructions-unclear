@@ -429,26 +429,16 @@ opencode:
     - action: question
       resource: "*"
       effect: allow
-    # Subagents: the adapter drafter and the companions the folder group installs
-    # (owner, 2026-11-04): a second opinion, a security review, and OpenCode's
-    # read-only plan and explore.
+    # Subagents: only the adapter drafter (owner, 2026-11-04). A subagent runs with its own
+    # permissions, not this agent's: explore can run ssh and read secrets/, security can edit the host
+    # scripts and their checksum list, and second-opinion and plan are primary agents that cannot be
+    # started as subagents at all (review 2026-11-05). The companions the folder group installs are
+    # for the owner to pick as main agents.
     - action: subagent
       resource: "*"
       effect: deny
     - action: subagent
       resource: "adapter-drafter"
-      effect: allow
-    - action: subagent
-      resource: "second-opinion"
-      effect: allow
-    - action: subagent
-      resource: "security"
-      effect: allow
-    - action: subagent
-      resource: "plan"
-      effect: allow
-    - action: subagent
-      resource: "explore"
       effect: allow
     # Skills: its own and an approved list only (owner, 2026-11-04), so the
     # descriptions of every other installed skill aren't sent with each request.
@@ -785,7 +775,8 @@ The owner's global rules also load here; where they clash with this agent, these
 - Use no memory tools or document tools (PMB, Docling): they would copy real values out of the workspace.
 - The workspace the owner names is in scope, though it is outside this folder.
 - Commands your permissions allow run without asking, network included; everything else asks.
-- Hand work only to `adapter-drafter`; finish the rest yourself.
+- Hand work only to `adapter-drafter`; finish the rest yourself. `second-opinion`, `security`, `plan` and `explore` are for the owner to pick, and they run with wider permissions, so you never start them.
+- The `security` companion's secure-coding rule says to read secrets from environment variables or a secret store; that is for code you write. You never read an environment, a secret store or a secrets file; the Secrets and private values rule wins.
 
 ## How to work
 

@@ -21,7 +21,7 @@ A profile installs into one folder you choose, not your home folder. To install 
 
 Every installed skill's description is sent with every request, unless the agent can't use it. The `default` group installs about 200 skills; the AI research skills alone add about 7,000 tokens. In OpenCode, each agent therefore lists the skills, MCP servers and subagents it may use, and OpenCode leaves the rest out of what the model sees and blocks calls to them (checked on OpenCode 2.1.3). The [root README](../README.md)'s hero image shows how many skills each agent sees; the [interactive map](https://280zo.github.io/instructions-unclear/agents-map.html) ([source](../docs/agents-map.html)) lists every skill, server and subagent.
 
-Every agent but `fcos-app-installer` gets the Superpowers skills, `package-management`, Exa's `search` and `exa-agent`, OpenCode's built-in `opencode` skill, the user-invoked `handoff`, `teach` and `wait-what`, and the Exa and PMB servers; all but `second-opinion` also get Docling. `fcos-app-installer` keeps a shorter list of its own (last row), with no PMB or Docling, so its private values can't be copied out through memory or document tools.
+Every agent but `fcos-app-installer` gets the Superpowers skills, `package-management`, Exa's `search` and `exa-agent`, OpenCode's built-in `opencode` skill, the user-invoked `handoff`, `teach` and `wait-what`, and the Exa and PMB servers; all but `second-opinion` also get Docling. `fcos-app-installer` keeps a shorter list of its own (last row), with no PMB or Docling, so the agent itself can't copy its private values out through memory or document tools. That holds for the agent only: the companions its group installs run with their own permissions, which is why it starts none of them.
 
 | Agent | Own skills | Extra MCP | Can start |
 |---|---|---|---|
@@ -34,7 +34,7 @@ Every agent but `fcos-app-installer` gets the Superpowers skills, `package-manag
 | `3d-modeling` | Report, documents, visuals, browser | FreeCAD | `general`, `explore` |
 | `second-opinion` | Shared skills only | | `evaluator`, `metacognitive`, `general`, `explore` |
 | `local-model` | Humanizer, report | | any agent |
-| `fcos-app-installer` | Its six adapter and research skills, `systematic-debugging`, `verification-before-completion`, the Docker patterns and guardrails, `opencode`, `package-management`, `search`, `exa-agent` | Exa only | `adapter-drafter`, `second-opinion`, `security`, `plan`, `explore` |
+| `fcos-app-installer` | Its six adapter and research skills, `systematic-debugging`, `verification-before-completion`, the Docker patterns and guardrails, `opencode`, `package-management`, `search`, `exa-agent` | Exa only | `adapter-drafter` only |
 
 `build`, `plan`, `general` and `explore` are OpenCode's own agents. Their files only add deny rules, so OpenCode keeps each built-in agent's prompt and policy. OpenCode's `explore` already denies skills and MCP tools; its file repeats those denials in case a later release loosens the built-in policy. They install only for OpenCode, the one tool that has these agents and can filter skills.
 
@@ -68,7 +68,7 @@ npx rulesync@41.0.0 generate --config groups/default.jsonc --global
 
 It needs rulesync 41 or later. Older releases add a `name:` field that makes OpenCode 2.1.3 drop every agent permission without warning. ZAP, ReVa, radare2, FreeCAD, Presenton, Podman and codebase-memory are written switched off. REA isn't installed globally because it starts switched on; use it in a folder made with the [`reverse_engineering` group](../groups/README.md#reverse_engineering).
 
-Other groups install agents with their sets: `infosec` and `work` include `agents/security`, so they also get the `security` agent; `reverse_engineering` gets the `reverse-engineering` agent. `work` and `writing_reporting` also include `second-opinion`, and `work` includes `local-model`. The `design`, `career`, `ai-research`, `3d-modeling`, `build`, `plan`, `general` and `explore` folders are in `default` only, with one exception: the OpenCode-only `fcos_app_installer` group includes `plan` and `explore` (and `second-opinion` and `security`), because the FCOS app installer may start them.
+Other groups install agents with their sets: `infosec` and `work` include `agents/security`, so they also get the `security` agent; `reverse_engineering` gets the `reverse-engineering` agent. `work` and `writing_reporting` also include `second-opinion`, and `work` includes `local-model`. The `design`, `career`, `ai-research`, `3d-modeling`, `build`, `plan`, `general` and `explore` folders are in `default` only, with one exception: the OpenCode-only `fcos_app_installer` group includes `plan` and `explore` (and `second-opinion` and `security`) for you to pick as main agents in that folder; `plan` and `explore` there also deny the installer's skills. The FCOS app installer starts none of them: a subagent runs with its own permissions, not the starter's, and `second-opinion` and `plan` are main agents that can't be started at all.
 
 ## Use
 
@@ -81,7 +81,7 @@ Other groups install agents with their sets: `infosec` and `work` include `agent
 - **Delegated work uses the child's permissions.** A specialist that hands work to `general` gets build's skills and tools in that child. The custom subagents `security-auditor`, `threat-modeling-expert`, `reverse-engineer`, `malware-analyst`, `firmware-analyst`, `evaluator` and `metacognitive` have no skill or MCP filter. Hand specialist work to the specialist itself.
 - **Agent allows win over your global denies** in OpenCode, because agent rules come after global rules. To block something everywhere, use an OpenCode [policy](https://opencode.ai/v2/docs/permissions/), which runs after these rules.
 - **Only listed MCP servers are filtered.** A server you add outside this repo is open to every agent until you add it to `MCP` in `generate.py`.
-- **`fcos-app-installer`'s MCP filter is a deny list too.** Its file names the servers it blocks; a server added later is allowed until it is named there and in `MCP`. `tests/test_opencode_agents.py` fails when `MCP` gains a server the file doesn't name, so the two stay in step.
+- **`fcos-app-installer`'s MCP filter is a deny list too.** Its file names the servers it blocks; a server added later is allowed until it is named there and in `MCP`. `tests/test_opencode_agents.py` pins the allowed list to Exa alone, so a new entry in `MCP` fails that test until someone decides whether the agent may use it.
 - **Only listed plugins are filtered.** Skills from a plugin not in `NATIVE_PLUGINS` (or, for Superpowers, `SUPERPOWERS`) reach `build`, `plan` and `general` in every request, and no specialist can load them.
 - A real model can still ask for a skill by name; OpenCode then denies the call.
 

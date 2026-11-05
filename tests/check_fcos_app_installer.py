@@ -21,10 +21,10 @@ ROOT = Path(__file__).resolve().parents[1]
 FOLDER = ROOT / "agents" / "fcos-app-installer"
 SKILLS = ["adapter-duckdns", "adapter-generic", "adapter-opnsense", "adapter-proxmox", "adapter-truenas",
           "researching-apps-for-self-hosting"]
-COMPANION_SKILLS = ["attack-tree-construction", "sast-configuration", "security-best-practices",
-                    "security-requirement-extraction", "stride-analysis-patterns", "threat-mitigation-mapping"]
-COMPANION_AGENTS = sorted(["adapter-drafter", "evaluator", "explore", "fcos-app-installer", "metacognitive",
-                           "plan", "second-opinion", "security", "security-auditor", "threat-modeling-expert"])
+sys.path.insert(0, str(FOLDER / "toolkit" / "tools"))
+from layout import COMPANION_AGENTS as _COMPANION_AGENTS, COMPANION_SKILLS  # noqa: E402
+
+COMPANION_AGENTS = sorted({"adapter-drafter", "fcos-app-installer"} | set(_COMPANION_AGENTS))
 problems = []
 
 

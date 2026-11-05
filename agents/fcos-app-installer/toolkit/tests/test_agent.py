@@ -382,6 +382,24 @@ class ReviewFixTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertEqual(effect(self.text, "edit", path), "ask")
 
+    def test_the_override_section_settles_the_secure_coding_rule_the_security_companion_adds(self):
+        # That rule says to read secrets from the environment or a secret store; this agent must not.
+        section = " ".join(self.text.split("## Overrides of global rules", 1)[1].split("## How to work", 1)[0].split())
+        self.assertIn("secure-coding rule", section)
+        self.assertIn("never read an environment", section)
+
+    def test_it_may_start_the_adapter_drafter_and_nothing_else(self):
+        # A subagent runs with its own permissions, not this agent's: explore can run ssh and read
+        # secrets/, security can edit the host scripts and their checksum list, and second-opinion
+        # and plan are primary agents that cannot be started at all (review 2026-11-05).
+        self.assertEqual(effect(self.text, "subagent", "adapter-drafter"), "allow")
+        for name in ("second-opinion", "security", "plan", "explore", "general", "evaluator", "metacognitive",
+                     "security-auditor", "threat-modeling-expert", "build"):
+            with self.subTest(name=name):
+                self.assertEqual(effect(self.text, "subagent", name), "deny")
+        prompt = " ".join(self.text.split("\n---\n", 1)[1].split())
+        self.assertIn("Hand work only to `adapter-drafter`", prompt)
+
     def test_removing_its_own_scratch_file_is_allowed_and_extra_arguments_are_not(self):
         self.assertEqual(effect(self.text, "shell", "rm -f /tmp/opencode/apply-edge.sh"), "allow")
         for command in ("rm -f /tmp/opencode/a /etc/passwd", "rm -f /tmp/opencode/a b",

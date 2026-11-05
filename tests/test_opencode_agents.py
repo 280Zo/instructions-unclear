@@ -272,8 +272,8 @@ class FcosAppInstallerMapTests(unittest.TestCase):
     def test_the_map_reads_the_servers_and_subagents_too(self):
         spec = generate.spec_of(self.NAME)
         self.assertEqual(generate.allowed_mcp(spec), ["exa"])  # a deny list; Exa stays for research
-        self.assertEqual(sorted(spec["subagents"]),
-                         ["adapter-drafter", "explore", "plan", "second-opinion", "security"])
+        # Only the locked-down helper: companions run with their own, wider permissions.
+        self.assertEqual(spec["subagents"], ["adapter-drafter"])
 
     def test_its_skills_are_a_folder_group_bundle_only_it_may_load(self):
         data = generate.map_data()
@@ -282,7 +282,8 @@ class FcosAppInstallerMapTests(unittest.TestCase):
         self.assertIn("not default", group["title"])
         self.assertEqual(sorted(group["items"]), self.SKILLS)
         self.assertEqual(group["agents"], [self.NAME])
-        # The everyday agents never see them, even in the project folder that installs them.
+        # The everyday agents deny them wherever the default install and this folder's group both put
+        # their files (the group installs plan and explore with the same deny rules).
         for name in BUILTINS:
             head, _ = frontmatter(agent_file(name))
             for skill in self.SKILLS:
@@ -293,8 +294,43 @@ class FcosAppInstallerMapTests(unittest.TestCase):
         by_title = {g["title"]: g for g in data["subagents"]}
         self.assertEqual(by_title["adapter-drafter"]["agents"], [self.NAME])
         for companion in ("second-opinion", "security", "plan", "explore"):
-            self.assertIn(self.NAME, [a for a in generate.MAP_AGENTS if a == self.NAME and companion in
-                                      generate.spec_of(self.NAME)["subagents"]])
+            self.assertNotIn(companion, generate.spec_of(self.NAME)["subagents"])
+            if companion in by_title:
+                self.assertNotIn(self.NAME, by_title[companion]["agents"], companion)
+
+    def declared(self, rules: str):
+        import tempfile
+        from pathlib import Path
+        scratch = "/tmp/opencode" if Path("/tmp/opencode").is_dir() else None
+        with tempfile.TemporaryDirectory(dir=scratch) as tmp:
+            path = Path(tmp) / "agent.md"
+            path.write_text(f"---\nname: x\nopencode:\n  mode: primary\n  permissions:\n{rules}---\n\nbody\n")
+            return generate.declared_rules(str(path))
+
+    def test_the_rule_reader_takes_the_forms_the_file_uses(self):
+        good = ('    - action: skill\n      resource: "adapter-*"\n      effect: allow\n'
+                '    # a comment between rules\n'
+                '    - action: "pmb_*"\n      resource: "*"\n      effect: deny\n')
+        self.assertEqual(self.declared(good), [("skill", "adapter-*", "allow"), ("pmb_*", "*", "deny")])
+
+    def test_the_rule_reader_refuses_any_form_it_could_misread_or_skip(self):
+        # A rule it cannot read would drop out of the map without a word; refuse instead.
+        for name, rules in {
+            "flow style": '    - {action: skill, resource: "eli5", effect: allow}\n',
+            "resource first": '    - resource: "eli5"\n      action: skill\n      effect: allow\n',
+            "bare dash": '    -\n      action: skill\n      resource: "eli5"\n      effect: allow\n',
+            "comment after the action": '    - action: skill # note\n      resource: "eli5"\n      effect: allow\n',
+            "trailing space": '    - action: skill \n      resource: "eli5"\n      effect: allow\n',
+            "single quotes": "    - action: 'skill'\n      resource: \"eli5\"\n      effect: allow\n",
+            "unquoted resource": '    - action: skill\n      resource: eli5\n      effect: allow\n',
+            "comment after the effect": '    - action: skill\n      resource: "eli5"\n      effect: allow # x\n',
+            "extra key": '    - action: skill\n      resource: "eli5"\n      effect: allow\n      note: x\n',
+            "escape in the resource": '    - action: skill\n      resource: "\\u0065li5"\n      effect: allow\n',
+            "unknown effect": '    - action: skill\n      resource: "eli5"\n      effect: maybe\n',
+        }.items():
+            with self.subTest(form=name):
+                with self.assertRaises(ValueError):
+                    self.declared(rules)
 
     def test_it_alone_among_agents_reaches_exa_and_nothing_else_beyond_the_shared_tools(self):
         data = generate.map_data()
