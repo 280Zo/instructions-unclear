@@ -1306,7 +1306,7 @@ SOFTWARE.
 
 ## anomalyco/opencode
 
-Applies to the "How to work" section that `agents/generate.py` (`BASE_INSTRUCTIONS`) adds to the `design`, `career`, `ai-research`, `security`, `reverse-engineering` and `3d-modeling` agents. It is adapted and made tool-neutral from OpenCode's default system prompt, `packages/core/src/session/runner/prompt/system.txt` and the tool guidance in `packages/core/src/session/system-prompt.ts`. Source: https://github.com/anomalyco/opencode, tag v2.1.3, commit bb25a2f4a3f3f04d7c344bec0c0574ea3510b3b1. Full upstream LICENSE follows unchanged.
+Applies to the "How to work" section that `agents/generate.py` (`BASE_INSTRUCTIONS`) adds to the `design`, `career`, `ai-research`, `security`, `reverse-engineering` and `3d-modeling` agents. The `fcos-app-installer` agent (`agents/fcos-app-installer/subagents/fcos-app-installer.md`) carries a copy of the same text, kept by hand with the rest of its prompt. It is adapted and made tool-neutral from OpenCode's default system prompt, `packages/core/src/session/runner/prompt/system.txt` and the tool guidance in `packages/core/src/session/system-prompt.ts`. Source: https://github.com/anomalyco/opencode, tag v2.1.3, commit bb25a2f4a3f3f04d7c344bec0c0574ea3510b3b1. Full upstream LICENSE follows unchanged.
 
 ```text
 MIT License

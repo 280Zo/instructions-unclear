@@ -71,7 +71,7 @@ class RedactTests(unittest.TestCase):
                      "kept: /var/lib/appdata/authentik/data/media/public/app-icons",
                      "302 https://login.example.duckdns.org/", "/run/user/3203/containers",
                      "a1b2c3d4e5f6a7b8c9d0e1f2a monica_db_password  file  2 days ago",
-                     "monica_app_key", "/home/owner/AI/Proxmox-agent-v2/tools/vmssh.py",
+                     "monica_app_key", "/home/owner/AI/fcos-app-installer/tools/vmssh.py",
                      "drwxr-x---. 2 3203 3203 4096 Nov  3 12:00 monica",
                      "Started notes-app.service - Example notes app (app).",
                      "IdentificationStage", "both archives are intact"):

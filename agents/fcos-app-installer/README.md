@@ -4,24 +4,29 @@
 CoreOS virtual machines and adds containerized services to them: rootless
 Podman Quadlets, backups by database engine, a firewall per VM, and one login
 front end (Traefik + Authentik) in front of every service. It follows the
-procedure in [`docs/guide/README.md`](docs/guide/README.md), asks its questions
-in plain language ([`docs/guide/questions.md`](docs/guide/questions.md)), and
-stops for every step on systems it doesn't touch: your hypervisor's shell, your
-router, your file server, your DNS provider, and anything involving a secret.
+procedure in `docs/guide/README.md`, asks its questions in plain language
+(`docs/guide/questions.md`), and stops for every step on systems it doesn't
+touch: your hypervisor's shell, your router, your file server, your DNS
+provider, and anything involving a secret.
+
+This README is also installed into the folder you run the agent in, where
+`docs/`, `tools/` and the other folders sit beside it. In the repository those
+folders are under `toolkit/` (see [Layout](#layout)), so the paths below are
+plain text and not links.
 
 ## What it needs
 
 - OpenCode 2.1.3 or newer on your desktop. Start OpenCode in the toolkit's
-  folder, the one that holds `tools/`, `AGENTS.md` and `.opencode/`: the agent's
+  folder, the one that holds `tools/`, `AGENTS.md` and `.opencode/`. The agent's
   allow rules, guard rules and rules file are all relative to it, and
   `python3 tools/check_requirements.py` fails when you start anywhere else.
-  OpenCode loads every `AGENTS.md` (the toolkit's rules are the one in its
-  folder), and project skills, from that folder and each folder above it
-  (searched upward) up to the git root, or up to your home folder when the
-  toolkit is under it (see `docs/guide/research-notes.md`). Keep the toolkit in
+  OpenCode loads the `AGENTS.md` in that folder and in each folder above it
+  (searched upward), up to the git root, or up to your home folder when the
+  toolkit is under it. Project skills are searched upward too, but only as far
+  as the project root (see `docs/guide/research-notes.md`). Keep the toolkit in
   a folder of its own, outside any other checkout and outside folders that hold
-  their own `AGENTS.md` or skills: otherwise those files load into every
-  session. The agents' skill and subagent filters were tested on OpenCode 2.1.3.
+  their own `AGENTS.md` or skills, or those files load into every session.
+  The agents' skill and subagent filters were tested on OpenCode 2.1.3.
 - Python 3 with PyYAML. (git is optional for the tools: when it is installed,
   they ask it for the checkout around the toolkit; without it they look for a
   `.git` above the toolkit instead. The test suite does need git: some tests
@@ -32,21 +37,32 @@ router, your file server, your DNS provider, and anything involving a secret.
 - `python3 tools/check_requirements.py` checks all of these and changes nothing.
 - A virtualization platform, a router, a file server with NFS, and a DNS
   provider for Let's Encrypt DNS-01 (DuckDNS only today: the login front end's
-  Traefik settings name it; another provider needs that changed). Each has an adapter
-  skill in `.opencode/skills/adapter-<product>/` with the steps you do yourself; a product without one gets
-  general steps, and the agent can draft an adapter as you go.
+  Traefik settings name it, and another provider needs that changed). Each
+  product has an adapter skill in `.opencode/skills/adapter-<product>/` with
+  the steps you do yourself. A product without one gets general steps, and the
+  agent can draft an adapter as you go.
 
 ## Install
 
-These two steps run from the root of the instructions-unclear repository (the
-folder this README sits in, `agents/fcos-app-installer/`, is part of it). The
-toolkit goes into a folder of its own, outside any git checkout: a copy inside
-another repository would load that repository's own `AGENTS.md` and skills into
-every session. `~/AI/fcos-app-installer` stands for the folder you choose.
+The install has two parts. `install.py` copies the toolkit's own files, and
+rulesync writes the agent, its helper, the `/add-service` command, the skills
+and the rules. `~/AI/fcos-app-installer` stands for the folder you choose. Make
+it a folder of its own, outside any git checkout: a copy inside another
+repository would load that repository's own `AGENTS.md` and skills into every
+session. The installer refuses the repository it belongs to and warns about any
+other checkout.
 
-1. Place the toolkit's own files (the ones rulesync can't place: `tools/`,
-   `templates/`, `docs/`, `tests/` and the rest). The first command only lists
-   what it would do:
+1. Get the instructions-unclear repository, and run the next two commands from
+   its root:
+
+   ```fish
+   # desktop (fish)
+   git clone https://github.com/280Zo/instructions-unclear.git
+   cd instructions-unclear
+   ```
+2. Copy the toolkit's own files (`tools/`, `templates/`, `docs/`, `tests/` and the
+   rest). The first command only lists what it would do; read its list, then
+   add `--apply`:
 
    ```fish
    # desktop (fish), in the repository
@@ -54,23 +70,25 @@ every session. `~/AI/fcos-app-installer` stands for the folder you choose.
    python3 agents/fcos-app-installer/install.py ~/AI/fcos-app-installer --apply
    ```
 
-   It copies a fixed list of files, never deletes, and leaves your workspace
-   and your own files alone.
-2. Add the agent, its helper, the `/add-service` command, the skills and the
-   rules (`AGENTS.md`) with rulesync:
+   It copies a fixed list of files and never deletes anything. A file on that
+   list that already exists and differs is replaced, so a README.md or
+   `.gitignore` of yours at the top of the folder, or an edit you made to a
+   toolkit file, would be overwritten. The dry run lists each one as "changed".
+   Your workspace, rulesync's output and any other file are left alone.
+3. Add the agent and the rest with rulesync:
 
    ```fish
    # desktop (fish), in the repository
    npx rulesync@41.0.0 generate --config groups/fcos_app_installer.jsonc --output-roots ~/AI/fcos-app-installer
    ```
 
-   Only OpenCode enforces the agent's permission list. For another tool add
-   `--targets opencode,claudecode` (always keep `opencode`: the tools read the
-   skills where OpenCode keeps them); that tool gets the agent's instructions
-   without the guard rails.
-3. In the new folder, run the requirement check and the tests, then the checks
-   in [`docs/guide/10-trial-run.md`](docs/guide/10-trial-run.md) once (that
-   OpenCode loads the rules, skills and helper agent), and start OpenCode there:
+   Only OpenCode enforces the agent's permission list. For another tool, add
+   `--targets opencode,claudecode` and keep `opencode` in the list, because the
+   tools read the skills where OpenCode keeps them. That tool gets the agent's
+   instructions without the guard rails.
+4. In the new folder, run the requirement check and the tests. Then run the
+   checks in `docs/guide/10-trial-run.md` once to see that OpenCode loads the
+   rules, skills and helper agent, and start OpenCode there:
 
    ```fish
    # desktop (fish)
@@ -78,12 +96,13 @@ every session. `~/AI/fcos-app-installer` stands for the folder you choose.
    python3 tools/check_requirements.py
    python3 -m unittest discover tests
    ```
-4. Start with `/add-service <service>`; the agent asks which server and VM. On the first run it asks where
-   to keep the workspace (below) and creates it with `tools/workspace.py`.
+5. Start with `/add-service <service>`. The agent asks which server and VM. On
+   the first run it asks where to keep the workspace (below) and creates it with
+   `tools/workspace.py`.
 
 ## The workspace: your private files
 
-Everything specific to your setup lives in a folder **outside** the toolkit's
+Everything specific to your setup lives in a folder outside the toolkit's
 folder and outside any git checkout that holds it, by default
 `~/fcos-workspace`, remembered in `~/.config/fcos-agent/workspace`.
 `tools/workspace.py` refuses a folder inside either. It asks git for the
@@ -102,8 +121,7 @@ guarded at its own folder only.
   adapters-draft/  adapters drafted during runs
 ```
 
-Start from [`site.example.yaml`](site.example.yaml). Every value there is a
-placeholder.
+Start from `site.example.yaml`. Every value there is a placeholder.
 
 ## Giving the agent access to your hypervisor
 
@@ -112,12 +130,10 @@ script as root on each server, after checking its checksum:
 `.opencode/skills/adapter-proxmox/scripts/setup-agent-access.sh --storage <id> --bridge <name> --iso-storage <id>`
 (run it with `--check` first). It creates a pool, a limited role, a user and a
 token. The token can only see and manage VMs in its pool, use one disk
-storage, one bridge, and upload config discs. `tools/pve.py`, the only way
-the agent uses it, has no delete or disk-swap command; those stay steps you
-run yourself. The
-script prints the secret once; the agent's next step stores it in
-`<workspace>/secrets/` from a hidden prompt. The agent uses it only through
-`tools/pve.py`. When the install is done, `teardown-agent-access.sh
+storage, one bridge, and upload config discs. The agent uses it only through
+`tools/pve.py`, which has no delete or disk-swap command; those stay steps you
+run yourself. The script prints the secret once, and the agent's next step
+stores it in `<workspace>/secrets/` from a hidden prompt. When the install is done, `teardown-agent-access.sh
 --move-to backrooms --create-pool` moves the VMs into pool `backrooms`, then
 removes the access and the agent's pool; the VMs keep running.
 
@@ -132,35 +148,45 @@ reach anything you can, including your SSH key, your ssh-agent and
 try the others. For a hard boundary, run the agent as a separate user or in a
 container that can't read those.
 
-Three things that keep those guard rails working:
+Three habits keep those guard rails working:
 
-- **Pick the `fcos-app-installer` agent** in this folder. OpenCode's own
-  `build` agent sees the same tools and skills but none of this agent's
-  rules, so it would run or edit things this agent may not.
-- **Answer an approval with "Allow once".** "Allow always" saves the command's
+- Pick the `fcos-app-installer` agent in this folder. OpenCode's own `build`
+  agent sees the same tools and skills but none of this agent's rules, so it
+  would run or edit things this agent may not.
+- Answer an approval with "Allow once". "Allow always" saves the command's
   pattern for the whole project (OpenCode's Permissions docs), so later
-  commands that merely start the same way stop asking. A configured deny
-  still wins, but the asks you rely on disappear. "Reject" also cancels every
-  other request waiting at that moment.
-- **The workspace rule is broad on purpose.** The agent may work in any folder
-  whose path contains "fcos-" without asking (owner decision, 2026-10-31), so
-  keep that word for install folders such as `~/fcos-installs/<place>/`, and
-  don't use it for unrelated folders. `secrets/` inside it stays off limits.
+  commands that merely start the same way stop asking. A configured deny still
+  wins, but the asks you rely on disappear. "Reject" also cancels every other
+  request waiting at that moment.
+- The workspace rule is broad on purpose: the agent may work in any folder whose
+  path contains "fcos-" without asking (owner decision, 2026-10-31). Keep that
+  word for install folders such as `~/fcos-installs/<place>/` and don't use it
+  for unrelated folders. `secrets/` inside such a folder stays off limits.
+
+The agent starts only its own `adapter-drafter` helper. A subagent runs with
+its own permissions, not the starter's, so any other agent it started could
+read `secrets/` or run commands the installer is denied. The folder holds no
+other agent.
+
+Its MCP filter is a deny list. The agent's file names each server it blocks, and
+only Exa is left open for research. A server you add later is allowed until
+someone names it there, and `agents/generate.py` and its tests in the
+repository need the same change. Skills and subagents are allow lists.
 
 ## The login front end and getting in when it's down
 
 One login front end (Traefik and Authentik) sits in front of every app: you
 log in once, and Authentik's dashboard lists your apps. Each app's port only
 accepts connections from the login front end (apps bound to loopback open no
-port at all). If the login front end is down,
-the apps keep running, and you reach any of them through an SSH tunnel:
+port at all). If the login front end is down, the apps keep running, and you
+reach any of them through an SSH tunnel:
 
 ```fish
 # desktop (fish)
 ssh -N -L 8080:<vm-ip>:<port> <admin>@<vm-ip>
 ```
 
-1. You SSH from your desktop into the **app's own VM**. SSH from the admin
+1. You SSH from your desktop into the app's own VM. SSH from the admin
    network is allowed on every VM and doesn't involve Authentik.
 2. SSH then connects to the app's port from inside that VM. Traffic from a
    machine to its own address counts as local traffic, which the firewall
@@ -170,7 +196,7 @@ ssh -N -L 8080:<vm-ip>:<port> <admin>@<vm-ip>
 
 The tunnel skips the login page and HTTPS; use it to fix things and close it
 when done. Details, and the fallback when SSH is down too:
-[`docs/guide/08-break-glass.md`](docs/guide/08-break-glass.md).
+`docs/guide/08-break-glass.md`.
 
 ## Updating
 
@@ -225,7 +251,8 @@ pinned. The list takes one `sha256sum` line per script, no blank lines or
 comments.
 
 After you change a script on purpose, read the change first (for example with
-`git diff` in the checkout you keep the toolkit in), then rewrite the list
+`diff` against the same script in the instructions-unclear repository, or
+`git diff` if you keep the toolkit in a checkout), then rewrite the list
 yourself from the skills folder (`.opencode/skills`) and check it:
 
 ```fish
@@ -248,8 +275,12 @@ python3 -m unittest discover tests
 
 `publish_check.py` fails on any value from your workspace, any private
 address, real domain or email, SSH key, password hash or secret-looking value.
-It scans the toolkit's own folder only, or the one folder you pass as an
-argument (pass a checkout's top level to scan all of it). Its last line says how
+It checks every file in the folder, with no exemptions. It scans the toolkit's
+own folder only, or the one folder you pass as an argument (pass a checkout's
+top level to scan all of it). Run it in the folder you installed the toolkit
+into. In the repository the skills sit at `skills/`, not `.opencode/skills/`,
+so it can't find the adapters and reports product names such as `proxmox`
+from your workspace as hits. Its last line says how
 it found the files: `git list` (git's list for the folder, ignored files
 excluded) or `walked` (every file in a plain copy, or when git can't answer;
 git's own folder, Python caches and links are skipped, and git-ignored files are
@@ -280,3 +311,50 @@ rulesync sources and the toolkit's own files:
 | `toolkit/` | the toolkit's own files: `tools/`, `templates/`, `docs/`, `schemas/`, `specs/`, `tests/`, `site.example.yaml`, `host-scripts.sha256` |
 | `install.py` | places `toolkit/` and this README into the folder you run the toolkit in |
 | `profile.jsonc` | the profile for rulesync; `groups/fcos_app_installer.jsonc` is the install group |
+
+## For agents: install, remove and update
+
+Install. Follow [Install](#install) with the user's folder, and ask before each
+step: the installer copies files and rulesync writes the agent files, so both
+change the user's disk. Run the dry run first and show the user its list,
+especially any "changed" line, since those files get replaced. The group installs
+the installer agent, `adapter-drafter`, the `/add-service` command, 6 skills and
+2 rules, and writes no MCP settings, so it can't replace the user's MCP list. It
+is not part of the `default` group; it needs `--output-roots`, never `--global`.
+To verify, ask the user to start OpenCode in the new folder, pick
+`fcos-app-installer`, and work through `docs/guide/10-trial-run.md`. Its checks
+show that the rules, skills and helper agent load.
+
+Remove. The install wrote only into the folder it was installed to, so delete
+that folder, with the user's approval. Two things live outside it and belong to
+the user: the workspace (their private values and `secrets/`) and the
+remembered path `~/.config/fcos-agent/workspace`. Leave both unless the user
+asks, and never open `secrets/`. The hypervisor user and token and the VM
+setup keys that runs create are not in the folder either; the teardown steps
+in the guide remove them (`teardown-agent-access.sh`), so tell the user if they
+are still in place. rulesync uses `delete: false`, so regenerating after a
+change to the repository never removes an old agent, skill or command file;
+delete stale names yourself, with approval, from `.opencode/agents/`,
+`.opencode/commands/` and `.opencode/skills/`.
+
+Update. The toolkit has no upstream. It is written for this repo, so edit the
+files under `agents/fcos-app-installer/` in the repository. Keep the tool
+sections in `subagents/*.md` and `commands/add-service.md` (`name`, `targets`
+and `opencode:`, listed in the repo's `AGENTS.md`). The agent's permission list
+is hand-written, so don't try to generate it; `agents/generate.py` reads it for
+the agent map. After a change, run `python3 -m unittest discover -s tests` in
+the repository, then `check_fcos_app_installer.py` from the repository's
+`tests/` folder with the path of the rulesync CLI. That check installs into a
+new folder and runs the toolkit's whole suite there. To update an installed
+folder, run `install.py` again (it lists what changes), then the rulesync
+command. The pinned Butane and Podman images are updated by hand (see
+[Updating](#updating)). When you add or rename a folder here, update
+`groups/README.md` and the catalog READMEs, and run `python3 agents/generate.py`.
+
+## Origin
+
+Written for this repo by 280Zo, under the repository's MIT license. The toolkit
+started as a separate project and moved here as a rulesync profile, and it has
+no upstream to check. The agent's closing "How to work" section is the shared
+one from `agents/generate.py`, adapted from OpenCode v2.1.3 (MIT, © 2025
+opencode). The license text is in the repository's `THIRD_PARTY_LICENSES.md`.
