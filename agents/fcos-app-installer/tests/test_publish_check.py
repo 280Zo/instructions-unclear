@@ -68,7 +68,11 @@ class WorkspaceSourceTests(unittest.TestCase):
         self.addCleanup(self._tmp.cleanup)
         self.tmp = Path(self._tmp.name).resolve()
         (self.tmp / "home").mkdir()
-        patcher = mock.patch.dict(os.environ, {"HOME": str(self.tmp / "home")})
+        # No GIT_* variable from the caller (a git hook sets GIT_DIR): the test's own git calls and
+        # the tool's must all see the repositories the test builds.
+        env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+        env["HOME"] = str(self.tmp / "home")
+        patcher = mock.patch.dict(os.environ, env, clear=True)
         patcher.start()
         self.addCleanup(patcher.stop)
         self.repo = self.tmp / "repo"
@@ -77,9 +81,10 @@ class WorkspaceSourceTests(unittest.TestCase):
         self.secret = j("PVE-", "BIGBOX")
         (self.repo / "notes.md").write_text(f"runs on {self.secret} today\n")
 
-    def run_check(self, *args: str, workspace: Path | None = None):
+    def run_check(self, *args: str, workspace: Path | None = None, **extra_env: str):
         env = {k: v for k, v in os.environ.items() if k != "FCOS_WORKSPACE"}
         env["HOME"] = str(self.tmp / "home")
+        env.update(extra_env)
         if workspace is not None:
             env["FCOS_WORKSPACE"] = str(workspace)
         return subprocess.run([sys.executable, str(ROOT / "tools/publish_check.py"), *(args or (str(self.repo),))],
@@ -100,6 +105,9 @@ class WorkspaceSourceTests(unittest.TestCase):
         self.assertEqual(self.run_check(str(self.tmp / "missing")).returncode, 2)
 
     def plain_folder(self, name="plain") -> Path:
+        # Needs a folder with no git checkout around it, and TMPDIR may be inside one.
+        if any((p / ".git").exists() for p in [self.tmp, *self.tmp.parents]):
+            self.skipTest(f"{self.tmp} is inside a git checkout")
         folder = self.tmp / name
         folder.mkdir()
         return folder
@@ -110,7 +118,7 @@ class WorkspaceSourceTests(unittest.TestCase):
         (plain / "ok.md").write_text("nothing private\n")
         result = self.run_check(str(plain))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("(1 files)", result.stderr)
+        self.assertIn("(1 file, walked)", result.stderr)
         (plain / "sub").mkdir()
         (plain / "sub" / "bad.md").write_text(j("gateway: 192", ".168.1.1\n"))
         result = self.run_check(str(plain))
@@ -137,7 +145,50 @@ class WorkspaceSourceTests(unittest.TestCase):
         (plain / "linked").symlink_to(self.tmp, target_is_directory=True)
         result = self.run_check(str(plain))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("(1 files)", result.stderr)
+        self.assertIn("(1 file, walked)", result.stderr)
+
+    def test_a_checkout_is_scanned_from_gits_list_and_says_so(self):
+        result = self.run_check()
+        self.assertIn("git list)", result.stderr)
+
+    def test_the_callers_git_variables_do_not_switch_the_mode(self):
+        # A git hook runs with GIT_DIR pointing at its own repository.
+        elsewhere = {"GIT_DIR": str(self.tmp / "nowhere" / ".git"), "GIT_WORK_TREE": str(self.tmp / "nowhere")}
+        in_repo = self.run_check(**elsewhere)
+        self.assertIn("git list)", in_repo.stderr)
+        self.assertNotIn("walked", in_repo.stderr)
+        plain = self.plain_folder()
+        (plain / "ok.md").write_text("nothing private\n")
+        self.assertIn("walked)", self.run_check(str(plain), **elsewhere).stderr)
+
+    def test_an_unreadable_file_is_a_hit_not_a_crash(self):
+        if os.geteuid() == 0:
+            self.skipTest("root can read any file")
+        plain = self.plain_folder()
+        locked = plain / "locked.md"
+        locked.write_text("nothing private\n")
+        locked.chmod(0)
+        self.addCleanup(locked.chmod, 0o600)
+        result = self.run_check(str(plain))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("locked.md: unreadable", result.stdout)
+        self.assertNotIn("Traceback", result.stderr)
+
+    def test_a_file_name_that_is_not_utf8_does_not_crash_either_mode(self):
+        name = b"bad\xff.md"
+        plain = self.plain_folder()
+        try:
+            (Path(os.fsdecode(bytes(plain))) / os.fsdecode(name)).write_text(j("gateway: 192", ".168.1.1\n"))
+            (self.repo / os.fsdecode(name)).write_text(j("gateway: 192", ".168.1.1\n"))
+        except OSError:
+            self.skipTest("this file system refuses non-UTF-8 names")
+        for folder in (plain, self.repo):
+            with self.subTest(folder=folder.name):
+                result = self.run_check(str(folder))
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+                self.assertIn("private IPv4 address", result.stdout)
+                self.assertIn("bad", result.stdout)
 
     def test_nothing_to_scan_is_an_error_not_a_pass(self):
         self.assertEqual(self.run_check(str(self.plain_folder("empty"))).returncode, 2)

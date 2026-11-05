@@ -45,8 +45,8 @@ adapter step to show, for example "virtualization: `create_api_access`".
 
 ## Running it with the agent
 
-In OpenCode, run `/add-service <service>` from this repository (the agent asks
-which server and VM). The
+In OpenCode, started in the toolkit's folder (the one holding `tools/`), run
+`/add-service <service>` (the agent asks which server and VM). The
 `fcos-app-installer` agent reads this guide and the workspace, asks the questions in
 `questions.md`, and does every **[Agent]** step itself. It stops for **[Owner]**
 steps, missing values, the 5 GB rule, images that start as root, failed checks,
@@ -67,6 +67,9 @@ anything irreversible, and commits.
 11. [Move and update](11-move-and-update.md): another computer, a newer toolkit, a service's new release line
 
 ## Conventions
+
+Run every desktop command in this guide (`python3 tools/...`) from the
+toolkit's folder, the one holding `tools/`: the commands are relative to it.
 
 Every action is tagged with who does it. **[Owner]** steps happen on systems
 the agent never touches: the virtualization server's shell, the router, the

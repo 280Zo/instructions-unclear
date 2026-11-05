@@ -467,6 +467,8 @@ elif HERE.parent.parts[-len(SKILLS_DIR.parts):] == SKILLS_DIR.parts:
     ROOT = HERE.parent.parents[len(SKILLS_DIR.parts) - 1]
 else:
     sys.exit("set FCOS_AGENT_ROOT to the toolkit's folder, or move this folder into its " + str(SKILLS_DIR))
+if not (ROOT / "tools" / "adapters.py").is_file():
+    sys.exit(str(ROOT) + " is not the toolkit's folder (it has no tools/adapters.py)")
 sys.path.insert(0, str(ROOT / "tools"))
 from adapters import ROLE_STEPS, derived_keys, example_value, load_adapter, render_step  # noqa: E402
 

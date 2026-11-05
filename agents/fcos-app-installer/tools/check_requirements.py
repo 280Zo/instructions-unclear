@@ -36,7 +36,10 @@ def opencode_version() -> str:
     exe = shutil.which("opencode")
     if not exe:
         return ""
-    done = subprocess.run([exe, "--version"], capture_output=True, text=True, timeout=30)
+    try:
+        done = subprocess.run([exe, "--version"], capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.SubprocessError):  # a hung or unrunnable opencode counts as not found
+        return ""
     return done.stdout.strip() or done.stderr.strip()
 
 

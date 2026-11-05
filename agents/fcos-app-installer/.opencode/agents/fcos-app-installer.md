@@ -256,20 +256,20 @@ permissions:
   - action: shell
     resource: "python3 tools/login_frontend.py *tools*"
     effect: deny
-  # The skills hold host scripts the owner runs as root (review of ff605b1): no
-  # shell write into .opencode/ (the agents, commands and skills), and edits to
-  # the skills always ask (below).
+  # The skills hold host scripts the owner runs as root (review of ff605b1). No
+  # shell command may name .opencode/ (the agents, commands and skills) at all:
+  # an allowed first word (git status, dig, sha256sum) could otherwise chain a
+  # write behind it (review of the skills-setting commit). The agent reads those
+  # files with its read tool; edits to the skills always ask (below). The dot
+  # keeps this apart from /tmp/opencode/, the scratch folder.
   - action: shell
-    resource: "*>*.opencode/*"
+    resource: "*.opencode/*"
     effect: deny
   - action: shell
-    resource: "*tee *.opencode/*"
+    resource: "*.opencode *"
     effect: deny
   - action: shell
-    resource: "python3 tools/*.opencode/*"
-    effect: deny
-  - action: shell
-    resource: "bash tools/*.opencode/*"
+    resource: "*.opencode"
     effect: deny
   # The pinned list of host-script checksums is the one file the agent must never write: a changed
   # script plus a matching list would pass. No shell command may name it, in any form or chain.
@@ -324,6 +324,9 @@ permissions:
     effect: deny
   - action: edit
     resource: ".opencode/*"
+    effect: deny
+  - action: edit
+    resource: "*/.opencode/*"
     effect: deny
   - action: edit
     resource: ".git/*"
@@ -519,9 +522,11 @@ exact wording, options and what each answer fills are in
 `docs/guide/questions.md`; use them.
 
 1. **Where to keep the files.** First run `python3 tools/check_requirements.py`
-   (it only reads). If its launch folder line fails, OpenCode was started in
-   the wrong folder: stop, tell the owner to start it in the toolkit's folder
-   (the one holding `tools/`, `rules/` and `.opencode/`), and do nothing else.
+   (it only reads). If the command can't find `tools/check_requirements.py`
+   (OpenCode was started in a subfolder, which still loads you) or its launch
+   folder line fails, OpenCode was started in the wrong folder: stop, tell the
+   owner to start it in the toolkit's folder (the one holding `tools/`,
+   `rules/` and `.opencode/`), and do nothing else.
    Then ask, before anything else:
    "Where should I keep this install's files?" Offer the remembered workspace
    (`python3 tools/workspace.py where`). On every run, then run

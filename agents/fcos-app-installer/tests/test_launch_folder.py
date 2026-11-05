@@ -3,7 +3,8 @@
 The agent's allow rules (python3 tools/*, bash tools/*), its guard rules, the commands in the
 prompts and the guide, and opencode.json's `instructions` are all relative paths. They hold
 only when the launch folder is the folder that holds tools/, rules/, docs/ and .opencode/.
-These tests read that installed layout and check every such path against it.
+These tests read that installed layout and check every such path against it. They assert the
+allow rules; the deny and ask rules are in test_agent.py and test_guard_rules.py.
 """
 import fnmatch
 import json
@@ -23,11 +24,16 @@ sys.path.insert(0, str(ROOT / "tools"))
 from layout import SKILLS  # noqa: E402
 from test_agent import effect, rules  # noqa: E402
 
-TOOL_COMMAND = re.compile(r"\b(?:python3|bash) (tools/[A-Za-z0-9_.-]+\.(?:py|sh))")
-FOLDER_PATH = re.compile(r"(?<![\w/<>.~-])((?:docs/guide|rules|templates|schemas|specs|tools)/"
-                         r"[A-Za-z0-9_./-]*\.(?:md|yaml|tmpl|py|sh|values|env))")
-# Named in prose as optional: read when present.
-OPTIONAL = {"docs/superpowers/followups/"}
+from layout import SKILLS_DIR  # noqa: E402
+
+# "python3 tools/x.py", "python3 ./tools/x.py" and "python3 $dir/tools/x.py" all name a tool.
+TOOL_COMMAND = re.compile(r"\b(?:python3|bash) (?:\./|\$\w+/)?(tools/[A-Za-z0-9_.-]+\.(?:py|sh))")
+FOLDER_PATH = re.compile(r"(?<![\w/<>.~$-])((?:docs/guide|rules|templates|schemas|specs|tools|tests|"
+                         + re.escape(SKILLS_DIR) + r")/[A-Za-z0-9_./-]*\.(?:md|yaml|tmpl|py|sh|values|env))")
+
+
+# Targets a trial-run row tries to write and expects to be refused: they must not exist.
+REFUSED_EXAMPLES = {f"{SKILLS_DIR}/x.md"}
 
 
 def instruction_files():
@@ -36,6 +42,8 @@ def instruction_files():
     files = [ROOT / "README.md"]
     for folder in folders:
         files += sorted(p for p in folder.rglob("*") if p.is_file() and p.suffix in {".md", ".yaml"})
+    # The tools quote paths and commands in their messages and usage text too.
+    files += sorted(p for p in (ROOT / "tools").iterdir() if p.suffix in {".py", ".sh"})
     return files
 
 
@@ -53,6 +61,8 @@ class LaunchFolderTests(unittest.TestCase):
         seen = 0
         for path in instruction_files():
             for named in FOLDER_PATH.findall(path.read_text(encoding="utf-8")):
+                if named in REFUSED_EXAMPLES:
+                    continue
                 seen += 1
                 with self.subTest(file=str(path.relative_to(ROOT)), named=named):
                     self.assertTrue((ROOT / named).is_file())
@@ -80,13 +90,48 @@ class LaunchFolderTests(unittest.TestCase):
 
     def test_the_run_starts_by_checking_the_launch_folder(self):
         prompt = (ROOT / ".opencode" / "agents" / "fcos-app-installer.md").read_text()
-        step = prompt.split("1. **Where to keep the files.**", 1)[1].split("2. **Earlier installs.**", 1)[0]
+        step = " ".join(prompt.split("1. **Where to keep the files.**", 1)[1]
+                        .split("2. **Earlier installs.**", 1)[0].split())
         self.assertIn("python3 tools/check_requirements.py", step)
         self.assertIn("launch folder", step)
+        # Started in a subfolder, OpenCode still loads the agent but the relative command finds no
+        # tool, so Python prints an error and no launch folder line: that case must stop the run too.
+        self.assertIn("can't find `tools/check_requirements.py`", step)
+        self.assertIn("stop", step)
+        self.assertIn("do nothing else", step)
+        # The check comes before the first question.
+        self.assertLess(step.index("python3 tools/check_requirements.py"), step.index("Where should I keep"))
+
+    def test_started_in_a_subfolder_the_command_the_agent_runs_cannot_find_the_tool(self):
+        # What the prompt's step answers: the allowed relative command fails loudly, not silently.
+        result = subprocess.run([sys.executable, "tools/check_requirements.py"], cwd=ROOT / "docs",
+                                capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("can't open file", result.stderr)
+
+    def test_the_add_service_command_starts_with_the_same_check(self):
+        text = " ".join((ROOT / ".opencode" / "commands" / "add-service.md").read_text().split())
+        self.assertIn("requirement check", text)
+        self.assertLess(text.index("requirement check"), text.index("asking where the workspace is"))
 
     def test_the_readme_says_where_to_start_opencode(self):
-        readme = " ".join((ROOT / "README.md").read_text().split()).lower()
-        self.assertIn("start opencode in the toolkit's folder", readme)
+        readme = " ".join((ROOT / "README.md").read_text().split())
+        self.assertIn("Start OpenCode in the toolkit's folder, the one that holds `tools/`", readme)
+        install = " ".join(readme.split("## Install", 1)[1].split("\n## ", 1)[0].split())
+        self.assertNotIn("project folder", install)
+        self.assertIn("toolkit's folder", install)
+        # OpenCode searches the rules glob (and AGENTS.md) from the launch folder up to the git root.
+        self.assertIn("searched upward", readme)
+
+    def test_the_guide_tells_a_person_where_to_run_its_commands(self):
+        guide = " ".join((ROOT / "docs" / "guide" / "README.md").read_text().split())
+        self.assertIn("from the toolkit's folder", guide)
+        self.assertNotIn("from this repository", guide)
+
+    def test_the_rules_lookup_is_recorded_with_its_source(self):
+        notes = " ".join((ROOT / "docs" / "guide" / "research-notes.md").read_text().split())
+        self.assertIn("globUp", notes)
+        self.assertIn("v2.1.3/packages/core/src/config/plugin/instruction.ts", notes)
 
 
 class CheckRequirementsLaunchFolderTests(unittest.TestCase):

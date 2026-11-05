@@ -45,22 +45,41 @@ def _remembered_file() -> Path:
     return Path.home() / ".config" / "fcos-agent" / "workspace"
 
 
-def _enclosing_checkout(folder: Path) -> Path:
-    """The top level of the git checkout that holds folder, or folder itself when it isn't in one
-    (or git isn't installed, in which case only the toolkit's own folder can be guarded)."""
+def git_env() -> dict:
+    """The only environment git is run in: the caller's GIT_DIR, GIT_WORK_TREE and similar (a git
+    hook sets them) would point it at another repository, and the user's and system's git config
+    can change its answers."""
+    return {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_CONFIG_GLOBAL": "/dev/null", "HOME": "/nonexistent"}
+
+
+def _git_toplevel(folder: Path) -> Path | None:
     git = shutil.which("git")
-    if git:
-        env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "GIT_CONFIG_NOSYSTEM": "1",
-               "GIT_CONFIG_GLOBAL": "/dev/null", "HOME": "/nonexistent"}
-        try:
-            done = subprocess.run([git, "-C", str(folder), "rev-parse", "--show-toplevel"], env=env,
-                                  capture_output=True, text=True, timeout=30)
-        except (OSError, subprocess.SubprocessError):
-            return folder
-        top = Path(done.stdout.strip()).resolve() if done.returncode == 0 and done.stdout.strip() else None
-        if top is not None and (top == folder or top in folder.parents):
-            return top
-    return folder
+    if not git:
+        return None
+    try:
+        done = subprocess.run([git, "-C", str(folder), "rev-parse", "--show-toplevel"], env=git_env(),
+                              capture_output=True, timeout=30)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    top = done.stdout.decode("utf-8", "replace").rstrip("\n") if done.returncode == 0 else ""
+    return Path(top).resolve() if top else None
+
+
+def _nearest_git_folder(folder: Path) -> Path | None:
+    """The nearest folder at or above this one that has a .git (a folder, or a file for a worktree
+    or submodule), found without git."""
+    return next((p for p in [folder, *folder.parents] if (p / ".git").exists()), None)
+
+
+def _enclosing_checkout(folder: Path) -> Path:
+    """The top level of the git checkout that holds folder, or folder itself when it isn't in one.
+    The guard fails closed: when git can't answer (not installed, refusing a checkout owned by
+    another user, hung), the checkout is found by looking for .git above the folder."""
+    top = _git_toplevel(folder)
+    if top is not None and (top == folder or top in folder.parents):
+        return top
+    return _nearest_git_folder(folder) or folder
 
 
 def _outside_repo(path: Path) -> Path:
@@ -70,8 +89,9 @@ def _outside_repo(path: Path) -> Path:
     base = _enclosing_checkout(REPO_ROOT)
     if resolved == base or base in resolved.parents:
         raise WorkspaceError(
-            f"workspace {resolved} is inside {base}, the folder the toolkit is published from; "
-            f"choose a folder outside it")
+            f"workspace {resolved} is inside {base}, the git checkout the toolkit sits in, and whatever "
+            f"that checkout publishes must never include private values; choose a folder outside it "
+            f"(better, install the toolkit in a folder of its own, outside any other checkout)")
     return resolved
 
 

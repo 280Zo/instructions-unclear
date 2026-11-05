@@ -33,6 +33,21 @@ class RequirementsTests(unittest.TestCase):
             self.assertIn(needle, out)
         self.assertNotIn("git", out)  # the host-script check reads a pinned list; the toolkit needs no git
 
+    def test_a_hung_or_unrunnable_opencode_counts_as_missing(self):
+        import subprocess
+        import check_requirements as mod
+        saved_which, saved_run = mod.shutil.which, mod.subprocess.run
+        for error in (subprocess.TimeoutExpired("opencode", 30), OSError("not executable")):
+            def broken(*args, error=error, **kwargs):
+                raise error
+            mod.shutil.which = lambda name: "/x/opencode"
+            mod.subprocess.run = broken
+            try:
+                with self.subTest(error=type(error).__name__):
+                    self.assertEqual(mod.opencode_version(), "")
+            finally:
+                mod.shutil.which, mod.subprocess.run = saved_which, saved_run
+
     def test_started_elsewhere_refused(self):
         code, out = self.run_check(launch=Path("/somewhere/else"))
         self.assertEqual(code, 1)

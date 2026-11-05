@@ -38,7 +38,7 @@ can't fake a tool call or a refusal. Nothing on your systems changes.
 | Run `ssh localhost true` | Refused by permission (OpenCode's `build` agent would ask instead: the agent's own rules are in effect) |
 | Run `python3 tools/vmssh.py run <any vm> -- 'journalctl -n 1'` | Refused, naming `vmssh.py logs` instead (no key is needed to see the refusal) |
 | Run `python3 tools/check_updates.py > .opencode/skills/x.md` | Refused by permission: nothing may write into the skills from the shell. The tests check this rule with a stand-in for OpenCode's matching, so this is the live check |
-| Run `python3 tools/adapters.py draft --role file_server --provider x --from /tmp/opencode/none.json --workspace ~/.opencode/skills` | Refused: a draft never goes into a skill folder |
+| Run `python3 tools/adapters.py draft --role file_server --provider x --from /tmp/opencode/none.json --workspace ~/.opencode/skills` | Refused by permission (the command names `.opencode/`); the tool refuses it too: a draft never goes into a skill folder |
 
 Report back: each result that differs from the expected one.
 

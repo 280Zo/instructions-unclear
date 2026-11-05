@@ -35,11 +35,18 @@ class TempHome(unittest.TestCase):
         self.tmp = Path(self._tmp.name).resolve()
         self.home = self.tmp / "home"
         self.home.mkdir()
-        env = {k: v for k, v in os.environ.items() if k != "FCOS_WORKSPACE"}
+        # No GIT_* variable from the caller: a git hook sets GIT_DIR, which would point every
+        # git call in these tests at the wrong repository.
+        env = {k: v for k, v in os.environ.items() if k != "FCOS_WORKSPACE" and not k.startswith("GIT_")}
         env["HOME"] = str(self.home)
         patcher = mock.patch.dict(os.environ, env, clear=True)
         patcher.start()
         self.addCleanup(patcher.stop)
+
+    def skip_if_tmp_is_in_a_checkout(self):
+        """Some tests need a folder with no git checkout around it; TMPDIR may be inside one."""
+        if any((p / ".git").exists() for p in [self.tmp, *self.tmp.parents]):
+            self.skipTest(f"{self.tmp} is inside a git checkout")
 
     @property
     def remembered(self) -> Path:
@@ -140,20 +147,69 @@ class EnclosingCheckoutTests(TempHome):
         self.assertEqual(resolve_workspace(str(self.tmp / "ws")), self.tmp / "ws")
 
     def test_a_toolkit_outside_any_checkout_guards_its_own_folder(self):
-        plain = self.tmp / "plain" / "toolkit"
-        plain.mkdir(parents=True)
+        # A copy that is a plain folder (the installed toolkit) has no checkout around it.
+        # Needs a TMPDIR outside every checkout; the sibling "big" repo is a separate tree.
+        plain_root = Path(tempfile.mkdtemp(prefix="plain-", dir="/tmp/opencode" if os.path.isdir("/tmp/opencode") else None))
+        self.addCleanup(__import__("shutil").rmtree, plain_root, True)
+        if any((p / ".git").exists() for p in [plain_root, *plain_root.parents]):
+            self.skipTest(f"{plain_root} is inside a git checkout")
+        plain = plain_root / "toolkit"
+        plain.mkdir()
         with mock.patch.object(workspace, "REPO_ROOT", plain):
-            self.assertEqual(resolve_workspace(str(self.tmp / "plain" / "ws")), self.tmp / "plain" / "ws")
+            self.assertEqual(resolve_workspace(str(plain_root / "ws")), plain_root / "ws")
             with self.assertRaises(WorkspaceError):
                 resolve_workspace(str(plain / "ws"))
 
-    def test_without_git_only_the_toolkit_folder_is_guarded(self):
+    def test_git_variables_of_the_caller_do_not_change_the_answer(self):
+        # A git hook runs with GIT_DIR and GIT_WORK_TREE set to its own repository.
+        other = self.tmp / "other"
+        other.mkdir()
+        subprocess.run(["git", "init", "-q"], cwd=other, check=True)
+        variables = {"GIT_DIR": str(other / ".git"), "GIT_WORK_TREE": str(other)}
+        with mock.patch.dict(os.environ, variables):
+            with self.assertRaises(WorkspaceError) as caught:
+                resolve_workspace(str(self.big / "ws"))
+            self.assertIn(str(self.big), str(caught.exception))
+            self.assertEqual(resolve_workspace(str(self.tmp / "ws")), self.tmp / "ws")
+
+    def test_when_git_cannot_answer_the_guard_still_finds_the_checkout(self):
+        # Fail closed: git missing, failing (dubious ownership), or hung must not shrink the guard
+        # to the toolkit's own folder; the checkout is then found by walking up to its .git.
         empty = self.tmp / "no-git-here"
         empty.mkdir()
-        with mock.patch.dict(os.environ, {"PATH": str(empty)}):
-            self.assertEqual(resolve_workspace(str(self.big / "ws")), self.big / "ws")
+        failing = subprocess.CompletedProcess(["git"], 128, b"", b"fatal: detected dubious ownership")
+        cases = {
+            "no git installed": mock.patch.dict(os.environ, {"PATH": str(empty)}),
+            "git fails": mock.patch.object(workspace.subprocess, "run", return_value=failing),
+            "git hangs": mock.patch.object(workspace.subprocess, "run",
+                                           side_effect=subprocess.TimeoutExpired("git", 30)),
+            "git unrunnable": mock.patch.object(workspace.subprocess, "run", side_effect=OSError("denied")),
+        }
+        for name, patch in cases.items():
+            with self.subTest(case=name), patch:
+                with self.assertRaises(WorkspaceError) as caught:
+                    resolve_workspace(str(self.big / "ws"))
+                self.assertIn(str(self.big), str(caught.exception))
+                self.assertEqual(resolve_workspace(str(self.tmp / "ws")), self.tmp / "ws")
+
+    def test_a_worktree_or_submodule_marks_its_checkout_with_a_git_file(self):
+        linked = self.tmp / "linked"
+        toolkit = linked / "sub" / "toolkit"
+        toolkit.mkdir(parents=True)
+        (linked / ".git").write_text("gitdir: /elsewhere/.git/worktrees/linked\n")
+        empty = self.tmp / "no-git-here"
+        empty.mkdir()
+        with mock.patch.object(workspace, "REPO_ROOT", toolkit), mock.patch.dict(os.environ, {"PATH": str(empty)}):
             with self.assertRaises(WorkspaceError):
-                resolve_workspace(str(self.toolkit / "ws"))
+                resolve_workspace(str(linked / "ws"))
+
+    def test_the_refusal_says_what_it_protects_and_what_to_do(self):
+        with self.assertRaises(WorkspaceError) as caught:
+            resolve_workspace(str(self.big / "ws"))
+        message = str(caught.exception)
+        self.assertIn(str(self.big), message)
+        self.assertIn("choose a folder outside it", message)
+        self.assertIn("folder of its own", message)
 
 
 class ResolveTests(TempHome):

@@ -15,6 +15,11 @@ router, your file server, your DNS provider, and anything involving a secret.
   folder, the one that holds `tools/`, `rules/` and `.opencode/`: the agent's
   allow rules, guard rules and rule files are all relative to it, and
   `python3 tools/check_requirements.py` fails when you start anywhere else.
+  OpenCode loads the `rules/*.md` glob from `opencode.json`, and any
+  `AGENTS.md`, from that folder and every folder above it up to the git root
+  (searched upward, see `docs/guide/research-notes.md`), so keep the toolkit in
+  a folder of its own, outside any other checkout: otherwise that checkout's own
+  `rules/*.md` and `AGENTS.md` files load into every session.
   Earlier 2.0 releases ignore the config's `instructions` list, so the rules in
   `rules/` wouldn't load (fixed in 2.0.30), and the agents' skill and subagent
   filters were tested on 2.1.3.
@@ -32,9 +37,11 @@ router, your file server, your DNS provider, and anything involving a secret.
 
 ## Install
 
-1. Clone this repository and start OpenCode in its folder.
+1. Clone this repository and start OpenCode in the toolkit's folder inside it
+   (the one holding `tools/`).
 2. The agent and its command live in `.opencode/` (`agents/fcos-app-installer.md`,
-   `commands/add-service.md`); OpenCode picks them up from the project folder.
+   `commands/add-service.md`); OpenCode picks them up from the folder it is
+   started in.
 3. Run the checks in [`docs/guide/10-trial-run.md`](docs/guide/10-trial-run.md)
    once: the tests, then that OpenCode loads the rules, skills and helper agent.
 4. Start with `/add-service <service>`; the agent asks which server and VM. On the first run it asks where
@@ -43,9 +50,12 @@ router, your file server, your DNS provider, and anything involving a secret.
 ## The workspace: your private files
 
 Everything specific to your setup lives in a folder **outside** the toolkit's
-folder and outside any git checkout that holds it (`tools/workspace.py` refuses
-both), by default `~/fcos-workspace`, remembered in
-`~/.config/fcos-agent/workspace`:
+folder and outside any git checkout that holds it, by default
+`~/fcos-workspace`, remembered in `~/.config/fcos-agent/workspace`.
+`tools/workspace.py` refuses a folder inside either. It asks git for the
+checkout's top level; if git can't answer (not installed, or it refuses a
+checkout another user owns), it looks for a `.git` above the toolkit instead.
+A toolkit that is in no checkout is guarded at its own folder only.
 
 ```
 <workspace>/
@@ -192,9 +202,13 @@ python3 -m unittest discover tests
 
 `publish_check.py` fails on any value from your workspace, any private
 address, real domain or email, SSH key, password hash or secret-looking value.
-It scans the toolkit's own folder only: git's list of files when the folder is
-in a checkout, every file in it when it is a plain copy. A scan that finds no
-file to read is an error, not a pass.
+It scans the toolkit's own folder only, or the one folder you pass as an
+argument (pass a checkout's top level to scan all of it). Its last line says how
+it found the files: `git list` (git's list for the folder, ignored files
+excluded) or `walked` (every file in a plain copy, or when git can't answer;
+git's own folder, Python caches and links are skipped, and git-ignored files are
+read). A file it can't read is reported as a hit, and a scan that finds no file
+at all is an error, not a pass.
 
 ## Layout
 
