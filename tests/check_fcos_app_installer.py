@@ -21,10 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FOLDER = ROOT / "agents" / "fcos-app-installer"
 SKILLS = ["adapter-duckdns", "adapter-generic", "adapter-opnsense", "adapter-proxmox", "adapter-truenas",
           "researching-apps-for-self-hosting"]
-sys.path.insert(0, str(FOLDER / "toolkit" / "tools"))
-from layout import COMPANION_AGENTS as _COMPANION_AGENTS, COMPANION_SKILLS  # noqa: E402
-
-COMPANION_AGENTS = sorted({"adapter-drafter", "fcos-app-installer"} | set(_COMPANION_AGENTS))
+AGENTS = ["adapter-drafter", "fcos-app-installer"]
 problems = []
 
 
@@ -59,10 +56,11 @@ def main(argv):
     check((target / "AGENTS.md").is_file(), "the rules are in AGENTS.md")
     check(not (target / ".opencode" / "opencode.json").exists(), "no opencode.json (no instructions list)")
     found = sorted(p.parent.name for p in (target / ".opencode" / "skills").rglob("SKILL.md"))
-    check(set(SKILLS) <= set(found), "the six skills are siblings under .opencode/skills")
-    check(set(found) - set(SKILLS) == set(COMPANION_SKILLS), "the only other skills are the security bundle's")
+    check(found == SKILLS, "the six skills are siblings under .opencode/skills, and the only skills")
     agents = sorted(p.stem for p in (target / ".opencode" / "agents").glob("*.md"))
-    check(agents == COMPANION_AGENTS, "the agents are the two own ones and the companions")
+    check(agents == AGENTS, "the only agents are the installer and its helper")
+    check(sorted(p.stem for p in (target / ".opencode" / "commands").glob("*.md")) == ["add-service"],
+          "the only command is /add-service")
     check(all(p.parent.parent == target / ".opencode" / "skills"
               for p in (target / ".opencode" / "skills").rglob("SKILL.md")),
           "every skill is a direct child of the skills folder")

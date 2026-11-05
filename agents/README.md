@@ -21,7 +21,7 @@ A profile installs into one folder you choose, not your home folder. To install 
 
 Every installed skill's description is sent with every request, unless the agent can't use it. The `default` group installs about 200 skills; the AI research skills alone add about 7,000 tokens. In OpenCode, each agent therefore lists the skills, MCP servers and subagents it may use, and OpenCode leaves the rest out of what the model sees and blocks calls to them (checked on OpenCode 2.1.3). The [root README](../README.md)'s hero image shows how many skills each agent sees; the [interactive map](https://280zo.github.io/instructions-unclear/agents-map.html) ([source](../docs/agents-map.html)) lists every skill, server and subagent.
 
-Every agent but `fcos-app-installer` gets the Superpowers skills, `package-management`, Exa's `search` and `exa-agent`, OpenCode's built-in `opencode` skill, the user-invoked `handoff`, `teach` and `wait-what`, and the Exa and PMB servers; all but `second-opinion` also get Docling. `fcos-app-installer` keeps a shorter list of its own (last row), with no PMB or Docling, so the agent itself can't copy its private values out through memory or document tools. That holds for the agent only: the companions its group installs run with their own permissions, which is why it starts none of them.
+Every agent but `fcos-app-installer` gets the Superpowers skills, `package-management`, Exa's `search` and `exa-agent`, OpenCode's built-in `opencode` skill, the user-invoked `handoff`, `teach` and `wait-what`, and the Exa and PMB servers; all but `second-opinion` also get Docling. `fcos-app-installer` keeps a shorter list of its own (last row), with no PMB or Docling, so it can't copy its private values out through memory or document tools. It starts only its own `adapter-drafter`: any other agent it started would run with that agent's own, wider permissions, not its.
 
 | Agent | Own skills | Extra MCP | Can start |
 |---|---|---|---|
@@ -68,7 +68,7 @@ npx rulesync@41.0.0 generate --config groups/default.jsonc --global
 
 It needs rulesync 41 or later. Older releases add a `name:` field that makes OpenCode 2.1.3 drop every agent permission without warning. ZAP, ReVa, radare2, FreeCAD, Presenton, Podman and codebase-memory are written switched off. REA isn't installed globally because it starts switched on; use it in a folder made with the [`reverse_engineering` group](../groups/README.md#reverse_engineering).
 
-Other groups install agents with their sets: `infosec` and `work` include `agents/security`, so they also get the `security` agent; `reverse_engineering` gets the `reverse-engineering` agent. `work` and `writing_reporting` also include `second-opinion`, and `work` includes `local-model`. The `design`, `career`, `ai-research`, `3d-modeling`, `build`, `plan`, `general` and `explore` folders are in `default` only, with one exception: the OpenCode-only `fcos_app_installer` group includes `plan` and `explore` (and `second-opinion` and `security`) for you to pick as main agents in that folder; `plan` and `explore` there also deny the installer's skills. The FCOS app installer starts none of them: a subagent runs with its own permissions, not the starter's, and `second-opinion` and `plan` are main agents that can't be started at all.
+Other groups install agents with their sets: `infosec` and `work` include `agents/security`, so they also get the `security` agent; `reverse_engineering` gets the `reverse-engineering` agent. `work` and `writing_reporting` also include `second-opinion`, and `work` includes `local-model`. The `design`, `career`, `ai-research`, `3d-modeling`, `build`, `plan`, `general` and `explore` folders are in `default` only, and are never part of the `fcos_app_installer` group.
 
 ## Use
 
@@ -110,7 +110,7 @@ The tests fail when the image is out of date, so forgetting shows up there. To p
 
 ### Install
 
-Use the `default` group as above. Don't add the per-agent folders (`build`, `plan`, `general`, `explore`, `design`, `career`, `ai-research`, `3d-modeling`) to other groups: `work` also targets Copilot, which can't filter skills. The OpenCode-only `fcos_app_installer` group is the one exception. To verify in OpenCode, ask the user to open `/agents` in a new session and check that the six specialists, `build`, `plan`, `second-opinion` and `local-model` appear, then run [the runtime check](../tests/README.md#opencode-permission-regression) instead of asking a model which skills it has. For other tools, the runtime check only confirms the generated files.
+Use the `default` group as above. Don't add the per-agent folders (`build`, `plan`, `general`, `explore`, `design`, `career`, `ai-research`, `3d-modeling`) to other groups: `work` also targets Copilot, which can't filter skills. To verify in OpenCode, ask the user to open `/agents` in a new session and check that the six specialists, `build`, `plan`, `second-opinion` and `local-model` appear, then run [the runtime check](../tests/README.md#opencode-permission-regression) instead of asking a model which skills it has. For other tools, the runtime check only confirms the generated files.
 
 ### Remove
 

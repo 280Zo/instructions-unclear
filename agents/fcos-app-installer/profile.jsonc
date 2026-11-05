@@ -6,11 +6,5 @@
   "targets": ["opencode"],
   "features": ["rules", "subagents", "commands", "skills"],
   "delete": false,
-  "inputRoots": [
-    "agents/fcos-app-installer",
-    "agents/second-opinion",
-    "agents/security",
-    "agents/plan",
-    "agents/explore"
-  ]
+  "inputRoots": ["agents/fcos-app-installer"]
 }

@@ -432,8 +432,7 @@ opencode:
     # Subagents: only the adapter drafter (owner, 2026-11-04). A subagent runs with its own
     # permissions, not this agent's: explore can run ssh and read secrets/, security can edit the host
     # scripts and their checksum list, and second-opinion and plan are primary agents that cannot be
-    # started as subagents at all (review 2026-11-05). The companions the folder group installs are
-    # for the owner to pick as main agents.
+    # started as subagents at all (review 2026-11-05). The folder group installs no other agent.
     - action: subagent
       resource: "*"
       effect: deny
@@ -775,8 +774,8 @@ The owner's global rules also load here; where they clash with this agent, these
 - Use no memory tools or document tools (PMB, Docling): they would copy real values out of the workspace.
 - The workspace the owner names is in scope, though it is outside this folder.
 - Commands your permissions allow run without asking, network included; everything else asks.
-- Hand work only to `adapter-drafter`; finish the rest yourself. `second-opinion`, `security`, `plan` and `explore` are for the owner to pick, and they run with wider permissions, so you never start them.
-- The `security` companion's secure-coding rule says to read secrets from environment variables or a secret store; that is for code you write. You never read an environment, a secret store or a secrets file; the Secrets and private values rule wins.
+- Hand work only to `adapter-drafter`; finish the rest yourself. Any other agent runs with its own, wider permissions, so you never start one.
+- The owner's global secure-coding rule says to read secrets from environment variables or a secret store; that is for code you write. You never read an environment, a secret store or a secrets file; the Secrets and private values rule wins.
 
 ## How to work
 

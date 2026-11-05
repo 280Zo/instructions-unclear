@@ -113,49 +113,22 @@ class WorkspaceSourceTests(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text)
 
-    def test_companion_files_get_only_the_workspace_scan(self):
-        # Owner, 2026-11-04: rulesync also installs companion agents (second-opinion, security, plan,
-        # explore) into this folder. Their upstream commands and skills hold example secrets; the
-        # toolkit's own files do not get that pass, and nothing gets one for a workspace value.
+    def test_every_installed_file_gets_the_full_scan_with_no_exemptions(self):
+        # Owner, 2026-11-05: no companion agents live in this folder, so nothing is exempt. A file
+        # under the agent folders, a skill, or one named like an upstream agent is scanned like any other.
         folder = self.plain_folder()
         example = j("gateway: 10", ".1.2.3\n")
-        self.put(folder, ".opencode/commands/security-sast.md", example)
-        self.put(folder, ".opencode/agents/security-auditor.md", example)
-        self.put(folder, f"{SKILLS_DIR}/security-best-practices/SKILL.md", example)
-        self.put(folder, f"{SKILLS_DIR}/security-best-practices/references/x.md", example)
-        self.assertEqual(self.run_check(str(folder)).returncode, 0)
-        # Everything else is scanned in full: the toolkit's own files, and any name that is not exactly
-        # a companion's (a case variant, a trailing space, a new file, a skill nobody listed).
-        for own in (".opencode/commands/add-service.md", ".opencode/agents/fcos-app-installer.md",
-                    ".opencode/agents/adapter-drafter.md", f"{SKILLS_DIR}/adapter-proxmox/SKILL.md",
-                    f"{SKILLS_DIR}/adapter-newone/notes.md",
-                    f"{SKILLS_DIR}/researching-apps-for-self-hosting/SKILL.md", "tools/x.py", "AGENTS.md",
-                    ".opencode/agents/Fcos-app-installer.md", ".opencode/agents/adapter-drafter.md ",
-                    ".opencode/agents/Security.md", ".opencode/agents/new-agent.md",
-                    ".opencode/commands/new-command.md", ".opencode/commands/Security-sast.md",
-                    f"{SKILLS_DIR}/Adapter-x/SKILL.md", f"{SKILLS_DIR}/zzz-new/scripts/run.sh",
-                    f"{SKILLS_DIR}/fcos-helper/SKILL.md", f"{SKILLS_DIR}/security-best-practices-2/SKILL.md"):
-            with self.subTest(own=own):
-                self.put(folder, own, example)
-                result = self.run_check(str(folder))
-                self.assertEqual(result.returncode, 1, result.stdout)
-                self.assertIn(own, result.stdout)
-                (folder / own).unlink()
-        self.put(folder, ".opencode/commands/security-sast.md", f"runs on {self.secret}\n")
-        result = self.run_check(str(folder), workspace=self.make_workspace())
-        self.assertEqual(result.returncode, 1)
-        self.assertIn("value from workspace", result.stdout)
-
-    def test_a_companion_lookalike_outside_the_installed_places_is_scanned(self):
-        folder = self.plain_folder()
-        example = j("gateway: 10", ".1.2.3\n")
-        for path in ("commands/security-sast.md", ".opencode/other/security-sast.md",
-                     ".opencode/commands/nested/security-sast.md", f"{SKILLS_DIR}/SKILL.md",
-                     ".opencode/agents/nested/security-auditor.md"):
+        for path in (".opencode/commands/security-sast.md", ".opencode/agents/security-auditor.md",
+                     ".opencode/commands/add-service.md", ".opencode/agents/fcos-app-installer.md",
+                     ".opencode/agents/Fcos-app-installer.md", ".opencode/agents/adapter-drafter.md ",
+                     ".opencode/agents/new-agent.md", f"{SKILLS_DIR}/adapter-proxmox/SKILL.md",
+                     f"{SKILLS_DIR}/security-best-practices/SKILL.md", f"{SKILLS_DIR}/zzz-new/scripts/run.sh",
+                     "tools/x.py", "AGENTS.md"):
             with self.subTest(path=path):
                 self.put(folder, path, example)
                 result = self.run_check(str(folder))
                 self.assertEqual(result.returncode, 1, result.stdout)
+                self.assertIn(path, result.stdout)
                 (folder / path).unlink()
 
     def plain_folder(self, name="plain") -> Path:

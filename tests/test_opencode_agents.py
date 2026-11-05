@@ -199,19 +199,12 @@ class AgentTests(unittest.TestCase):
     def test_other_groups_keep_their_agents(self):
         # Only default gets the per-agent folders.
         # The security and reverse-engineering agents travel with their sets.
-        # An OpenCode-only folder group may carry the restrictions for OpenCode's own plan and explore
-        # agents (the FCOS app installer's companions): the rule is there to keep them out of groups
-        # that also target Copilot, which cannot filter skills.
-        companions = {"fcos_app_installer": {"plan", "explore"}}
         for group in ROOT.glob("groups/*.jsonc"):
             if group.stem == "default":
                 continue
-            config = read_jsonc(group)
+            roots = read_jsonc(group)["inputRoots"]
             for name in OWN_FOLDERS:
-                if name in companions.get(group.stem, ()):
-                    self.assertEqual(config["targets"], ["opencode"], group.stem)
-                    continue
-                self.assertNotIn(f"agents/{name}", config["inputRoots"], group.stem)
+                self.assertNotIn(f"agents/{name}", roots, group.stem)
         for group, folder in [("work", "security"), ("infosec", "security"),
                               ("reverse_engineering", "reverse-engineering")]:
             self.assertIn(f"agents/{folder}", read_jsonc(ROOT / f"groups/{group}.jsonc")["inputRoots"])
@@ -272,7 +265,7 @@ class FcosAppInstallerMapTests(unittest.TestCase):
     def test_the_map_reads_the_servers_and_subagents_too(self):
         spec = generate.spec_of(self.NAME)
         self.assertEqual(generate.allowed_mcp(spec), ["exa"])  # a deny list; Exa stays for research
-        # Only the locked-down helper: companions run with their own, wider permissions.
+        # Only the locked-down helper: any other agent runs with its own, wider permissions.
         self.assertEqual(spec["subagents"], ["adapter-drafter"])
 
     def test_its_skills_are_a_folder_group_bundle_only_it_may_load(self):
@@ -282,21 +275,19 @@ class FcosAppInstallerMapTests(unittest.TestCase):
         self.assertIn("not default", group["title"])
         self.assertEqual(sorted(group["items"]), self.SKILLS)
         self.assertEqual(group["agents"], [self.NAME])
-        # The everyday agents deny them wherever the default install and this folder's group both put
-        # their files (the group installs plan and explore with the same deny rules).
+        # The everyday agents never offer them, even where the default install and this folder meet.
         for name in BUILTINS:
             head, _ = frontmatter(agent_file(name))
             for skill in self.SKILLS:
                 self.assertIn(f'{{action: "skill", resource: "{skill}", effect: deny}}', head, name)
 
-    def test_the_helper_and_the_companions_appear_as_subagents_only_it_starts(self):
+    def test_the_helper_appears_as_a_subagent_only_it_starts(self):
         data = generate.map_data()
         by_title = {g["title"]: g for g in data["subagents"]}
         self.assertEqual(by_title["adapter-drafter"]["agents"], [self.NAME])
-        for companion in ("second-opinion", "security", "plan", "explore"):
-            self.assertNotIn(companion, generate.spec_of(self.NAME)["subagents"])
-            if companion in by_title:
-                self.assertNotIn(self.NAME, by_title[companion]["agents"], companion)
+        for other in ("second-opinion", "security", "plan", "explore", "general"):
+            if other in by_title:
+                self.assertNotIn(self.NAME, by_title[other]["agents"], other)
 
     def declared(self, rules: str):
         import tempfile

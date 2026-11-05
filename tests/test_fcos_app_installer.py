@@ -382,46 +382,23 @@ class GroupTests(unittest.TestCase):
         self.assertEqual(profile["inputRoots"][0], "agents/fcos-app-installer")
         self.assertEqual(group["inputRoots"][0], "agents/fcos-app-installer")
 
-    def test_the_toolkits_companion_lists_are_exactly_what_the_group_installs_beside_it(self):
-        # tools/layout.py names the companions' files so publish_check can exempt exactly those. If
-        # the group gains or loses an agent, command or skill, the list must change with it.
-        spec = importlib.util.spec_from_file_location("fcos_layout", FOLDER / "toolkit" / "tools" / "layout.py")
-        layout = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(layout)
-        roots = [ROOT / r for r in jsonc(ROOT / "groups" / "fcos_app_installer.jsonc")["inputRoots"]
-                 if r != "agents/fcos-app-installer"]
-        agents = {p.stem for r in roots for p in (r / "subagents").glob("*.md")}
-        commands = {p.stem for r in roots for p in (r / "commands").glob("*.md")}
-        skills = {p.parent.name for r in roots for p in (r / "skills").glob("*/SKILL.md")}
-        self.assertEqual(set(layout.COMPANION_AGENTS), agents)
-        self.assertEqual(set(layout.COMPANION_COMMANDS), commands)
-        self.assertEqual(set(layout.COMPANION_SKILLS), skills)
-        own_agents = {p.stem for p in (FOLDER / "subagents").glob("*.md")}
-        own_skills = {p.parent.name for p in (FOLDER / "skills").glob("*/SKILL.md")}
-        own_commands = {p.stem for p in (FOLDER / "commands").glob("*.md")}
-        self.assertEqual((set(layout.COMPANION_AGENTS) & own_agents, set(layout.COMPANION_SKILLS) & own_skills,
-                          set(layout.COMPANION_COMMANDS) & own_commands), (set(), set(), set()))
-
-    def test_the_group_installs_the_companions_for_you_to_pick_not_for_it_to_start(self):
+    def test_the_group_installs_the_installer_alone_and_matches_the_profile(self):
+        # Owner, 2026-11-05: no companion agents in this folder. A subagent runs with its own
+        # permissions, not the starter's, and the installer starts only adapter-drafter.
         group = jsonc(ROOT / "groups" / "fcos_app_installer.jsonc")
         profile = jsonc(FOLDER / "profile.jsonc")
+        self.assertEqual(group["inputRoots"], ["agents/fcos-app-installer"])
         self.assertEqual(group["inputRoots"], profile["inputRoots"])  # the two selections never drift
+        self.assertEqual(group["targets"], ["opencode"])
 
     def test_every_subagent_it_may_start_is_installed_by_the_group(self):
         # A permission to start an agent the folder lacks would be a promise the install cannot keep.
         allowed = [r["resource"] for r in frontmatter(FOLDER / "subagents" / "fcos-app-installer.md")
                    ["opencode"]["permissions"] if r["action"] == "subagent" and r["effect"] == "allow"]
         group = jsonc(ROOT / "groups" / "fcos_app_installer.jsonc")
-        self.assertEqual(group["inputRoots"], ["agents/fcos-app-installer", "agents/second-opinion",
-                                               "agents/security", "agents/plan", "agents/explore"])
         installed = {p.stem for root in group["inputRoots"] for p in (ROOT / root / "subagents").glob("*.md")}
-        self.assertEqual(sorted(set(allowed) - installed), [])
-        # Only the locked-down helper: a subagent runs with its own permissions, not the installer's.
+        self.assertEqual(installed, {"fcos-app-installer", "adapter-drafter"})
         self.assertEqual(allowed, ["adapter-drafter"])
-
-    def test_the_companions_are_not_pulled_into_other_agents_by_this_group(self):
-        # plan and explore only restrict OpenCode's own agents, so the group must stay OpenCode-only.
-        self.assertEqual(jsonc(ROOT / "groups" / "fcos_app_installer.jsonc")["targets"], ["opencode"])
 
     def test_it_is_a_folder_group_not_part_of_default(self):
         default = jsonc(ROOT / "groups" / "default.jsonc")["inputRoots"]

@@ -382,8 +382,9 @@ class ReviewFixTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertEqual(effect(self.text, "edit", path), "ask")
 
-    def test_the_override_section_settles_the_secure_coding_rule_the_security_companion_adds(self):
-        # That rule says to read secrets from the environment or a secret store; this agent must not.
+    def test_the_override_section_settles_the_secure_coding_rule_about_reading_secrets(self):
+        # The owner's global secure-coding rule says to read secrets from the environment or a
+        # secret store; this agent must not.
         section = " ".join(self.text.split("## Overrides of global rules", 1)[1].split("## How to work", 1)[0].split())
         self.assertIn("secure-coding rule", section)
         self.assertIn("never read an environment", section)
