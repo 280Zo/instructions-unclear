@@ -324,7 +324,7 @@ class AdapterTests(unittest.TestCase):
             self.render_discover(self.pinned("\n".join(lines + lines[:1]) + "\n"))
 
     def test_the_script_check_needs_no_git(self):
-        # The agent used to compare each script with the committed one, so it needed git and a clone.
+        # The agent compares each script with the pinned checksum list, never with a committed copy, so it needs no git or clone.
         source = (ROOT / "tools" / "adapters.py").read_text()
         for gone in ("_git", "_committed", "_blob_hash", "rev-parse"):
             self.assertNotIn(gone, source)
@@ -457,8 +457,7 @@ class AdapterTests(unittest.TestCase):
         self.assertIn("teardown-agent-access.sh --move-to", teardown)
 
     def test_teardown_creates_the_pool_the_vms_move_into(self):
-        # An owner with no pool of their own has nowhere to move the VMs to (seen on a real
-        # install, 2026-11-03). The script creates it with --create-pool, so the check and the
+        # An owner with no pool of their own has nowhere to move the VMs to. The script creates it with --create-pool, so the check and the
         # real run must both pass it; without it the script stops: "create it first".
         adapter = load_adapter("virtualization", "proxmox")
         teardown = render_step(adapter, "teardown_api_access", every_value(adapter, "teardown_api_access"))
@@ -473,8 +472,8 @@ class AdapterTests(unittest.TestCase):
         self.assertNotIn("KEEP_POOL", adapter["owner_steps"]["teardown_api_access"]["uses"])
 
     def test_truenas_backup_folder_does_not_make_the_vm_folder_group_writable(self):
-        # The step used to say "group of the services that back up there, mode 2775" for the
-        # VM's folder. Each service has its own group, so that group means nothing, and group
+        # The VM's folder must not be group-writable ("mode 2775" for "the group of the services that
+        # back up there"). Each service has its own group, so that group means nothing, and group
         # write without a sticky bit lets a member delete another service's backup folder.
         adapter = load_adapter("file_server", "truenas")
         text = render_step(adapter, "backup_folder", every_value(adapter, "backup_folder"))
@@ -487,7 +486,7 @@ class AdapterTests(unittest.TestCase):
         self.assertIn("create", text.lower())
         self.assertIn("can't create", text)
 
-    def test_proxmox_capabilities_from_the_spike(self):
+    def test_proxmox_capabilities(self):
         adapter = load_adapter("virtualization", "proxmox")
         self.assertTrue(adapter["capabilities"]["api_create_vm"])
         self.assertTrue(adapter["capabilities"]["api_upload_ignition"])

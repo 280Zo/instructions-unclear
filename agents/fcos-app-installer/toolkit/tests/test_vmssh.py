@@ -134,7 +134,7 @@ class VmSshTests(unittest.TestCase):
         return r, home / ".ssh" / "authorized_keys.d" / "fcos-agent"
 
     def test_owner_step_adds_the_key_only_on_the_machine_it_is_for(self):
-        # Seen twice on a real install (2026-11-03): the block was pasted on the wrong machine,
+        # Seen twice on a real install: the block was pasted on the wrong machine,
         # once overwriting another VM's agent key and once landing on the hypervisor.
         code, out, err = self.run_tool("keygen", "edge")
         self.assertEqual(code, 0, err)

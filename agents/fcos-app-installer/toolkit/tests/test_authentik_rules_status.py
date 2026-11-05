@@ -129,7 +129,7 @@ class RulesStatusTests(unittest.TestCase):
         self.assertIn("pending custom/app-new.yaml (not registered: Authentik ignored this file", out)
 
     def test_expected_hashes_from_the_vm_are_used_when_the_folder_is_unreadable(self):
-        # Trial VM 2026-11-03: podman exec lacks the worker's extra group, so it can't list the
+        # podman exec lacks the worker's extra group, so it can't list the
         # folder; the VM hashes the files (sudo sha512sum) and passes them in as EXPECTED.
         code, out = self.run_script({}, {"custom/app-a.yaml": lambda h: Instance("successful", "abc")},
                                     expected=lambda hashes: {"custom/app-a.yaml": "abc"})

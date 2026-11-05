@@ -23,7 +23,7 @@ capabilities:
   api_start_vm: true
   api_delete_vm: false
 defaults:
-  # Proven in the Task 4 spike: Ignition on an uploaded NoCloud ISO (ide2).
+  # Ignition on an uploaded NoCloud ISO (ide2) works (research-notes.md, row 12).
   # copy_ignition_snippet is the fallback when uploads are not allowed.
   ignition_method: nocloud-iso
 scripts:

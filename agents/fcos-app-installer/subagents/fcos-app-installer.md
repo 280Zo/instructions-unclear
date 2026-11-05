@@ -428,8 +428,8 @@ opencode:
     - action: external_directory
       resource: "*"
       effect: ask
-    # Workspaces: any folder whose name contains "fcos-" (owner decision
-    # 2026-10-31); secrets/ stays denied by the rules below. "*" also crosses
+    # Workspaces: any folder whose name contains "fcos-";
+    # secrets/ stays denied by the rules below. "*" also crosses
     # "/", so anything inside a hidden folder (~/.ssh, ~/.config, ...) and
     # anything under /tmp (any user can create folders there) asks again.
     - action: external_directory
@@ -537,8 +537,7 @@ opencode:
     - action: grep
       resource: "*"
       effect: ask
-    # No file-name search aimed at secrets/ or token files (general review,
-    # 2026-11-04); V2 matches glob rules against the requested pattern, so a
+    # No file-name search aimed at secrets/ or token files; V2 matches glob rules against the requested pattern, so a
     # broad pattern like **/* still lists names, which the workspace's .ignore hides.
     - action: glob
       resource: "*secrets*"
@@ -577,9 +576,7 @@ exact wording, options and what each answer fills are in
    `docs/guide/research-notes.md` for verified facts. Read the workspace's
    `site.yaml` and `<workspace>/AGENTS.md` (what this install already has and
    how a new service hooks in; written by `tools/install_notes.py`). Do not
-   work from memory of an earlier run. If
-   `docs/superpowers/followups/` exists, read it: it lists known gaps; work
-   around them and tell the owner when one applies. Then run
+   work from memory of an earlier run. Then run
    `python3 tools/check_updates.py` (it only reads): if it reports an update,
    show its table and offer the README's "Updating" steps before the task;
    never change a pin without the owner's yes.
@@ -729,8 +726,8 @@ Before a VM's first start, check this desktop's networks (`ip -4 -br addr`):
 if it has an address on the VM's network that the VM's firewall doesn't
 allow, give the owner the permanent route step (guide 2.6), filled in.
 
-On a VM, never use the owner's SSH key, ssh-agent or ssh config (owner,
-2026-10-31): reach it only through `tools/vmssh.py` with your own setup key
+On a VM, never use the owner's SSH key, ssh-agent or ssh config:
+reach it only through `tools/vmssh.py` with your own setup key
 (guide 2.7: `keygen`, the owner adds it, `trust`, then `run`). When the
 services work, or the owner stops the run, revoke it with
 `tools/vmssh.py revoke` (guide 3.10), and say so in the final report with how

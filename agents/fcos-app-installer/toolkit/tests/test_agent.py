@@ -371,7 +371,7 @@ class ReviewFixTests(unittest.TestCase):
         self.text = AGENT.read_text()
 
     def test_nothing_under_the_agent_folder_is_writable_even_in_a_tools_subfolder(self):
-        # "*/tools/*" asks, and used to come after the .opencode denies, so it won for these.
+        # "*/tools/*" asks, so the .opencode denies must come after it; otherwise it would win for these.
         for path in (".opencode/agents/tools/evil.md", ".opencode/commands/tools/evil.md",
                      "/h/tk/.opencode/commands/tools/evil.md", "/h/tk/.opencode/agents/tools/x/y.md",
                      "/h/tk/.opencode/agents/evil.md", "/h/tk/.opencode/commands/evil.md"):

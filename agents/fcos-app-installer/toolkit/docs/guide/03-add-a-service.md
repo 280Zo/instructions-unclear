@@ -43,9 +43,8 @@ which hides secret-looking text. Then each fact goes into the spec:
 
 If a fact isn't in the official docs, ask (question 14) instead of guessing.
 
-**Apps that send mail.** Nothing here uses an email server (owner decision:
-never an email server). Set the app's mail driver to its log driver, so what it
-would send is written to its log. Many apps still refuse to build a message
+**Apps that send mail.** Nothing here uses an email server. Set the app's mail driver to its log driver,
+so what it would send is written to its log. Many apps still refuse to build a message
 without a sender address: Monica's invitations failed with "An email must have
 a From or a Sender header" until `MAIL_FROM_ADDRESS` was set. Give the app a
 sender address on the owner's domain (nothing is sent from or to it), and find

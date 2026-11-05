@@ -189,7 +189,7 @@ Remove the test service afterward ([section 7](07-remove-and-rollback.md)).
 ## 6.10 People and access
 
 Everyone signs in to the login page with a local account: no email, and
-nothing here talks to the outside (owner decision). Groups decide which apps
+nothing here talks to the outside. Groups decide which apps
 each person gets:
 
 - `guests`: the default group. Anyone who can reach the login page (your

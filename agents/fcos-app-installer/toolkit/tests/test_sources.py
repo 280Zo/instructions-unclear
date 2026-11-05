@@ -31,7 +31,7 @@ class SourceTests(unittest.TestCase):
         guide = (ROOT / "docs" / "guide" / "03-add-a-service.md").read_text()
         # Review: ak apply_blueprint never registers a new file, so the outpost file's
         # required metaapplyblueprint fails for a new app; a worker restart rescans (apps.py
-        # send_on_startup), as proven on the trial VM 2026-11-02.
+        # send_on_startup).
         self.assertIn("systemctl --user restart authentik-worker.service", guide)
         self.assertIn("tools/authentik_rules_status.py", guide)
         self.assertNotIn("ak apply_blueprint custom/", guide)

@@ -29,7 +29,7 @@ try:
 except NameError:
     DEADLINE_S = 300
 # {"custom/<file>": sha512 hex} computed on the VM (guide 3.9): `podman exec` runs without the
-# worker's extra group, so it can't list the rules folder itself (trial VM 2026-11-03).
+# worker's extra group, so it can't list the rules folder itself.
 try:
     EXPECTED
 except NameError:

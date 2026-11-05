@@ -44,7 +44,7 @@ SAMPLE = {
 }
 
 
-# FCOS's own layout links (read on the trial VM 2026-11-02; ostree layout): every
+# FCOS's own layout links (ostree layout): every
 # run of a generated script happens in a tree shaped like this.
 FCOS_LINKS = {"usr/local": "../var/usrlocal", "home": "var/home", "mnt": "var/mnt", "opt": "var/opt",
               "srv": "var/srv", "root": "var/roothome"}

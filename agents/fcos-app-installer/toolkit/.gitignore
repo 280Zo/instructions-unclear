@@ -7,10 +7,6 @@
 /vms/
 /notes/
 
-# Planning documents are not part of the published repo.
-/docs/design/
-/docs/superpowers/
-
 # The global gitignore excludes .opencode/; if you commit this folder, publish only the agents,
 # commands and skills rulesync wrote there, nothing else OpenCode keeps there.
 !/.opencode/

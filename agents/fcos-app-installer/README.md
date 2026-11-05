@@ -222,9 +222,7 @@ container files). Nothing pulls them for you.
    `python3 -m unittest discover tests`, both fixture validations and
    `python3 tools/publish_check.py`. Pull the new image yourself; the tools
    say the exact command.
-4. Review it the way this toolkit was built: a fresh reviewer for each
-   commit, then a whole-branch review.
-5. Run the trial in `docs/guide/10-trial-run.md` on a VM that doesn't matter.
+4. Run the trial in `docs/guide/10-trial-run.md` on a VM that doesn't matter.
    Only then go back to the task.
 
 ### For the agent

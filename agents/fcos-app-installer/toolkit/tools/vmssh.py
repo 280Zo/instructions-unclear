@@ -145,7 +145,7 @@ def _print_owner_step(key: Path, vm: str) -> None:
     print("It goes in its own file beside your key, and `python3 tools/vmssh.py revoke "
           f"{args.vm}` removes it again when the services work.\n")
     # The block stops by itself on any other machine: pasted on the wrong one, it would
-    # overwrite that machine's agent key or put the key on a hypervisor (seen 2026-11-03).
+    # overwrite that machine's agent key or put the key on a hypervisor.
     print("```bash")
     print(f"# vm {args.vm} (bash, admin): run this ONLY on {args.vm}")
     print(f'if [ "$(hostnamectl hostname)" = "{args.vm}" ]; then')

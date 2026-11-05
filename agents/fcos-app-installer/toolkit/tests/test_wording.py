@@ -138,7 +138,7 @@ class GuideTests(unittest.TestCase):
         self.assertNotIn("$svc-backup*", text)
 
     def test_remove_also_removes_the_system_units_ignition_made(self):
-        # Seen on a real removal (2026-11-03): the file list covers files and links only, so
+        # On a real removal the file list covers files and links only, so
         # subids-<svc>.service (a unit) stayed behind and would fail at the next boot once
         # the account is gone. The units and the empty Quadlet folder go too.
         text = (GUIDE / "07-remove-and-rollback.md").read_text()
@@ -151,7 +151,7 @@ class GuideTests(unittest.TestCase):
         self.assertIn("stay until", text)
 
     def test_app_log_checks_keep_generated_credentials_out_of_view(self):
-        # Monica prints an OAuth client secret into its log at first start (2026-11-03); the
+        # Monica prints an OAuth client secret into its log at first start; the
         # agent read it. Logs are read only through vmssh.py logs (redacted), and the page says why.
         text = (GUIDE / "03-add-a-service.md").read_text()
         self.assertIn("python3 tools/vmssh.py logs $vm $svc-app.service", text)
@@ -163,7 +163,7 @@ class GuideTests(unittest.TestCase):
 
     def test_database_page_has_a_mariadb_restore_and_a_restore_test(self):
         # The page covered SQLite and Postgres restores only, and no way to prove a backup
-        # restores. The restore test was run on a real install (2026-11-03): a throwaway
+        # restores. The restore test ran on a real install: a throwaway
         # MariaDB with no network and its data in memory, counts compared with the live one.
         text = (GUIDE / "04-databases-and-backups.md").read_text()
         self.assertIn("## Test a restore", text)
@@ -179,7 +179,7 @@ class GuideTests(unittest.TestCase):
         self.assertIn("not tested", restore.split("MariaDB", 1)[1].split("Then run", 1)[0])
 
     def test_break_glass_says_the_tunnel_fails_for_apps_that_force_their_own_https(self):
-        # Tested on a real install (2026-11-03): Monica's login page loaded through the SSH
+        # Tested on a real install: Monica's login page loaded through the SSH
         # tunnel, but signing in redirected to https://localhost:<port> and failed. The
         # working way in is the app's route without the login, edited by hand and put back.
         text = (GUIDE / "08-break-glass.md").read_text()
@@ -192,11 +192,11 @@ class GuideTests(unittest.TestCase):
 
     def test_apps_that_mail_need_a_sender_address_for_the_log_mailer(self):
         # Monica's invitations failed with 'An email must have a From or a Sender header'
-        # until MAIL_FROM_ADDRESS was set, although the mail only goes to the log (2026-11-03).
+        # until MAIL_FROM_ADDRESS was set, although the mail only goes to the log.
         text = (GUIDE / "03-add-a-service.md").read_text()
         self.assertIn("sender address", text)
         self.assertIn("MAIL_FROM_ADDRESS", text)
-        self.assertIn("never an email server", text)
+        self.assertIn("Nothing here uses an email server", text)
 
     def test_login_front_end_vm_gets_its_backup_folders(self):
         text = (GUIDE / "06-edge-vm.md").read_text()

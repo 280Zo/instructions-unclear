@@ -352,8 +352,7 @@ class RepoTests(unittest.TestCase):
         if not in_a_checkout(ROOT):
             self.skipTest("this copy of the toolkit is not in a git checkout")
         env = without_git_variables(os.environ)
-        for path in ("config.yaml", "vms/edge/base-config.bu", "notes/x.md",
-                     "docs/design/x.md", "docs/superpowers/plans/x.md"):
+        for path in ("config.yaml", "vms/edge/base-config.bu", "notes/x.md"):
             with self.subTest(path=path):
                 rc = subprocess.run(["git", "check-ignore", "-q", path], cwd=ROOT, env=env).returncode
                 self.assertEqual(rc, 0, f"{path} is not git-ignored")

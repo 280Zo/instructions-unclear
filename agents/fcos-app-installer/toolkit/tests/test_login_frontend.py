@@ -540,7 +540,7 @@ class SignupTests(FrontendCase):
         self.assertEqual(sorted(fields), ["name", "password", "password_repeat", "username"])  # no email
         ident = by["authentik_stages_identification.identificationstage"][0]
         self.assertEqual(ident["identifiers"], {"name": "default-authentication-identification"})
-        # The serializer requires user_fields on every update (trial VM 2026-11-03: "When no user
+        # The serializer requires user_fields on every update ("When no user
         # fields are selected, at least one source must be selected"); the default flow's values.
         self.assertEqual(set(ident["attrs"]), {"enrollment_flow", "user_fields"})
         self.assertEqual(ident["attrs"]["user_fields"], ["email", "username"])
