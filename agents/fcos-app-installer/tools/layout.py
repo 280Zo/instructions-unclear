@@ -10,3 +10,7 @@ from pathlib import Path
 TOOLKIT_ROOT = Path(__file__).resolve().parent.parent
 SKILLS_DIR = ".opencode/skills"
 SKILLS = TOOLKIT_ROOT / SKILLS_DIR
+# sha256sum -c list of every host script, paths relative to the skills folder. It stays outside
+# every skill folder and the agent's rules deny edits to it; tools/adapters.py refuses a script
+# whose hash differs from it.
+CHECKSUMS = TOOLKIT_ROOT / "host-scripts.sha256"

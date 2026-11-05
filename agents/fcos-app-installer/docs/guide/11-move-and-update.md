@@ -35,17 +35,20 @@ install (`python3 tools/workspace.py where`).
 
 ## 11.2 [Owner] Update the toolkit
 
-1. Get the newer toolkit the way you installed it (from the repository you
-   keep it in), then run `python3 tools/check_requirements.py` and the
-   tests: `python3 -m unittest discover tests`.
+1. Get the newer toolkit the way you installed it (README.md "Install"), into
+   a new folder next to the old one. In the new folder run
+   `python3 tools/check_requirements.py` and the tests:
+   `python3 -m unittest discover tests`. Start OpenCode in the new folder.
 2. Run `python3 tools/check_updates.py`. For anything it reports, follow
    README.md "Updating".
 3. If the hypervisor's host scripts changed, their checksum changed with
-   them: the next virtualization step (such as `create_api_access`) shows the
-   new checksum, so check it again before running the script, as on a first
-   install.
-4. Releases of the toolkit are marked with a git tag, so you can always go
-   back to the one you had.
+   them, and the new toolkit carries the new pinned list
+   (`host-scripts.sha256`): the next virtualization step (such as
+   `create_api_access`) shows the new checksum, so check it again before
+   running the script, as on a first install.
+4. Keep the previous folder until the new one passes these checks, so you can
+   go back to it. Your workspaces are in neither folder, so nothing in them
+   changes.
 
 ## 11.3 Move a service to a new release line
 

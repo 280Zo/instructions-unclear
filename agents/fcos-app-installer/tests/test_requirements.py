@@ -29,8 +29,9 @@ class RequirementsTests(unittest.TestCase):
     def test_all_present(self):
         code, out = self.run_check()
         self.assertEqual(code, 0, out)
-        for needle in ("OpenCode", "2.1.3", "git", "PyYAML", "podman or docker", "launch folder"):
+        for needle in ("OpenCode", "2.1.3", "PyYAML", "podman or docker", "launch folder"):
             self.assertIn(needle, out)
+        self.assertNotIn("git", out)  # the host-script check reads a pinned list; the toolkit needs no git
 
     def test_started_elsewhere_refused(self):
         code, out = self.run_check(launch=Path("/somewhere/else"))
@@ -47,7 +48,7 @@ class RequirementsTests(unittest.TestCase):
         self.assertEqual(self.run_check(opencode="opencode v3.0.0")[0], 0)
 
     def test_missing_tools_refused(self):
-        self.assertEqual(self.run_check(which=lambda n: None if n == "git" else "/x/" + n)[0], 1)
+        self.assertEqual(self.run_check(which=lambda n: None if n == "git" else "/x/" + n)[0], 0)  # git is optional
         self.assertEqual(self.run_check(which=lambda n: None if n in ("podman", "docker") else "/x/" + n)[0], 1)
         self.assertEqual(self.run_check(which=lambda n: None if n == "podman" else "/x/" + n)[0], 0)  # docker will do
         self.assertEqual(self.run_check(yaml_ok=False)[0], 1)
@@ -55,10 +56,14 @@ class RequirementsTests(unittest.TestCase):
     def test_readme_and_guide_state_it(self):
         readme = (ROOT / "README.md").read_text()
         needs = readme.split("## What it needs", 1)[1].split("\n## ", 1)[0]
-        for needle in ("OpenCode 2.1.3", "git", "PyYAML", "Podman or Docker"):
+        for needle in ("OpenCode 2.1.3", "PyYAML", "Podman or Docker"):
             self.assertIn(needle, needs)
+        self.assertNotRegex(needs, r"(?i)\bgit,")  # git is not a requirement of the toolkit
         guide = (ROOT / "docs" / "guide" / "10-trial-run.md").read_text()
         self.assertIn("python3 tools/check_requirements.py", guide)
+        expected = " ".join(guide.split("Expected:", 1)[1].split("\n\n", 1)[0].split())
+        self.assertNotIn("git", expected)
+        self.assertIn("launch folder", expected)
         notes = (ROOT / "docs" / "guide" / "research-notes.md").read_text()
         self.assertIn("2.0.30", notes)
         self.assertIn("51341", notes)

@@ -22,9 +22,11 @@ class GuidePageTests(unittest.TestCase):
 
     def test_updating_the_toolkit(self):
         text = flat(PAGE.read_text().split("## 11.2", 1)[1].split("## 11.3", 1)[0])
-        for needle in ("python3 tools/check_updates.py", "checksum", "create_api_access", "README.md", "tag"):
+        for needle in ("python3 tools/check_updates.py", "checksum", "create_api_access", "README.md",
+                       "previous folder", "host-scripts.sha256"):
             with self.subTest(needle=needle):
                 self.assertIn(needle, text)
+        self.assertNotIn("git tag", text)  # the toolkit needs no git: an update is a new copy, not a checkout
 
     def test_moving_a_service_to_a_new_release_line(self):
         text = flat(PAGE.read_text().split("## 11.3", 1)[1])

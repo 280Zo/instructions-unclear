@@ -18,7 +18,8 @@ router, your file server, your DNS provider, and anything involving a secret.
   Earlier 2.0 releases ignore the config's `instructions` list, so the rules in
   `rules/` wouldn't load (fixed in 2.0.30), and the agents' skill and subagent
   filters were tested on 2.1.3.
-- git, and Python 3 with PyYAML.
+- Python 3 with PyYAML. (git is optional: if it is installed, the tools use it
+  to find the checkout around the toolkit; nothing needs it.)
 - Podman or Docker: the build checks run Butane and Podman's Quadlet generator
   in containers, from the images pinned in `tools/images.env`. You pull them
   once yourself; the tools say the exact command.
@@ -160,6 +161,24 @@ offer to run the steps above first; never change a pin without the owner's
 yes, and the owner approves each commit and pulls the image. If the check
 can't run (no network), say so and carry on with the current pins.
 
+## Changing a host script
+
+You run the adapters' host scripts as root, after checking the checksum a step
+shows. A step takes that checksum from the script itself, so the tools also
+compare every script with `host-scripts.sha256`, a list the agent cannot edit
+(it sits outside the skills, and the agent's rules deny edits to it and any
+shell command that names it). A script whose hash differs from the list stops
+its step with a message. After you change a script on purpose, review the
+change, then rewrite the list yourself from the skills folder
+(`.opencode/skills`), and check it:
+
+```fish
+# desktop (fish)
+cd .opencode/skills
+sha256sum adapter-*/scripts/* | sort -k 2 > ../../host-scripts.sha256
+sha256sum -c ../../host-scripts.sha256
+```
+
 ## Publishing
 
 This repository is meant to be shared. Real values never go into it: before
@@ -183,6 +202,7 @@ file to read is an error, not a pass.
 |---|---|
 | `.opencode/` | the agents (`fcos-app-installer`, the main one for Fedora CoreOS; `adapter-drafter`, its helper that drafts adapters), the `/add-service` command, and `opencode.json`, which loads `rules/` |
 | `.opencode/skills/` | skills: one adapter per provider (its owner steps, notes and host scripts), the generic fallback, and `researching-apps-for-self-hosting` |
+| `host-scripts.sha256` | the pinned checksum of every host script, which the agent cannot edit |
 | `rules/` | rules that don't depend on the OS: how owner steps are given, how secrets and private values are handled |
 | `docs/guide/` | the procedure, provider-neutral |
 | `schemas/` | the service spec's field reference |

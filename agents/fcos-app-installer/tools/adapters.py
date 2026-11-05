@@ -46,7 +46,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from layout import SKILLS, SKILLS_DIR  # noqa: E402
+from layout import CHECKSUMS, SKILLS, SKILLS_DIR  # noqa: E402
 from render import RenderError, render  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
@@ -249,39 +249,35 @@ def _checksum_key(path: str) -> str:
     return re.split(r"[-_]", stem, maxsplit=1)[0].upper() + "_SHA256"
 
 
-def _git(*args: str) -> tuple[int, str]:
-    """Run git in the agent's folder without the user's or the system's git config."""
-    import subprocess
-    git = shutil.which("git")
-    if git is None:
-        raise AdapterError("git not found; the agent checks its host scripts against the committed version "
-                           "with git, so install git")
-    env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "GIT_CONFIG_NOSYSTEM": "1",
-           "GIT_CONFIG_GLOBAL": "/dev/null", "HOME": "/nonexistent"}
-    done = subprocess.run([git, "-C", str(REPO), *args], env=env, capture_output=True, text=True)
-    return done.returncode, done.stdout.strip()
+PINNED_LINE = re.compile(r"([0-9a-f]{64})  (\S+)")
 
 
-def _committed(path: Path) -> bool:
-    """True when path's contents equal the committed version (HEAD). The owner runs these scripts
-    as root, and their checksum is taken from the file as it is, so a script the agent (or
-    anything else) changed would pass the owner's sha256sum check (review of ff605b1). The
-    committed blob is compared with the file's own hash, so index flags such as
-    --assume-unchanged can't hide a change (review of f632889)."""
-    if _git("rev-parse", "--show-toplevel")[0] != 0:
-        raise AdapterError(f"the agent's folder {REPO} isn't a git checkout, so its host scripts can't be "
-                           "checked against the committed version; install the toolkit with git clone")
-    rel = str(path.resolve().relative_to(REPO))
-    code, committed = _git("rev-parse", "--verify", "--quiet", f"HEAD:./{rel}")
-    return code == 0 and committed == _blob_hash(path)
+def _pinned() -> dict[str, str]:
+    """The pinned list (sha256sum format): script path in the skills folder -> sha256."""
+    try:
+        text = CHECKSUMS.read_text(encoding="utf-8")
+    except OSError as error:
+        raise AdapterError(f"the checksum list {CHECKSUMS} can't be read ({error.strerror}); the host "
+                           "scripts can't be checked, so no step that runs one is shown") from None
+    found = {}
+    for number, line in enumerate(text.splitlines(), start=1):
+        match = PINNED_LINE.fullmatch(line)
+        if match is None:
+            raise AdapterError(f"{CHECKSUMS.name}:{number}: not a sha256sum line")
+        found[match[2]] = match[1]
+    return found
 
 
-def _blob_hash(path: Path) -> str:
-    """The file's git blob id, computed here: git's own hashing command would apply the repo's
-    .gitattributes filters, which can hide a change or run a command (whole-branch review)."""
-    import hashlib
-    data = path.read_bytes()
-    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+def _is_pinned(path: Path, digest: str) -> bool:
+    """True when the script's sha256 is the one the pinned list holds for it. The owner runs these
+    scripts as root, and a step shows the checksum of the file as it is, so a script the agent (or
+    anything else) changed would pass the owner's sha256sum check (review of ff605b1). The list is a
+    file the agent's rules deny it to edit, kept outside every skill folder, and it needs no git."""
+    try:
+        key = path.resolve().relative_to(ADAPTERS.resolve()).as_posix()
+    except ValueError:
+        return False
+    return _pinned().get(key) == digest
 
 
 def derived_values(adapter: dict) -> dict:
@@ -297,14 +293,15 @@ def derived_values(adapter: dict) -> dict:
         target = (skill / path).resolve() if skill is not None else None
         if target is None or skill not in target.parents or not target.is_file():
             raise AdapterError(f"{adapter.get('provider')}: script {path} is not a file in its skill folder")
-        if not _committed(target):
-            raise AdapterError(f"{adapter.get('provider')}: script {path} differs from the committed version, "
-                               "or isn't committed; the owner runs it as root, so this step isn't shown. "
-                               "Tell the owner; don't change or restore it yourself")
+        digest = hashlib.sha256(target.read_bytes()).hexdigest()
+        if not _is_pinned(target, digest):
+            raise AdapterError(f"{adapter.get('provider')}: script {path} differs from the pinned checksum in "
+                               f"{CHECKSUMS.name}, or isn't listed there; the owner runs it as root, so this "
+                               "step isn't shown. Tell the owner; don't change or restore it yourself")
         key = _checksum_key(path)
         if key in out:
             raise AdapterError(f"{adapter.get('provider')}: two scripts give the checksum {key}")
-        out[key] = hashlib.sha256(target.read_bytes()).hexdigest()
+        out[key] = digest
     return out
 
 

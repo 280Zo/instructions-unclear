@@ -1,0 +1,4 @@
+253d15e1ae8ee1f6136b9366a29bb3d788f56691bbff2f57c8c943dbe77701a7  adapter-proxmox/scripts/discover-host.sh
+a3571bba1393a205ec29fdcda08937bff43a0f351f819db213a17fc8c2ca679d  adapter-proxmox/scripts/lib.sh
+058ccb56e73a102a17face4063f9aabc1c2dbf74ed93d3e14cc266e63970f339  adapter-proxmox/scripts/setup-agent-access.sh
+dd03f532de556a6b034f50102222211a2b5ccc0a8a89729d37f65831a83bad5f  adapter-proxmox/scripts/teardown-agent-access.sh

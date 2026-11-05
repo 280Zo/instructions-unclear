@@ -213,56 +213,64 @@ class AdapterTests(unittest.TestCase):
             render_step(step, "s", {"LAN_CIDR": "192.0.2.0/24, 198.51.100.0/24"})
         self.assertIn("allow 192.0.2.0/24", render_step(step, "s", {"LAN_CIDR": "192.0.2.0/24"}))
 
-    def test_a_changed_host_script_is_refused(self):
-        # Review of ff605b1: the owner runs these as root, and the checksum is taken from the
-        # file as it is. A script that differs from the committed one must stop the step.
+    # Review of ff605b1: the owner runs the host scripts as root, and the step shows the checksum of
+    # the file as it is. The pinned list, a file the agent can't edit, says what the file must be.
+    def pinned(self, text):
+        path = Path(tempfile.mkdtemp(dir=SCRATCH)) / "host-scripts.sha256"
+        self.addCleanup(shutil.rmtree, path.parent, True)
+        path.write_text(text)
+        return path
+
+    def render_discover(self, checksums):
         import adapters as mod
         adapter = load_adapter("virtualization", "proxmox")
-        saved = mod._committed
-        mod._committed = lambda path: False
+        saved = mod.CHECKSUMS
+        mod.CHECKSUMS = checksums
         try:
-            with self.assertRaisesRegex(AdapterError, "differs from the committed"):
-                render_step(adapter, "discover_host", every_value(adapter, "discover_host"))
+            return render_step(adapter, "discover_host", every_value(adapter, "discover_host"))
         finally:
-            mod._committed = saved
-        self.assertTrue(mod._committed(PROXMOX / "scripts" / "lib.sh"))
+            mod.CHECKSUMS = saved
 
-    def test_script_check_says_why_it_cannot_run(self):
-        # Review of f632889: a copy without .git, or no git at all, must say so plainly.
-        import adapters as mod
-        lib = PROXMOX / "scripts" / "lib.sh"
-        saved_git, saved_which = mod._git, mod.shutil.which
-        try:
-            mod._git = lambda *args: (128, "") if "--show-toplevel" in args else saved_git(*args)
-            with self.assertRaisesRegex(AdapterError, "isn't a git checkout.*git clone"):
-                mod._committed(lib)
-            mod._git = saved_git
-            mod.shutil.which = lambda name: None
-            with self.assertRaisesRegex(AdapterError, "git not found"):
-                mod._committed(lib)
-        finally:
-            mod._git, mod.shutil.which = saved_git, saved_which
+    def real_list(self):
+        import layout
+        return layout.CHECKSUMS.read_text()
 
-    def test_script_check_compares_contents_not_the_index(self):
-        # Review of f632889: `git update-index --assume-unchanged` would hide a change from
-        # `git diff`. Whole-branch review: `git hash-object` applies .gitattributes filters (which
-        # can hide a change or run a command), so the file is hashed in Python, as git hashes a blob.
+    def test_a_script_that_matches_the_pinned_list_renders(self):
+        self.assertIn("discover-host.sh", self.render_discover(self.pinned(self.real_list())))
+
+    def test_a_changed_host_script_is_refused(self):
         import hashlib
-        import adapters as mod
-        lib = PROXMOX / "scripts" / "lib.sh"
-        data = lib.read_bytes()
-        expected = hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
-        self.assertEqual(mod._blob_hash(lib), expected)
-        self.assertEqual(mod._git("rev-parse", "--verify", "--quiet", "HEAD:./" + str(lib.relative_to(ROOT)))[1],
-                         expected)  # the committed blob is exactly this
-        saved = mod._git
-        try:
-            mod._git = lambda *args: (0, "0" * 40) if args[0] == "rev-parse" and args[-1].startswith("HEAD:") \
-                else saved(*args)
-            self.assertFalse(mod._committed(lib))
-            self.assertNotIn("hash-object", (ROOT / "tools" / "adapters.py").read_text())
-        finally:
-            mod._git = saved
+        wrong = hashlib.sha256(b"not the script").hexdigest()
+        lines = [l.replace(l.split("  ")[0], wrong) if l.endswith("scripts/lib.sh") else l
+                 for l in self.real_list().splitlines()]
+        with self.assertRaisesRegex(AdapterError, "differs from the pinned checksum"):
+            self.render_discover(self.pinned("\n".join(lines) + "\n"))
+
+    def test_a_script_missing_from_the_list_is_refused(self):
+        lines = [l for l in self.real_list().splitlines() if not l.endswith("scripts/lib.sh")]
+        with self.assertRaisesRegex(AdapterError, "isn't listed"):
+            self.render_discover(self.pinned("\n".join(lines) + "\n"))
+
+    def test_an_unreadable_or_malformed_list_refuses_plainly(self):
+        with self.assertRaisesRegex(AdapterError, "checksum list.*can't be read"):
+            self.render_discover(Path(tempfile.gettempdir()) / "no-such-list.sha256")
+        with self.assertRaisesRegex(AdapterError, r"host-scripts\.sha256:1: not a sha256sum line"):
+            self.render_discover(self.pinned("this is not a checksum\n"))
+
+    def test_the_script_check_needs_no_git(self):
+        # The agent used to compare each script with the committed one, so it needed git and a clone.
+        source = (ROOT / "tools" / "adapters.py").read_text()
+        for gone in ("_git", "_committed", "_blob_hash", "rev-parse"):
+            self.assertNotIn(gone, source)
+        elsewhere = Path(tempfile.mkdtemp(dir=SCRATCH))  # not a checkout, and a PATH without git
+        self.addCleanup(shutil.rmtree, elsewhere, True)
+        code = ("import sys; sys.path.insert(0, sys.argv[1]); "
+                "from adapters import derived_values, load_adapter; "
+                "print(sorted(derived_values(load_adapter('virtualization', 'proxmox'))))")
+        result = subprocess.run([sys.executable, "-c", code, str(ROOT / "tools")], cwd=elsewhere,
+                                capture_output=True, text=True, env={"PATH": str(elsewhere), "HOME": str(elsewhere)})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("DISCOVER_SHA256", result.stdout)
 
     def test_draft_needs_a_real_workspace_outside_any_skill_folder(self):
         # Whole-branch review, 2026-11-04: a draft written into a skill folder would become a

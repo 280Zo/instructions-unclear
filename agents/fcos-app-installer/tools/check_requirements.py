@@ -7,7 +7,6 @@ Usage: check_requirements.py
   `instructions` list but never load it, so rules/*.md would silently be missing
   (anomalyco/opencode issue #51341; the loader is in 2.0.30 and later), and the
   agents' skill and subagent filters were tested on 2.1.3.
-- git: the host-script check compares each shipped script with the committed one.
 - Python 3 with PyYAML: every tool reads YAML.
 - podman or docker: the build checks run Butane and Podman in containers.
 - launch folder: OpenCode must be started in the toolkit's folder. The agent's allow rules
@@ -65,7 +64,6 @@ def main(argv: list[str]) -> int:
     rows = [  # (name, ok, shown when ok, shown when missing)
         ("OpenCode", version is not None and version >= MINIMUM_OPENCODE,
          f"{found} (needs {minimum} or newer)", f"needs {minimum} or newer; found {found or 'none'}"),
-        ("git", shutil.which("git") is not None, "found", "not found; needed for the host-script check"),
         ("Python 3 with PyYAML", has_pyyaml(), "found", "PyYAML missing; install python3-yaml"),
         ("podman or docker", runtime is not None, f"found {runtime}",
          "neither found; needed for the build checks"),

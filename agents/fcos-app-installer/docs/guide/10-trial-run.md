@@ -18,9 +18,9 @@ python3 -m unittest discover tests
 python3 tools/publish_check.py
 ```
 
-Expected: an `ok` line for each requirement (OpenCode 2.1.3 or newer, git,
-Python 3 with PyYAML, podman or docker), `OK` from the tests, and `0 hit(s)`
-from the publish check.
+Expected: an `ok` line for each requirement (OpenCode 2.1.3 or newer, Python 3
+with PyYAML, podman or docker, and the launch folder), `OK` from the tests, and
+`0 hit(s)` from the publish check.
 
 ## 10.2 [Owner] What OpenCode loads
 
