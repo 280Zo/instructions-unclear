@@ -272,6 +272,45 @@ class AdapterTests(unittest.TestCase):
         with self.assertRaisesRegex(AdapterError, "no blank lines or comments"):
             self.render_discover(self.pinned("\n"))
 
+    def test_the_list_splits_on_newlines_only_and_wants_lowercase_hex(self):
+        # sha256sum -c ends a line at a newline only; a lone CR (or U+2028) joins two entries into
+        # one bad line, so this tool must not split there and accept what sha256sum would not.
+        lines = self.real_list().splitlines()
+        joined = lines[0] + "\r" + lines[1] + "\n" + "\n".join(lines[2:]) + "\n"
+        with self.assertRaisesRegex(AdapterError, r"host-scripts\.sha256:1: not a sha256sum line"):
+            self.render_discover(self.pinned(joined))
+        upper = lines[0].split("  ")[0].upper() + "  " + lines[0].split("  ")[1]
+        with self.assertRaisesRegex(AdapterError, "lowercase hex"):
+            self.render_discover(self.pinned("\n".join([upper] + lines[1:]) + "\n"))
+
+    def odd_root(self):
+        """A copy of the Proxmox skill outside the real skills folder, as a loaded root."""
+        root = Path(tempfile.mkdtemp(dir=SCRATCH))
+        self.addCleanup(shutil.rmtree, root, True)
+        shutil.copytree(PROXMOX, root / "adapter-proxmox")
+        return root
+
+    def test_a_skill_outside_the_skills_folder_is_never_pinned(self):
+        # A copy of an adapter loaded from some other root has no entry in the list, however
+        # identical its scripts are.
+        from adapters import derived_values
+        root = self.odd_root()
+        adapter = load_adapter("virtualization", "proxmox", root=root)
+        with self.assertRaisesRegex(AdapterError, "isn't listed"):
+            derived_values(adapter)
+
+    def test_a_script_that_is_a_link_out_of_its_skill_is_refused(self):
+        from adapters import derived_values
+        root = self.odd_root()
+        adapter = load_adapter("virtualization", "proxmox", root=root)
+        script = root / "adapter-proxmox" / adapter["scripts"][0]  # the first one the check looks at
+        outside = root / "elsewhere.sh"
+        outside.write_text(script.read_text())
+        script.unlink()
+        script.symlink_to(outside)
+        with self.assertRaisesRegex(AdapterError, "not a file in its skill folder"):
+            derived_values(adapter)
+
     def test_a_list_that_is_not_text_is_refused_plainly(self):
         path = Path(tempfile.mkdtemp(dir=SCRATCH)) / "host-scripts.sha256"
         self.addCleanup(shutil.rmtree, path.parent, True)

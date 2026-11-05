@@ -77,6 +77,10 @@ class RequirementsTests(unittest.TestCase):
         for needle in ("OpenCode 2.1.3", "PyYAML", "Podman or Docker"):
             self.assertIn(needle, needs)
         self.assertNotRegex(needs, r"(?i)\bgit,")  # git is not a requirement of the toolkit
+        # The tools don't need git, but the test suite does (some tests build a repository or ask
+        # git which files a folder publishes), and guide 11 has you run the tests on a copy.
+        git_bullet = " ".join(needs.split("(git is optional", 1)[1].split("- Podman", 1)[0].split())
+        self.assertIn("test suite", git_bullet)
         guide = (ROOT / "docs" / "guide" / "10-trial-run.md").read_text()
         self.assertIn("python3 tools/check_requirements.py", guide)
         expected = " ".join(guide.split("Expected:", 1)[1].split("\n\n", 1)[0].split())

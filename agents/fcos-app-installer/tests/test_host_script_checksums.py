@@ -59,13 +59,28 @@ class PinnedListTests(unittest.TestCase):
 
 
     def test_every_shipped_script_is_declared_by_its_adapter_so_it_is_pinned(self):
-        # A script an adapter does not declare in `scripts:` gets no checksum and no pin check.
+        # A script an adapter does not declare in `scripts:` gets no checksum and no pin check; one
+        # in a subfolder of scripts/ counts too.
         import yaml
-        for folder in sorted(SKILLS.glob("*/scripts")):
-            adapter = yaml.safe_load((folder.parent / "adapter.yaml").read_text())
+        folders = sorted(SKILLS.glob("*/scripts"))
+        self.assertTrue(folders)
+        for folder in folders:
             with self.subTest(skill=folder.parent.name):
-                present = {p.relative_to(folder.parent).as_posix() for p in folder.iterdir() if p.is_file()}
+                self.assertTrue((folder.parent / "adapter.yaml").is_file(), "a skill with scripts needs an adapter.yaml")
+                adapter = yaml.safe_load((folder.parent / "adapter.yaml").read_text())
+                present = {p.relative_to(folder.parent).as_posix() for p in folder.rglob("*") if p.is_file()}
                 self.assertEqual(present, set(adapter.get("scripts", [])))
+
+    def test_every_script_a_step_runs_is_one_the_adapter_declares(self):
+        # {{SKILL_DIR}}/scripts/x.sh in a step's text or commands must name a pinned script.
+        import re as regex
+        import yaml
+        for adapter_file in sorted(SKILLS.glob("*/adapter.yaml")):
+            text = adapter_file.read_text()
+            declared = set(yaml.safe_load(text).get("scripts", []))
+            for named in set(regex.findall(r"\{\{SKILL_DIR\}\}/(scripts/[A-Za-z0-9._-]+)", text)):
+                with self.subTest(skill=adapter_file.parent.name, script=named):
+                    self.assertIn(named, declared)
 
 
 class HonestWordingTests(unittest.TestCase):
@@ -78,19 +93,31 @@ class HonestWordingTests(unittest.TestCase):
                 text = " ".join(path.read_text().split())
                 self.assertNotRegex(text, r"(?i)\bagent (?:cannot|can't|can not) edit")
 
+    def readme_section(self):
+        return " ".join((ROOT / "README.md").read_text().split("## Changing a host script", 1)[1]
+                        .split("\n## ", 1)[0].split())
+
     def test_the_readme_says_it_is_a_guard_rail_and_what_makes_it_hard(self):
-        section = " ".join((ROOT / "README.md").read_text().split("## Changing a host script", 1)[1]
-                           .split("\n## ", 1)[0].split())
+        section = self.readme_section()
         self.assertIn("guard rail", section)
         self.assertIn("separate user", section)
         self.assertIn("read the change first", section)
 
+    def test_the_known_gaps_are_named_not_hidden(self):
+        # The rules match the command text; the shell expands wildcards and quotes afterwards.
+        section = self.readme_section()
+        self.assertIn("host-s*", section)
+        self.assertNotRegex(section, r"(?i)spellings of the name included")
+        comment = AGENT.read_text().split("The pinned list of host-script checksums", 1)[1].split("action: shell", 1)[0]
+        self.assertIn("avoid all three", " ".join(comment.split()))
+
 
 class AgentGuardsTheListTests(unittest.TestCase):
     """A guard rail, not a wall: the agent's rules deny edits to the list and any shell command that
-    names it, including the quoted, globbed and variable spellings of its name. The agent runs as
-    the owner's user, so only a separate user (README) makes this a hard boundary. The agent reads
-    the list with its read tool if it needs to."""
+    contains its name, its extension or the word "host-script". Spellings that avoid all three
+    (host-s*, a quote inside the word) get through; the agent runs as the owner's user, so only a
+    separate user (README) makes this a hard boundary. The agent reads the list with its read tool
+    if it needs to."""
 
     def setUp(self):
         self.text = AGENT.read_text()
@@ -110,8 +137,9 @@ class AgentGuardsTheListTests(unittest.TestCase):
             with self.subTest(command=command):
                 self.assertEqual(effect(self.text, "shell", command), "deny")
 
-    def test_quoted_globbed_and_variable_spellings_of_the_name_are_denied_too(self):
-        # Review of the checksum-list commit: the shell expands these to the real file.
+    def test_spellings_that_keep_part_of_the_name_are_denied_too(self):
+        # Review of the checksum-list commit: the shell expands these to the real file. Each keeps
+        # the word host-script or the extension .sha25, which is what the rules look for.
         for command in ("sha256sum a > host-scripts.sha\"256\"",
                         "sha256sum a > host-scripts.sha25?",
                         "sha256sum a > host-scripts.sha2*",
@@ -139,6 +167,33 @@ class AgentGuardsTheListTests(unittest.TestCase):
                 self.assertEqual(effect(drafter, "shell", command), "deny")
         # What it is for still works.
         self.assertEqual(effect(drafter, "shell", "python3 tools/adapters.py show --role file_server"), "allow")
+
+    def test_each_drafter_shell_deny_stands_on_its_own(self):
+        # One command per rule that no other rule catches, so removing a rule fails a test (review of
+        # the checksum-list guard-rail commit). Each starts with a command the drafter may run.
+        drafter = DRAFTER.read_text()
+        only = {
+            "newline": "python3 tools/adapters.py show --role x\nid",
+            "carriage return": "python3 tools/adapters.py show --role x\rid",
+            "the agent folder": "python3 tools/adapters.py draft --role x --provider y --from /tmp/opencode/r.json --workspace /w/.opencoder",
+            "the list's word": "python3 tools/adapters.py show --role x --provider host-script",
+            "the list's extension": "python3 tools/adapters.py show --role x --provider a.sha256",
+        }
+        for what, command in only.items():
+            with self.subTest(denied=what):
+                self.assertEqual(effect(drafter, "shell", command), "deny")
+
+    def test_the_drafters_edits_reach_neither_the_list_nor_the_agent_folder_through_its_drafts_folder(self):
+        drafter = DRAFTER.read_text()
+        for path in ("/ws/adapters-draft/../host-scripts.sha256",
+                     f"/ws/adapters-draft/../../toolkit/{SKILLS_DIR}/a/x",
+                     f"/ws/adapters-draft/{SKILLS_DIR}/a/SKILL.md",
+                     "/ws/adapters-draft/adapter-x/../../site.yaml"):
+            with self.subTest(path=path):
+                self.assertEqual(effect(drafter, "edit", path), "deny")
+        for path in ("/ws/adapters-draft/adapter-x/SKILL.md", "/tmp/opencode/recorded.json"):
+            with self.subTest(path=path):
+                self.assertEqual(effect(drafter, "edit", path), "allow")
 
 
 if __name__ == "__main__":

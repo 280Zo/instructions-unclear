@@ -253,17 +253,22 @@ PINNED_LINE = re.compile(r"([0-9a-f]{64})  (\S+)")
 def _pinned() -> dict[str, str]:
     """The pinned list (sha256sum format): script path in the skills folder -> sha256."""
     try:
-        text = CHECKSUMS.read_text(encoding="utf-8")
+        # Bytes, decoded here: text mode would turn a lone CR or a CRLF into a newline, which
+        # sha256sum -c does not do.
+        text = CHECKSUMS.read_bytes().decode("utf-8")
     except (OSError, UnicodeDecodeError) as error:
-        reason = getattr(error, "strerror", None) or "it is not UTF-8 text"
+        reason = "it is not UTF-8 text" if isinstance(error, UnicodeDecodeError) else error.strerror
         raise AdapterError(f"the checksum list {CHECKSUMS} can't be read ({reason}); the host "
                            "scripts can't be checked, so no step that runs one is shown") from None
     found = {}
-    for number, line in enumerate(text.splitlines(), start=1):
+    lines = text.split("\n")  # not splitlines(): sha256sum -c ends a line at a newline only
+    if lines[-1] == "":
+        lines.pop()  # the newline that ends the last line
+    for number, line in enumerate(lines, start=1):
         match = PINNED_LINE.fullmatch(line)
         if match is None:
-            raise AdapterError(f"{CHECKSUMS.name}:{number}: not a sha256sum line "
-                               "(the list takes no blank lines or comments)")
+            raise AdapterError(f"{CHECKSUMS.name}:{number}: not a sha256sum line (lowercase hex, two spaces, "
+                               "a path; the list takes no blank lines or comments)")
         if match[2] in found:  # `sha256sum -c` would complain too, and the last line would win silently
             raise AdapterError(f"{CHECKSUMS.name}:{number}: {match[2]} is listed twice")
         found[match[2]] = match[1]
@@ -271,8 +276,8 @@ def _pinned() -> dict[str, str]:
 
 
 def _pin_state(path: Path, digest: str) -> str:
-    """"pinned" when the script's sha256 is the one the list holds for it, "differs" when the list
-    holds another, "unlisted" when the list does not hold it. The owner runs these scripts as root,
+    """Returns "pinned" when the script's sha256 is the one the list holds for it, "differs" when the
+    list holds another, "unlisted" when the list does not hold it. The owner runs these scripts as root,
     and a step shows the checksum of the file as it is, so a script the agent (or anything else)
     changed would pass the owner's sha256sum check (review of ff605b1). The list is a file the
     agent's rules keep it from editing (a guard rail; README), outside every skill folder, and it

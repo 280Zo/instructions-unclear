@@ -26,9 +26,10 @@ router, your file server, your DNS provider, and anything involving a secret.
   Earlier 2.0 releases ignore the config's `instructions` list, so the rules in
   `rules/` wouldn't load (fixed in 2.0.30), and the agents' skill and subagent
   filters were tested on 2.1.3.
-- Python 3 with PyYAML. (git is optional: when it is installed, the tools ask it
-  for the checkout around the toolkit; without it they look for a `.git` above
-  the toolkit instead. Nothing else needs it.)
+- Python 3 with PyYAML. (git is optional for the tools: when it is installed,
+  they ask it for the checkout around the toolkit; without it they look for a
+  `.git` above the toolkit instead. The test suite does need git: some tests
+  build a repository or ask git which files a folder publishes.)
 - Podman or Docker: the build checks run Butane and Podman's Quadlet generator
   in containers, from the images pinned in `tools/images.env`. You pull them
   once yourself; the tools say the exact command.
@@ -185,11 +186,12 @@ You run the adapters' host scripts as root, after checking the checksum a step
 shows. A step takes that checksum from the script itself, so the tools also
 compare every script with `host-scripts.sha256`, a list the agent's rules keep
 it from editing: the list sits outside the skills, edits to it are denied, and
-so is any shell command that names it, its extension or the word `host-script`
-(quoted, globbed and variable spellings of the name included). This is a guard
-rail like the rest of the agent's permissions, not a wall: the agent runs as
-your user, so a command written to get around the rules could still rewrite the
-file. For a hard boundary run the agent as a separate user. A script whose hash
+so is any shell command that contains its name, its extension (`.sha25`) or the
+word `host-script`. A spelling that avoids all three, such as `host-s*` or
+`host-'scripts'.sha'256'`, is expanded by the shell after the rules have matched
+and gets through. This is a guard rail like the rest of the agent's
+permissions, not a wall: the agent runs as your user, so a command written to
+get around the rules could still rewrite the file. For a hard boundary run the agent as a separate user. A script whose hash
 differs from the list, or that the list does not hold, stops its step with a
 message, and only scripts an adapter declares in its `scripts:` list are
 pinned. The list takes one `sha256sum` line per script, no blank lines or

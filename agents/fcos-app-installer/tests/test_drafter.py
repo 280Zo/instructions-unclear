@@ -17,6 +17,14 @@ class DrafterTests(unittest.TestCase):
     def setUp(self):
         self.text = DRAFTER.read_text()
 
+    def test_the_commands_it_is_told_to_run_are_on_one_line(self):
+        # The drafter's rules deny a newline in a command (it separates commands), so a command the
+        # prompt wraps over two lines would be refused if a model copied the wrap.
+        import re
+        for command in re.findall(r"`(python3 tools/[^`]*)`", self.text.split("\n---\n", 1)[1]):
+            with self.subTest(command=command[:60]):
+                self.assertNotIn("\n", command)
+
     def test_is_a_subagent(self):
         fm = frontmatter(self.text)
         self.assertIn("mode: subagent", fm)
