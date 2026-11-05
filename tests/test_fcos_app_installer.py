@@ -210,6 +210,50 @@ class InstallerRefusalTests(InstallerBase):
                 self.refused(str(self.target), "--apply", why="looks like a secret")
                 path.unlink()
 
+    def test_the_secret_name_list_covers_the_common_credential_files(self):
+        for name in ("tools/secrets.yaml", "tools/secret.txt", "tools/token", "tools/token.txt", "tools/api_key.txt",
+                     "tools/password.txt", "docs/.aws/credentials", "docs/.git-credentials", "docs/.pgpass",
+                     "docs/.htpasswd", "docs/.dockercfg", "docs/.boto", "docs/kubeconfig", "docs/service-account.json",
+                     "docs/oauth.json", "docs/terraform.tfvars", "docs/x.tfstate.backup", "docs/x.p8", "docs/x.jks",
+                     "docs/x.keystore", "docs/x.asc", "docs/x.gpg", "docs/known_hosts", "docs/.gnupg/pubring.kbx"):
+            with self.subTest(name=name):
+                path = self.source / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("x\n")
+                self.refused(str(self.target), "--apply", why="looks like a secret")
+                path.unlink()
+
+    def test_names_that_only_mention_a_secret_are_not_refused(self):
+        for name in ("tools/secret_scan.py", "tests/test_secret_scan.py", "tools/images.env", "docs/secret-handling.md",
+                     "tools/token_check.py", "docs/passwords-in-the-workspace.md"):
+            with self.subTest(name=name):
+                path = self.source / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("x\n")
+                code, out, err = run(self.module, str(self.target), source=self.source)
+                self.assertEqual(code, 0, err)
+                path.unlink()
+
+    def test_a_named_pipe_at_a_destination_is_refused_not_waited_on(self):
+        import signal
+        self.target.mkdir()
+        os.mkfifo(self.target / "site.example.yaml")
+        signal.signal(signal.SIGALRM, lambda *_: (_ for _ in ()).throw(TimeoutError("install.py hung on a pipe")))
+        signal.alarm(5)
+        self.addCleanup(signal.alarm, 0)
+        self.refused(str(self.target), "--check", why="not a regular file")
+
+    def test_an_unwritable_folder_with_nothing_to_change_is_not_a_reason_to_refuse(self):
+        run(self.module, str(self.target), "--apply", source=self.source)
+        guide = self.target / "docs" / "guide"
+        guide.chmod(0o555)
+        self.addCleanup(guide.chmod, 0o755)
+        code, out, err = run(self.module, str(self.target), "--check", source=self.source)
+        self.assertEqual((code, err), (0, ""), out)
+
+    def test_a_padded_folder_argument_is_a_usage_error(self):
+        self.refused("  " + str(self.target) + "  ", "--apply", why="usage")
+
     def test_an_empty_folder_argument_is_a_usage_error_not_the_current_folder(self):
         self.refused("", "--apply", why="usage")
 

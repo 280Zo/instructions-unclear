@@ -12,8 +12,8 @@ Usage:
   install.py <folder> --apply    do it
   install.py <folder> --check    dry run that exits 1 when anything would change
 
-It copies a fixed list of top-level entries and nothing else, refuses links and anything that
-looks like a secret, never deletes, and never touches files that are not on that list (.opencode/,
+It copies a fixed list of top-level entries and nothing else, refuses links and common secret
+file names (it never reads a file's contents for secrets), never deletes, and never touches files that are not on that list (.opencode/,
 AGENTS.md, your workspace, your own files). A file that is on the list and differs from the
 toolkit's copy IS replaced, including a README.md or .gitignore of yours at the folder's top and
 edits you made to a toolkit file; the dry run lists every such file as "changed" first, so read it
@@ -34,10 +34,16 @@ HERE = Path(__file__).resolve().parent
 INSTALL_LIST = ("tools", "templates", "docs", "schemas", "specs", "tests", "site.example.yaml",
                 "host-scripts.sha256", ".gitignore")
 SKIP_DIRS = {"__pycache__"}
-SECRET_SUFFIXES = (".token", ".key", ".pem", ".p12", ".pfx", ".kdbx", ".cred", ".tfstate")
+SECRET_SUFFIXES = (".token", ".key", ".pem", ".p12", ".pfx", ".p8", ".jks", ".keystore", ".kdbx", ".cred",
+                   ".tfstate", ".tfstate.backup", ".gpg", ".asc")
 SECRET_PREFIXES = (".env", "id_rsa", "id_ed25519", "id_ecdsa", "id_dsa")
-SECRET_NAMES = {"credentials.json", ".credentials.json", "auth.json", ".claude.json", ".npmrc", ".netrc"}
-SECRET_FOLDERS = {"secrets", ".ssh"}
+SECRET_NAMES = {"credentials.json", ".credentials.json", "auth.json", ".claude.json", ".npmrc", ".netrc",
+                ".git-credentials", ".pgpass", ".htpasswd", ".dockercfg", ".boto", "kubeconfig", "known_hosts",
+                "service-account.json", "oauth.json", "terraform.tfvars"}
+# A file whose whole name (before the extension) is one of these; "secret_scan.py" is not.
+SECRET_STEMS = {"secret", "secrets", "token", "tokens", "password", "passwords", "passwd", "api_key", "apikey",
+                "api-key", "credentials", "credential"}
+SECRET_FOLDERS = {"secrets", ".ssh", ".aws", ".gnupg"}
 
 
 class Refusal(Exception):
@@ -48,6 +54,7 @@ def looks_secret(relative: Path) -> bool:
     """Names that hold or suggest a secret, whatever their case; nothing like them is installed."""
     name = relative.name.lower()
     return (name.endswith(SECRET_SUFFIXES) or name.startswith(SECRET_PREFIXES) or name in SECRET_NAMES
+            or name.split(".", 1)[0] in SECRET_STEMS
             or bool(SECRET_FOLDERS & {part.lower() for part in relative.parts}))
 
 
@@ -125,18 +132,14 @@ def check_room(target: Path) -> None:
 
 def classify(files: dict[str, Path], target: Path) -> dict[str, list[str]]:
     """new / changed / same, refusing a destination that would be written through a link, over a
-    folder, into a file or into a folder we cannot write to; the whole plan is checked before
-    anything is written."""
+    folder or a pipe, into a file, or into a folder we cannot write to; the whole plan is checked
+    before anything is written. A folder we cannot write to matters only where a file is to be
+    created or replaced in it."""
     result = {"new": [], "changed": [], "same": []}
     for relative, path in files.items():
         destination = target / relative
         if destination.is_dir() and not destination.is_symlink():
             raise Refusal(f"{shown(relative)} in {target} is a folder where a file belongs")
-        container = destination.parent
-        while not container.exists():
-            container = container.parent
-        if container.is_dir() and not os.access(container, os.W_OK | os.X_OK):
-            raise Refusal(f"{shown(container.relative_to(target).as_posix() or '.')} in {target} is not writable")
         for parent in [*reversed(destination.relative_to(target).parents)][1:] + [Path(relative)]:
             step = target / parent
             if step.is_symlink():
@@ -144,13 +147,22 @@ def classify(files: dict[str, Path], target: Path) -> dict[str, list[str]]:
         for parent in Path(relative).parents:
             if parent != Path(".") and (target / parent).exists() and not (target / parent).is_dir():
                 raise Refusal(f"{parent.as_posix()} in {target} is not a folder")
+        if destination.exists() and not destination.is_file():
+            raise Refusal(f"{shown(relative)} in {target} is not a regular file (a pipe, a device or a socket)")
         if not destination.exists():
-            result["new"].append(relative)
+            kind = "new"
         elif (destination.read_bytes() != path.read_bytes()
               or (destination.stat().st_mode & 0o111) != (path.stat().st_mode & 0o111)):
-            result["changed"].append(relative)
+            kind = "changed"
         else:
-            result["same"].append(relative)
+            kind = "same"
+        if kind != "same":
+            container = destination.parent
+            while not container.exists():
+                container = container.parent
+            if container.is_dir() and not os.access(container, os.W_OK | os.X_OK):
+                raise Refusal(f"{shown(container.relative_to(target).as_posix() or '.')} in {target} is not writable")
+        result[kind].append(relative)
     return result
 
 
@@ -174,9 +186,10 @@ def write(files: dict[str, Path], target: Path, names: list[str]) -> None:
 def main(argv: list[str], source: Path | None = None) -> int:
     flags = {a for a in argv if a.startswith("--")}
     folders = [a for a in argv if not a.startswith("--")]
-    if (len(folders) != 1 or not folders[0].strip() or not flags <= {"--apply", "--check"}
+    if (len(folders) != 1 or not folders[0].strip() or folders[0] != folders[0].strip()
+            or not flags <= {"--apply", "--check"}
             or {"--apply", "--check"} <= flags):
-        print("usage: install.py <folder> [--apply | --check]   (the folder must be named)", file=sys.stderr)
+        print("usage: install.py <folder> [--apply | --check]   (the folder must be named, without surrounding spaces)", file=sys.stderr)
         return 2
     source = Path(source) if source is not None else HERE / "toolkit"
     folder = source.resolve().parent  # the installer's own folder, whatever source is

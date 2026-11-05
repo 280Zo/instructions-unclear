@@ -225,8 +225,9 @@ def agent_path(name):
 
 
 def declared_rules(path):
-    """(action, resource, effect) in order, from the agent file's permission list."""
-    """Only the exact form the file uses is read (action, resource, effect on three lines, the
+    """(action, resource, effect) in order, from the agent file's permission list.
+
+    Only the exact form the file uses is read (action, resource, effect on three lines, the
     resource double-quoted); anything else raises, so a rule can never drop out of the map unseen."""
     head = (ROOT / path).read_text().split("\n---\n", 1)[0].splitlines()
     start = next((i for i, line in enumerate(head) if re.fullmatch(r"\s*permissions:", line)), None)
@@ -238,11 +239,11 @@ def declared_rules(path):
     found = []
     for i in range(0, len(body), 3):
         action = re.fullmatch(r'\s*- action: (?:"([A-Za-z0-9_*?\-]+)"|([A-Za-z0-9_*?\-]+))', body[i])
-        resource = re.fullmatch(r'\s+resource: "((?:[^"\\\n]|\\[nr])*)"', body[i + 1])
+        resource = re.fullmatch(r'\s+resource: "((?:[^"\\\n]|\\[nrt])*)"', body[i + 1])
         effect = re.fullmatch(r"\s+effect: (allow|ask|deny)", body[i + 2])
         if not (action and resource and effect):
             raise ValueError(f"{path}: a permission rule is not in the form this script reads: {body[i].strip()}")
-        found.append((action[1] or action[2], resource[1].replace("\\n", "\n").replace("\\r", "\r"), effect[1]))
+        found.append((action[1] or action[2], resource[1].replace("\\n", "\n").replace("\\r", "\r").replace("\\t", "\t"), effect[1]))
     return found
 
 

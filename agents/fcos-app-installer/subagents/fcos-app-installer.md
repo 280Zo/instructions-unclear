@@ -157,6 +157,16 @@ opencode:
     - action: shell
       resource: "rm -f /tmp/opencode/* ?*"
       effect: deny
+    # The shell splits on a tab or $IFS as it does on a space, and a redirect truncates a file.
+    - action: shell
+      resource: "rm -f /tmp/opencode/*\t*"
+      effect: deny
+    - action: shell
+      resource: "rm -f /tmp/opencode/*IFS*"
+      effect: deny
+    - action: shell
+      resource: "rm -f /tmp/opencode/*>*"
+      effect: deny
     - action: shell
       resource: "python3 -m unittest */*"
       effect: deny
@@ -746,8 +756,9 @@ message to a file in `/tmp/opencode/` and run `git commit -F` on it, and keep
 those words out of the message. Stage a change to the adapters or to your own
 files with `git add .`, which names no path and stays inside the toolkit's
 folder (the `-A` form would stage the whole checkout when the toolkit is a
-subfolder of one), and say so in the file list you show; `git diff` and
-`git status` without a path show the same files.
+subfolder of one), and say so in the file list you show. Check what is staged with
+`git status .` and `git diff .`: without the `.` they list the whole checkout,
+including files `git add .` did not stage.
 
 ## Final report
 

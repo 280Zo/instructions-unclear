@@ -301,8 +301,10 @@ class FcosAppInstallerMapTests(unittest.TestCase):
     def test_the_rule_reader_takes_the_forms_the_file_uses(self):
         good = ('    - action: skill\n      resource: "adapter-*"\n      effect: allow\n'
                 '    # a comment between rules\n'
-                '    - action: "pmb_*"\n      resource: "*"\n      effect: deny\n')
-        self.assertEqual(self.declared(good), [("skill", "adapter-*", "allow"), ("pmb_*", "*", "deny")])
+                '    - action: "pmb_*"\n      resource: "*"\n      effect: deny\n'
+                '    - action: shell\n      resource: "rm -f *\\t*"\n      effect: deny\n')
+        self.assertEqual(self.declared(good), [("skill", "adapter-*", "allow"), ("pmb_*", "*", "deny"),
+                                               ("shell", "rm -f *\t*", "deny")])
 
     def test_the_rule_reader_refuses_any_form_it_could_misread_or_skip(self):
         # A rule it cannot read would drop out of the map without a word; refuse instead.

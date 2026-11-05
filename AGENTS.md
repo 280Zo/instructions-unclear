@@ -311,12 +311,12 @@ git ls-files --cached --others --exclude-standard -z -- . ':!AGENTS.md' ':!skill
 
 Expect no output. The patterns catch home paths, common token formats (Anthropic and OpenAI `sk-`, GitHub, Slack, AWS), and any token, secret, password or API key field holding a literal value. `${VAR}` placeholders and `{env:...}` / `{file:...}` references pass. The scan skips this file, which quotes the patterns. It was checked against fake Claude Code, Codex and imported MCP credentials, and caught all of them.
 
-The scan also skips `agents/fcos-app-installer/toolkit/`: its tests and guide use placeholder paths such as `/home/owner`, and it has a leak scan of its own that also looks for the owner's real values. Run that one in an installed folder (`python3 tools/publish_check.py`, as the installed README describes), not in the repository, where it can't find the skills it exempts. The scan above skips `skills/`, so run it again on any of my own folders there (whose README says "Written for this repo"), replacing the `git ls-files ...` pathspec with those folders, for example `skills/eli5 skills/report skills/package-management`.
+The scan also skips `agents/fcos-app-installer/toolkit/`: its tests and guide use placeholder paths such as `/home/owner`, and it has a leak scan of its own that also looks for the owner's real values. Run that one in an installed folder (`python3 tools/publish_check.py`, as the installed README describes), not in the repository: there the skills sit at `skills/`, not `.opencode/skills/`, so the product names it exempts when it finds them (such as `proxmox`) come back as hits. The scan above skips `skills/`, so run it again on any of my own folders there (whose README says "Written for this repo"), replacing the `git ls-files ...` pathspec with those folders, for example `skills/eli5 skills/report skills/package-management`.
 
-Third-party skills are full of documentation placeholders (`api_key="your-api-key"`, `/home/ubuntu`), so they get a narrower scan for real token formats and your own home path:
+Third-party skills are full of documentation placeholders (`api_key="your-api-key"`, `/home/ubuntu`), so they get a narrower scan for real token formats and your own home path. Run the same narrow scan on `agents/fcos-app-installer/toolkit/`, which the broad scan skips:
 
 ```bash
-git ls-files --cached --others --exclude-standard -z -- skills/ \
+git ls-files --cached --others --exclude-standard -z -- skills/ agents/fcos-app-installer/toolkit/ \
   | xargs -0 rg -n \
       -e "/home/$USER" -e "/run/user/$(id -u)" \
       -e '\bsk-[A-Za-z0-9_-]{16,}' -e 'gh[pousr]_[A-Za-z0-9]{20,}' -e 'xox[abpr]-[A-Za-z0-9-]{10,}' -e 'AKIA[0-9A-Z]{16}'

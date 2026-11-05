@@ -404,7 +404,10 @@ class ReviewFixTests(unittest.TestCase):
     def test_removing_its_own_scratch_file_is_allowed_and_extra_arguments_are_not(self):
         self.assertEqual(effect(self.text, "shell", "rm -f /tmp/opencode/apply-edge.sh"), "allow")
         for command in ("rm -f /tmp/opencode/a /etc/passwd", "rm -f /tmp/opencode/a b",
-                        "rm -f /tmp/opencode/*..*", "rm -f /tmp/opencode/a ../b"):
+                        "rm -f /tmp/opencode/*..*", "rm -f /tmp/opencode/a ../b",
+                        # The shell splits on a tab or $IFS as on a space, and a redirect truncates a file.
+                        "rm -f /tmp/opencode/a\t/etc/passwd", "rm -f /tmp/opencode/a${IFS}/etc/passwd",
+                        "rm -f /tmp/opencode/a$IFS/etc/passwd", "rm -f /tmp/opencode/a>/home/o/file"):
             with self.subTest(command=command):
                 self.assertEqual(effect(self.text, "shell", command), "deny")
 
@@ -415,6 +418,12 @@ class ReviewFixTests(unittest.TestCase):
                 self.assertIn(word, section)
         self.assertIn("git add .", section)
         self.assertNotIn("git add -A", section)
+        # Without a path, status and diff list the whole enclosing checkout, which add . does not stage.
+        self.assertIn("git status .", section)
+        self.assertIn("git diff .", section)
+        self.assertNotIn("show the same files", section)
+        self.assertEqual(effect(self.text, "shell", "git status ."), "allow")
+        self.assertEqual(effect(self.text, "shell", "git diff ."), "allow")
         # The rules really do deny a commit message holding any of them.
         for message in ("git commit -m 'Update host-scripts list'", "git commit -m 'drop .opencode'",
                         "git commit -m 'refresh the .sha256 list'"):
