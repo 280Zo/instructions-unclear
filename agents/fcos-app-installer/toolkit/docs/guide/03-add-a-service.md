@@ -45,8 +45,9 @@ If a fact isn't in the official docs, ask (question 14) instead of guessing.
 
 **Apps that send mail.** Nothing here uses an email server. Set the app's mail driver to its log driver,
 so what it would send is written to its log. Many apps still refuse to build a message
-without a sender address: Monica's invitations failed with "An email must have
-a From or a Sender header" until `MAIL_FROM_ADDRESS` was set. Give the app a
+without a sender address: one app failed on a real install with "An email must have
+a From or a Sender header" until its sender setting was set (3.13, "Apps tested on a real
+install"). Give the app a
 sender address on the owner's domain (nothing is sent from or to it), and find
 in its docs which log file holds the mail. A link in such a mail can be a
 credential (an invitation lets someone join): the owner reads it from the log
@@ -62,7 +63,7 @@ gateway's details (how the groups and bindings behave, what to do when a group i
 `operations.md`, "Who may open an app".
 
 **The app's dashboard section and logo.** The gateway's dashboard may list apps under section headings.
-Propose a section from what the app is for (Monica, a relationship manager: `Relationships`), reuse an
+Propose a section from what the app is for (a relationship manager: `Relationships`), reuse an
 existing section when the app fits one, ask the owner, and put it in `section:`. For the logo, find it
 in the app's official repository or website (an SVG or PNG the project publishes), save it as
 `<workspace>/services/<svc>/<file>`, show it to the owner, and use it as `icon:` once they confirm; the
@@ -111,7 +112,7 @@ Write `<workspace>/services/<svc>/service.yaml`
 
 ```fish
 # desktop (fish)
-set ws <workspace>; set svc monica
+set ws <workspace>; set svc <svc>
 python3 tools/check_workspace.py $ws; and python3 tools/gen_service.py $ws/services/$svc/service.yaml $ws/site.yaml $ws/services/$svc; and bash tools/build-vm.sh $ws/services/$svc/rendered
 ```
 
@@ -148,12 +149,12 @@ script creates exactly what Ignition would create. List every fragment by name
 (no wildcards). If any fragment is refused, the tool prints nothing and exits
 non-zero, and nothing is pushed.
 
-List exactly the fragments 3.6 generated for this service, by name (Monica
-shown: a `db` container with a database and some `local` data):
+List exactly the fragments 3.6 generated for this service, by name (shown for
+a service with a `db` container that has a database and some `local` data):
 
 ```fish
 # desktop (fish)
-set ws <workspace>; set vm apps; set svc monica
+set ws <workspace>; set vm <vm>; set svc <svc>
 rm -f /tmp/opencode/apply-$svc.sh
 python3 tools/ign_to_script.py $ws/vms/$vm/igns/{$svc,$svc-port,$svc-backup-db,$svc-backup-files}.ign > /tmp/opencode/apply-$svc.sh; and python3 tools/vmssh.py run $vm -- 'f=$(mktemp) && cat > "$f" && sudo bash "$f"; rc=$?; rm -f "$f"; exit $rc' < /tmp/opencode/apply-$svc.sh; and python3 tools/vmssh.py run $vm -- "sudo loginctl enable-linger $svc; sudo systemctl start user@\$(id -u $svc).service; sudo systemctl reload nftables; sudo -u $svc XDG_RUNTIME_DIR=/run/user/\$(id -u $svc) systemctl --user daemon-reload"; or echo "STOP: push failed, nothing more was run"
 ```
@@ -192,11 +193,11 @@ sudo -u <svc> XDG_RUNTIME_DIR=/run/user/<uid> podman secret ls
 ```
 
 Report back: the secret names now listed. Then **[Agent]** starts the
-containers and the backup timers that 3.6 generated (Monica shown):
+containers and the backup timers that 3.6 generated (shown for a service with `db`, `app` and `cron` containers):
 
 ```fish
 # desktop (fish)
-set vm apps; set svc monica
+set vm <vm>; set svc <svc>
 python3 tools/vmssh.py run $vm -- "sudo -u $svc XDG_RUNTIME_DIR=/run/user/\$(id -u $svc) systemctl --user start $svc-db.service $svc-app.service $svc-cron.service $svc-backup-db.timer $svc-backup-files.timer"
 ```
 
@@ -250,7 +251,7 @@ Run each check and report its result to the owner:
 
 ```fish
 # desktop (fish)
-set vm apps; set ip 192.0.2.30; set svc monica; set port 8110; set host monica.example.org
+set vm <vm>; set ip 192.0.2.30; set svc <svc>; set port 8110; set host <svc>.example.org
 python3 tools/vmssh.py run $vm -- "sudo -u $svc XDG_RUNTIME_DIR=/run/user/\$(id -u $svc) systemctl --user is-active $svc-app.service"
 python3 tools/vmssh.py logs $vm $svc-app.service -n 30
 python3 tools/http_check.py --timeout 3 http://$ip:$port/
@@ -262,7 +263,7 @@ python3 tools/vmssh.py run $vm -- "sudo -u $svc XDG_RUNTIME_DIR=/run/user/\$(id 
 
 | Check | Expected |
 |---|---|
-| Units active, logs clean | `active`, no errors in the last 30 lines. Some apps print generated credentials at first start (Monica prints an OAuth client secret), so logs are read only with `vmssh.py logs`, which hides anything that looks like a secret (`[hidden]`); `vmssh.py run` refuses `journalctl`, `podman logs`, log files, environments and secret stores. If a secret reaches the agent anyway, it stops and tells the owner to rotate it. |
+| Units active, logs clean | `active`, no errors in the last 30 lines. Some apps print generated credentials at first start (one app printed an OAuth client secret), so logs are read only with `vmssh.py logs`, which hides anything that looks like a secret (`[hidden]`); `vmssh.py run` refuses `journalctl`, `podman logs`, log files, environments and secret stores. If a secret reaches the agent anyway, it stops and tells the owner to rotate it. |
 | Port from another LAN machine (the desktop) | `refused` or `timeout` (any status code means the port is open to the LAN: fail) |
 | Port from the login front end | an HTTP status from the app |
 | `https://<host>/` | `302` to `https://<login host>/...`; for a service on its own login, the app's own page or login (no redirect to the login page) |
@@ -352,3 +353,21 @@ These are design choices, not facts from a source.
   `ExecStartPre=/usr/bin/mountpoint -q <mount-root>` for every mount root it uses. Accessing an
   automount point triggers the NFS mount, and if the mount fails the service fails. Rootful
   exceptions also add `RequiresMountsFor=`.
+
+### Apps tested on a real install
+
+What was observed with one app, Monica 4.1 (a relationship manager), when the toolkit was tested on
+a real install. They are examples of kinds of app, not rules for every app.
+
+- **A mail sender address.** With the mail driver set to the log driver, the app's invitations still
+  failed with "An email must have a From or a Sender header" until `MAIL_FROM_ADDRESS` was set. Its
+  settings are in its `.env.example`.
+- **A forced https address.** With `APP_ENV=production` the app builds every link from `APP_URL` and
+  requires https. Through the SSH tunnel its login page loaded, but signing in redirected to
+  `https://localhost:8080` and Firefox stopped with `SSL_ERROR_RX_RECORD_TOO_LONG`. Section 8 has the
+  way around it.
+- **Secrets in the log.** It printed an OAuth client secret into its log at first start, which is why
+  logs are read only with `vmssh.py logs`.
+
+Source: https://raw.githubusercontent.com/monicahq/monica/4.x/.env.example · https://github.com/monicahq/docker
+

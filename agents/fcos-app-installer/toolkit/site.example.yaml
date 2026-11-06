@@ -23,40 +23,17 @@ roles:
   file_server: {provider: ASK}
   dns_certificates: {provider: ASK}
 
-# --- Proxmox hosts (keys are your own names; always ask which one a VM goes on) ---
+# --- Hosts: the virtualization servers (keys are your own names; always ask which one a VM goes on) ---
 # always_on: false means the host is sometimes shut down; anything on it is off
-# with it. The edge VM must go on an always_on host.
+# with it. The edge VM must go on an always_on host. The virtualization adapter
+# says which more keys it needs; its site.example.yaml shows them all.
 hosts:
   host-a:
-    name: pve-a                 # ASK: the name the owner uses for this server
-    node: pve-a                 # optional: Proxmox node name, if different from the key
-    address: 192.0.2.21         # optional until tools/pve.py is used: the server's IP or DNS name (API on port 8006)
-    ca_file: null               # optional: path to the CA certificate for the API (null: system CAs)
+    name: ASK                   # the name the owner uses for this server
     always_on: false            # ASK
-    storage: local-lvm          # ASK: VM disk storage pool
-    snippets_storage: coreos    # ASK: storage with content "snippets" (guide 01)
-    iso_storage: local          # optional: directory storage with content "iso"; only for ignition.method nocloud-iso (granted by setup-agent-access.sh --iso-storage <id>)
-    image_dir: /var/lib/vz/import  # import folder of iso_storage (Proxmox default for storage local)
-    bridge: vmbr0               # ASK
-    vlan_tag: null              # ASK: null if untagged
-    max_cores: 12               # ASK
-    max_ram_mib: 12288          # ASK
-    backup_storage: local       # ASK: host-local storage for vzdump
   host-b:
-    name: pve-b                 # ASK
-    node: pve-b                 # optional
-    address: 192.0.2.22         # optional until tools/pve.py is used
-    ca_file: null               # optional
+    name: ASK
     always_on: true             # ASK
-    storage: local-lvm          # ASK
-    snippets_storage: coreos    # ASK
-    iso_storage: local          # optional (see host-a)
-    image_dir: /var/lib/vz/import  # import folder of iso_storage (Proxmox default for storage local)
-    bridge: vmbr0               # ASK
-    vlan_tag: null              # ASK
-    max_cores: 4                # ASK
-    max_ram_mib: 8192           # ASK
-    backup_storage: local       # ASK
 
 # --- Network (the owner sets reservations, DNS and inter-VLAN rules in OPNsense) ---
 network:
@@ -112,7 +89,7 @@ shared_groups: []
 vms: []
 # Entry shape (one per VM; the owner decides how many):
 #   - name: edge                  # maps to: VM_NAME
-#     vmid: 201                   # ASK: unused Proxmox VM ID on that host
+#     vmid: 201                   # ASK: an unused VM ID on that host (if the hypervisor adapter uses one)
 #     host: host-b
 #     ip: 192.0.2.10              # ASK  maps to: EDGE_IP (for every VM's firewall)
 #     cores: 2
@@ -175,7 +152,7 @@ services: []
 #     groups: [family]            # groups of the auth gateway that may open it (none: see its operations.md)
 #     redirects: [{path: /.well-known/carddav, to: /dav/}]   # answered by the ingress with https
 #     section: Relationships      # the gateway dashboard's heading for the app
-#     icon: monica.svg            # logo file in services/<svc>/, from the app's official sources
+#     icon: logo.svg            # logo file in services/<svc>/, from the app's official sources
 #     accepted_risks: []          # e.g. "db on NFS, 12 GB, accepted 2026-11-02"
 
 # --- Derived placeholders (the agent builds these; nothing to fill in) ---

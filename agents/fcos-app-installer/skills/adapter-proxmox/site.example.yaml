@@ -1,0 +1,36 @@
+# The hosts section of the site file for the Proxmox VE adapter. Values are examples: ask the user for each
+# one marked ASK. This shows every key the adapter's scripts and tools/pve.py read.
+# Keys are your own names; always ask which one a VM goes on.
+# always_on: false means the host is sometimes shut down; anything on it is off
+# with it. The edge VM must go on an always_on host.
+hosts:
+  host-a:
+    name: pve-a                 # ASK: the name the owner uses for this server
+    node: pve-a                 # optional: Proxmox node name, if different from the key
+    address: 192.0.2.21         # optional until tools/pve.py is used: the server's IP or DNS name (API on port 8006)
+    ca_file: null               # optional: path to the CA certificate for the API (null: system CAs)
+    always_on: false            # ASK
+    storage: local-lvm          # ASK: VM disk storage pool
+    snippets_storage: coreos    # ASK: storage with content "snippets" (guide 01)
+    iso_storage: local          # optional: directory storage with content "iso"; only for ignition.method nocloud-iso (granted by setup-agent-access.sh --iso-storage <id>)
+    image_dir: /var/lib/vz/import  # import folder of iso_storage (Proxmox default for storage local)
+    bridge: vmbr0               # ASK
+    vlan_tag: null              # ASK: null if untagged
+    max_cores: 12               # ASK
+    max_ram_mib: 12288          # ASK
+    backup_storage: local       # ASK: host-local storage for vzdump
+  host-b:
+    name: pve-b                 # ASK
+    node: pve-b                 # optional
+    address: 192.0.2.22         # optional until tools/pve.py is used
+    ca_file: null               # optional
+    always_on: true             # ASK
+    storage: local-lvm          # ASK
+    snippets_storage: coreos    # ASK
+    iso_storage: local          # optional (see host-a)
+    image_dir: /var/lib/vz/import  # import folder of iso_storage (Proxmox default for storage local)
+    bridge: vmbr0               # ASK
+    vlan_tag: null              # ASK
+    max_cores: 4                # ASK
+    max_ram_mib: 8192           # ASK
+    backup_storage: local       # ASK

@@ -13,7 +13,7 @@ adapter.yaml:
   defaults                    optional choices for the agent (e.g. ignition_method)
   owner_steps                 <step id>: {title, steps[], blocks[], uses[], report_back[]}
                               blocks: [{machine, code}]; machine names the machine
-                              and shell, e.g. "proxmox {{HOST}} (bash, root)"
+                              and shell, e.g. "<product> {{HOST}} (bash, root)"
   scripts                     host scripts it ships (paths in its skill folder); the
                               tool fills in each one's checksum as <FIRST WORD>_SHA256
                               (lib.sh: LIB_SHA256), the agent's folder as AGENT_REPO

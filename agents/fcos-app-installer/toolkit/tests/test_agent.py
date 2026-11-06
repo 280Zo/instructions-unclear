@@ -97,7 +97,7 @@ class AgentTests(unittest.TestCase):
 
     def test_every_vm_setting_is_decided_and_shown(self):
         text = " ".join(body(self.text).split())
-        for needle in ("Every VM setting matters", "settings table", "never leave a setting to a Proxmox default"):
+        for needle in ("Every VM setting matters", "settings table", "never leave a setting to the platform's default"):
             self.assertIn(needle, text)
 
     def test_question_rules_from_the_trial_run(self):

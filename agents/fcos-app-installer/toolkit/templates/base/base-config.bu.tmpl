@@ -14,7 +14,7 @@ passwd:
 
 storage:
   filesystems:
-    # Proxmox scsi1, kept across rebuilds. Ignition formats it only when it
+    # The second disk (the hypervisor's scsi1), kept across rebuilds. Ignition formats it only when it
     # has no matching filesystem yet; it never wipes existing data.
     - device: /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi1
       format: xfs

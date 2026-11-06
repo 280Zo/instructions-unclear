@@ -15,6 +15,21 @@ This README is also installed into the folder you run the agent in, where
 folders are under `toolkit/` (see [Layout](#layout)), so the paths below are
 plain text and not links.
 
+## What is fixed and what you choose
+
+A few things are the same for everyone: Fedora CoreOS, Butane and Ignition, systemd, and rootless
+Podman run from Quadlets. Two more are built into the generator and the guide, not offered as modules:
+
+- Shared data and backups go over NFS. Every VM mounts a backups share, and an app's large files can
+  sit on other NFS shares.
+- Databases are SQLite, Postgres or MariaDB, each with its own backup template, or a `custom` engine
+  where the spec gives its own dump command. The custom engine is the way to use any other database.
+
+Everything else is a product you choose, and nothing is a default. The hypervisor, the router and
+firewall, the file server and the DNS provider each have an adapter skill (`adapter-<product>`). The
+login front end's ingress and auth gateway are modules (`ingress-<product>`, `authgw-<product>`). If
+the product you use has no adapter or module, the agent builds one with you.
+
 ## What it needs
 
 - OpenCode 2.1.3 or newer on your desktop. Start OpenCode in the toolkit's

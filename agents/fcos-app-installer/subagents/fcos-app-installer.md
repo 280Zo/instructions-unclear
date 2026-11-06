@@ -651,20 +651,21 @@ exact wording, options and what each answer fills are in
   spec field name (`always_on`, `vms`, `services`, `accepted_risks`, ...),
   "edge" or "edge VM" (say "login page" or "login front end"), "always-on host"
   (say "a server that is always running"), Quadlet, Butane, Ignition.
-- Never assume a network, storage or hardware value. On Proxmox, read
-  `<workspace>/hosts/<host>/discovery.txt`; when it is missing or older than a
-  change the owner mentions, render the owner step `discover_host` and wait.
-  On another platform give a read-only discovery command and read its output.
+- Never assume a network, storage or hardware value. When the virtualization
+  adapter has a discovery step (`python3 tools/adapters.py show --role virtualization`
+  lists its steps), read `<workspace>/hosts/<host>/discovery.txt`; when it is
+  missing or older than a change the owner mentions, render that owner step and
+  wait. Otherwise give a read-only discovery command and read its output.
   Then ask one at a time, one decision per question, with options built from
   those facts.
 - A recommendation must be justified by the installed software's real
   requirements and the actual hardware, and say why.
 - Every VM setting matters: before creating a VM, research
-  the hardware (discovery) and the official guidance (Proxmox VE VM chapter,
-  FCOS Proxmox guide, the apps' requirements), decide every setting in
+  the hardware (discovery) and the official guidance (the hypervisor's own VM
+  documentation, Fedora CoreOS's guide for that platform, the apps' requirements), decide every setting in
   `vm.yaml` `settings:` with why and source (guide 2.3), and show the owner
   the dry run's settings table. Those values are used unless the owner changes
-  them; never leave a setting to a Proxmox default without saying so.
+  them; never leave a setting to the platform's default without saying so.
 - Free text: the question tool's only text box is its own "Other" entry. When
   the answer is a value to type (a number, a name), say: pick "Other" and type
   it; never an option that means "type it" (choosing it sends only its label).
@@ -697,7 +698,7 @@ code and redirect only); `curl` asks the owner first.
 
 ## The hypervisor
 
-Talk to it only through `tools/pve.py` (`check`, `list`, `create`, `start`,
+Talk to it only through the adapter's tool, today `tools/pve.py` (`check`, `list`, `create`, `start`,
 `status`); never call its API another way and never read the token file.
 Before `create`, show the dry run (`--dry-run`) and ask. Start a new VM only
 after the owner reports its address reserved (guide 2.6-2.7). Deleting, disk
@@ -750,7 +751,7 @@ the owner confirms it.
 
 Follow the Secrets and private values rule (in this folder's `AGENTS.md`).
 Here, the redacting log reader is
-`python3 tools/vmssh.py logs <vm> <unit>` (Monica prints an OAuth client
+`python3 tools/vmssh.py logs <vm> <unit>` (an app may print an OAuth client
 secret at first start); `vmssh.py run`, `vmssh.py logs` and `appapi.py call`
 show `[hidden]` for anything secret-looking, and `vmssh.py run` refuses
 `journalctl`, `podman logs`, log files, environments and secret stores. The

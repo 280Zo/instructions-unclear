@@ -10,7 +10,7 @@ should be kept:
 
 ```fish
 # desktop (fish)
-set ws <workspace>; set vm apps; set svc monica; set uid 3110
+set ws <workspace>; set vm <vm>; set svc <svc>; set uid <uid>
 python3 tools/vmssh.py run $vm -- "sudo loginctl disable-linger $svc; sudo systemctl stop user@$uid.service"
 for f in $ws/vms/$vm/igns/{$svc,$svc-port,$svc-backup-db,$svc-backup-files}.ign
     python3 -c 'import json,sys; s=json.load(open(sys.argv[1])).get("storage",{}); [print(e["path"]) for k in ("files","links") for e in s.get(k,[])]' $f

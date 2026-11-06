@@ -216,7 +216,7 @@ def cmd_run(ws: Path, site: dict, args) -> int:
 def cmd_logs(ws: Path, site: dict, args) -> int:
     admin, ip = _target(site, args.vm)
     if not UNIT.match(args.unit):
-        raise VmSshError("the unit must be a unit name ending in .service, e.g. monica-app.service")
+        raise VmSshError("the unit must be a unit name ending in .service, e.g. myapp-app.service")
     if not 1 <= args.lines <= 500:
         raise VmSshError("-n must be between 1 and 500")
     field = "_SYSTEMD_UNIT" if args.system else "_SYSTEMD_USER_UNIT"

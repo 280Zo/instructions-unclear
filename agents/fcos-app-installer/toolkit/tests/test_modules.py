@@ -311,6 +311,25 @@ class SharedFilesNameNoProductTests(unittest.TestCase):
                 with self.subTest(file=str(path.relative_to(ROOT)), product=product):
                     self.assertNotIn(product, text)
 
+    def test_site_example_templates_and_prompt_name_no_hypervisor_product(self):
+        agent = Path(__file__).resolve().parents[2] / "subagents" / "fcos-app-installer.md"
+        paths = [ROOT / "site.example.yaml", *sorted((ROOT / "templates").rglob("*.tmpl"))]
+        if agent.is_file():  # in the repository; the installed copy is checked by the agent tests
+            paths.append(agent)
+        for path in paths:
+            with self.subTest(file=path.name):
+                self.assertNotIn("proxmox", path.read_text().lower())
+
+    def test_the_proxmox_adapter_ships_the_hosts_example(self):
+        data = yaml.safe_load((SKILLS / "adapter-proxmox" / "site.example.yaml").read_text())
+        self.assertEqual(list(data), ["hosts"])
+        for host in data["hosts"].values():
+            for key in ("name", "node", "address", "storage", "bridge", "always_on", "max_cores", "max_ram_mib"):
+                self.assertIn(key, host)
+        shared = yaml.safe_load((ROOT / "site.example.yaml").read_text())["hosts"]
+        for host in shared.values():
+            self.assertEqual(set(host), {"name", "always_on"})
+
     def test_each_module_shows_an_example_of_its_site_section(self):
         for name, key in (("ingress-traefik", "traefik"), ("authgw-authentik", "authentik")):
             with self.subTest(module=name):

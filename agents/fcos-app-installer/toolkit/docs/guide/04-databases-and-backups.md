@@ -54,7 +54,7 @@ readable.
 
 ```fish
 # desktop (fish)
-set vm apps; set svc monica; set ctr db
+set vm <vm>; set svc <svc>; set ctr db
 python3 tools/vmssh.py run $vm -- "sudo -u $svc XDG_RUNTIME_DIR=/run/user/\$(id -u $svc) systemctl --user start $svc-backup-$ctr.service; sudo -u $svc ls -lt /var/mnt/backups/<vm>/$svc/ | head"
 python3 tools/vmssh.py logs $vm $svc-backup-$ctr.service -n 20
 ```
@@ -95,7 +95,7 @@ sudo systemctl --user -M <svc>@ start <app units>
 For the login front end's auth gateway the units and names are in its `operations.md`, "Restoring the
 database".
 
-MariaDB (Monica shown). The dump has a `DROP TABLE IF EXISTS` before every
+MariaDB. The dump has a `DROP TABLE IF EXISTS` before every
 table and no `CREATE DATABASE` (`mariadb-dump` enables `--opt` by default;
 checked in a real dump), so loading it into the existing database replaces its
 tables. Loading it into a live database is **not tested** here; the throwaway
@@ -120,7 +120,7 @@ database service's first backups, and again after big changes. It starts a
 throwaway MariaDB from the same image the service uses, with no network and its
 data in memory (`--tmpfs`), loads the newest dump, and compares counts with the
 live database. It prints counts and file names only, never rows, so nothing
-personal reaches the agent. Tested on a real install (Monica: 95 tables, 2 users,
+personal reaches the agent. Tested on a real install (one app: 95 tables, 2 users,
 1 account, restored and live equal).
 
 ```bash

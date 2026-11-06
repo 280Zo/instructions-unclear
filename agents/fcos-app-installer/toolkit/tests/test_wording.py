@@ -187,7 +187,7 @@ class GuideTests(unittest.TestCase):
         # tunnel, but signing in redirected to https://localhost:<port> and failed. The
         # working way in is the app's route without the login, edited by hand and put back.
         text = (GUIDE / "08-break-glass.md").read_text()
-        self.assertIn("builds every link from its own `https://` address", text)
+        self.assertIn("build every link from their own `https://` address", text)
         self.assertIn("SSL_ERROR_RX_RECORD_TOO_LONG", text)
         # The edit itself is the ingress module's procedure.
         from layout import SKILLS
@@ -197,6 +197,26 @@ class GuideTests(unittest.TestCase):
         self.assertIn("<svc>.yml.login", ops)
         self.assertIn("put it back", ops.lower())
         self.assertIn("ingress module's `operations.md`", text)
+
+    def test_the_fixed_parts_are_stated_where_a_reader_looks(self):
+        readme = (ROOT / "README.md").read_text()
+        self.assertIn("## What is fixed and what you choose", readme)
+        for needle in ("Shared data and backups go over NFS", "SQLite, Postgres or MariaDB", "`custom` engine"):
+            self.assertIn(needle, readme)
+        schema = (ROOT / "schemas" / "service.schema.md").read_text()
+        self.assertIn("fixed parts of the design", schema)
+        self.assertIn("What is fixed and what you choose", schema)
+
+    def test_procedure_pages_name_no_example_app_outside_the_tested_on_a_real_install_notes(self):
+        # Examples use <svc>; what was observed with one app is kept as a note, with its sources.
+        notes = "### Apps tested on a real install"
+        for page in guide_pages():
+            text = page.read_text()
+            if page.name == "03-add-a-service.md":
+                self.assertIn(notes, text)
+                text = text.split(notes, 1)[0]
+            with self.subTest(page=page.name):
+                self.assertNotRegex(text, r"(?i)monica")
 
     def test_apps_that_mail_need_a_sender_address_for_the_log_mailer(self):
         # Monica's invitations failed with 'An email must have a From or a Sender header'

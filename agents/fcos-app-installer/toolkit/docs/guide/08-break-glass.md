@@ -39,10 +39,10 @@ normal way in, and close them when done (Ctrl+C).
 
 **Apps that force their own `https://` address.** The tunnel above only works
 in a browser for an app that builds its links from the address it is asked on.
-Monica, in production mode, builds every link from its own `https://` address:
-tested on a real install, its login page loaded through the tunnel, but signing
+Some apps, in production mode, build every link from their own `https://` address:
+tested on a real install with one such app, its login page loaded through the tunnel, but signing
 in redirected to `https://localhost:8080` and Firefox stopped with
-`SSL_ERROR_RX_RECORD_TOO_LONG`. The tunnel still shows that such an app answers
+`SSL_ERROR_RX_RECORD_TOO_LONG` (3.13, "Apps tested on a real install"). The tunnel still shows that such an app answers
 (a status check), and nothing more.
 
 For those apps, and when only the auth gateway is down while the ingress still runs, the way in is the

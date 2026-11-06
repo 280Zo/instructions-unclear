@@ -61,6 +61,10 @@ Every container also gets `NoNewPrivileges=true`, `DropCapability=ALL`,
 | `host` | `nfs` only: `/var/mnt/<share>/...`; the share must be listed for the VM in `site.yaml`. No label option is added. |
 | `engine` | `local-db` only: `sqlite` (needs `file`), `postgres` (`pg_dump -Fc`, user and database from `POSTGRES_USER` and `POSTGRES_DB`), `mariadb` or `mysql` (`mariadb-dump --single-transaction` inside the container with its own `MARIADB_USER`, `MARIADB_PASSWORD`, `MARIADB_DATABASE`; the official `mysql` image has neither the tool nor those variables, so use `custom` for it), `custom` (needs `command`: one line that prints the dump). One `local-db` volume per container. |
 
+These storage and database choices are fixed parts of the design: shared data goes over NFS, and
+`engine` is `sqlite`, `postgres`, `mariadb` (or `mysql`) or `custom` with its own dump command. They are
+not modules; see the README, "What is fixed and what you choose".
+
 ## Secret
 
 | Field | Meaning |

@@ -11,7 +11,8 @@ The agent itself only uses `tools/pve.py` (check, list, create, start,
 status) with the token. Everything that needs root on the host, or deletes,
 is an owner step from this skill. The host scripts the owner runs are in
 `scripts/` (`lib.sh`, `setup-agent-access.sh`, `discover-host.sh`,
-`teardown-agent-access.sh`); the renderer puts their checksums in the steps.
+`teardown-agent-access.sh`); the renderer puts their checksums in the steps. `site.example.yaml` in this
+folder shows the `hosts` section of the site file with every key the scripts and `tools/pve.py` read.
 
 Order of a first install: `discover_host`, `download_image`,
 `create_api_access`, then `store_api_token` as its own step right after a new

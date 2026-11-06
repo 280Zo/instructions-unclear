@@ -111,7 +111,7 @@ new needs an account for it: they go into the site file's `people:` (People and 
 
 Authentik's dashboard lists apps under section headings, all on one page: each application's `group`
 becomes a heading over its apps (authentik's `web/src/user/LibraryPage/ApplicationList.ts`). Propose a
-section from what the app is for (Monica, a relationship manager: `Relationships`), reuse an existing
+section from what the app is for (a relationship manager: `Relationships`), reuse an existing
 section when the app fits one, ask the owner, and put it in `section:`. Apps with the same section
 are listed together; without one, an app is listed under "Ungrouped".
 
