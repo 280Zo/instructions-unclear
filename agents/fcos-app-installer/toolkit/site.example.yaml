@@ -43,11 +43,11 @@ network:
   dns: 192.0.2.1                # ASK: the router's DNS resolver
   timezone: UTC     # ASK  maps to: TIMEZONE
 
-# Tailscale is only the route into the LAN for the user's desktop and phone.
-# Their Tailscale DNS points at the router. If the subnet router runs on a host
+# Remote access (a VPN or an overlay network) is only the route into the LAN for the user's
+# desktop and phone. Their DNS points at the router. If what routes into the LAN runs on a host
 # that isn't always_on, remote access stops while that host is off: warn.
-tailscale:
-  subnet_router_on: ASK         # router, a key under hosts:, or other
+remote_access:
+  route_into_lan_on: ASK        # router, a key under hosts:, or other
 
 # --- Admin user name on every VM ---
 admin_user: admin               # ASK  maps to: ADMIN_USER

@@ -34,8 +34,9 @@ class NetworkValueTests(unittest.TestCase):
             with self.subTest(bad=bad), self.assertRaises(RenderError) as caught:
                 render("{{LAN_CIDR}}", {"LAN_CIDR": bad})
             self.assertIn("LAN_CIDR", str(caught.exception))
+            self.assertNotIn("Tailscale", str(caught.exception))
 
-    def test_home_and_tailscale_networks_pass(self):
+    def test_home_and_shared_address_networks_pass(self):
         home = ".".join(["10", "0", "0", "0"]) + "/16"  # built at runtime: the publish check flags private addresses
         self.assertEqual(render("{{LAN_CIDR}}", {"LAN_CIDR": f"{home}, 100.64.0.0/10"}), f"{home}, 100.64.0.0/10")
 

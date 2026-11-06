@@ -438,6 +438,13 @@ class SiteExampleTests(unittest.TestCase):
         for key in ("vms", "services", "shared_groups"):
             self.assertEqual(site[key], [], key)
 
+    def test_site_example_names_remote_access_without_a_product(self):
+        text = (ROOT / "site.example.yaml").read_text()
+        site = yaml.safe_load(text)
+        self.assertEqual(site["remote_access"], {"route_into_lan_on": "ASK"})
+        self.assertNotIn("tailscale", text.lower())
+        self.assertNotIn("tailscale", site)
+
     def test_site_example_roles(self):
         site = yaml.safe_load((ROOT / "site.example.yaml").read_text())
         self.assertEqual(

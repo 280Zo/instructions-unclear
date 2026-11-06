@@ -29,10 +29,11 @@ def _networks(key: str, value: str) -> str:
         except ValueError:
             raise RenderError(f"{key}: {item!r} is not an IPv4 network like 192.0.2.0/24") from None
         # Home networks only: a public range (or halves that add up to every
-        # address) never belongs in these rules. Private LANs and Tailscale's
-        # 100.64.0.0/10 are not global, so they pass.
+        # address) never belongs in these rules. Private LANs and the shared
+        # address space 100.64.0.0/10 (used by some VPN overlays) are not
+        # global, so they pass.
         if net.prefixlen < 8 or net.is_global or net.is_loopback or net.overlaps(ipaddress.IPv4Network("0.0.0.0/8")):
-            raise RenderError(f"{key}: {item} is not a home network (private, Tailscale or documentation range)")
+            raise RenderError(f"{key}: {item} is not a home network (private, shared 100.64.0.0/10 or documentation range)")
         nets.append(net)
     for i, a in enumerate(nets):
         for b in nets[i + 1:]:

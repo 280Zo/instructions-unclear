@@ -176,7 +176,7 @@ it created. For a service moved to its own login, only its old provider.
 Everyone signs in to the login page with a local account: no email, and nothing here talks to the
 outside. Groups decide which apps each person gets:
 
-- `guests`: the default group. Anyone who can reach the login page (your home networks and Tailscale)
+- `guests`: the default group. Anyone who can reach the login page (your home networks and your remote-access network)
   can create their own account on its **Sign up** link and lands here, with only the apps whose
   `groups:` list `guests`.
 - `family`: the household. The user moves a person here (or adds more apps per person) in Authentik's
