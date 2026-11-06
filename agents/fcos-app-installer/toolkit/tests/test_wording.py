@@ -208,6 +208,18 @@ class GuideTests(unittest.TestCase):
         self.assertIn("fixed parts of the design", schema)
         self.assertIn("What is fixed and what you choose", schema)
 
+    def test_no_garbled_phrases_from_replacing_owner_with_user(self):
+        # "the user's user" and "an user" came from a mechanical rename; the person and a Linux account
+        # must never share a word that way. Phrases may wrap across a line.
+        from layout import SKILLS
+        agents = ROOT / ".opencode" / "agents"
+        files = guide_pages() + [ROOT / "README.md", agents / "fcos-app-installer.md", agents / "adapter-drafter.md",
+                                 *sorted(SKILLS.rglob("*.md")), *sorted(SKILLS.rglob("*.yaml"))]
+        for path in files:
+            if path.is_file():
+                with self.subTest(file=str(path.relative_to(ROOT))):
+                    self.assertNotRegex(path.read_text(), r"user's\s+user\b|\ban\s+user\b|\buser\s+user\b")
+
     def test_procedure_pages_name_no_example_app(self):
         # Examples use <svc>; the symptoms a reader needs are described without naming the app.
         for page in guide_pages():
