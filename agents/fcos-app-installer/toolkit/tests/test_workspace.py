@@ -242,6 +242,17 @@ class PrivateValueTests(TempHome):
         init_workspace(ws)
         return ws
 
+    def test_values_a_module_shows_in_its_own_example_are_public(self):
+        ws = self.make()
+        (ws / "site.yaml").write_text(
+            "edge:\n  authentik:\n    uid: 3201\n    postgres_user: authentik\n    postgres_db: authentik\n"
+            "    image: ghcr.io/goauthentik/server:2026.8\n    host: my-private-login\n"
+            "  traefik:\n    image: docker.io/library/traefik:v3\n")
+        values = private_values(ws)
+        self.assertEqual(values & {"authentik", "ghcr.io/goauthentik/server:2026.8",
+                                   "docker.io/library/traefik:v3"}, set())
+        self.assertIn("my-private-login", values)
+
     def test_private_values_skip_example_defaults(self):
         ws = self.make()
         gateway, domain = j("10", ".9.8.1"), j("myhome.", "duckdns.org")

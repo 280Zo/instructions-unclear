@@ -3,7 +3,8 @@
 `fcos-app-installer` is an [OpenCode](https://opencode.ai) agent that builds Fedora
 CoreOS virtual machines and adds containerized services to them: rootless
 Podman Quadlets, backups by database engine, a firewall per VM, and one login
-front end (Traefik + Authentik) in front of every service. It follows the
+front end in front of every service (an ingress and an auth gateway you
+choose; Traefik with Authentik is the pairing tested so far). It follows the
 procedure in `docs/guide/README.md`, asks its questions in plain language
 (`docs/guide/questions.md`), and stops for every step on systems it doesn't
 touch: your hypervisor's shell, your router, your file server, your DNS
@@ -202,8 +203,8 @@ repository need the same change. Skills and subagents are allow lists.
 
 ## The login front end and getting in when it's down
 
-One login front end (Traefik and Authentik) sits in front of every app: you
-log in once, and Authentik's dashboard lists your apps. Each app's port only
+One login front end (an ingress and an auth gateway) sits in front of every
+app: you log in once, and the gateway's dashboard lists your apps. Each app's port only
 accepts connections from the login front end (apps bound to loopback open no
 port at all). If the login front end is down, the apps keep running, and you
 reach any of them through an SSH tunnel:
@@ -214,7 +215,7 @@ ssh -N -L 8080:<vm-ip>:<port> <admin>@<vm-ip>
 ```
 
 1. You SSH from your desktop into the app's own VM. SSH from the admin
-   network is allowed on every VM and doesn't involve Authentik.
+   network is allowed on every VM and doesn't involve the auth gateway.
 2. SSH then connects to the app's port from inside that VM. Traffic from a
    machine to its own address counts as local traffic, which the firewall
    accepts (`iif "lo" accept`). So the tunnel reaches the app even though the
@@ -317,7 +318,7 @@ at all is an error, not a pass.
 | Folder | Holds |
 |---|---|
 | `.opencode/` | the agents (`fcos-app-installer`, the main one for Fedora CoreOS; `adapter-drafter`, its helper that drafts adapters) and the `/add-service` command, written by rulesync |
-| `.opencode/skills/` | skills: one adapter per provider (its owner steps, notes and host scripts), the generic fallback, `researching-apps-for-self-hosting`, and one module per product the login front end can use (`ingress-*`, `authgw-*`): its data, spec and templates. List them with `python3 tools/modules.py list` |
+| `.opencode/skills/` | skills: one adapter per provider (its owner steps, notes and host scripts), the generic fallback, `researching-apps-for-self-hosting`, and one module per product the login front end can use (`ingress-*`, `authgw-*`): its data, spec, templates and `operations.md` (the steps that depend on the product). List them with `python3 tools/modules.py list` |
 | `host-scripts.sha256` | the pinned checksum of every host script; the agent's rules keep it from editing this file |
 | `AGENTS.md` | rules that don't depend on the OS: how owner steps are given, how secrets and private values are handled; written by rulesync |
 | `docs/guide/` | the procedure, provider-neutral |

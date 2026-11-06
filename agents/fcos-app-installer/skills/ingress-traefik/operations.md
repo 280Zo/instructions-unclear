@@ -10,6 +10,9 @@ their sources, are in `reference.md`.
 |---|---|
 | UID/GID for the `traefik` account | `edge.traefik.uid/gid` |
 | Email for Let's Encrypt notices | `acme_email` |
+| The Traefik image, pinned to a major tag | `edge.traefik.image` |
+
+An example of this section, with the keys filled in, is `site.example.yaml` in this folder.
 
 ## Ports and the VM
 

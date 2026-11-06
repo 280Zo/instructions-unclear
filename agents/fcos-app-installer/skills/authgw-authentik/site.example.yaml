@@ -1,0 +1,20 @@
+# The Authentik section of the site file, under edge. Values are examples: pick your own host, UID/GID
+# and images (ask: check the current release).
+edge:
+  authentik:
+    host: auth.example.org
+    uid: 3201
+    gid: 3201
+    image: ghcr.io/goauthentik/server:2026.8
+    postgres_image: docker.io/library/postgres:17-alpine   # stay on 17
+    postgres_user: authentik
+    postgres_db: authentik
+
+# The login page's own accounts and sign-in sources (all optional; top-level keys). See operations.md,
+# "People and access".
+signup: {group: guests}
+people:
+  - {username: sam, name: "Sam Example", groups: [family]}
+signin_sources:
+  google: {client_id: "<client ID>"}
+  apple: {client_id: "<services ID>;<team ID>;<key ID>"}

@@ -40,7 +40,8 @@ fi
 # with the fixtures behind the login page (a fixture named like one of the
 # chosen login front end modules' own services is a stand-alone example and
 # would clash with it).
-mapfile -t own < <(python3 "$root/tools/modules.py" services "$site")
+own_names="$(python3 "$root/tools/modules.py" services "$site")" || exit 1
+mapfile -t own <<<"$own_names"
 routed=()
 for spec in "$root"/tests/fixtures/services/*.yaml; do
     name="$(basename "$spec" .yaml)"

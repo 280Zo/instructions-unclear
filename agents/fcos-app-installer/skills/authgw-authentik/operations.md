@@ -14,6 +14,9 @@ What guide 6.1 asks for, for this module:
 | Authentik image: the current release from Authentik's docs, pinned to `YYYY.M` | `edge.authentik.image` |
 | Postgres image for Authentik (the official compose file names the major version) | `edge.authentik.postgres_image` |
 | UID/GID for the `authentik` account | `edge.authentik.uid/gid` |
+| The Postgres user and database names | `edge.authentik.postgres_user`, `edge.authentik.postgres_db` |
+
+An example of this section, with the keys filled in, is `site.example.yaml` in this folder. It also shows the optional `signup`, `people` and `signin_sources` keys (see "People and access").
 
 ## The containers
 
@@ -273,6 +276,15 @@ aren't offered: Authentik has no upload page of its own, and a picture stored on
 in the ID token, which the outpost's sign-out puts into its redirect address (`id_token_hint`,
 `internal/outpost/proxyv2/application/application.go`).
 
+## Upgrading
+
+Back up the database first (the nightly backup counts; check that it is recent), read the release notes
+for every release line in between, and move one release line at a time: the upgrade must follow the
+sequence of releases, going to the latest patch of each `major.minor` before the next one, for example
+`2025.2.x`, then `2025.4.x`, then `2025.6.x`. Authentik does not support downgrading, so the backup is the
+way back. The server and all outposts must be on the same version. Change `edge.authentik.image`, then
+follow guide 11. The source is in `reference.md`, "Upgrading Authentik".
+
 ## Stop it
 
 ```fish
@@ -296,7 +308,7 @@ sudo -u authentik cat /var/mnt/backups/<vm>/authentik/<newest>.dump | sudo -u au
 sudo systemctl --user -M authentik@ start authentik-server.service authentik-worker.service
 ```
 
-If the database password is lost, set a new one inside the database first (guide 5.3), then keep the
+If the database password is lost, set a new one inside the database first (guide 5.3, with `<svc>` = `authentik` and `<container>` = `postgres`), then keep the
 new value in the password manager and create it as the secret `authentik_pg_password`.
 
 ## If only Authentik is down

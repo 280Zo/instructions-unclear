@@ -1,0 +1,6 @@
+# The Traefik section of the site file, under edge. Values are examples: pick your own UID/GID.
+edge:
+  traefik:
+    uid: 3202
+    gid: 3202
+    image: docker.io/library/traefik:v3

@@ -109,7 +109,7 @@ def render(ws: Path, notes: list[str]) -> str:
                    f"| {spec.get('port', 'none')} | {uid}/{spec.get('gid', uid)} | {', '.join(classes) or 'none'} "
                    f"| {backups} |")
 
-    uids = sorted({s.get("uid") for s in specs} | {(edge.get(k) or {}).get("uid") for k in chosen.values()} - {None})
+    uids = sorted(({s.get("uid") for s in specs} | {(edge.get(k) or {}).get("uid") for k in chosen.values()}) - {None})
     ports: dict[str, list] = {}
     for spec in specs:
         if spec.get("port"):

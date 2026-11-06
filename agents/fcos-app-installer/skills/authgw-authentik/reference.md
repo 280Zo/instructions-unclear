@@ -31,3 +31,9 @@ Source: https://github.com/goauthentik/authentik/blob/version/2026.8.5/blueprint
 The embedded outpost's `providers` list is replaced as a whole. One generated rules file
 (`outpost-providers`) lists every proxy provider and is regenerated from the configuration whenever a
 service is added or removed.
+
+## Upgrading Authentik
+
+Upgrades must follow the sequence of major releases: do not skip from an older release directly to the most recent one. Upgrade to the latest minor version (`.x`) within each `major.minor` release before the next (from `2025.2.1`: the latest `2025.2.x`, then the latest `2025.4.x`, then `2025.6.x`). Authentik does not support downgrading, so back up the PostgreSQL database before upgrading. The authentik server and all outposts must be the same version.
+
+Source: https://docs.goauthentik.io/install-config/upgrade/

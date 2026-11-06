@@ -119,8 +119,11 @@ def _scan(capability: str) -> tuple[list[str], list[tuple[str, str]]]:
     if SKILLS.is_dir():
         for path in sorted(SKILLS.glob(f"{prefix}*/module.yaml")):
             try:
-                if read(path.parent.name)["capability"] == capability:
+                declared = read(path.parent.name)["capability"]
+                if declared == capability:
                     good.append(path.parent.name)
+                else:
+                    bad.append((path.parent.name, f"its folder name says {capability} but module.yaml declares {declared}"))
             except Exception as error:
                 bad.append((path.parent.name, str(error)))
     return good, bad
@@ -160,8 +163,8 @@ def code(name: str):
     data = read(name)
     try:
         loaded = importlib.import_module(data["code"])
-    except ImportError as error:
-        raise _error(f"module {name!r}: its code {data['code']!r} can't be imported ({error})") from None
+    except Exception as error:  # ImportError, or whatever the module's code raises while loading
+        raise _error(f"module {name!r}: its code {data['code']!r} can't be loaded ({type(error).__name__}: {error})") from None
     for function, params in CONTRACT[data["capability"]].items():
         target = getattr(loaded, function, None)
         if not callable(target) or tuple(inspect.signature(target).parameters) != params:
@@ -190,7 +193,14 @@ def spec_path(name: str) -> Path:
 
 def service_name(name: str) -> str:
     """The name of the service a module's spec describes (the site file's edge.<name> section)."""
-    return _yaml().safe_load(spec_path(name).read_text(encoding="utf-8"))["name"]
+    path = spec_path(name)  # a module error from read() passes through
+    try:
+        service = _yaml().safe_load(path.read_text(encoding="utf-8"))["name"]
+    except Exception as error:
+        raise _error(f"module {name!r}: its spec can't be read or has no name ({type(error).__name__}: {error})") from None
+    if not (isinstance(service, str) and service):
+        raise _error(f"module {name!r}: its spec has no name")
+    return service
 
 
 def frontend_services(site: dict) -> dict[str, str]:

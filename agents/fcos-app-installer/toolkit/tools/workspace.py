@@ -214,6 +214,8 @@ def private_values(ws: Path) -> set[str]:
     """Every scalar in site.yaml and the service specs worth protecting."""
     ws = Path(ws)
     public = EXAMPLE.read_text(encoding="utf-8") if EXAMPLE.exists() else ""
+    # What a module shows as the example of its own site section (<module>/site.example.yaml) is public too.
+    public += "".join("\n" + p.read_text(encoding="utf-8") for p in sorted(SKILLS.glob("*/site.example.yaml")))
     # Exact names of the adapters the agent ships (adapter-<name>/ in the skills folder) are public.
     shipped = {p.parent.name.removeprefix("adapter-") for p in SKILLS.glob("adapter-*/adapter.yaml")}
     files = [ws / "site.yaml", *sorted((ws / "services").glob("*/service.yaml")),

@@ -30,7 +30,7 @@ class InstallNotesTests(unittest.TestCase):
         site["shared_groups"] = [{"name": "ai-projects", "gid": 3100}]
         (self.ws / "site.yaml").write_text(yaml.safe_dump(site))
         monica = spec_fixture("monica")
-        monica.update(login="authentik", hostname="monica", groups=["family"], section="Relationships")
+        monica.update(login="gateway", hostname="monica", groups=["family"], section="Relationships")
         for spec in (monica, spec_fixture("single")):
             folder = self.ws / "services" / spec["name"]
             folder.mkdir(parents=True)
@@ -39,6 +39,12 @@ class InstallNotesTests(unittest.TestCase):
     def text(self):
         write_notes(self.ws)
         return (self.ws / "AGENTS.md").read_text()
+
+    def test_a_service_without_a_uid_does_not_break_the_numbers_in_use(self):
+        folder = self.ws / "services" / "nouid"
+        folder.mkdir(parents=True)
+        (folder / "service.yaml").write_text("name: nouid\nvm: apps\n")
+        self.assertIn("UIDs:", self.text())
 
     def test_lists_what_exists(self):
         text = self.text()

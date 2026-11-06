@@ -84,7 +84,7 @@ render `config.bu`, and build the VM folder.
 The certificate step needs the DNS adapter's `acme` block: the generator stops with the fix when the
 site names no DNS provider, or one whose adapter has no such block.
 
-Each module's `operations.md` ("The containers") says how its containers are set up.
+The ingress's `operations.md` ("Ports and the VM") says what its VM needs, and the auth gateway's ("The containers") how its containers are set up.
 
 ## 6.4 [Owner] Certificate token and DNS
 

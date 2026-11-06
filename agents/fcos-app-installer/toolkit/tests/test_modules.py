@@ -147,6 +147,28 @@ class CraftedModuleTests(unittest.TestCase):
                     modules.code("ingress-traefik")
                 self.assertIn("ingress-traefik", str(caught.exception))
 
+    def test_a_module_whose_code_or_spec_fails_to_load_is_a_clear_error(self):
+        (self.tmp / "ingress-traefik" / "spec.yaml").write_text("not: a service\n")
+        with self.assertRaises(SpecError) as caught:
+            modules.service_name("ingress-traefik")
+        self.assertIn("ingress-traefik", str(caught.exception))
+        (self.tmp / "ingress-traefik" / "spec.yaml").unlink()
+        with self.assertRaises(SpecError):
+            modules.service_name("ingress-traefik")
+        self.assertEqual(modules.frontend_services(SITE), {})  # the workspace tools skip, they don't crash
+        original = modules.importlib.import_module
+        modules.importlib.import_module = lambda name: (_ for _ in ()).throw(SyntaxError("bad code"))
+        self.addCleanup(setattr, modules.importlib, "import_module", original)
+        with self.assertRaises(SpecError) as caught:
+            modules.code("authgw-authentik")
+        self.assertIn("authgw-authentik", str(caught.exception))
+
+    def test_a_folder_whose_prefix_and_declared_capability_disagree_is_reported(self):
+        self.edit("ingress-traefik", capability="auth_gateway", code="authgw.traefik")
+        self.assertEqual(modules.installed("ingress"), [])
+        self.assertEqual([name for name, _ in modules.broken()], ["ingress-traefik"])
+        self.assertIn("auth_gateway", dict(modules.broken())["ingress-traefik"])
+
     def test_a_spec_path_may_not_leave_the_module_folder(self):
         for bad in ("../x.yaml", "/etc/passwd", "a/../../b.yaml", 5):
             with self.subTest(spec=bad):
@@ -277,16 +299,38 @@ class ServicesCommandTests(unittest.TestCase):
         self.assertRegex(text, r'modules\.py"? services')
 
 
+class SharedFilesNameNoProductTests(unittest.TestCase):
+    """The files a user copies from, and the shared templates, don't name the login front end's products;
+    each module shows its own site values in its operations.md."""
+
+    def test_site_example_and_shared_templates_name_no_module_product(self):
+        paths = [ROOT / "site.example.yaml", *sorted((ROOT / "templates").rglob("*.tmpl"))]
+        for path in paths:
+            text = path.read_text().lower()
+            for product in PRODUCTS:
+                with self.subTest(file=str(path.relative_to(ROOT)), product=product):
+                    self.assertNotIn(product, text)
+
+    def test_each_module_shows_an_example_of_its_site_section(self):
+        for name, key in (("ingress-traefik", "traefik"), ("authgw-authentik", "authentik")):
+            with self.subTest(module=name):
+                data = yaml.safe_load((SKILLS / name / "site.example.yaml").read_text())
+                self.assertEqual(list(data)[0], "edge")
+                self.assertEqual(list(data["edge"]), [modules.service_name(name)])
+                self.assertEqual(modules.service_name(name), key)
+                self.assertIn("`site.example.yaml` in this folder", (SKILLS / name / "operations.md").read_text())
+
+
 class OperationsFileTests(unittest.TestCase):
     """The guide pages stay product-free by handing over to each module's operations.md."""
     SECTIONS = {
-        "ingress-traefik": ("Site values", "The certificate and the DNS provider", "Secrets on the login VM",
+        "ingress-traefik": ("Site values", "Ports and the VM", "The certificate and the DNS provider", "Secrets on the login VM",
                             "Start and check", "Applying route changes", "Stop it",
                             "Break-glass: an app's route without the login"),
         "authgw-authentik": ("Site values", "The containers", "Secrets on the login VM", "Start and check",
                              "First login", "Admin recovery", "End-to-end check", "Who may open an app",
                              "The dashboard section and the logo", "Applying the login rules", "Removing an app",
-                             "People and access", "Stop it", "Restoring the database"),
+                             "People and access", "Upgrading", "Stop it", "Restoring the database"),
     }
 
     def test_each_module_has_the_sections_the_guide_cites(self):
