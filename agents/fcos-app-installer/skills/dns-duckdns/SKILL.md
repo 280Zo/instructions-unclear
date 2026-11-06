@@ -1,5 +1,5 @@
 ---
-name: adapter-duckdns
+name: dns-duckdns
 description: "Manual steps for DuckDNS as the DNS provider that proves the domain for the login front end's wildcard certificate (Let's Encrypt DNS-01 through Traefik and lego). Use when the user's domain is a DuckDNS subdomain."
 license: MIT
 compatibility: Needs the fcos-app-installer toolkit; tools/adapters.py renders the steps from adapter.yaml.

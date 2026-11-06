@@ -54,4 +54,4 @@ Source: Tested on a real Proxmox node
 
 A Proxmox resource pool is a set of VMs, containers and storages, useful for permission handling. The teardown script moves the agent's VMs into a pool the user names and creates it with `--create-pool` (its own usage text; run on a real server, both servers).
 
-Source: https://pve.proxmox.com/pve-docs/chapter-pveum.html (Resource Pools) · `.opencode/skills/adapter-proxmox/scripts/teardown-agent-access.sh`
+Source: https://pve.proxmox.com/pve-docs/chapter-pveum.html (Resource Pools) · `.opencode/skills/hypervisor-proxmox/scripts/teardown-agent-access.sh`

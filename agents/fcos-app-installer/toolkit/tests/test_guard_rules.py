@@ -25,15 +25,15 @@ class ShellGuardTests(unittest.TestCase):
 
     def test_no_shell_command_may_name_the_agent_folder(self):
         for command in (
-                f"sha256sum x && cp evil {SKILLS_DIR}/adapter-proxmox/scripts/lib.sh",
-                f"git status && sed -i s/a/b/ {SKILLS_DIR}/adapter-proxmox/scripts/lib.sh",
+                f"sha256sum x && cp evil {SKILLS_DIR}/hypervisor-proxmox/scripts/lib.sh",
+                f"git status && sed -i s/a/b/ {SKILLS_DIR}/hypervisor-proxmox/scripts/lib.sh",
                 f"dig x ; ln -sf /tmp/x {SKILLS_DIR}/y",
                 "git diff && mv x ./.opencode/agents/fcos-app-installer.md",
                 "python3 tools/x.py && cd .opencode && cp y skills/z",
                 "git log | tee .opencode/commands/add-service.md",
                 "git status && cp x .opencode",
                 f"git status && dd if=/dev/zero of={SKILLS_DIR}/x",
-                f"python3 tools/render.py t v > {SKILLS_DIR}/adapter-proxmox/scripts/lib.sh",
+                f"python3 tools/render.py t v > {SKILLS_DIR}/hypervisor-proxmox/scripts/lib.sh",
                 f"python3 tools/gen_service.py s site {SKILLS_DIR}/x",
                 f"bash tools/build-vm.sh {SKILLS_DIR}/x",
                 # Separators written right after the folder name (review of the first fixes commit).

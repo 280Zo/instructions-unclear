@@ -145,7 +145,7 @@ class AdapterToolTests(unittest.TestCase):
         self.assertIn("no tool", str(caught.exception))
 
     def check(self, **changes):
-        data = yaml.safe_load((SKILLS / "adapter-proxmox" / "adapter.yaml").read_text())
+        data = yaml.safe_load((SKILLS / "hypervisor-proxmox" / "adapter.yaml").read_text())
         data.update(changes)
         return adapters._check_adapter(data, "virtualization", "proxmox")
 
@@ -157,7 +157,7 @@ class AdapterToolTests(unittest.TestCase):
                 self.check(code=bad)
 
     def test_only_a_role_with_a_tool_contract_may_name_code(self):
-        data = yaml.safe_load((SKILLS / "adapter-duckdns" / "adapter.yaml").read_text())
+        data = yaml.safe_load((SKILLS / "dns-duckdns" / "adapter.yaml").read_text())
         data["code"] = "virtualization.duckdns"
         with self.assertRaises(AdapterError):
             adapters._check_adapter(data, "dns_certificates", "duckdns")

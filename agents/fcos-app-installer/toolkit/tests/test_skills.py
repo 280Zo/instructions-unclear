@@ -16,7 +16,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 
-from layout import SKILLS  # noqa: E402
+from layout import SKILLS, adapter_skill  # noqa: E402
 from adapters import ROLE_STEPS, AdapterError, load_adapter  # noqa: E402
 
 NAME = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -55,7 +55,7 @@ class AdapterSkillTests(unittest.TestCase):
     def test_each_adapter_is_a_skill_with_its_data(self):
         for provider, role in ADAPTERS.items():
             with self.subTest(provider=provider):
-                folder = SKILLS / f"adapter-{provider}"
+                folder = SKILLS / adapter_skill(role, provider)
                 self.assertTrue((folder / "SKILL.md").is_file())
                 self.assertTrue((folder / "adapter.yaml").is_file())
                 adapter = load_adapter(role, provider)
@@ -67,7 +67,7 @@ class AdapterSkillTests(unittest.TestCase):
         self.assertTrue((SKILLS / "adapter-generic" / "adapter.yaml").is_file())
 
     def test_proxmox_host_scripts_live_in_its_skill(self):
-        scripts = SKILLS / "adapter-proxmox" / "scripts"
+        scripts = SKILLS / "hypervisor-proxmox" / "scripts"
         for name in ("lib.sh", "setup-agent-access.sh", "teardown-agent-access.sh", "discover-host.sh"):
             self.assertTrue((scripts / name).is_file(), name)
         self.assertEqual(sorted(load_adapter("virtualization", "proxmox")["scripts"]),
@@ -77,13 +77,18 @@ class AdapterSkillTests(unittest.TestCase):
     def test_an_adapter_for_another_role_is_refused(self):
         root = Path(tempfile.mkdtemp(prefix="skills-"))
         self.addCleanup(shutil.rmtree, root, True)
-        (root / "adapter-pfsense").mkdir()
-        data = yaml.safe_load((SKILLS / "adapter-opnsense" / "adapter.yaml").read_text())
+        (root / "router-pfsense").mkdir()
+        data = yaml.safe_load((SKILLS / "router-opnsense" / "adapter.yaml").read_text())
         data["provider"] = "pfsense"
-        (root / "adapter-pfsense" / "adapter.yaml").write_text(yaml.safe_dump(data))
+        (root / "router-pfsense" / "adapter.yaml").write_text(yaml.safe_dump(data))
         self.assertFalse(load_adapter("router_firewall", "pfsense", root=root)["generic"])
+        # Another role looks for its own prefix, so a router adapter is never taken for a file server's.
+        self.assertTrue(load_adapter("file_server", "pfsense", root=root)["generic"])
+        # A file that claims another role than its folder's prefix is refused.
+        data["role"] = "file_server"
+        (root / "router-pfsense" / "adapter.yaml").write_text(yaml.safe_dump(data))
         with self.assertRaises(AdapterError):
-            load_adapter("file_server", "pfsense", root=root)
+            load_adapter("router_firewall", "pfsense", root=root)
 
     def test_role_steps_still_complete(self):
         for provider, role in ADAPTERS.items():

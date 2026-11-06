@@ -42,10 +42,10 @@ class DrafterTests(unittest.TestCase):
                 self.assertEqual(effect(self.text, "shell", command), "deny")
 
     def test_writes_only_drafts_and_scratch(self):
-        for path in (f"{WS}/adapters-draft/adapter-synology/SKILL.md", "/tmp/opencode/recorded.json"):
+        for path in (f"{WS}/adapters-draft/fileserver-synology/SKILL.md", "/tmp/opencode/recorded.json"):
             with self.subTest(path=path):
                 self.assertEqual(effect(self.text, "edit", path), "allow")
-        for path in (f"{SKILLS_DIR}/adapter-proxmox/adapter.yaml", "tools/adapters.py", f"{WS}/site.yaml",
+        for path in (f"{SKILLS_DIR}/hypervisor-proxmox/adapter.yaml", "tools/adapters.py", f"{WS}/site.yaml",
                      ".opencode/agents/fcos-app-installer.md", f"{WS}/secrets/x.token"):
             with self.subTest(path=path):
                 self.assertEqual(effect(self.text, "edit", path), "deny")

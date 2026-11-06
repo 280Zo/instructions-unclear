@@ -46,7 +46,7 @@ user; the values are used unless the user changes them.
 
 **Providers.** For Proxmox VE the settings below are what `tools/hypervisor.py`
 checks and sends; the official sources are the Proxmox VE VM chapter and the
-FCOS Proxmox guide, linked in the Proxmox adapter skill (`adapter-proxmox`).
+FCOS Proxmox guide, linked in the Proxmox adapter skill (`hypervisor-proxmox`).
 
 ```yaml
 name: <vm>
@@ -155,7 +155,7 @@ network would reject. A check it can't make only gives a warning: tell the
 user, who checks it on the server. A refusal goes to the user as it is; never
 change the user's network to get past it.
 
-**Providers.** The Proxmox VE tool (`adapter-proxmox`) reads the server's
+**Providers.** The Proxmox VE tool (`hypervisor-proxmox`) reads the server's
 network list and refuses a bridge other than the host's `bridge` (the token's
 permissions refuse it too; an optional `forbidden_bridges` list is honored but
 never asked), a VLAN on a bridge that isn't VLAN-aware or doesn't allow it,

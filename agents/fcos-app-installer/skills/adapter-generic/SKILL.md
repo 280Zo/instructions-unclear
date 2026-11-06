@@ -8,13 +8,13 @@ compatibility: Needs the fcos-app-installer toolkit; tools/adapters.py renders t
 # General steps for any product
 
 `tools/adapters.py` falls back to these steps by itself when no
-`adapter-<provider>` skill exists, and marks the adapter as generic. Say so to
+skill named `<role prefix>-<provider>` exists, and marks the adapter as generic. Say so to
 the user: the steps describe what to achieve, not where it is in their
 product's menus. Look up the product's official documentation for each step.
 
 When the install is done, offer to draft an adapter skill for the product from
 what the user actually did: hand it to the `adapter-drafter` subagent, which
-writes `<workspace>/adapters-draft/adapter-<provider>/` for review.
+writes `<workspace>/adapters-draft/<role prefix>-<provider>/` for review.
 
 ## How to use it
 

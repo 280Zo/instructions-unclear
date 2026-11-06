@@ -16,13 +16,19 @@ sys.path.insert(0, str(ROOT / "tools"))
 
 from adapters import (ROLE_STEPS, AdapterError, draft_adapter, load_adapter,  # noqa: E402
                       render_step)
-from layout import SKILLS, SKILLS_DIR  # noqa: E402
+from layout import ADAPTER_PREFIX, SKILLS, SKILLS_DIR, adapter_skill  # noqa: E402
 
 ADAPTERS = SKILLS
-PROXMOX = ADAPTERS / "adapter-proxmox"
+PROXMOX = ADAPTERS / "hypervisor-proxmox"
 SCRATCH = "/tmp/opencode" if os.path.isdir("/tmp/opencode") else None
 KNOWN = {"virtualization": "proxmox", "router_firewall": "opnsense", "file_server": "truenas",
          "dns_certificates": "duckdns"}
+
+
+def adapter_files(name: str) -> list[Path]:
+    """<name> in every shipped adapter skill (the role-prefixed ones and adapter-generic)."""
+    prefixes = (*ADAPTER_PREFIX.values(), "adapter")
+    return sorted(p for prefix in prefixes for p in ADAPTERS.glob(f"{prefix}-*/{name}"))
 
 
 def every_value(adapter, step_id) -> dict:
@@ -342,7 +348,7 @@ class AdapterTests(unittest.TestCase):
         """A copy of the Proxmox skill outside the real skills folder, as a loaded root."""
         root = Path(tempfile.mkdtemp(dir=SCRATCH))
         self.addCleanup(shutil.rmtree, root, True)
-        shutil.copytree(PROXMOX, root / "adapter-proxmox")
+        shutil.copytree(PROXMOX, root / "hypervisor-proxmox")
         return root
 
     def test_a_skill_outside_the_skills_folder_is_never_pinned(self):
@@ -358,7 +364,7 @@ class AdapterTests(unittest.TestCase):
         from adapters import derived_values
         root = self.odd_root()
         adapter = load_adapter("virtualization", "proxmox", root=root)
-        script = root / "adapter-proxmox" / adapter["scripts"][0]  # the first one the check looks at
+        script = root / "hypervisor-proxmox" / adapter["scripts"][0]  # the first one the check looks at
         outside = root / "elsewhere.sh"
         outside.write_text(script.read_text())
         script.unlink()
@@ -418,7 +424,7 @@ class AdapterTests(unittest.TestCase):
                 self.assertFalse((ws / "adapters-draft").exists())
 
     def test_skill_tables_show_no_raw_placeholders(self):
-        for skill in ADAPTERS.glob("adapter-*/SKILL.md"):
+        for skill in adapter_files("SKILL.md"):
             with self.subTest(skill=skill.parent.name):
                 self.assertNotIn("{{", skill.read_text())
 
@@ -668,10 +674,10 @@ class AdapterTests(unittest.TestCase):
     def test_invalid_provider_file_is_an_error_not_a_fallback(self):
         root = Path(tempfile.mkdtemp(dir=SCRATCH))
         self.addCleanup(shutil.rmtree, root, True)
-        (root / "adapter-pfsense").mkdir()
+        (root / "router-pfsense").mkdir()
         for text in ("role: [unclosed", "role: router_firewall\nprovider: pfsense\n", "\xff"):
             with self.subTest(text=text[:20]):
-                (root / "adapter-pfsense" / "adapter.yaml").write_bytes(text.encode("latin-1"))
+                (root / "router-pfsense" / "adapter.yaml").write_bytes(text.encode("latin-1"))
                 with self.assertRaises(AdapterError):
                     load_adapter("router_firewall", "pfsense", root=root)
 
@@ -703,8 +709,8 @@ class AdapterTests(unittest.TestCase):
         self.assertIn("{{VM_MAC}}", data["manual_steps"]["reserve_ip"]["steps"][0])
         tmp = Path(tempfile.mkdtemp(dir=SCRATCH))
         self.addCleanup(shutil.rmtree, tmp, True)
-        (tmp / "adapter-pfsense").mkdir()
-        (tmp / "adapter-pfsense" / "adapter.yaml").write_text(text)
+        (tmp / "router-pfsense").mkdir()
+        (tmp / "router-pfsense" / "adapter.yaml").write_text(text)
         adapter = load_adapter("router_firewall", "pfsense", root=tmp)
         self.assertFalse(adapter.get("generic"))
         self.assertIn("reservation", render_step(adapter, "reserve_ip", {"VM_MAC": "bc:24:11:00:00:01",
@@ -729,10 +735,10 @@ class AdapterTests(unittest.TestCase):
                                  "file_server", "--provider", "synology", "--from", str(recorded),
                                  "--workspace", str(ws)], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        folder = ws / "adapters-draft" / "adapter-synology"
+        folder = ws / "adapters-draft" / "fileserver-synology"
         self.assertTrue((folder / "adapter.yaml").is_file())
         skill = (folder / "SKILL.md").read_text()  # a draft is a skill, ready to review and move
-        self.assertTrue(skill.startswith("---\nname: adapter-synology\n"))
+        self.assertTrue(skill.startswith("---\nname: fileserver-synology\n"))
         self.assertIn("draft", skill.lower())
         test = folder / "test_synology.py"
         self.assertTrue(test.is_file())
@@ -771,11 +777,43 @@ class AdapterTests(unittest.TestCase):
 
     def test_adapters_publishable(self):
         from publish_check import check_text
-        files = sorted(ADAPTERS.glob("adapter-*/adapter.yaml"))
+        files = adapter_files("adapter.yaml")
         self.assertGreaterEqual(len(files), 5)
         for path in files:
             with self.subTest(path=path.name):
                 self.assertEqual(check_text(path.read_text(), set()), [])
+
+
+class AdapterNamingTests(unittest.TestCase):
+    """An adapter skill is named <role prefix>-<product>; only adapter-generic keeps the adapter- prefix."""
+
+    def test_every_shipped_adapter_folder_is_named_by_its_role_and_provider(self):
+        for path in adapter_files("adapter.yaml"):
+            if path.parent.name == "adapter-generic":
+                continue
+            data = yaml.safe_load(path.read_text())
+            with self.subTest(folder=path.parent.name):
+                self.assertEqual(path.parent.name, adapter_skill(data["role"], data["provider"]))
+
+    def test_adapter_generic_is_the_only_skill_with_the_old_prefix(self):
+        self.assertEqual(sorted(p.name for p in ADAPTERS.glob("adapter-*")), ["adapter-generic"])
+
+    def test_the_prefixes_cover_every_role_and_only_those(self):
+        self.assertEqual(set(ADAPTER_PREFIX), set(ROLE_STEPS))
+        self.assertEqual(len(set(ADAPTER_PREFIX.values())), len(ADAPTER_PREFIX))
+
+    def test_an_adapter_in_the_old_folder_name_is_not_found(self):
+        root = Path(tempfile.mkdtemp(dir=SCRATCH))
+        self.addCleanup(shutil.rmtree, root, True)
+        shutil.copytree(PROXMOX, root / "adapter-proxmox")
+        self.assertTrue(load_adapter("virtualization", "proxmox", root=root)["generic"])
+
+    def test_the_pinned_checksum_list_uses_the_new_folder_names(self):
+        from layout import CHECKSUMS
+        paths = [line.split("  ", 1)[1] for line in CHECKSUMS.read_text().splitlines() if line.strip()]
+        self.assertTrue(paths)
+        for path in paths:
+            self.assertTrue(path.startswith("hypervisor-"), path)
 
 
 if __name__ == "__main__":

@@ -12,9 +12,9 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 from layout import SKILLS  # noqa: E402
 
-SETUP = SKILLS / "adapter-proxmox" / "scripts" / "setup-agent-access.sh"
-TEARDOWN = SKILLS / "adapter-proxmox" / "scripts" / "teardown-agent-access.sh"
-LIB = SKILLS / "adapter-proxmox" / "scripts" / "lib.sh"
+SETUP = SKILLS / "hypervisor-proxmox" / "scripts" / "setup-agent-access.sh"
+TEARDOWN = SKILLS / "hypervisor-proxmox" / "scripts" / "teardown-agent-access.sh"
+LIB = SKILLS / "hypervisor-proxmox" / "scripts" / "lib.sh"
 STUBS = ROOT / "tests" / "stubs"
 
 PRIVS = ("VM.Allocate VM.Audit VM.PowerMgmt VM.Config.CPU VM.Config.Memory VM.Config.Disk "
@@ -632,7 +632,7 @@ class TeardownTests(HostScriptCase):
         self.assertEqual([], self.calls())
 
 
-DISCOVER = SKILLS / "adapter-proxmox" / "scripts" / "discover-host.sh"
+DISCOVER = SKILLS / "hypervisor-proxmox" / "scripts" / "discover-host.sh"
 
 DISCOVERY_STATE = {
     "storages": ["local", "local-lvm", "nas"],

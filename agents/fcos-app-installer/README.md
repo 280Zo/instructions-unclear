@@ -26,7 +26,7 @@ Podman run from Quadlets. Two more are built into the generator and the guide, n
   where the spec gives its own dump command. The custom engine is the way to use any other database.
 
 Everything else is a product you choose, and nothing is a default. The hypervisor, the router and
-firewall, the file server and the DNS provider each have an adapter skill (`adapter-<product>`). The
+firewall, the file server and the DNS provider each have an adapter skill (`hypervisor-<product>`, `router-<product>`, `fileserver-<product>` or `dns-<product>`). The
 login front end's ingress and auth gateway are modules (`ingress-<product>`, `authgw-<product>`). If
 the product you use has no adapter or module, the agent builds one with you.
 
@@ -54,7 +54,7 @@ the product you use has no adapter or module, the agent builds one with you.
 - A virtualization platform, a router, a file server with NFS, and a DNS
   provider for Let's Encrypt DNS-01 (the adapter's `acme` block gives the
   certificate client's provider code, so any provider the client supports
-  works once it has an adapter). Each product has an adapter skill in `.opencode/skills/adapter-<product>/` with
+  works once it has an adapter). Each product has an adapter skill in `.opencode/skills/<role>-<product>/` (the role is `hypervisor`, `router`, `fileserver` or `dns`) with
   the steps you do yourself. A product without one gets general steps, and the
   agent can draft an adapter as you go.
 
@@ -296,7 +296,7 @@ yourself from the skills folder (`.opencode/skills`) and check it:
 ```fish
 # desktop (fish)
 cd .opencode/skills
-sha256sum adapter-*/scripts/* > ../../host-scripts.sha256
+sha256sum */scripts/* > ../../host-scripts.sha256
 sha256sum -c ../../host-scripts.sha256
 ```
 
@@ -372,7 +372,10 @@ in the guide remove them (the adapter's teardown step), so tell the user if they
 are still in place. rulesync uses `delete: false`, so regenerating after a
 change to the repository never removes an old agent, skill or command file;
 delete stale names yourself, with approval, from `.opencode/agents/`,
-`.opencode/commands/` and `.opencode/skills/`.
+`.opencode/commands/` and `.opencode/skills/`. The four product adapters were once named
+`adapter-proxmox`, `adapter-opnsense`, `adapter-truenas` and `adapter-duckdns`; an install made
+before the rename still has those folders, with the same host scripts. Their pinned checksums are
+listed under the new names, so the old folders are only dead weight; delete them with approval.
 
 Update. The toolkit has no upstream. It is written for this repo, so edit the
 files under `agents/fcos-app-installer/` in the repository. Keep the tool

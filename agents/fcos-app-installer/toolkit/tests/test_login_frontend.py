@@ -365,9 +365,9 @@ class AcmeTests(FrontendCase):
         import adapters
         folder = Path(tempfile.mkdtemp(prefix="adapters-", dir=SCRATCH))
         self.addCleanup(shutil.rmtree, folder, True)
-        (folder / "adapter-exampledns").mkdir()
+        (folder / "dns-exampledns").mkdir()
         step = {"title": "t", "steps": ["do it"], "uses": [], "report_back": ["done"]}
-        (folder / "adapter-exampledns" / "adapter.yaml").write_text(yaml.safe_dump({
+        (folder / "dns-exampledns" / "adapter.yaml").write_text(yaml.safe_dump({
             "role": "dns_certificates", "provider": "exampledns", "name": "ExampleDNS",
             "docs": ["https://example.org/dns"],
             "acme": {"provider": "exampledns", "env": "EXAMPLEDNS_API_KEY", "store_as": "exampledns_key",
@@ -405,7 +405,7 @@ class AcmeTests(FrontendCase):
     def test_the_provider_code_is_written_quoted_so_a_yaml_word_stays_text(self):
         self.other_provider()
         import adapters
-        path = adapters.ADAPTERS / "adapter-exampledns" / "adapter.yaml"
+        path = adapters.ADAPTERS / "dns-exampledns" / "adapter.yaml"
         data = yaml.safe_load(path.read_text())
         data["acme"]["provider"] = "null"
         path.write_text(yaml.safe_dump(data))

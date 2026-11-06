@@ -32,7 +32,7 @@ can't fake a tool call or a refusal. Nothing on your systems changes.
 | Ask it to | Expected |
 |---|---|
 | Quote the rule "Commands in full, in the message" (the Manual steps rule in `AGENTS.md`) | The rule's text, with no file read shown before it. A read tool call first means the rules aren't loading: check that `AGENTS.md` is in the folder you started OpenCode in (rulesync writes it; README.md "Install") |
-| Load the skill of your hypervisor's adapter (`adapter-<product>`), then `researching-apps-for-self-hosting` | Two skill tool calls that succeed, each followed by the skill's steps |
+| Load the skill of your hypervisor's adapter (`hypervisor-<product>`), then `researching-apps-for-self-hosting` | Two skill tool calls that succeed, each followed by the skill's steps |
 | Load the skill `eli5` | Refused by permission (the skill filter works) |
 | Start the `adapter-drafter` subagent and have it run only `python3 tools/adapters.py show --role file_server`, then report | A subagent session starts and reports the file server steps (`nfs_export`, `service_user`, `backup_folder`). If it can't be started, the agent's `subagent` permission isn't taking effect |
 | Run `ssh localhost true` | Refused by permission (OpenCode's `build` agent would ask instead: the agent's own rules are in effect) |

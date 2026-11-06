@@ -242,8 +242,8 @@ class FcosAppInstallerMapTests(unittest.TestCase):
     generate.py reads them from there (generate.DECLARED), so the map cannot drift from the agent."""
 
     NAME = "fcos-app-installer"
-    SKILLS = ["adapter-duckdns", "adapter-generic", "adapter-opnsense", "adapter-proxmox", "adapter-truenas",
-              "authgw-authentik", "ingress-traefik", "researching-apps-for-self-hosting"]
+    SKILLS = ["adapter-generic", "authgw-authentik", "dns-duckdns", "fileserver-truenas", "hypervisor-proxmox",
+              "ingress-traefik", "researching-apps-for-self-hosting", "router-opnsense"]
 
     def test_it_is_declared_and_on_the_map_but_not_generated(self):
         self.assertEqual(generate.DECLARED, {self.NAME: "agents/fcos-app-installer/subagents/fcos-app-installer.md"})
