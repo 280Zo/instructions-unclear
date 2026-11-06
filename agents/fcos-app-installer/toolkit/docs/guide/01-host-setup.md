@@ -80,10 +80,13 @@ links them).
 
 ## 1.6 When the install is done
 
-**[Manual]** Adapter step **virtualization: `teardown_api_access`**. It moves
-the agent's VMs into pool `backrooms` (always this
-pool, so nothing is asked; they keep running, the script creates the pool when
-it doesn't exist, and a pool is only a label for a set of VMs), then removes
-the agent's pool, the token, its user, roles and grants. Run the check first. Afterwards delete
-the token file in `<workspace>/secrets/`. The next install runs the setup
-script again for a fresh token.
+**[Manual]** Adapter step **virtualization: `teardown_api_access`**. It removes
+the agent's access: the token, its user, roles and grants. The VMs keep
+running, and nothing is asked. Run the check first. Afterwards delete the token
+file in `<workspace>/secrets/`. The next install runs the setup script again
+for a fresh token.
+
+**Providers.** For Proxmox VE (`adapter-proxmox`) the teardown first moves the
+agent's VMs into pool `backrooms` (always this pool; the script creates it when
+it doesn't exist, and a pool is only a label for a set of VMs), then removes the
+agent's own pool.

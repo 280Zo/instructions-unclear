@@ -32,13 +32,28 @@ def _provider(site) -> str:
     if provider in (None, "ASK"):
         raise AdapterError("site.yaml: roles.virtualization.provider is not set; ask the user which hypervisor "
                            "runs the machines, then name its adapter (python3 tools/adapters.py show --role "
-                           "virtualization)")
+                           "virtualization --provider <name>)")
     return provider
+
+
+def _load_site(ws: Path) -> dict:
+    """The site file, with a one-line error for a missing, unreadable or invalid one."""
+    try:
+        return workspace.load_site(ws)
+    except (workspace._yaml().YAMLError, UnicodeDecodeError):
+        raise WorkspaceError("site.yaml can't be read as YAML; fix it first (python3 tools/workspace.py where "
+                             "shows the workspace)") from None
+    except OSError as error:
+        raise WorkspaceError(f"can't read {Path(ws) / 'site.yaml'} ({error.strerror}); is this the right "
+                             "workspace? (python3 tools/workspace.py where)") from None
 
 
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     verbs = TOOL_VERBS[ROLE]
+    if argv[:1] in (["-h"], ["--help"]):
+        print((__doc__ or "").strip())
+        return 0
     if not argv or argv[0] not in verbs:
         print(f"usage: hypervisor.py <{'|'.join(verbs)}> [arguments] [--workspace PATH]\n"
               "run it with a verb; the adapter's tool does the rest (see this file's header)", file=sys.stderr)
@@ -48,15 +63,11 @@ def main(argv: list[str] | None = None) -> int:
     known, _rest = where.parse_known_args(argv[1:])
     try:
         ws = workspace.resolve_workspace(known.workspace)
-        tool = load_tool(load_adapter(ROLE, _provider(workspace.load_site(ws))))
-        return tool.main(argv)
+        tool = load_tool(load_adapter(ROLE, _provider(_load_site(ws))))
     except (AdapterError, WorkspaceError) as error:
         print(f"hypervisor: {error}", file=sys.stderr)
         return 1
-    except (workspace._yaml().YAMLError, UnicodeDecodeError):
-        print("hypervisor: site.yaml can't be read as YAML; fix it first (python3 tools/workspace.py where "
-              "shows the workspace)", file=sys.stderr)
-        return 1
+    return tool.main(argv)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@
 CoreOS virtual machines and adds containerized services to them: rootless
 Podman Quadlets, backups by database engine, a firewall per VM, and one login
 front end in front of every service (an ingress and an auth gateway you
-choose; Traefik with Authentik is the pairing tested so far). It follows the
+choose). It follows the
 procedure in `docs/guide/README.md`, asks its questions in plain language
 (`docs/guide/questions.md`), and stops for every step on systems it doesn't
 touch: your hypervisor's shell, your router, your file server, your DNS
@@ -173,7 +173,7 @@ agent uses it only through the adapter's tool (`tools/hypervisor.py`, which load
 disk-swap command; those stay steps you run yourself. The step prints the secret once, and the agent's
 next step stores it in `<workspace>/secrets/` from a hidden prompt. When the install is done, the
 adapter's teardown step removes the access; the VMs keep running. The adapter's `SKILL.md` lists its
-steps (`python3 tools/adapters.py show --role virtualization`).
+steps (`python3 tools/adapters.py show --role virtualization --provider <name>`).
 
 On a VM the agent never uses your SSH key. It makes its own setup key
 (`tools/vmssh.py`), you add it beside yours, and it is revoked when the
@@ -368,7 +368,7 @@ the user: the workspace (their private values and `secrets/`) and the
 remembered path `~/.config/fcos-agent/workspace`. Leave both unless the user
 asks, and never open `secrets/`. The hypervisor user and token and the VM
 setup keys that runs create are not in the folder either; the teardown steps
-in the guide remove them (`teardown-agent-access.sh`), so tell the user if they
+in the guide remove them (the adapter's teardown step), so tell the user if they
 are still in place. rulesync uses `delete: false`, so regenerating after a
 change to the repository never removes an old agent, skill or command file;
 delete stale names yourself, with approval, from `.opencode/agents/`,

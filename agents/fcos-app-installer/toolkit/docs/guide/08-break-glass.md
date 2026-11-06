@@ -52,10 +52,9 @@ works; fix it first.
 
 If SSH itself is unreachable, the last way in is the VM's serial console on
 the virtualization server, logging in as `<admin>` with its password. **Not
-proven yet:** in the first test the serial console stayed silent although the
-VM had booted with its console on the serial port (the virtualization
-adapter's `reference.md`, "Console on the `proxmoxve` image").
-Until that is fixed and tested, don't count on it.
+proven:** the console can stay silent even when the VM booted with its console
+on the serial port (the virtualization adapter's `reference.md` has what was
+seen). Don't count on it until it has been tested.
 
 **Providers.** On Proxmox VE the serial console is `qm terminal <vmid>` on the
 server (leave with Ctrl+O); see the skill `adapter-proxmox` for the

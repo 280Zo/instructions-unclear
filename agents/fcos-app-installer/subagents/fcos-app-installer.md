@@ -652,7 +652,7 @@ exact wording, options and what each answer fills are in
   "edge" or "edge VM" (say "login page" or "login front end"), "always-on host"
   (say "a server that is always running"), Quadlet, Butane, Ignition.
 - Never assume a network, storage or hardware value. When the virtualization
-  adapter has a discovery step (`python3 tools/adapters.py show --role virtualization`
+  adapter has a discovery step (`python3 tools/adapters.py show --role virtualization --provider <name>`
   lists its steps), read `<workspace>/hosts/<host>/discovery.txt`; when it is
   missing or older than a change the user mentions, render that manual step and
   wait. Otherwise give a read-only discovery command and read its output.
@@ -794,9 +794,8 @@ End every run with:
 - the verification checklist from guide 3.10 with each result (pass, fail,
   not run, and why);
 - the user's remaining steps, including, once the install is verified,
-  removing your hypervisor access with `teardown-agent-access.sh` (the VMs
-  move into pool `backrooms` first; nothing to ask)
-  (virtualization: `teardown_api_access`) and deleting the token file;
+  removing your hypervisor access (virtualization: `teardown_api_access`;
+  nothing to ask) and deleting the token file;
 - changes to the workspace's site file and specs, including accepted risks;
 - how each new service is backed up: the table and notes from its
   `backups.md` (what, when, where, how many are kept, what happens when the

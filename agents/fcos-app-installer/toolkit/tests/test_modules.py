@@ -311,6 +311,12 @@ class SharedFilesNameNoProductTests(unittest.TestCase):
                 with self.subTest(file=str(path.relative_to(ROOT)), product=product):
                     self.assertNotIn(product, text)
 
+    def test_site_example_names_no_router_or_file_server_product(self):
+        text = (ROOT / "site.example.yaml").read_text().lower()
+        for product in ("opnsense", "truenas", "duckdns"):
+            with self.subTest(product=product):
+                self.assertNotIn(product, text)
+
     def test_site_example_templates_and_prompt_name_no_hypervisor_product(self):
         agent = Path(__file__).resolve().parents[2] / "subagents" / "fcos-app-installer.md"
         paths = [ROOT / "site.example.yaml", *sorted((ROOT / "templates").rglob("*.tmpl"))]

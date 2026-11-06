@@ -340,7 +340,7 @@ class AgentTests(unittest.TestCase):
 
     def test_prompt_rules_from_the_plan(self):
         text = body(self.text)
-        for phrase in ("teardown-agent-access.sh", "ends its turn", "plain language", "questions.md",
+        for phrase in ("teardown_api_access", "ends its turn", "plain language", "questions.md",
                        "draft an adapter", "never commit after an install"):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, text)

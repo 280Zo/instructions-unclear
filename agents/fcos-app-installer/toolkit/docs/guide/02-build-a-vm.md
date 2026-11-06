@@ -149,14 +149,18 @@ Expected: every line `ok`, ending with `build-vm: all checks passed`. Any
 python3 tools/hypervisor.py create <workspace>/vms/<vm>/vm.yaml --host <host> --workspace <workspace> --dry-run
 ```
 
-Before anything is sent (dry run included), `hypervisor.py` reads the server's
+Before anything is sent (dry run included), the adapter's tool checks the
+VM's network against the server's and refuses what the server or the user's
+network would reject. A check it can't make only gives a warning: tell the
+user, who checks it on the server. A refusal goes to the user as it is; never
+change the user's network to get past it.
+
+**Providers.** The Proxmox VE tool (`adapter-proxmox`) reads the server's
 network list and refuses a bridge other than the host's `bridge` (the token's
 permissions refuse it too; an optional `forbidden_bridges` list is honored but
 never asked), a VLAN on a bridge that isn't VLAN-aware or doesn't allow it,
 and a network card MTU above the bridge's. A bridge that doesn't report
-which VLANs it allows only gives a warning: tell the user, who checks it on
-the server. A refusal goes to the user as it is; never change the user's
-network to get past it.
+which VLANs it allows only gives a warning.
 
 Show the user the dry run's exact steps (upload the config disc, create the
 VM in the agent's pool with protection on, grow the OS disk) and ask before

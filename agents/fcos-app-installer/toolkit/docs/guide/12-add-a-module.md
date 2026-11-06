@@ -75,8 +75,8 @@ adapter names it in `adapter.yaml`: `code: virtualization.<provider>`, a file in
 `tools/virtualization/` named like the provider (dashes become underscores). The agent never runs that
 file. It runs `python3 tools/hypervisor.py <verb> ...`, which reads `roles.virtualization.provider` from
 the site file, loads the adapter's code and hands it the arguments unchanged. The code must define
-`VERBS = ("check", "list", "create", "start", "status")` and `main(argv)`; `tools/adapters.py` refuses an
-adapter whose code doesn't. The verbs are all the agent can do through the API: nothing that deletes or
+`VERBS = ("check", "list", "create", "start", "status")` and `main(argv)`; `tools/hypervisor.py` refuses
+an adapter whose code doesn't, and `tools/adapters.py` checks the `code:` name. The verbs are all the agent can do through the API: nothing that deletes or
 needs root, because those stay manual steps in the adapter. A hypervisor without an API has no `code:`,
 and `hypervisor.py` says it has no tool.
 

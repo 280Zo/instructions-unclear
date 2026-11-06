@@ -17,7 +17,8 @@ GUIDE = ROOT / "docs" / "guide"
 QUESTIONS = GUIDE / "questions.md"
 PROVIDER_EXEMPT = set()
 PROVIDER_WORDS = [r"\bqm ", r"\bpvesm\b", r"\bpveum\b", r"\bpvesh\b", r"OPNsense", r"TrueNAS", r"Proxmox",
-                  r"DuckDNS", r"(?i)traefik", r"(?i)authentik", r"(?i)\boutpost\b", r"(?i)blueprint"]
+                  r"DuckDNS", r"(?i)traefik", r"(?i)authentik", r"(?i)\boutpost\b", r"(?i)blueprint",
+                  r"backrooms", r"-agent-access"]
 
 
 def guide_pages(provider_check=False):

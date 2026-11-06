@@ -103,6 +103,28 @@ class EntryPointTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertNotIn("Traceback", err)
 
+    def test_a_missing_site_file_or_one_that_is_a_folder_is_an_error_not_a_traceback(self):
+        code, _out, err = self.run_tool("check", "--workspace", str(self.ws))  # no site.yaml yet
+        self.assertEqual(code, 1)
+        self.assertIn("can't read", err)
+        self.assertNotIn("Traceback", err)
+        (self.ws / "site.yaml").mkdir()
+        code, _out, err = self.run_tool("check", "--workspace", str(self.ws))
+        self.assertEqual(code, 1)
+        self.assertIn("can't read", err)
+
+    def test_help_prints_the_usage_and_succeeds(self):
+        for flag in ("-h", "--help"):
+            with self.subTest(flag=flag):
+                code, out, _err = self.run_tool(flag)
+                self.assertEqual(code, 0)
+                self.assertIn("hypervisor.py check", out)
+
+    def test_the_hint_for_an_unset_provider_names_the_provider_option(self):
+        self.site(provider="ASK")
+        _code, _out, err = self.run_tool("check", "--workspace", str(self.ws))
+        self.assertIn("--provider <name>", err)
+
     def test_run_as_a_script_it_prints_the_usage_without_a_traceback(self):
         result = subprocess.run([sys.executable, str(ROOT / "tools" / "hypervisor.py")], capture_output=True, text=True)
         self.assertEqual(result.returncode, 2)

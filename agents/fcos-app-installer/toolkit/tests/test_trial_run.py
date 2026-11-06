@@ -15,9 +15,9 @@ class TrialRunTests(unittest.TestCase):
     def test_live_checks_are_listed(self):
         text = " ".join(PAGE.read_text().split())
         for needle in ("AGENTS.md", "Commands in full, in the message", "adapter-drafter",
-                       "adapter-proxmox", "researching-apps-for-self-hosting", "python3 -m unittest discover tests",
+                       "adapter-<product>", "researching-apps-for-self-hosting", "python3 -m unittest discover tests",
                        "store_api_token", "file-server.md", "secrets.md", "AGENTS.md", "backups.md",
-                       "vmssh.py logs", "[hidden]", "backrooms", "revoke", "Report back"):
+                       "vmssh.py logs", "[hidden]", "teardown step", "revoke", "Report back"):
             with self.subTest(needle=needle):
                 self.assertIn(needle, text)
 
@@ -27,7 +27,7 @@ class TrialRunTests(unittest.TestCase):
         section = PAGE.read_text().split("## 10.2", 1)[1].split("## 10.3", 1)[0]
         self.assertNotIn("Which skills can you load", section)
         text = " ".join(section.split())
-        for needle in ("Load the skill `adapter-proxmox`", "Load the skill `eli5`", "refused by permission",
+        for needle in ("Load the skill of your hypervisor's adapter", "Load the skill `eli5`", "refused by permission",
                        "Run `ssh localhost true`", "no file read", "Start the `adapter-drafter` subagent",
                        # Whole-branch review: the tests' rule matcher is a stand-in for OpenCode's,
                        # so the rules that depend on how OpenCode splits a command are checked live.

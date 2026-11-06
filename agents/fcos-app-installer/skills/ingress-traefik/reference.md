@@ -8,7 +8,7 @@ Middleware `forwardAuth.address: http://<outpost>:9000/outpost.goauthentik.io/au
 
 Source: https://docs.goauthentik.io/add-secure-apps/providers/proxy/server_traefik/
 
-## Break-glass for an app that forces its own https address (tested on a real install, Monica 4.1)
+## Break-glass for an app that forces its own https address
 
 Monica's `APP_ENV=production` makes https mandatory (its docker README and `.env.example`), and it builds links from `APP_URL`. Through an SSH tunnel to its plain HTTP port, pages load (`200`) but signing in redirects to `https://localhost:<port>`. Removing the one `middlewares: [authentik]` line from the app's Traefik route file on the login VM opened the app at its normal https address with its own login; sign-in worked; restoring the file brought back the `302` to the login page. Traefik's file provider reloaded the edited file without a restart. Not tested: with Authentik itself stopped
 
