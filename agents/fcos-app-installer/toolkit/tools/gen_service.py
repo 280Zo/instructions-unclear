@@ -27,6 +27,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import modules  # noqa: E402
+from errors import SpecError  # noqa: E402,F401  (re-exported: other tools import it from here)
 from render import render  # noqa: E402
 from secret_scan import scan_text  # noqa: E402
 
@@ -62,10 +63,6 @@ PATH = re.compile(r"/[A-Za-z0-9._+@/-]+")
 SCHEDULE = re.compile(r"[A-Za-z0-9 :*,/.-]{1,60}")
 IMAGE = re.compile(r"[a-z0-9][a-z0-9._-]*(?::[0-9]+)?(?:/[a-z0-9][a-z0-9._-]*)+"
                    r":([A-Za-z0-9_][A-Za-z0-9_.-]{0,127})(?:@sha256:[0-9a-f]{64})?")
-
-
-class SpecError(Exception):
-    pass
 
 
 def _plain(value, limit=200, allow_empty=False, human=False) -> bool:

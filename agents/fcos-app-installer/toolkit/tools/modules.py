@@ -55,7 +55,7 @@ CONTRACT = {
 
 
 def _error(message: str):
-    from gen_service import SpecError  # imported late: gen_service imports this module
+    from errors import SpecError
     return SpecError(message)
 
 

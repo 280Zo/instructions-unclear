@@ -274,6 +274,29 @@ class WorkspaceToolsFollowTheChosenModulesTests(CraftedModuleTests):
         self.assertIn(str(site["edge"]["sso"]["uid"]), text)
 
 
+class ScriptErrorTests(unittest.TestCase):
+    """Run as scripts (as the agent does), the generators print a module error as one line."""
+
+    def test_gen_service_without_a_chosen_module_exits_with_one_line_not_a_traceback(self):
+        import tempfile
+        scratch = "/tmp/opencode" if Path("/tmp/opencode").is_dir() else None
+        with tempfile.TemporaryDirectory(dir=scratch) as tmp:
+            site = Path(tmp) / "site.yaml"
+            site.write_text("domain: example.org\\n")
+            result = subprocess.run([sys.executable, "-B", str(ROOT / "tools" / "gen_service.py"),
+                                     str(ROOT / "tests" / "fixtures" / "services" / "crm.yaml"), str(site),
+                                     str(Path(tmp) / "out")], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertIn("login_frontend.ingress", result.stderr)
+
+    def test_there_is_one_spec_error_class_whoever_imports_it(self):
+        import errors
+        import gen_service
+        self.assertIs(gen_service.SpecError, errors.SpecError)
+        self.assertIs(modules._error("x").__class__, errors.SpecError)
+
+
 class ServicesCommandTests(unittest.TestCase):
     def run_cli(self, *args):
         return subprocess.run([sys.executable, str(ROOT / "tools" / "modules.py"), *args],
