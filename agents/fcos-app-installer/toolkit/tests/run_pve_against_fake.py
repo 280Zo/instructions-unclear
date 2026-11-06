@@ -1,4 +1,4 @@
-"""Test-only launcher: run tools/pve.py's CLI against a local fake server.
+"""Test-only launcher: run tools/virtualization/proxmox.py's CLI against a local fake server.
 
 The tool itself has no way to change its API endpoint. This wrapper patches the
 base-URL resolver in-process and then calls pve.main(). It never touches an
@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
-import pve  # noqa: E402
+from virtualization import proxmox as pve  # noqa: E402
 
 HOST = "host-a"
 FAKE_PRINCIPAL = "fcos-agent@pve!fcos-bootstrap"

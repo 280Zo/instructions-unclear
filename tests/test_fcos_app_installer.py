@@ -471,7 +471,8 @@ class GroupTests(unittest.TestCase):
     def test_agents_md_explains_how_to_add_a_service_module(self):
         text = " ".join((ROOT / "AGENTS.md").read_text().split())
         for needle in ("### FCOS service modules", "docs/guide/12-add-a-module.md", "module.yaml",
-                       "tools/ingress", "tools/authgw", "tests/test_modules.py"):
+                       "tools/ingress", "tools/authgw", "tools/virtualization", "tools/hypervisor.py",
+                       "tests/test_modules.py"):
             self.assertIn(needle, text)
 
     def test_the_groups_readme_shows_the_install_commands(self):

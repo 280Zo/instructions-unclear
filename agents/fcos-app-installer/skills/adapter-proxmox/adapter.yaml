@@ -1,10 +1,11 @@
 role: virtualization
 provider: proxmox
 name: Proxmox VE
+code: virtualization.proxmox
 notes: >-
   Tested on Proxmox VE 9.2 with the Fedora CoreOS stable proxmoxve image
   (this skill's reference.md). The agent creates, starts and
-  checks VMs through tools/pve.py with a pool-scoped API token; it never runs
+  checks VMs through tools/hypervisor.py with a pool-scoped API token; it never runs
   commands on the host. Everything that deletes, or needs root, is an owner
   step. Blocks that change or delete things run as one strict script
   (bash -euo pipefail) that stops at the first failed check.
@@ -15,7 +16,7 @@ docs:
   - https://github.com/coreos/fedora-coreos-docs/blob/main/modules/ROOT/pages/provisioning-proxmoxve.adoc
   - https://pve.proxmox.com/pve-docs/chapter-qm.html
 discovery:
-  api: tools/pve.py check shows the version and the token's rights; list shows the pool's VMs.
+  api: tools/hypervisor.py check shows the version and the token's rights; list shows the pool's VMs.
   ask: node name, VM disk storage, ISO/import storage and the folder of its import content (/var/lib/vz/import for storage local), bridge, VLAN tag, MTU, always_on.
 capabilities:
   api_create_vm: true
@@ -90,7 +91,7 @@ owner_steps:
   store_api_token:
     title: Store the agent's Proxmox token for {{HOST}} on your desktop
     steps:
-      - Run this on your desktop right after the token was created. It creates the file readable only by you, then asks for the secret at a hidden prompt (paste the value row the setup script printed) and writes it to the workspace's token file, readable only by you. Only tools/pve.py reads that file; the agent never does.
+      - Run this on your desktop right after the token was created. It creates the file readable only by you, then asks for the secret at a hidden prompt (paste the value row the setup script printed) and writes it to the workspace's token file, readable only by you. Only the adapter's tool (tools/virtualization/proxmox.py) reads that file; the agent never does.
     blocks:
       - machine: "desktop (fish)"
         code: |

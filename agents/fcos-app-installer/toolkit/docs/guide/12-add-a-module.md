@@ -67,4 +67,17 @@ Read the two existing modules' code before writing a third; the contract is what
 6. Mark the pairing `tested: true` only after the user has built it on a real install and told you
    it worked. Until then it is `tested: false`, and any glue is experimental.
 
+## 12.4 An adapter with a tool
+
+An adapter is a system the user runs by hand. When that system has an API the agent can use with a
+limited token, the adapter may also ship a tool. Only the virtualization role has one today. The
+adapter names it in `adapter.yaml`: `code: virtualization.<provider>`, a file in
+`tools/virtualization/` named like the provider (dashes become underscores). The agent never runs that
+file. It runs `python3 tools/hypervisor.py <verb> ...`, which reads `roles.virtualization.provider` from
+the site file, loads the adapter's code and hands it the arguments unchanged. The code must define
+`VERBS = ("check", "list", "create", "start", "status")` and `main(argv)`; `tools/adapters.py` refuses an
+adapter whose code doesn't. The verbs are all the agent can do through the API: nothing that deletes or
+needs root, because those stay owner steps in the adapter. A hypervisor without an API has no `code:`,
+and `hypervisor.py` says it has no tool.
+
 The module goes in the repository. What the user's own install looks like stays in their workspace.

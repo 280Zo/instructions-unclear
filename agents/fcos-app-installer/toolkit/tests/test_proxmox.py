@@ -13,9 +13,9 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tests"))
 
-import pve  # noqa: E402
+from virtualization import proxmox as pve  # noqa: E402
 from fake_pve import FakePve  # noqa: E402
-from pve import PveClient, PveError, load_token, plan_create  # noqa: E402
+from virtualization.proxmox import PveClient, PveError, load_token, plan_create  # noqa: E402
 
 REAL_API_BASE = pve._api_base
 REAL_BUILD_ISO = pve.build_iso
@@ -609,7 +609,7 @@ class SafetyTests(PveCase):
                 PveClient(url, PRINCIPAL, SECRET, True)
 
     def test_no_environment_override_of_the_endpoint(self):
-        source = (ROOT / "tools" / "pve.py").read_text()
+        source = (ROOT / "tools" / "virtualization" / "proxmox.py").read_text()
         self.assertNotIn("FCOS_PVE_TEST", source)
         self.assertNotIn("os.environ", source)
         self.assertNotIn("getenv", source)
@@ -638,7 +638,7 @@ class SafetyTests(PveCase):
         code = (
             "import sys\n"
             "sys.path.insert(0, sys.argv[1])\n"
-            "import pve\n"
+            "from virtualization import proxmox as pve\n"
             "def blocked(opener, request, *a, **k):\n"
             "    print('ATTEMPT', request.full_url)\n"
             "    raise pve.urllib.error.URLError('blocked in test')\n"

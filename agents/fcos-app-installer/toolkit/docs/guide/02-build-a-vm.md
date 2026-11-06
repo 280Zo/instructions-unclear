@@ -44,7 +44,7 @@ platform's tool refuses a spec where one is missing, unexplained or out of
 range, and its dry run prints them all as a table. Show that table to the
 owner; the values are used unless the owner changes them.
 
-**Providers.** For Proxmox VE the settings below are what `tools/pve.py`
+**Providers.** For Proxmox VE the settings below are what `tools/hypervisor.py`
 checks and sends; the official sources are the Proxmox VE VM chapter and the
 FCOS Proxmox guide, linked in the Proxmox adapter skill (`adapter-proxmox`).
 
@@ -140,16 +140,16 @@ bash tools/build-vm.sh $ws/vms/$vm
 
 Expected: every line `ok`, ending with `build-vm: all checks passed`. Any
 `FAIL` stops the procedure. The Ignition file goes next to the spec as
-`<vm>.ign`, which is where `tools/pve.py` looks for it.
+`<vm>.ign`, which is where `tools/hypervisor.py` looks for it.
 
 ## 2.5 [Agent] Create the VM, stopped
 
 ```fish
 # desktop (fish)
-python3 tools/pve.py create <workspace>/vms/<vm>/vm.yaml --host <host> --workspace <workspace> --dry-run
+python3 tools/hypervisor.py create <workspace>/vms/<vm>/vm.yaml --host <host> --workspace <workspace> --dry-run
 ```
 
-Before anything is sent (dry run included), `pve.py` reads the server's
+Before anything is sent (dry run included), `hypervisor.py` reads the server's
 network list and refuses a bridge other than the host's `bridge` (the token's
 permissions refuse it too; an optional `forbidden_bridges` list is honored but
 never asked), a VLAN on a bridge that isn't VLAN-aware or doesn't allow it,
@@ -160,8 +160,8 @@ network to get past it.
 
 Show the owner the dry run's exact steps (upload the config disc, create the
 VM in the agent's pool with protection on, grow the OS disk) and ask before
-running it without `--dry-run`. The VM is created stopped, and `pve.py`
-prints its network card's `MAC address:` for 2.6 (`pve.py status` shows it
+running it without `--dry-run`. The VM is created stopped, and `hypervisor.py`
+prints its network card's `MAC address:` for 2.6 (`hypervisor.py status` shows it
 again).
 
 ## 2.6 [Owner] Router: reserve the address
@@ -210,7 +210,7 @@ ssh-agent).
 
    ```fish
    # desktop (fish)
-   python3 tools/pve.py start <vmid> --host <host> --workspace <workspace>
+   python3 tools/hypervisor.py start <vmid> --host <host> --workspace <workspace>
    python3 tools/vmssh.py keygen <vm> --workspace <workspace>
    ```
 
@@ -247,7 +247,7 @@ FCOS updates itself (Zincati) and reboots inside the update window; that is
 expected.
 
 **If SSH doesn't answer:** first check the address reservation (2.6).
-`tools/pve.py status` shows whether the VM is running. The owner can see in
+`tools/hypervisor.py status` shows whether the VM is running. The owner can see in
 the virtualization platform's own view whether it has read from its disks and
 sent network traffic; a VM that read hundreds of MB and sent packets has
 booted. The serial console is not a proven fallback yet (see

@@ -82,7 +82,7 @@ class LaunchFolderTests(unittest.TestCase):
             with self.subTest(pattern=pattern):
                 self.assertRegex(pattern, r"^(?:python3|bash) tools/")
         # Started anywhere else, the same command line is not an allowed tool run.
-        self.assertEqual(effect(text, "shell", "python3 /elsewhere/tools/pve.py list"), "ask")
+        self.assertEqual(effect(text, "shell", "python3 /elsewhere/tools/hypervisor.py list"), "ask")
 
     def test_the_run_starts_by_checking_the_launch_folder(self):
         prompt = (ROOT / ".opencode" / "agents" / "fcos-app-installer.md").read_text()

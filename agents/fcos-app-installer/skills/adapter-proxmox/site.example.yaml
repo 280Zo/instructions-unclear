@@ -1,5 +1,5 @@
 # The hosts section of the site file for the Proxmox VE adapter. Values are examples: ask the user for each
-# one marked ASK. This shows every key the adapter's scripts and tools/pve.py read.
+# one marked ASK. This shows every key the adapter's scripts and tools/virtualization/proxmox.py read.
 # Keys are your own names; always ask which one a VM goes on.
 # always_on: false means the host is sometimes shut down; anything on it is off
 # with it. The edge VM must go on an always_on host.
@@ -7,7 +7,7 @@ hosts:
   host-a:
     name: pve-a                 # ASK: the name the owner uses for this server
     node: pve-a                 # optional: Proxmox node name, if different from the key
-    address: 192.0.2.21         # optional until tools/pve.py is used: the server's IP or DNS name (API on port 8006)
+    address: 192.0.2.21         # optional until the API tool is used: the server's IP or DNS name (API on port 8006)
     ca_file: null               # optional: path to the CA certificate for the API (null: system CAs)
     always_on: false            # ASK
     storage: local-lvm          # ASK: VM disk storage pool
@@ -22,7 +22,7 @@ hosts:
   host-b:
     name: pve-b                 # ASK
     node: pve-b                 # optional
-    address: 192.0.2.22         # optional until tools/pve.py is used
+    address: 192.0.2.22         # optional until the API tool is used
     ca_file: null               # optional
     always_on: true             # ASK
     storage: local-lvm          # ASK

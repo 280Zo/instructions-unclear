@@ -39,7 +39,7 @@ to use it, `adapter.yaml` holds the steps, `scripts/` its host scripts, and
 `tools/adapters.py` is the one renderer for all of them.
 
 **Providers.** Adapter skills exist for Proxmox VE (`adapter-proxmox`, with its
-host scripts and API access through `tools/pve.py`), OPNsense
+host scripts and API access through `tools/hypervisor.py`), OPNsense
 (`adapter-opnsense`), TrueNAS (`adapter-truenas`) and DuckDNS
 (`adapter-duckdns`). Pages in this guide name the
 adapter step to show, for example "virtualization: `create_api_access`".
@@ -82,7 +82,7 @@ file server, the DNS provider, remote-access consoles, and anything involving
 a secret value. The agent shows them from the adapter, with every value filled
 in, says which machine and shell each command runs in, lists what to report
 back, and waits. **[Agent]** steps happen on the desktop, in the workspace, on
-the machines over SSH, and through `tools/pve.py`.
+the machines over SSH, and through `tools/hypervisor.py`.
 
 Each code block starts with a comment naming the machine and shell:
 `# desktop (fish)`, `# vm ai (bash, <admin>)`. Desktop commands are fish syntax;
@@ -146,7 +146,7 @@ lists as open, protected by the app's own password.
 
 | The owner | The agent |
 |---|---|
-| Virtualization server: runs the setup script and the delete/rebuild commands from the adapter | Creates, starts and checks VMs with `tools/pve.py` and the limited token |
+| Virtualization server: runs the setup script and the delete/rebuild commands from the adapter | Creates, starts and checks VMs with `tools/hypervisor.py` and the limited token |
 | Router: address reservations, the DNS wildcard, traffic rules between networks | Writes the specs, generates and builds every file, runs the checks |
 | File server: accounts, groups, exports, folders | Pushes changes to running VMs over SSH as `<admin>` and starts services |
 | Secret values: entered at hidden prompts, kept in the password manager | Lists secret names only; never sees a value |
@@ -156,7 +156,7 @@ lists as open, protected by the app's own password.
 | Tool | Does |
 |---|---|
 | `tools/workspace.py` | Creates and finds the workspace; reads earlier installs |
-| `tools/pve.py` | The only way the agent talks to the virtualization API: `check`, `list`, `create [--dry-run]`, `start`, `status`. Reads the token itself; refuses VMs outside its pool |
+| `tools/hypervisor.py` | The only way the agent talks to the virtualization API: `check`, `list`, `create [--dry-run]`, `start`, `status`. Reads the token itself; refuses VMs outside its pool |
 | `tools/gen_service.py <service.yaml> <site.yaml> <out>` | Generates every file for one service from its spec |
 | `tools/login_frontend.py <site.yaml> <out> [<service.yaml>...]` | Generates the login front end and every route and login rule |
 | `tools/adapters.py` | Loads adapters, renders owner steps, drafts new adapters |

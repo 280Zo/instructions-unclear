@@ -1,4 +1,4 @@
-"""A fake of the Proxmox endpoints tools/pve.py uses, with a request log.
+"""A fake of the Proxmox endpoints tools/virtualization/proxmox.py uses, with a request log.
 
 Plain HTTP on 127.0.0.1, random port. Test-only.
 """

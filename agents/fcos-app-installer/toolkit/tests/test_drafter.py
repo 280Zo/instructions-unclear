@@ -35,7 +35,7 @@ class DrafterTests(unittest.TestCase):
                         f"python3 tools/adapters.py draft --role file_server --provider synology --from /tmp/opencode/r.json --workspace {WS}"):
             with self.subTest(command=command):
                 self.assertEqual(effect(self.text, "shell", command), "allow")
-        for command in ("python3 tools/vmssh.py run edge -- true", "python3 tools/pve.py list", "ssh x", "rm -rf /",
+        for command in ("python3 tools/vmssh.py run edge -- true", "python3 tools/hypervisor.py list", "ssh x", "rm -rf /",
                         "python3 tools/adapters.py render --role x --step y --values v",
                         "python3 tools/adapters.py draft --from ../x", "python3 tools/adapters.py show; ssh x"):
             with self.subTest(command=command):

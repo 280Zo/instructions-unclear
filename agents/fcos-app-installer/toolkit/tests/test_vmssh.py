@@ -439,11 +439,11 @@ class AgentRulesTests(unittest.TestCase):
         sys.path.insert(0, str(ROOT / "tests"))
         from test_agent import AGENT, effect
         text = AGENT.read_text()
-        for command in ("python3 tools/pve.py list; ssh admin@192.0.2.30 true",
+        for command in ("python3 tools/hypervisor.py list; ssh admin@192.0.2.30 true",
                         "bash tools/validate.sh x && ssh 192.0.2.30", "env ssh 192.0.2.30", "command ssh 192.0.2.30",
                         "/usr/bin/ssh 192.0.2.30", "git -c core.sshCommand='ssh -i k' fetch",
                         "GIT_SSH_COMMAND=x git fetch", "SSH_AUTH_SOCK=/x python3 tools/x.py",
-                        "python3 tools/pve.py list | scp a b:", "python3 tools/x.py; rsync a b:"):
+                        "python3 tools/hypervisor.py list | scp a b:", "python3 tools/x.py; rsync a b:"):
             with self.subTest(command=command):
                 self.assertEqual(effect(text, "shell", command), "deny")
         # The agent's own commands still run hands-off.

@@ -169,7 +169,7 @@ Start from `site.example.yaml`. Every value there is a placeholder.
 The agent never runs commands on your servers. Where the hypervisor has an API, its adapter has a step
 you run yourself, as the server's administrator, that creates a limited token. The token can only see
 and manage the VMs in its own pool, use one disk storage and one bridge, and upload config discs. The
-agent uses it only through the adapter's tool (`tools/pve.py` for Proxmox VE), which has no delete or
+agent uses it only through the adapter's tool (`tools/hypervisor.py`, which loads the adapter's code), which has no delete or
 disk-swap command; those stay steps you run yourself. The step prints the secret once, and the agent's
 next step stores it in `<workspace>/secrets/` from a hidden prompt. When the install is done, the
 adapter's teardown step removes the access; the VMs keep running. The adapter's `SKILL.md` lists its

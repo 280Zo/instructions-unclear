@@ -73,7 +73,7 @@ opencode:
     - action: shell
       resource: "podman pull *"
       effect: ask
-    # Never: hypervisor commands or its API directly (only tools/pve.py), root
+    # Never: hypervisor commands or its API directly (only tools/hypervisor.py), root
     # logins, local root, secrets, publishing.
     - action: shell
       resource: "qm *"
@@ -594,14 +594,14 @@ exact wording, options and what each answer fills are in
    for certificates) the answer picks an adapter: see its steps, capabilities
    and defaults with `python3 tools/adapters.py show --role <role> --provider <name>`
    (`tools/adapters.py`). An unknown product gets the general steps.
-4. **Hypervisor access.** Test the token with `python3 tools/pve.py check`.
+4. **Hypervisor access.** Test the token with `python3 tools/hypervisor.py check`.
    Without one, show the setup steps (virtualization: `create_api_access`):
    the owner checks each script's checksum, runs the check mode, then for real.
    When the token is new, show `store_api_token` next, as its own step: the
    setup script prints only the secret, never the command that stores it.
 5. **Where the service goes.** Always ask **which server** and which VM, even
    if you think you know. List the VMs the token can see
-   (`python3 tools/pve.py list`) and ask: "Add it to an existing machine, or
+   (`python3 tools/hypervisor.py list`) and ask: "Add it to an existing machine, or
    create a new one?" For a new VM, follow guide section 2.
 6. **Login page.** Ask whether the app goes behind the login page, and say
    which app paths (APIs, sync) would stay open and why. The login
@@ -698,7 +698,7 @@ code and redirect only); `curl` asks the owner first.
 
 ## The hypervisor
 
-Talk to it only through the adapter's tool, today `tools/pve.py` (`check`, `list`, `create`, `start`,
+Talk to it only through `tools/hypervisor.py` (`check`, `list`, `create`, `start`,
 `status`); never call its API another way and never read the token file.
 Before `create`, show the dry run (`--dry-run`) and ask. Start a new VM only
 after the owner reports its address reserved (guide 2.6-2.7). Deleting, disk

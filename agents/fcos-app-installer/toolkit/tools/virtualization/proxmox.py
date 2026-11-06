@@ -1,13 +1,13 @@
-#!/usr/bin/env python3
-"""The agent's only way to talk to Proxmox VE.
+"""The agent's only way to talk to Proxmox VE: the virtualization adapter's tool. It is run through
+tools/hypervisor.py, which reads the product from the site file and passes the arguments here.
 
 Usage:
-  pve.py check  [--host KEY]                    validate the token, show its permissions
-  pve.py list   [--host KEY]                    VMs in the fcos-agent pool
-  pve.py create <vm.yaml> [--dry-run] [--host KEY]   (ignition.method nocloud-iso also uploads
+  hypervisor.py check  [--host KEY]                    validate the token, show its permissions
+  hypervisor.py list   [--host KEY]                    VMs in the fcos-agent pool
+  hypervisor.py create <vm.yaml> [--dry-run] [--host KEY]   (ignition.method nocloud-iso also uploads
                                                 a config ISO built by tools/make_cidata_iso.sh)
-  pve.py start  <vm> [--host KEY]               <vm>: name under vms/ or a VMID
-  pve.py status <vm> [--host KEY]
+  hypervisor.py start  <vm> [--host KEY]               <vm>: name under vms/ or a VMID
+  hypervisor.py status <vm> [--host KEY]
 
 Runs on the owner's desktop. It reads the API token from
 <workspace>/secrets/proxmox-<host>.token itself (one line,
@@ -49,7 +49,7 @@ TASK_TIMEOUT = 900
 MAX_RESPONSE = 4 * 1024 * 1024
 MAX_ISO = 64 * 1024 * 1024
 BUILD_TIMEOUT = 600
-ISO_SCRIPT = Path(__file__).resolve().parent / "make_cidata_iso.sh"
+ISO_SCRIPT = Path(__file__).resolve().parent.parent / "make_cidata_iso.sh"
 
 HOST_KEY = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 NODE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]*$")
@@ -958,7 +958,7 @@ def cmd_create(ws: Path, site: dict, args) -> int:
     print(f"VM {spec['vmid']} ({spec['name']}) created in pool {POOL}; not started")
     mac = vm_mac(client, node, spec["vmid"])
     if mac:
-        print(f"MAC address: {mac} (reserve its address in DHCP before pve.py start, "
+        print(f"MAC address: {mac} (reserve its address in DHCP before hypervisor.py start, "
               "if the network only serves reserved addresses)")
     else:
         print("MAC address: not reported; read it in Proxmox (VM > Hardware > Network Device)")
@@ -992,7 +992,7 @@ def cmd_status(ws: Path, site: dict, args) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="pve.py", allow_abbrev=False,
+    parser = argparse.ArgumentParser(prog="hypervisor.py", allow_abbrev=False,
                                      description="Create and start FCOS VMs in the fcos-agent pool.")
     common = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
     common.add_argument("--host", help="host key from site.yaml")
@@ -1012,6 +1012,9 @@ def build_parser() -> argparse.ArgumentParser:
 COMMANDS = {"check": cmd_check, "list": cmd_list, "create": cmd_create,
             "start": cmd_start, "status": cmd_status}
 
+# The verbs every virtualization tool has (the contract tools/adapters.py checks).
+VERBS = tuple(COMMANDS)
+
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
@@ -1025,7 +1028,3 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:  # noqa: BLE001 - never show a traceback that could carry the token
         print(f"pve: unexpected {type(exc).__name__}: {_oneline(exc)}", file=sys.stderr)
         return 1
-
-
-if __name__ == "__main__":
-    sys.exit(main())

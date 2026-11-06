@@ -64,8 +64,8 @@ class AgentTests(unittest.TestCase):
 
     def test_hands_off_for_its_own_steps(self):
         ws = "/home/owner/fcos-workspace"
-        for command in (f"python3 tools/pve.py check --host host-a --workspace {ws}",
-                        f"python3 tools/pve.py create {ws}/vms/apps/vm.yaml --host host-a --dry-run",
+        for command in (f"python3 tools/hypervisor.py check --host host-a --workspace {ws}",
+                        f"python3 tools/hypervisor.py create {ws}/vms/apps/vm.yaml --host host-a --dry-run",
                         f"python3 tools/gen_service.py {ws}/services/crm/service.yaml {ws}/site.yaml {ws}/services/crm",
                         f"python3 tools/login_frontend.py {ws}/site.yaml {ws}/login-frontend",
                         "python3 tools/adapters.py draft --role file_server --provider synology --from x.json",
@@ -146,7 +146,7 @@ class AgentTests(unittest.TestCase):
         for command in ("rm -f /tmp/opencode/x README.md .git/index",
                         "python3 -m unittest discover -s /tmp/opencode",
                         "python3 -m unittest /tmp/opencode/test_x.py",
-                        "python3 -m unittest tests.test_pve /tmp/opencode/x.py",
+                        "python3 -m unittest tests.test_proxmox /tmp/opencode/x.py",
                         "ssh -l 'root' 192.0.2.5", "ssh -l \"root\" 192.0.2.5", "ssh -l'root' 192.0.2.5",
                         "ssh -o 'User root' 192.0.2.5",
                         "ssh-keygen -R 192.0.2.20 -f /home/owner/agent/README.md"):
@@ -163,7 +163,7 @@ class AgentTests(unittest.TestCase):
                         "python3 tools/http_check.py https://crm.example.duckdns.org/",
                         "python3 tools/workspace.py where",
                         "python3 -m unittest discover tests",
-                        "python3 -m unittest tests.test_pve",
+                        "python3 -m unittest tests.test_proxmox",
                         "ssh-keygen -R 192.0.2.20",
                         "python3 tools/adapters.py render --role router_firewall --provider opnsense --step reserve_ip --values /tmp/opencode/v.json"):
             with self.subTest(command=command):
@@ -181,7 +181,7 @@ class AgentTests(unittest.TestCase):
         self.assertIn("python3 tools/workspace.py previous", text)
         self.assertIn("python3 tools/adapters.py show", text)
         self.assertIn("python3 tools/adapters.py render", text)
-        self.assertIn("python3 tools/pve.py list", text)
+        self.assertIn("python3 tools/hypervisor.py list", text)
         self.assertNotRegex(text, r"`python3 tools/workspace\.py`")
 
     def test_search_tool_asks(self):
@@ -333,7 +333,7 @@ class AgentTests(unittest.TestCase):
     def test_prompt_states_the_rules(self):
         text = body(self.text)
         for phrase in ("docs/guide/README.md", "docs/guide/questions.md", "publish_check.py", "which server",
-                       "5 GB", "[Owner]", "secret", "workspace", "tools/pve.py", "tools/adapters.py",
+                       "5 GB", "[Owner]", "secret", "workspace", "tools/hypervisor.py", "tools/adapters.py",
                        "tools/gen_service.py", "tools/login_frontend.py", "reference.md"):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase.lower(), text.lower())

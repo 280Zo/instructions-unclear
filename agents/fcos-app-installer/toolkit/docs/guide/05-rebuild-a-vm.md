@@ -16,7 +16,7 @@ pick up a change that can't be pushed live.
    VM's current disc `fcos-<vm>-ign.iso` is still attached and is never
    overwritten:
    `bash tools/make_cidata_iso.sh <workspace>/vms/<vm>/<vm>.ign <workspace>/vms/<vm>/fcos-<vm>-ign-<YYYYMMDD>.iso`.
-   Gap: `tools/pve.py` uploads a config disc only when it creates a VM. Until
+   Gap: `tools/hypervisor.py` uploads a config disc only when it creates a VM. Until
    it can upload one for an existing VM, the owner uploads that file to the
    VM's ISO storage, keeping its name, in the server's web interface. The
    rebuild step refuses a disc that is already attached, then attaches the new

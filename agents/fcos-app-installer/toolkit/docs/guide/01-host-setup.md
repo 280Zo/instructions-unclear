@@ -7,7 +7,7 @@ server's values filled in.
 
 **Providers.** For Proxmox VE the steps are in the skill `adapter-proxmox` (`.opencode/skills/adapter-proxmox/`);
 the setup and teardown scripts are in its `scripts/` and the agent
-uses the token through `tools/pve.py`. For another platform the agent shows
+uses the token through `tools/hypervisor.py`. For another platform the agent shows
 the general steps from the skill `adapter-generic`.
 
 ## 1.1 Ask the owner, from what the server shows
@@ -55,7 +55,7 @@ When the token is new, the script prints its secret once, and nothing to run.
 The agent then shows the next step on its own, **virtualization:
 `store_api_token`**: a desktop command that stores the secret in
 `<workspace>/secrets/` from a hidden prompt. The secret never goes into the
-chat, and the agent never reads the file; only `tools/pve.py` does.
+chat, and the agent never reads the file; only `tools/hypervisor.py` does.
 
 Report back: the checksum lines, the check's output, the apply's output
 without the secret.
@@ -64,7 +64,7 @@ without the secret.
 
 ```fish
 # desktop (fish)
-python3 tools/pve.py check --host <host> --workspace <workspace>
+python3 tools/hypervisor.py check --host <host> --workspace <workspace>
 ```
 
 Expected: the API version, and the token's rights on exactly its pool, its

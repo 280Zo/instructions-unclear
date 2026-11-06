@@ -38,6 +38,7 @@ Usage:
 """
 
 import argparse
+import importlib
 import json
 import re
 import sys
@@ -75,7 +76,12 @@ PATH_VALUE = re.compile(r"/[A-Za-z0-9._/@+-]{1,199}")
 OPTIONS_VALUE = re.compile(r"[a-z0-9_]+=[A-Za-z0-9._-]+(,[a-z0-9_]+=[A-Za-z0-9._-]+)*")
 MACHINE = re.compile(r".+ \((bash|fish)(, [^)]+)?\)")
 TOP_KEYS = {"role", "provider", "name", "docs", "discovery", "capabilities", "defaults", "owner_steps", "scripts",
-            "draft", "notes", "acme"}
+            "draft", "notes", "acme", "code"}
+# Roles whose adapter may ship a tool the agent runs (tools/<package>/<product>.py), with the verbs the
+# generic entry point accepts. Only the virtualization role has one: tools/hypervisor.py.
+TOOL_PACKAGES = {"virtualization": "virtualization"}
+TOOL_VERBS = {"virtualization": ("check", "list", "create", "start", "status")}
+TOOL_NAME = re.compile(r"[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*")
 ACME_KEYS = {"provider", "env", "store_as", "notes"}
 ACME_PROVIDER = re.compile(r"[a-z0-9][a-z0-9-]{0,40}")
 ACME_ENV = re.compile(r"[A-Z][A-Z0-9_]{0,60}")
@@ -158,6 +164,16 @@ def _check_acme(acme, role: str, where: str) -> None:
         raise AdapterError(f"{where}: acme notes must be one printable line of at most 300 characters, with no {{ }}")
 
 
+def _check_code(code, role: str, provider: str, where: str) -> None:
+    """code names the adapter's tool: <package>.<product>, in the role's package and named like the provider."""
+    package = TOOL_PACKAGES.get(role)
+    if package is None:
+        raise AdapterError(f"{where}: the {role} role has no tool contract, so the adapter can't name code")
+    expected = f"{package}.{provider.replace('-', '_')}"
+    if not (isinstance(code, str) and TOOL_NAME.fullmatch(code) and code == expected):
+        raise AdapterError(f"{where}: code must be {expected} (a file in tools/{package}/), not {code!r}")
+
+
 def _check_adapter(data, role: str, provider: str) -> dict:
     where = f"adapter-{provider}/adapter.yaml"
     if not isinstance(data, dict):
@@ -182,6 +198,8 @@ def _check_adapter(data, role: str, provider: str) -> dict:
     _check_scripts(data.get("scripts", []), where)
     if "acme" in data:
         _check_acme(data["acme"], role, where)
+    if "code" in data:
+        _check_code(data["code"], role, provider, where)
     steps = data.get("owner_steps")
     if not isinstance(steps, dict):
         raise AdapterError(f"{where}: owner_steps is required")
@@ -267,6 +285,24 @@ def load_adapter(role: str, provider: str | None, root: Path | None = None) -> d
     steps = _generic_steps(role)
     return {"role": role, "provider": provider or "generic", "name": provider or "generic", "generic": True,
             "docs": [], "discovery": {}, "capabilities": {}, "defaults": {}, "scripts": [], "owner_steps": steps}
+
+
+def load_tool(adapter: dict):
+    """The Python module of the adapter's tool, checked to have the role's verbs and a main(argv)."""
+    where = f"adapter-{adapter.get('provider')}"
+    code = adapter.get("code")
+    if adapter.get("generic") or not code:
+        raise AdapterError(f"{where} has no tool: every step it has is an owner step. A tool is a file in "
+                           "tools/<role package>/ named by `code:` in adapter.yaml (docs/guide/12-add-a-module.md)")
+    try:
+        loaded = importlib.import_module(code)
+    except Exception as error:  # ImportError, or whatever the tool's code raises while loading
+        raise AdapterError(f"{where}: its tool {code!r} can't be loaded ({type(error).__name__}: {error})") from None
+    if tuple(getattr(loaded, "VERBS", ())) != TOOL_VERBS[adapter["role"]]:
+        raise AdapterError(f"{where}: its tool {code!r} must define VERBS = {TOOL_VERBS[adapter['role']]}")
+    if not callable(getattr(loaded, "main", None)):
+        raise AdapterError(f"{where}: its tool {code!r} must define main(argv)")
+    return loaded
 
 
 def acme_data(site: dict) -> dict:

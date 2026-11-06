@@ -262,7 +262,9 @@ deploy or work with, so only the products a user chose are loaded and nothing is
 - `ingress-<product>` and `authgw-<product>`: the login front end's reverse proxy and auth gateway.
   Each has `SKILL.md`, `module.yaml` (capability, provides, needs, `pairs_with` with a `tested`
   flag), `spec.yaml`, `templates/` and `reference.md`; its Python is in `tools/ingress/` or
-  `tools/authgw/`, because the agent runs `python3 tools/*`.
+  `tools/authgw/`, because the agent runs `python3 tools/*`. An adapter whose system has an API
+  for the agent names its tool with `code:` in `adapter.yaml` (a file in `tools/virtualization/`, run
+  through `tools/hypervisor.py`); the contract is in section 12.4 of that guide.
 
 To add a module, follow `agents/fcos-app-installer/toolkit/docs/guide/12-add-a-module.md`. The
 installed agent gets the same instruction from `agents/fcos-app-installer/rules/modules.md`. Copy the

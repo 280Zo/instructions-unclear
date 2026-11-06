@@ -203,14 +203,14 @@ class AdapterTests(unittest.TestCase):
         self.assertIn(f"chmod 600 {token_file}", text)
         self.assertIn("read -s", text)
         key_id = re.search(r"^KEY_ID='([^']+)'", (PROXMOX / "scripts" / "lib.sh").read_text(), re.M).group(1)
-        self.assertIn(f"'{key_id}='", text)  # pve.py reads one line <token id>=<secret>
+        self.assertIn(f"'{key_id}='", text)  # the Proxmox tool reads one line <token id>=<secret>
         self.assertIn("set -e t", text)
         block = text.split("```fish", 1)[1].split("```", 1)[0]
         # Review: no file readable by others for a moment, and no empty token file.
         self.assertLess(block.index('test -n "$t"'), block.index("install -m 600 /dev/null"))
         self.assertLess(block.index("install -m 600 /dev/null"), block.index("printf"))
         self.assertNotIn("umask", block)  # it would stay set in the owner's shell
-        self.assertNotIn("pve.py", block)  # the agent checks the token itself (guide 1.4)
+        self.assertNotIn("hypervisor.py", block)  # the agent checks the token itself (guide 1.4)
 
     def test_host_must_be_a_workspace_key_for_the_server(self):
         # HOST names the token file and hosts/<HOST>/: it is the site file's hosts key,
