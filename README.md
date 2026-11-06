@@ -227,6 +227,7 @@ A profile installs into one folder instead of your home folder, keeping speciali
 | Folder                                                      | Adds                                                                                            |
 | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | [`skills/ai-research`](skills/ai-research/)                 | 98 AI research skills: training, fine-tuning, inference, evaluation, RAG, agents, paper writing |
+| [`skills/permission-tuning`](skills/permission-tuning/)     | `permission-tuning` skill and shell-habits rule for tuning OpenCode permissions; `ai_research` group only |
 | [`skills/designskills`](skills/designskills/)               | 19 design skills: graphics, brand identity, color palettes, typography and design critique      |
 | [`mcp-servers/rea`](mcp-servers/rea/)                       | REA, an MCP server and skill for reverse engineering apps, websites, APKs and binaries          |
 | [`mcp-servers/zap`](mcp-servers/zap/)                       | Official ZAP MCP connection for web-security workflows; disabled until configured               |
@@ -367,7 +368,7 @@ Saved selections, so you don't have to list folders. [`groups/README.md`](groups
 | `work`                | OpenCode, Copilot and Copilot CLI on a work machine                                                                                           |
 | `writing_reporting`   | Writing, reports and visuals, without touching MCP settings                                                                                   |
 | `infosec`             | Security rule/agents, 11 security and utility skills and a disabled ZAP connection, in a folder you choose; native plugins install separately |
-| `ai_research`         | AI research skills, in a folder you choose                                                                                                    |
+| `ai_research`         | AI research skills, plus the permission-tuning skill and its shell-habits rule, in a folder you choose                                        |
 | `career`              | Career skills in a folder you choose; the `career` agent comes with `default`                                                                 |
 | `reverse_engineering` | REA, the `reverse-engineering` agent and its helpers, and disabled ReVa/radare2 connections, in a folder you choose; IoTHackBot is native-owned                                      |
 | `design`              | Design skills for graphics, UI, palettes and brand, in a folder you choose                                                                    |

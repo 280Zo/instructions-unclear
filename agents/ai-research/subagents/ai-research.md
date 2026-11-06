@@ -82,6 +82,7 @@ opencode:
     - {action: "skill", resource: "outlines", effect: allow}
     - {action: "skill", resource: "package-management", effect: allow}
     - {action: "skill", resource: "peft", effect: allow}
+    - {action: "skill", resource: "permission-tuning", effect: allow}
     - {action: "skill", resource: "phoenix", effect: allow}
     - {action: "skill", resource: "pinecone", effect: allow}
     - {action: "skill", resource: "presenting-conference-talks", effect: allow}

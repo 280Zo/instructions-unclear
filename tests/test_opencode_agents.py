@@ -123,6 +123,8 @@ class AgentTests(unittest.TestCase):
             available |= set(generate.BUNDLES[key])
         # REA is folder-only, so its skill may be absent.
         available.add("reverse-engineer-anything")
+        # permission-tuning installs only with the ai_research folder group.
+        available |= set(generate.BUNDLES["permission-tuning"])
         for spec in generate.agent_specs().values():
             for bundle in spec.get("bundles", []):
                 for skill in generate.BUNDLES[bundle]:

@@ -1,9 +1,10 @@
 {
   "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
-  // Folder-scoped: the 98 AI research skills. Run from the repo root with
-  // --output-roots <folder>. Never run this with --global.
+  // Folder-scoped: the 98 AI research skills, the permission-tuning skill and
+  // its shell-habits rule (written to the folder's AGENTS.md). Run from the
+  // repo root with --output-roots <folder>. Never run this with --global.
   "targets": ["opencode"],
-  "features": ["skills"],
+  "features": ["rules", "skills"],
   "delete": false,
-  "inputRoots": ["skills/ai-research"]
+  "inputRoots": ["skills/ai-research", "skills/permission-tuning"]
 }

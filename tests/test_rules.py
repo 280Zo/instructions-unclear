@@ -93,5 +93,36 @@ class RuleTests(unittest.TestCase):
             self.assertEqual(roots[-1], "rules/shell-preamble-reminder", group)
 
 
+    def test_permission_tuning_installs_only_with_the_ai_research_folder_group(self):
+        folder = "skills/permission-tuning"
+        group = read_jsonc(ROOT / "groups/ai_research.jsonc")
+        self.assertIn("rules", group["features"])
+        self.assertIn(folder, group["inputRoots"])
+        for name in HOME_GROUPS:
+            self.assertNotIn(folder, read_jsonc(ROOT / f"groups/{name}.jsonc")["inputRoots"], name)
+        self.assertNotIn(folder, read_jsonc(ROOT / "rulesync.jsonc")["inputRoots"])
+
+        rule = (ROOT / folder / "rules/shell-habits.md").read_text()
+        self.assertIn("root: true", rule)
+        self.assertIn('targets: ["*"]', rule)
+        for text in ["VAR=value", "git add --", "`permission-tuning` skill", '"Always"']:
+            self.assertIn(text, rule)
+        # The habits live here only, not in the global engineering rule.
+        self.assertNotIn("VAR=value", rule_text("engineering"))
+
+        skill = (ROOT / folder / "skills/permission-tuning/SKILL.md").read_text()
+        head = skill.split("---")[1]
+        self.assertEqual([l.split(":")[0] for l in head.strip().splitlines()], ["name", "description"])
+        self.assertIn("name: permission-tuning", head)
+        for path in (ROOT / folder).rglob("*"):
+            if path.is_file():
+                self.assertNotIn("/home/", path.read_text(), path)
+
+    def test_replies_use_full_paths(self):
+        text = rule_text("communication")
+        for word in ["never relative", "`~/...`", "`$HOME/...`"]:
+            self.assertIn(word, text)
+
+
 if __name__ == "__main__":
     unittest.main()

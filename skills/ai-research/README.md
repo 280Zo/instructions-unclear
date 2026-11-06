@@ -40,7 +40,7 @@ Some skills install Python packages or use cloud GPUs (Modal, Lambda Labs, SkyPi
 ### Install
 
 - This folder is a profile. The [`ai_research` group](../../groups/README.md#ai_research) installs it, and so does the command under [Install](#install) above, run with `--output-roots` into a folder the user picks (suggest `~/research` or `~/AI/ai_research`). Never add `--global`. The `default` group installs it globally only alongside the filtering [specialist agents](../../agents/README.md).
-- It installs skills only, with no rules and no MCP servers. Python packages, GPUs and cloud accounts are not installed; each skill asks for what it needs when used.
+- This profile installs skills only, with no rules and no MCP servers. The `ai_research` group adds one more folder, [`skills/permission-tuning`](../permission-tuning/), and with it the folder's own `AGENTS.md` holding the shell-habits rule. Python packages, GPUs and cloud accounts are not installed; each skill asks for what it needs when used.
 - To verify, start the tool in that folder and confirm the skills list includes `autoresearch` and `serving-llms-vllm`. Don't run training, serving or cloud jobs as a test.
 
 ### Remove
@@ -48,7 +48,7 @@ Some skills install Python packages or use cloud GPUs (Modal, Lambda Labs, SkyPi
 Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component), working inside the chosen folder (`.opencode/skills/`, `.claude/skills/` and so on), not the home folder.
 
 - `delete: false` leaves all 98 skills behind: every directory under `skills/ai-research/skills/`. The `name` fields often differ from the directory names (for example `0-autoresearch-skill` holds `autoresearch`, `vllm` holds `serving-llms-vllm`), so check the generation output for the installed folder names before deleting.
-- The folder gets no generated `AGENTS.md` from this profile, because it has no rules.
+- The folder gets no generated `AGENTS.md` from this profile, because it has no rules. The `ai_research` group does write one; delete it too when removing that group's files.
 - If nothing else lives in the folder, the user may prefer to delete the whole folder. Ask first, since research code, data and results may be stored there.
 - Python environments, packages, model downloads and cloud resources the skills set up stay unless the user asks to remove them.
 

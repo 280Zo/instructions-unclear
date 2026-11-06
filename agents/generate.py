@@ -108,6 +108,7 @@ BUNDLES = {
     "design": skill_ids("skills/designskills"),
     "career": skill_ids("skills/resume-skills", "skills/interview-coach", "skills/career-workspace"),
     "ai-research": skill_ids("skills/ai-research"),
+    "permission-tuning": skill_ids("skills/permission-tuning"),
     "reverse-engineering": skill_ids(
         "agents/reverse-engineering", "mcp-servers/rea", "mcp-servers/reva"
     ),
@@ -120,12 +121,13 @@ BUNDLE_TITLES = {
     "browser": "Browser and screenshots", "secure-coding": "Secure coding and SAST",
     "threat": "Threat modeling and photo geolocation", "design": "Design skills",
     "career": "Career skills", "ai-research": "AI research skills",
+    "permission-tuning": "Permission tuning (folder group ai_research, not default)",
     "reverse-engineering": "Reverse-engineering skills",
     "fcos": "FCOS app installer skills (folder group fcos_app_installer, not default)",
     **{key: f"{plugin['title']} (native plugin, installed separately)" for key, plugin in NATIVE_PLUGINS.items()},
 }
 # Bundles no group but their own folder group installs: shown whole on the map.
-FOLDER_ONLY_BUNDLES = ["fcos"]
+FOLDER_ONLY_BUNDLES = ["fcos", "permission-tuning"]
 # Only build-family agents see everything else; these stay with their specialist.
 SPECIALIST_BUNDLES = ["design", "career", "ai-research", "threat", "reverse-engineering", "fcos", *NATIVE_PLUGINS]
 
@@ -156,7 +158,7 @@ SPECIALISTS = {
     },
     "ai-research": {
         "description": "AI and machine-learning research and engineering: training, fine-tuning, RL, quantization, inference serving, evaluation, interpretability, safety, RAG and vector stores, agent frameworks, experiment tracking, research ideation and ML paper writing.",
-        "bundles": ["humanizer", "report", "documents", "visual", "ai-research"],
+        "bundles": ["humanizer", "report", "documents", "visual", "ai-research", "permission-tuning"],
         "mcp": BASE_MCP,
         "subagents": ["general", "explore"],
         "instructions": "You are the AI research agent. Handle AI and machine-learning research and engineering: training, fine-tuning, RL, quantization, inference serving, evaluation, interpretability, safety, RAG and vector stores, agent frameworks, experiment tracking, research ideation and ML paper writing. Prefer the AI research skill for the framework in use. Ask before installing packages, using paid GPUs or cloud accounts, or starting long jobs. Hand work outside AI research back to the main agent.",

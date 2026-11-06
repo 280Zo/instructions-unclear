@@ -8,7 +8,7 @@ Saved selections, so you don't have to name every folder. Run every command from
 | [`work`](#work) | Your home folder, OpenCode, Copilot and Copilot CLI | Rules, agents, MCP servers and writing skills for a work machine |
 | [`writing_reporting`](#writing_reporting) | Your home folder, OpenCode | Rules plus writing, report and visual skills, without touching MCP settings |
 | [`infosec`](#infosec) | A folder you choose | The security bundle (rule, 3 agents, 4 commands), 11 security and utility skills and disabled ZAP MCP; native security plugins install separately |
-| [`ai_research`](#ai_research) | A folder you choose | 98 AI research skills |
+| [`ai_research`](#ai_research) | A folder you choose | 98 AI research skills, the `permission-tuning` skill and its shell-habits rule |
 | [`career`](#career) | A folder you choose | 22 career skills, the interview coach and 4 career-workspace skills, including the application starter. The `career` agent comes with `default` |
 | [`reverse_engineering`](#reverse_engineering) | A folder you choose | REA, RE agents and disabled ReVa/radare2 MCPs; IoTHackBot is native-owned |
 | [`design`](#design) | A folder you choose | 19 design skills (graphics, brand, palettes, typography, design systems, critique) plus `anatomy` |
@@ -120,7 +120,9 @@ npx rulesync@41.0.0 generate --config groups/infosec.jsonc --output-roots ~/AI/i
 
 ## ai_research
 
-The 98 skills from [`skills/ai-research`](../skills/ai-research/). `default` also installs them for the OpenCode [`ai-research` agent](../agents/ai-research/), the only agent that sees them; use this group for other tools.
+The 98 skills from [`skills/ai-research`](../skills/ai-research/), plus the [`permission-tuning`](../skills/permission-tuning/) skill and its shell-habits rule. That's 99 skills and 1 rule. `default` also installs the 98 for the OpenCode [`ai-research` agent](../agents/ai-research/), the only agent that sees them; use this group for other tools.
+
+The rule lands in the folder's own `AGENTS.md`, replacing any `AGENTS.md` already there, so it applies only when you start your tool in this folder. `default`, `work` and `writing_reporting` don't include `permission-tuning`, so your global instructions file doesn't get the shell habits. In OpenCode, the `ai-research` agent and the `build` family can load the skill.
 
 ```bash
 mkdir -p ~/AI/ai_research
