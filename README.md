@@ -150,7 +150,7 @@ Every folder below installs on its own. Open a group to see what's in it; each f
 | [`rules/shell-preamble-reminder`](rules/shell-preamble-reminder/) | Short preamble reminder placed last in the installed rules                    |
 | [`rules/scope-secrets-approvals`](rules/scope-secrets-approvals/) | Where to work, what never to touch, what to ask before doing                  |
 | [`rules/engineering`](rules/engineering/)                         | Small changes, commands, verification                                         |
-| [`rules/communication`](rules/communication/)                     | State assumptions and summarize at the end                                    |
+| [`rules/communication`](rules/communication/)                     | State assumptions, summarize at the end, write full file paths                |
 | [`rules/routing`](rules/routing/)                                 | Which skill owns each job when several installed skills could do it           |
 | [`rules/preferences`](rules/preferences/)                         | Your preferences: vim, fish, pnpm/uv, zellij, firefox, ISO dates, US spelling |
 

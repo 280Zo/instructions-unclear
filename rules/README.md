@@ -7,7 +7,7 @@ How I want all AI agents to behave, split into topics you can install separately
 | `shell-preamble/`          | Explain every shell command that isn't a plain read before running it. Installed first       |
 | `scope-secrets-approvals/` | Where to work, what never to touch, what to ask before doing                                 |
 | `engineering/`             | Inspect first, keep changes small, use `sd` for replacements, verify before claiming success |
-| `communication/`           | State assumptions and summarize at the end                                                   |
+| `communication/`           | State assumptions, summarize at the end, write full file paths (prefer `~/` or `$HOME`)      |
 | `routing/`                 | Which skill owns each job when several installed skills could do it                          |
 | `preferences/`             | Your preferences: vim, fish, pnpm/uv, zellij, firefox, ISO dates, US spelling                |
 | `shell-preamble-reminder/` | Repeat the preamble check at the end of the installed rules. Installed last                  |
