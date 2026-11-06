@@ -6,6 +6,7 @@ Usage: render.py <template> <values-file>   (writes to stdout)
 
 import re
 import sys
+from pathlib import Path
 
 PLACEHOLDER = re.compile(r"\{\{([A-Z][A-Z0-9_]*)\}\}")
 KEY = re.compile(r"^[A-Z][A-Z0-9_]*$")
@@ -106,13 +107,38 @@ def load_values(path: str) -> dict[str, str]:
     return values
 
 
+def _under(path: Path, roots: list[Path]) -> bool:
+    return any(path == root or root in path.parents for root in roots)
+
+
+def _checked_paths(template: str, values: str) -> tuple[Path, Path]:
+    """The two files, resolved (symlinks and ..) and checked. This tool runs without asking, so it may not be
+    turned into a way to print any readable file: a template comes from templates/ and a values file from the
+    workspace, the test fixtures or the scratch folder."""
+    toolkit = Path(__file__).resolve().parent.parent
+    template_path, values_path = Path(template).resolve(), Path(values).resolve()
+    if not _under(template_path, [toolkit / "templates"]):
+        raise RenderError("the template must be a file under the toolkit's templates/ folder")
+    roots = [toolkit / "tests" / "fixtures", Path("/tmp/opencode").resolve()]
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    try:
+        import workspace
+        roots.append(workspace.resolve_workspace().resolve())
+    except Exception:  # no workspace set (or one that can't be used): the other folders still work
+        pass
+    if not _under(values_path, roots):
+        raise RenderError("the values file must be in the workspace, tests/fixtures or /tmp/opencode")
+    return template_path, values_path
+
+
 def main(argv: list[str]) -> int:
     if len(argv) != 3:
         print(__doc__.strip(), file=sys.stderr)
         return 2
     try:
-        with open(argv[1], encoding="utf-8") as handle:
-            sys.stdout.write(render(handle.read(), load_values(argv[2])))
+        template_path, values_path = _checked_paths(argv[1], argv[2])
+        with open(template_path, encoding="utf-8") as handle:
+            sys.stdout.write(render(handle.read(), load_values(str(values_path))))
     except (RenderError, OSError) as error:
         print(f"render: {argv[1]}: {error}", file=sys.stderr)
         return 1

@@ -73,6 +73,28 @@ opencode:
     - action: shell
       resource: "podman pull *"
       effect: ask
+    # The rules match the whole command string, so an allowed first word could carry any other
+    # command behind a separator. A chain asks (the guide chains some pushes on purpose), and the
+    # denies below still win over this. Command substitution with $( ) is not covered: the guide's
+    # remote commands use it inside quotes (README, "guard rails, not a wall").
+    - action: shell
+      resource: "*;*"
+      effect: ask
+    - action: shell
+      resource: "*&&*"
+      effect: ask
+    - action: shell
+      resource: "* & *"
+      effect: ask
+    - action: shell
+      resource: "*|*"
+      effect: ask
+    - action: shell
+      resource: "*\n*"
+      effect: ask
+    - action: shell
+      resource: "*`*"
+      effect: ask
     # Never: hypervisor commands or its API directly (only tools/hypervisor.py), root
     # logins, local root, secrets, publishing.
     - action: shell
@@ -326,6 +348,17 @@ opencode:
     - action: edit
       resource: "*/adapters-draft/*"
       effect: allow
+    # The patterns above match at any depth, so a toolkit folder that happens to hold a vms/ or
+    # services/ folder inside it must not borrow them: its templates, guide and schemas ask.
+    - action: edit
+      resource: "*/templates/*"
+      effect: ask
+    - action: edit
+      resource: "*/docs/*"
+      effect: ask
+    - action: edit
+      resource: "*/schemas/*"
+      effect: ask
     - action: edit
       resource: "/tmp/opencode/*"
       effect: allow

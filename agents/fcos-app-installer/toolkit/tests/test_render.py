@@ -115,5 +115,84 @@ class LoadValuesTests(unittest.TestCase):
             load_values(write_values("not a pair\n"))
 
 
+class CommandLinePathTests(unittest.TestCase):
+    """render.py runs without asking, so it may only read templates from templates/ and values files from the
+    workspace, the fixtures or /tmp/opencode: anything else would let it print any readable file."""
+
+    FIXTURE = ROOT / "tests" / "fixtures" / "ai-vm.values"
+    TEMPLATE = ROOT / "templates" / "base" / "firewall.bu.tmpl"
+
+    def run_main(self, template, values):
+        import contextlib
+        import io
+        from render import main
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = main(["render.py", str(template), str(values)])
+        return code, out.getvalue(), err.getvalue()
+
+    def test_a_template_and_a_fixture_values_file_render(self):
+        code, out, err = self.run_main(self.TEMPLATE, self.FIXTURE)
+        self.assertEqual(code, 0, err)
+        self.assertTrue(out.strip())
+
+    def test_a_file_that_is_not_a_template_is_not_printed(self):
+        import os
+        with tempfile.TemporaryDirectory(dir=ROOT) as tmp:
+            planted = Path(tmp) / "key.pem"
+            planted.write_text("-----BEGIN " + "PRIVATE KEY-----\nabc\n")  # built at runtime: the publish scan flags it
+            for template in (planted, ROOT / "tools" / "render.py", ROOT / "templates" / ".." / "tools" / "render.py",
+                             Path("/etc/passwd")):
+                with self.subTest(template=str(template)):
+                    code, out, err = self.run_main(template, self.FIXTURE)
+                    self.assertEqual(code, 1)
+                    self.assertEqual(out, "")
+                    self.assertIn("template", err)
+            link = Path(tmp) / "link.tmpl"
+            os.symlink(planted, link)
+            code, out, err = self.run_main(link, self.FIXTURE)
+            self.assertEqual((code, out), (1, ""))
+            # A symlink inside templates/ that points out is resolved first and refused too.
+            inside = ROOT / "templates" / "zz-test-link.tmpl"
+            os.symlink(planted, inside)
+            try:
+                code, out, err = self.run_main(inside, self.FIXTURE)
+            finally:
+                inside.unlink()
+            self.assertEqual((code, out), (1, ""))
+
+    def test_a_values_file_outside_the_allowed_folders_is_refused(self):
+        # A folder that is neither under the toolkit's fixtures, nor /tmp/opencode, nor the workspace.
+        elsewhere = next((d for d in ("/dev/shm", "/var/tmp") if Path(d).is_dir()), None)
+        if elsewhere:
+            with tempfile.TemporaryDirectory(dir=elsewhere) as tmp:
+                values = Path(tmp) / "x.values"
+                values.write_text(self.FIXTURE.read_text())
+                code, out, err = self.run_main(self.TEMPLATE, values)
+            self.assertEqual((code, out), (1, ""))
+            self.assertIn("values", err)
+        code, out, err = self.run_main(self.TEMPLATE, "/etc/passwd")
+        self.assertEqual((code, out), (1, ""))
+        self.assertIn("values", err)
+
+    def test_a_values_file_in_the_scratch_folder_or_the_workspace_is_allowed(self):
+        import os
+        from unittest import mock
+        scratch = Path("/tmp/opencode")
+        if scratch.is_dir():
+            with tempfile.TemporaryDirectory(dir=scratch) as tmp:
+                values = Path(tmp) / "x.values"
+                values.write_text(self.FIXTURE.read_text())
+                self.assertEqual(self.run_main(self.TEMPLATE, values)[0], 0)
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = Path(tmp).resolve() / "ws"
+            (ws / "vms").mkdir(parents=True)
+            (ws / "site.yaml").write_text("{}\n")
+            values = ws / "vms" / "x.values"
+            values.write_text(self.FIXTURE.read_text())
+            with mock.patch.dict(os.environ, {"FCOS_WORKSPACE": str(ws)}):
+                self.assertEqual(self.run_main(self.TEMPLATE, values)[0], 0)
+
+
 if __name__ == "__main__":
     unittest.main()

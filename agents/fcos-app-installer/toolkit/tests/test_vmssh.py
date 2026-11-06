@@ -490,7 +490,8 @@ class AgentRulesTests(unittest.TestCase):
         guide = (ROOT / "docs" / "guide" / "03-add-a-service.md").read_text()
         push = next(line for line in guide.splitlines() if line.startswith("python3 tools/ign_to_script.py")
                     and "apply-$svc.sh" in line)
-        self.assertEqual(effect(text, "shell", push), "allow")
+        # The push chains a generated script into a root run on the VM, so it asks (and is not denied).
+        self.assertEqual(effect(text, "shell", push), "ask")
         # The pinned host key lives with the agent key, out of the agent's reach.
         self.assertEqual(effect(text, "edit", "/home/owner/fcos-ws/secrets/agent-ssh/edge/known_hosts"), "deny")
 

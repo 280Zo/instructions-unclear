@@ -82,6 +82,41 @@ class GenCase(unittest.TestCase):
         return validate_spec(spec, copy.deepcopy(SITE if site is None else site))
 
 
+class OutputFolderTests(GenCase):
+    """The generators run without asking and delete files an earlier run wrote, so their output folder may not
+    be the toolkit, a folder in it, or one that holds it (a planted manifest there could name toolkit files)."""
+
+    def test_the_toolkit_its_folders_and_its_parents_are_refused(self):
+        for folder in (ROOT, ROOT / "templates", ROOT / "tools", ROOT / "docs", ROOT.parent, ROOT.parent.parent,
+                       ROOT / "templates" / ".." / "tools"):
+            with self.subTest(folder=str(folder)):
+                before = sorted(p.name for p in ROOT.iterdir())
+                with self.assertRaises(SpecError) as caught:
+                    generate(spec_fixture("single"), copy.deepcopy(SITE), folder)
+                self.assertIn("output folder", str(caught.exception))
+                self.assertEqual(sorted(p.name for p in ROOT.iterdir()), before)
+
+    def test_a_planted_manifest_cannot_delete_a_toolkit_file(self):
+        name = spec_fixture("single")["name"]
+        parent = self.tmpdir()
+        (parent / "keep.txt").write_text("x")
+        (parent / f".gen-service-{name}.json").write_text(json.dumps(["keep.txt"]))
+        generate(spec_fixture("single"), copy.deepcopy(SITE), parent)  # an ordinary folder: stale entries go
+        self.assertFalse((parent / "keep.txt").exists())
+        victim = ROOT / "tools" / "redact.py"
+        planted = ROOT.parent / f".gen-service-{name}.json"
+        planted.write_text(json.dumps([f"{ROOT.name}/tools/redact.py"]))
+        try:
+            with self.assertRaises(SpecError):
+                generate(spec_fixture("single"), copy.deepcopy(SITE), ROOT.parent)
+        finally:
+            planted.unlink()
+        self.assertTrue(victim.exists())
+
+    def test_an_ordinary_folder_and_the_scratch_folder_are_fine(self):
+        self.assertTrue((self.gen("single") / "rendered").is_dir())
+
+
 class HardeningTests(GenCase):
     def test_fixtures_are_valid(self):
         for name in ("single", "crm", "authentik"):

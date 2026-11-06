@@ -766,9 +766,20 @@ def _ids_report(spec, svc, vm, uid, gid) -> str:
     return "\n".join(out)
 
 
+def _check_output_folder(out: Path) -> Path:
+    """The resolved output folder. These generators run without asking and delete files an earlier run
+    listed in a manifest, so the folder may not be the toolkit, inside it, or a folder that holds it."""
+    toolkit = Path(__file__).resolve().parent.parent
+    root = Path(out).resolve()
+    if root == toolkit or toolkit in root.parents or root in toolkit.parents:
+        raise SpecError(f"output folder {out} is the toolkit, inside it or around it; use a folder in the "
+                        "workspace (for example <workspace>/services/<svc> or <workspace>/login-frontend)")
+    return root
+
+
 def _write_all(out: Path, svc: str, files: dict[str, str]) -> list[Path]:
     """Write files, remove ones an earlier run wrote that this run does not, return every path."""
-    root = out.resolve()
+    root = _check_output_folder(out)
     manifest = out / f".gen-service-{svc}.json"
     try:
         old = json.loads(manifest.read_text(encoding="utf-8")) if manifest.is_file() else []

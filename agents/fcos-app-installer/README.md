@@ -186,6 +186,17 @@ reach anything you can, including your SSH key, your ssh-agent and
 try the others. For a hard boundary, run the agent as a separate user or in a
 container that can't read those.
 
+What the rules do and don't cover. They match the whole command text, so a
+command chained behind an allowed one (`;`, `&&`, `|`, a newline, a backtick)
+asks first instead of running. Command substitution with `$( )` is not covered,
+because the guide's remote commands use it. The tools that run without asking
+limit what they read and write: `render.py` reads only templates from the
+toolkit and values files from the workspace, the fixtures or `/tmp/opencode`,
+and the generators refuse an output folder that is, is inside or holds the
+toolkit. On a VM, `vmssh.py run` refuses a list of commands, but it is a list,
+not a sandbox: the setup key gives the agent `sudo` there, so keep the key for
+the length of the run only and revoke it when it ends.
+
 Three habits keep those guard rails working:
 
 - Pick the `fcos-app-installer` agent in this folder. OpenCode's own `build`
