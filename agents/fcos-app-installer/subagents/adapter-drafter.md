@@ -148,7 +148,19 @@ opencode:
       resource: "*"
       effect: deny
     - action: skill
-      resource: "adapter-*"
+      resource: "adapter-generic"
+      effect: allow
+    - action: skill
+      resource: "hypervisor-*"
+      effect: allow
+    - action: skill
+      resource: "router-*"
+      effect: allow
+    - action: skill
+      resource: "fileserver-*"
+      effect: allow
+    - action: skill
+      resource: "dns-*"
       effect: allow
     # MCP servers it doesn't need (by server name; Exa stays, for the docs).
     - action: "pmb_*"
@@ -206,7 +218,7 @@ read, and write one draft.
    on a server are bash, with the machine and shell named in each block.
 4. Run this on one line (a newline would be refused):
    `python3 tools/adapters.py draft --role <role> --provider <provider> --from /tmp/opencode/<provider>-recorded.json --workspace <workspace>`.
-   It writes `<workspace>/adapters-draft/adapter-<provider>/` with
+   It writes `<workspace>/adapters-draft/<role prefix>-<provider>/` with
    `adapter.yaml`, a `SKILL.md` marked DRAFT and a small test, and refuses
    unsafe steps.
 5. Edit that `SKILL.md`: what the product is, when to use it, notes from its

@@ -1,5 +1,5 @@
 ---
-name: adapter-truenas
+name: fileserver-truenas
 description: "Manual steps for TrueNAS as the file server of the fcos-app-installer toolkit: letting a VM mount an NFS share, creating a service's user and folders, and creating its backup folder. Use when the user's file server or NAS is TrueNAS."
 license: MIT
 compatibility: Needs the fcos-app-installer toolkit; tools/adapters.py renders the steps from adapter.yaml.

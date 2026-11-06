@@ -11,11 +11,7 @@ opencode:
     - {action: "skill", resource: "academic-plotting", effect: deny}
     - {action: "skill", resource: "accelerate", effect: deny}
     - {action: "skill", resource: "ad-creative-design", effect: deny}
-    - {action: "skill", resource: "adapter-duckdns", effect: deny}
     - {action: "skill", resource: "adapter-generic", effect: deny}
-    - {action: "skill", resource: "adapter-opnsense", effect: deny}
-    - {action: "skill", resource: "adapter-proxmox", effect: deny}
-    - {action: "skill", resource: "adapter-truenas", effect: deny}
     - {action: "skill", resource: "address-sanitizer", effect: deny}
     - {action: "skill", resource: "adjudicate-regression", effect: deny}
     - {action: "skill", resource: "aflpp", effect: deny}
@@ -85,6 +81,7 @@ opencode:
     - {action: "skill", resource: "diagramming-code", effect: deny}
     - {action: "skill", resource: "differential-review", effect: deny}
     - {action: "skill", resource: "dimensional-analysis", effect: deny}
+    - {action: "skill", resource: "dns-duckdns", effect: deny}
     - {action: "skill", resource: "dspy", effect: deny}
     - {action: "skill", resource: "dwarf-expert", effect: deny}
     - {action: "skill", resource: "email-design", effect: deny}
@@ -92,6 +89,7 @@ opencode:
     - {action: "skill", resource: "executive-resume-writer", effect: deny}
     - {action: "skill", resource: "faiss", effect: deny}
     - {action: "skill", resource: "ffind", effect: deny}
+    - {action: "skill", resource: "fileserver-truenas", effect: deny}
     - {action: "skill", resource: "firebase-apk-scanner", effect: deny}
     - {action: "skill", resource: "flash-attention", effect: deny}
     - {action: "skill", resource: "fp-check", effect: deny}
@@ -113,6 +111,7 @@ opencode:
     - {action: "skill", resource: "hqq", effect: deny}
     - {action: "skill", resource: "huggingface-tokenizers", effect: deny}
     - {action: "skill", resource: "hunt-regressions", effect: deny}
+    - {action: "skill", resource: "hypervisor-proxmox", effect: deny}
     - {action: "skill", resource: "icon-design", effect: deny}
     - {action: "skill", resource: "image-generation", effect: deny}
     - {action: "skill", resource: "image-treatment", effect: deny}
@@ -215,6 +214,7 @@ opencode:
     - {action: "skill", resource: "reverse-engineer-anything", effect: deny}
     - {action: "skill", resource: "review-walkthrough", effect: deny}
     - {action: "skill", resource: "rigor-reviewer", effect: deny}
+    - {action: "skill", resource: "router-opnsense", effect: deny}
     - {action: "skill", resource: "rust-review", effect: deny}
     - {action: "skill", resource: "ruzzy", effect: deny}
     - {action: "skill", resource: "rwkv", effect: deny}

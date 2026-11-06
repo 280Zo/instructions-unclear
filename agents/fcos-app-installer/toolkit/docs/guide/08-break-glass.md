@@ -57,5 +57,5 @@ on the serial port (the virtualization adapter's `reference.md` has what was
 seen). Don't count on it until it has been tested.
 
 **Providers.** On Proxmox VE the serial console is `qm terminal <vmid>` on the
-server (leave with Ctrl+O); see the skill `adapter-proxmox` for the
+server (leave with Ctrl+O); see the skill `hypervisor-proxmox` for the
 platform's other manual steps.

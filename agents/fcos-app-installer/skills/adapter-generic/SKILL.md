@@ -8,13 +8,13 @@ compatibility: Needs the fcos-app-installer toolkit; tools/adapters.py renders t
 # General steps for any product
 
 `tools/adapters.py` falls back to these steps by itself when no
-`adapter-<provider>` skill exists, and marks the adapter as generic. Say so to
+skill named `<role prefix>-<provider>` exists, and marks the adapter as generic. Say so to
 the user: the steps describe what to achieve, not where it is in their
 product's menus. Look up the product's official documentation for each step.
 
 When the install is done, offer to draft an adapter skill for the product from
 what the user actually did: hand it to the `adapter-drafter` subagent, which
-writes `<workspace>/adapters-draft/adapter-<provider>/` for review.
+writes `<workspace>/adapters-draft/<role prefix>-<provider>/` for review.
 
 ## How to use it
 
@@ -43,7 +43,4 @@ or node name.
 | dns certificates | `api_token`, `acme_provider` |
 
 A DNS adapter also carries an `acme` block (the certificate client's provider code, the variable the
-token goes in, the secret's name). An adapter drafted for an earlier version names its second step
-`traefik_provider`: rename it `acme_provider` and add the block, or the check reports the role's
-steps as missing. An adapter drafted before steps were called manual steps has the key
-`owner_steps`: rename it `manual_steps`.
+token goes in, the secret's name).

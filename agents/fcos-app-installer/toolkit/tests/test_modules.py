@@ -327,7 +327,7 @@ class SharedFilesNameNoProductTests(unittest.TestCase):
                 self.assertNotIn("proxmox", path.read_text().lower())
 
     def test_the_proxmox_adapter_ships_the_hosts_example(self):
-        data = yaml.safe_load((SKILLS / "adapter-proxmox" / "site.example.yaml").read_text())
+        data = yaml.safe_load((SKILLS / "hypervisor-proxmox" / "site.example.yaml").read_text())
         self.assertEqual(list(data), ["hosts"])
         for host in data["hosts"].values():
             for key in ("name", "node", "address", "storage", "bridge", "always_on", "max_cores", "max_ram_mib"):

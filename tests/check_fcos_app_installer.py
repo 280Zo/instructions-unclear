@@ -19,8 +19,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 FOLDER = ROOT / "agents" / "fcos-app-installer"
-SKILLS = ["adapter-duckdns", "adapter-generic", "adapter-opnsense", "adapter-proxmox", "adapter-truenas",
-          "authgw-authentik", "ingress-traefik", "researching-apps-for-self-hosting"]
+SKILLS = ["adapter-generic", "authgw-authentik", "dns-duckdns", "fileserver-truenas", "hypervisor-proxmox",
+          "ingress-traefik", "researching-apps-for-self-hosting", "router-opnsense"]
 AGENTS = ["adapter-drafter", "fcos-app-installer"]
 problems = []
 

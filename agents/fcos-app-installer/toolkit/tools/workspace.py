@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from layout import SKILLS  # noqa: E402
+from layout import ADAPTER_PREFIX, SKILLS  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 EXAMPLE = REPO_ROOT / "site.example.yaml"
@@ -216,8 +216,10 @@ def private_values(ws: Path) -> set[str]:
     public = EXAMPLE.read_text(encoding="utf-8") if EXAMPLE.exists() else ""
     # What a module shows as the example of its own site section (<module>/site.example.yaml) is public too.
     public += "".join("\n" + p.read_text(encoding="utf-8") for p in sorted(SKILLS.glob("*/site.example.yaml")))
-    # Exact names of the adapters the agent ships (adapter-<name>/ in the skills folder) are public.
-    shipped = {p.parent.name.removeprefix("adapter-") for p in SKILLS.glob("adapter-*/adapter.yaml")}
+    # Exact names of the adapters the agent ships (<prefix>-<name>/ in the skills folder, adapter-generic
+    # included) are public.
+    shipped = {p.parent.name.split("-", 1)[1] for prefix in (*ADAPTER_PREFIX.values(), "adapter")
+               for p in SKILLS.glob(f"{prefix}-*/adapter.yaml")}
     files = [ws / "site.yaml", *sorted((ws / "services").glob("*/service.yaml")),
              *sorted((ws / "vms").glob("*/vm.yaml"))]
     values = set()

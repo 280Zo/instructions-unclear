@@ -20,7 +20,7 @@ from layout import CHECKSUMS, SKILLS, SKILLS_DIR  # noqa: E402
 from test_agent import AGENT, effect  # noqa: E402
 from test_drafter import DRAFTER  # noqa: E402
 
-LINE = re.compile(r"^([0-9a-f]{64})  (adapter-[a-z0-9-]+/scripts/[A-Za-z0-9._-]+)$")
+LINE = re.compile(r"^([0-9a-f]{64})  ((?:hypervisor|router|fileserver|dns)-[a-z0-9-]+/scripts/[A-Za-z0-9._-]+)$")
 
 
 def shipped_scripts() -> dict[str, str]:
@@ -85,7 +85,7 @@ class PinnedListTests(unittest.TestCase):
 
 class HonestWordingTests(unittest.TestCase):
     """The rules are a guard rail: the shell expands quoted and globbed names, and the agent runs as
-    the user's user. No file may say the agent *cannot* edit the list."""
+    the same Linux user as the person. No file may say the agent *cannot* edit the list."""
 
     def test_nothing_claims_a_wall(self):
         for path in (ROOT / "README.md", ROOT / "tools" / "layout.py", ROOT / "tools" / "adapters.py"):
@@ -115,7 +115,7 @@ class HonestWordingTests(unittest.TestCase):
 class AgentGuardsTheListTests(unittest.TestCase):
     """A guard rail, not a wall: the agent's rules deny edits to the list and any shell command that
     contains its name, its extension or the word "host-script". Spellings that avoid all three
-    (host-s*, a quote inside the word) get through; the agent runs as the user's user, so only a
+    (host-s*, a quote inside the word) get through; the agent runs as the same Linux user as the person, so only a
     separate user (README) makes this a hard boundary. The agent reads the list with its read tool
     if it needs to."""
 
@@ -129,7 +129,7 @@ class AgentGuardsTheListTests(unittest.TestCase):
 
     def test_shell_commands_naming_the_list_are_denied(self):
         for command in ("echo x > host-scripts.sha256",
-                        f"sha256sum {SKILLS_DIR}/adapter-proxmox/scripts/lib.sh >host-scripts.sha256",
+                        f"sha256sum {SKILLS_DIR}/hypervisor-proxmox/scripts/lib.sh >host-scripts.sha256",
                         "python3 tools/render.py t v | tee host-scripts.sha256",
                         "cp /tmp/opencode/x host-scripts.sha256",
                         "git status && sed -i s/a/b/ host-scripts.sha256",
@@ -161,7 +161,7 @@ class AgentGuardsTheListTests(unittest.TestCase):
         self.assertEqual(effect(drafter, "edit", "host-scripts.sha256"), "deny")
         for command in ("python3 tools/adapters.py show --role x\ncp /tmp/opencode/x host-scripts.sha256",
                         "python3 tools/adapters.py show --role x\r\ncp /tmp/opencode/x host-scripts.sha256",
-                        f"python3 tools/adapters.py show --role x\ncp /tmp/opencode/x {SKILLS_DIR}/adapter-proxmox/scripts/lib.sh",
+                        f"python3 tools/adapters.py show --role x\ncp /tmp/opencode/x {SKILLS_DIR}/hypervisor-proxmox/scripts/lib.sh",
                         "python3 tools/adapters.py show --role file_server --provider host-scripts.sha\"256\""):
             with self.subTest(command=command):
                 self.assertEqual(effect(drafter, "shell", command), "deny")

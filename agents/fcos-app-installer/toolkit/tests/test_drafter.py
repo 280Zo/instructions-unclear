@@ -42,10 +42,10 @@ class DrafterTests(unittest.TestCase):
                 self.assertEqual(effect(self.text, "shell", command), "deny")
 
     def test_writes_only_drafts_and_scratch(self):
-        for path in (f"{WS}/adapters-draft/adapter-synology/SKILL.md", "/tmp/opencode/recorded.json"):
+        for path in (f"{WS}/adapters-draft/fileserver-synology/SKILL.md", "/tmp/opencode/recorded.json"):
             with self.subTest(path=path):
                 self.assertEqual(effect(self.text, "edit", path), "allow")
-        for path in (f"{SKILLS_DIR}/adapter-proxmox/adapter.yaml", "tools/adapters.py", f"{WS}/site.yaml",
+        for path in (f"{SKILLS_DIR}/hypervisor-proxmox/adapter.yaml", "tools/adapters.py", f"{WS}/site.yaml",
                      ".opencode/agents/fcos-app-installer.md", f"{WS}/secrets/x.token"):
             with self.subTest(path=path):
                 self.assertEqual(effect(self.text, "edit", path), "deny")
@@ -56,6 +56,9 @@ class DrafterTests(unittest.TestCase):
                 self.assertEqual(effect(self.text, "read", path), "deny")
         self.assertEqual(effect(self.text, "subagent", "general"), "deny")
         self.assertEqual(effect(self.text, "skill", "adapter-generic"), "allow")
+        for skill in ("hypervisor-proxmox", "router-opnsense", "fileserver-truenas", "dns-duckdns"):
+            self.assertEqual(effect(self.text, "skill", skill), "allow", skill)
+        self.assertEqual(effect(self.text, "skill", "adapter-proxmox"), "deny")  # an old install's leftover
         self.assertEqual(effect(self.text, "skill", "brainstorming"), "deny")
 
     def test_same_secret_and_folder_guards_as_the_main_agent(self):

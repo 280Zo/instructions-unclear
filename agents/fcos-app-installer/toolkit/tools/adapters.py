@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Provider adapters: the user's steps for systems the agent never touches.
 
-Each provider is a skill, adapter-<provider>/ in the skills folder (tools/layout.py): SKILL.md
+Each provider is a skill, <prefix>-<provider>/ in the skills folder (tools/layout.py), where the
+prefix names the role (hypervisor-, router-, fileserver-, dns-): SKILL.md
 says what the product is and when to use it, adapter.yaml holds its steps, and
 scripts/ any host scripts. This tool is the one renderer for every adapter skill.
 adapter.yaml:
@@ -34,7 +35,7 @@ Usage:
   adapters.py render --role <role> [--provider <name>] --step <id> --values <values.json>
       one manual step as Markdown with every value filled in (refuses unsafe values)
   adapters.py draft --role <role> --provider <name> --from <recorded.json> [--workspace <path>]
-      writes <workspace>/adapters-draft/adapter-<provider>/ (adapter.yaml, SKILL.md, a small test)
+      writes <workspace>/adapters-draft/<prefix>-<provider>/ (adapter.yaml, SKILL.md, a small test)
 """
 
 import argparse
@@ -45,7 +46,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from layout import CHECKSUMS, SKILLS, SKILLS_DIR  # noqa: E402
+from layout import CHECKSUMS, SKILLS, SKILLS_DIR, adapter_skill  # noqa: E402
 from render import RenderError, render  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
@@ -175,7 +176,7 @@ def _check_code(code, role: str, provider: str, where: str) -> None:
 
 
 def _check_adapter(data, role: str, provider: str) -> dict:
-    where = f"adapter-{provider}/adapter.yaml"
+    where = f"{adapter_skill(role, provider)}/adapter.yaml"
     if not isinstance(data, dict):
         raise AdapterError(f"{where}: must be a mapping")
     unknown = set(data) - TOP_KEYS
@@ -277,7 +278,7 @@ def load_adapter(role: str, provider: str | None, root: Path | None = None) -> d
     if provider is not None and not (isinstance(provider, str) and PROVIDER.fullmatch(provider)):
         raise AdapterError("provider must be lowercase letters, digits and hyphens")
     root = ADAPTERS if root is None else Path(root)
-    folder = root / f"adapter-{provider}"
+    folder = root / adapter_skill(role, provider)
     path = folder / "adapter.yaml"
     if provider is not None and provider != "generic" and path.is_file():
         data = _check_adapter(_read_yaml(path), role, provider)
@@ -289,7 +290,7 @@ def load_adapter(role: str, provider: str | None, root: Path | None = None) -> d
 
 def load_tool(adapter: dict):
     """The Python module of the adapter's tool, checked to have the role's verbs and a main(argv)."""
-    where = f"adapter-{adapter.get('provider')}"
+    where = adapter_skill(adapter["role"], adapter.get("provider"))
     code = adapter.get("code")
     if adapter.get("generic") or not code:
         raise AdapterError(f"{where} has no tool: every step it has is a manual step. A tool is a file in "
@@ -319,7 +320,7 @@ def acme_data(site: dict) -> dict:
     adapter = load_adapter("dns_certificates", provider)
     acme = adapter.get("acme")
     if not acme:
-        raise AdapterError(f"adapter-{provider} has no acme data (the certificate client's provider code, the "
+        raise AdapterError(f"{adapter_skill('dns_certificates', provider)} has no acme data (the certificate client's provider code, the "
                            "token's environment variable and the name it is stored under); add an acme: block to its "
                            "adapter.yaml (see docs/guide/12-add-a-module.md and the lego provider list)")
     return acme
@@ -525,7 +526,7 @@ def _check_host_key(values: dict) -> None:
 
 
 SKILL_TEMPLATE = """---
-name: adapter-{provider}
+name: {skill}
 description: "DRAFT manual steps for {provider} in the {role} role of the fcos-app-installer toolkit. Use when the user's {role} is {provider}. Review every step against {provider}'s official documentation before moving this skill into {skills_dir}/."
 license: MIT
 compatibility: Needs the fcos-app-installer toolkit; tools/adapters.py renders the steps.
@@ -623,11 +624,12 @@ def main(argv: list[str]) -> int:
             raise AdapterError(f"{ws} has no site.yaml: drafts go into an install's workspace")
         if "skills" in ws.parts or any(p in (".agents", ".opencode", ".claude") for p in ws.parts):
             raise AdapterError(f"{ws} is inside a skill or agent folder; drafts go into an install's workspace")
-        folder = ws / "adapters-draft" / f"adapter-{args.provider}"
+        folder = ws / "adapters-draft" / adapter_skill(args.role, args.provider)
         folder.mkdir(parents=True, exist_ok=True)
         (folder / "adapter.yaml").write_text(text, encoding="utf-8")
         (folder / "SKILL.md").write_text(
-            SKILL_TEMPLATE.format(role=args.role, provider=args.provider, skills_dir=SKILLS_DIR), encoding="utf-8")
+            SKILL_TEMPLATE.format(role=args.role, provider=args.provider, skills_dir=SKILLS_DIR,
+                                  skill=adapter_skill(args.role, args.provider)), encoding="utf-8")
         (folder / f"test_{args.provider.replace('-', '_')}.py").write_text(
             TEST_TEMPLATE.format(skills_dir=SKILLS_DIR, role=args.role, provider=args.provider), encoding="utf-8")
         print(folder / "adapter.yaml")

@@ -1179,7 +1179,7 @@ class SecretScrubbingTests(PveCase):
 
 
 class WrapperTests(PveCase):
-    """tests/run_pve_against_fake.py must never read an user's workspace or token."""
+    """tests/run_pve_against_fake.py must never read a user's workspace or token."""
 
     WRAPPER = str(ROOT / "tests" / "run_pve_against_fake.py")
 

@@ -31,7 +31,7 @@ class GuideTests(unittest.TestCase):
     def test_rebuild_unlinks_only_old_os_disk(self):
         # The commands moved to the virtualization adapter (provider-neutral guide).
         self.assertIn("rebuild_os_disk", page("05-rebuild-a-vm.md"))
-        adapter = (SKILLS / "adapter-proxmox" / "adapter.yaml").read_text()
+        adapter = (SKILLS / "hypervisor-proxmox" / "adapter.yaml").read_text()
         self.assertNotIn("--idlist unused0", adapter)
         self.assertIn('--idlist "$SLOT"', adapter)
 

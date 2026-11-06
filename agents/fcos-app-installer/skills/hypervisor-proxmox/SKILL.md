@@ -1,5 +1,5 @@
 ---
-name: adapter-proxmox
+name: hypervisor-proxmox
 description: "Manual steps and agent access for Proxmox VE as the virtualization server of the fcos-app-installer toolkit: downloading the Fedora CoreOS image, giving the agent a pool-scoped API token and storing it, describing the host (read-only discovery), config-disc fallback, rebuilding an OS disk, deleting a VM, and removing the agent's access. Use when the user's VMs run on Proxmox VE."
 license: MIT
 compatibility: Needs the fcos-app-installer toolkit; tools/adapters.py renders the steps from adapter.yaml.

@@ -93,7 +93,7 @@ roles:
       backup_folder:
         title: Create the backup folder for {{SVC_NAME}} on VM {{VM_NAME}}
         steps:
-          - On the backups share, create {{VM_NAME}}/{{SVC_NAME}}/ yourself, owned by UID {{SVC_UID}} and GID {{SVC_GID}}, mode 0750. The VM sends numbers, so the user's UID must be {{SVC_UID}}.
+          - On the backups share, create {{VM_NAME}}/{{SVC_NAME}}/ yourself, owned by UID {{SVC_UID}} and GID {{SVC_GID}}, mode 0750. The VM sends numbers, so the folder's owner UID must be {{SVC_UID}}.
           - The folder {{VM_NAME}}/ above it should let everyone enter it but not write in it (mode 0755, not group-writable). The service can't create its own folder there, so its backups fail until you have.
         uses: [VM_NAME, SVC_NAME, SVC_UID, SVC_GID]
         report_back:

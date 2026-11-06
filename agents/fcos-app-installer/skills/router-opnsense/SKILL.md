@@ -1,5 +1,5 @@
 ---
-name: adapter-opnsense
+name: router-opnsense
 description: "Manual steps for OPNsense as the router and firewall of the fcos-app-installer toolkit: reserving a VM's address, pointing every name under the domain at the login front end, and allowing only the traffic a VM needs. Use when the user's router or firewall is OPNsense."
 license: MIT
 compatibility: Needs the fcos-app-installer toolkit; tools/adapters.py renders the steps from adapter.yaml.

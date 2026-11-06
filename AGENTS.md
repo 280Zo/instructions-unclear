@@ -256,9 +256,9 @@ rulesync installs rules, skills, agents, commands, hooks and MCP servers, not pl
 The FCOS app installer (`agents/fcos-app-installer/`) keeps one skill folder per product it can
 deploy or work with, so only the products a user chose are loaded and nothing is a default:
 
-- `adapter-<product>`: a system the user runs by hand (hypervisor, router, file server, DNS
-  provider). Its `adapter.yaml` holds the manual steps; a DNS provider's also holds an `acme` block
-  that the ingress reads.
+- `hypervisor-<product>`, `router-<product>`, `fileserver-<product>` and `dns-<product>`: a system
+  the user runs by hand (hypervisor, router, file server, DNS provider). Its `adapter.yaml` holds
+  the manual steps; a DNS provider's also holds an `acme` block that the ingress reads.
 - `ingress-<product>` and `authgw-<product>`: the login front end's reverse proxy and auth gateway.
   Each has `SKILL.md`, `module.yaml` (capability, provides, needs, `pairs_with` with a `tested`
   flag), `spec.yaml`, `templates/` and `reference.md`; its Python is in `tools/ingress/` or

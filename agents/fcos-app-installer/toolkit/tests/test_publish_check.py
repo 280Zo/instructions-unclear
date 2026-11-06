@@ -121,7 +121,7 @@ class WorkspaceSourceTests(unittest.TestCase):
         for path in (".opencode/commands/security-sast.md", ".opencode/agents/security-auditor.md",
                      ".opencode/commands/add-service.md", ".opencode/agents/fcos-app-installer.md",
                      ".opencode/agents/Fcos-app-installer.md", ".opencode/agents/adapter-drafter.md ",
-                     ".opencode/agents/new-agent.md", f"{SKILLS_DIR}/adapter-proxmox/SKILL.md",
+                     ".opencode/agents/new-agent.md", f"{SKILLS_DIR}/hypervisor-proxmox/SKILL.md",
                      f"{SKILLS_DIR}/security-best-practices/SKILL.md", f"{SKILLS_DIR}/zzz-new/scripts/run.sh",
                      "tools/x.py", "AGENTS.md"):
             with self.subTest(path=path):

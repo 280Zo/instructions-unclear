@@ -79,7 +79,7 @@ class AgentTests(unittest.TestCase):
             with self.subTest(command=command):
                 self.assertEqual(effect(self.text, "shell", command), "allow")
         for path in (f"{ws}/site.yaml", f"{ws}/vms/apps/vm.yaml", f"{ws}/services/crm/service.yaml",
-                     f"{ws}/adapters-draft/adapter-synology/adapter.yaml", "/tmp/opencode/x.sh"):
+                     f"{ws}/adapters-draft/fileserver-synology/adapter.yaml", "/tmp/opencode/x.sh"):
             with self.subTest(path=path):
                 self.assertEqual(effect(self.text, "edit", path), "allow")
         self.assertEqual(effect(self.text, "question", "*"), "allow")
@@ -224,18 +224,20 @@ class AgentTests(unittest.TestCase):
 
     def test_no_shell_writes_into_the_skills(self):
         # Review of ff605b1: the user runs the skills' host scripts as root.
-        for command in (f"python3 tools/render.py t v > {SKILLS_DIR}/adapter-proxmox/scripts/lib.sh",
+        for command in (f"python3 tools/render.py t v > {SKILLS_DIR}/hypervisor-proxmox/scripts/lib.sh",
                         f"python3 tools/render.py t v >{SKILLS_DIR}/x/SKILL.md",
                         f"python3 tools/x.py | tee {SKILLS_DIR}/x/adapter.yaml",
                         f"python3 tools/gen_service.py s site {SKILLS_DIR}/x"):
             with self.subTest(command=command):
                 self.assertEqual(effect(self.text, "shell", command), "deny")
-        self.assertEqual(effect(self.text, "edit", f"{SKILLS_DIR}/adapter-proxmox/scripts/lib.sh"), "ask")
+        self.assertEqual(effect(self.text, "edit", f"{SKILLS_DIR}/hypervisor-proxmox/scripts/lib.sh"), "ask")
         self.assertEqual(effect(self.text, "edit", f"/home/x/AI/toolkit/{SKILLS_DIR}/a/SKILL.md"), "ask")
 
     # Only its own skills plus an approved list, so the others' descriptions
     # aren't sent with every request; MCP servers it doesn't need are denied (Exa stays, for research).
-    ALLOWED_SKILLS = ("adapter-proxmox", "adapter-generic", "researching-apps-for-self-hosting", "opencode",
+    ALLOWED_SKILLS = ("hypervisor-proxmox", "router-opnsense", "fileserver-truenas", "dns-duckdns",
+                      "ingress-traefik", "authgw-authentik", "adapter-generic",
+                      "researching-apps-for-self-hosting", "opencode",
                       "package-management", "search", "exa-agent", "docker-compose-patterns",
                       "docker-destructive-guardrails", "systematic-debugging", "verification-before-completion")
 
@@ -243,7 +245,9 @@ class AgentTests(unittest.TestCase):
         for skill in self.ALLOWED_SKILLS:
             with self.subTest(skill=skill):
                 self.assertEqual(effect(self.text, "skill", skill), "allow")
-        for skill in ("eli5", "brainstorming", "frontend-design", "axolotl", "career-intake", "humanizer"):
+        # The old adapter-<product> names are not loaded from an install that still has those folders.
+        for skill in ("eli5", "brainstorming", "frontend-design", "axolotl", "career-intake", "humanizer",
+                      "adapter-proxmox", "adapter-opnsense", "adapter-truenas", "adapter-duckdns"):
             with self.subTest(skill=skill):
                 self.assertEqual(effect(self.text, "skill", skill), "deny")
 
@@ -326,7 +330,7 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(effect(self.text, "edit", "notes/x.md"), "deny")
         self.assertEqual(effect(self.text, "edit", ".opencode/agents/fcos-app-installer.md"), "deny")
         for path in ("templates/base/firewall.bu.tmpl", "tools/render.py", "docs/guide/03-add-a-service.md",
-                     f"{SKILLS_DIR}/adapter-proxmox/adapter.yaml", f"{SKILLS_DIR}/ingress-traefik/spec.yaml"):
+                     f"{SKILLS_DIR}/hypervisor-proxmox/adapter.yaml", f"{SKILLS_DIR}/ingress-traefik/spec.yaml"):
             with self.subTest(path=path):
                 self.assertEqual(effect(self.text, "edit", path), "ask")
 

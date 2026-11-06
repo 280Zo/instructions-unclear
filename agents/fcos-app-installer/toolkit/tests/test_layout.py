@@ -116,7 +116,7 @@ class DraftFollowsTheSettingTests(unittest.TestCase):
                                  "file_server", "--provider", "synology", "--from", str(recorded),
                                  "--workspace", str(ws)], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        return ws / "adapters-draft" / "adapter-synology"
+        return ws / "adapters-draft" / "fileserver-synology"
 
     def test_the_drafted_skill_says_where_it_goes(self):
         import layout
@@ -156,7 +156,7 @@ class DraftFollowsTheSettingTests(unittest.TestCase):
         folder = self.draft()
         project = Path(tempfile.mkdtemp(dir=SCRATCH))
         self.addCleanup(shutil.rmtree, project, True)
-        moved = project / layout.SKILLS_DIR / "adapter-synology"
+        moved = project / layout.SKILLS_DIR / "fileserver-synology"
         shutil.copytree(folder, moved)
         result = self.run_drafted(moved / "test_synology.py")
         self.assertNotEqual(result.returncode, 0)
@@ -171,7 +171,7 @@ class DraftFollowsTheSettingTests(unittest.TestCase):
                 toolkit = Path(tempfile.mkdtemp(dir=SCRATCH))
                 self.addCleanup(shutil.rmtree, toolkit, True)
                 (toolkit / "tools").symlink_to(ROOT / "tools")
-                moved = toolkit / skills_dir / "adapter-synology"
+                moved = toolkit / skills_dir / "fileserver-synology"
                 shutil.copytree(folder, moved)
                 (moved / "test_synology.py").write_text(adapters.TEST_TEMPLATE.format(
                     skills_dir=skills_dir, role="file_server", provider="synology"))
@@ -186,7 +186,7 @@ class DraftFollowsTheSettingTests(unittest.TestCase):
         (toolkit / "tools").symlink_to(ROOT / "tools")
         skills = toolkit / layout.SKILLS_DIR
         skills.mkdir(parents=True)
-        moved = skills / "adapter-synology"
+        moved = skills / "fileserver-synology"
         shutil.copytree(folder, moved)
         env = {k: v for k, v in os.environ.items() if k != "FCOS_AGENT_ROOT"}
         result = subprocess.run([sys.executable, str(moved / "test_synology.py")], capture_output=True,

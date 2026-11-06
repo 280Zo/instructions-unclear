@@ -34,14 +34,14 @@ what the agent may do through an API, and links to its official docs. A
 product without an adapter gets the general steps from the skill `adapter-generic`,
 and the agent offers to draft an adapter from what the user actually did
 (the `adapter-drafter` subagent, with `tools/adapters.py draft`). Each adapter is
-a skill, `.opencode/skills/adapter-<product>/`: `SKILL.md` says what the product is and when
+a skill, `.opencode/skills/<role prefix>-<product>/`: `SKILL.md` says what the product is and when
 to use it, `adapter.yaml` holds the steps, `scripts/` its host scripts, and
 `tools/adapters.py` is the one renderer for all of them.
 
-**Providers.** Adapter skills exist for Proxmox VE (`adapter-proxmox`, with its
+**Providers.** Adapter skills exist for Proxmox VE (`hypervisor-proxmox`, with its
 host scripts and API access through `tools/hypervisor.py`), OPNsense
-(`adapter-opnsense`), TrueNAS (`adapter-truenas`) and DuckDNS
-(`adapter-duckdns`). Pages in this guide name the
+(`router-opnsense`), TrueNAS (`fileserver-truenas`) and DuckDNS
+(`dns-duckdns`). Pages in this guide name the
 adapter step to show, for example "virtualization: `create_api_access`".
 The login front end's two parts are modules in the same way, `ingress-traefik`
 and `authgw-authentik`, each with an `operations.md` for the steps that depend
@@ -76,7 +76,7 @@ anything irreversible, and commits.
 Run every desktop command in this guide (`python3 tools/...`) from the
 toolkit's folder, the one holding `tools/`: the commands are relative to it.
 
-Every action is tagged with who does it. **[Manual]** steps happen on systems
+Every action is tagged with how it is done. **[Manual]** steps happen on systems
 the agent never touches: the virtualization server's shell, the router, the
 file server, the DNS provider, remote-access consoles, and anything involving
 a secret value. The agent shows them from the adapter, with every value filled

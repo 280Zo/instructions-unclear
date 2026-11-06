@@ -2,7 +2,7 @@
 
 - Questions are plain language: no config keys, field paths or internal names.
 - The procedure pages are provider-neutral: provider commands and names live in
-  the adapter skills (adapter-* in the skills folder). A paragraph that starts with **Providers.** may name providers and
+  the adapter skills (<role>-<product> in the skills folder). A paragraph that starts with **Providers.** may name providers and
   link their adapters.
 - Real values live in the private workspace, never in a repo config.yaml or vms/.
 """
@@ -72,7 +72,7 @@ class GuideTests(unittest.TestCase):
             for para in paragraphs(page.read_text()):
                 if para.lstrip().startswith("**Providers.**"):
                     found += 1
-                    self.assertRegex(para, r"adapter-|ingress-|authgw-", page.name)
+                    self.assertRegex(para, r"adapter-|hypervisor-|router-|fileserver-|dns-|ingress-|authgw-", page.name)
         self.assertGreaterEqual(found, 1)
 
     def test_guide_refers_to_workspace(self):

@@ -15,7 +15,7 @@ class TrialRunTests(unittest.TestCase):
     def test_live_checks_are_listed(self):
         text = " ".join(PAGE.read_text().split())
         for needle in ("AGENTS.md", "Commands in full, in the message", "adapter-drafter",
-                       "adapter-<product>", "researching-apps-for-self-hosting", "python3 -m unittest discover tests",
+                       "hypervisor-<product>", "researching-apps-for-self-hosting", "python3 -m unittest discover tests",
                        "store_api_token", "file-server.md", "secrets.md", "AGENTS.md", "backups.md",
                        "vmssh.py logs", "[hidden]", "teardown step", "revoke", "Report back"):
             with self.subTest(needle=needle):

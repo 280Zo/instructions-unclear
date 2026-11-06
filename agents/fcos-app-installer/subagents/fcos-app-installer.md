@@ -469,7 +469,19 @@ opencode:
       resource: "*"
       effect: deny
     - action: skill
-      resource: "adapter-*"
+      resource: "adapter-generic"
+      effect: allow
+    - action: skill
+      resource: "hypervisor-*"
+      effect: allow
+    - action: skill
+      resource: "router-*"
+      effect: allow
+    - action: skill
+      resource: "fileserver-*"
+      effect: allow
+    - action: skill
+      resource: "dns-*"
       effect: allow
     - action: skill
       resource: "ingress-*"
@@ -641,7 +653,7 @@ exact wording, options and what each answer fills are in
     draft an adapter for <product> from what you did?" On yes, start the
     `adapter-drafter` subagent with the role, the product, the workspace path
     and the steps the user actually did; it writes
-    `<workspace>/adapters-draft/adapter-<product>/` with
+    `<workspace>/adapters-draft/<role prefix>-<product>/` with
     `python3 tools/adapters.py draft`. Show the user its report.
 
 ## Asking

@@ -5,7 +5,7 @@ step that runs on the server is **[Manual]**: the agent never runs commands
 there. The agent shows each step from the virtualization adapter with the
 server's values filled in.
 
-**Providers.** For Proxmox VE the steps are in the skill `adapter-proxmox` (`.opencode/skills/adapter-proxmox/`);
+**Providers.** For Proxmox VE the steps are in the skill `hypervisor-proxmox` (`.opencode/skills/hypervisor-proxmox/`);
 the setup and teardown scripts are in its `scripts/` and the agent
 uses the token through `tools/hypervisor.py`. For another platform the agent shows
 the general steps from the skill `adapter-generic`.
@@ -86,7 +86,7 @@ running, and nothing is asked. Run the check first. Afterwards delete the token
 file in `<workspace>/secrets/`. The next install runs the setup script again
 for a fresh token.
 
-**Providers.** For Proxmox VE (`adapter-proxmox`) the teardown first moves the
+**Providers.** For Proxmox VE (`hypervisor-proxmox`) the teardown first moves the
 agent's VMs into pool `backrooms` (always this pool; the script creates it when
 it doesn't exist, and a pool is only a label for a set of VMs), then removes the
 agent's own pool.
