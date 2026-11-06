@@ -7,8 +7,8 @@ hosts:
   host-a:
     name: pve-a                 # ASK: the name the user uses for this server
     node: pve-a                 # optional: Proxmox node name, if different from the key
-    address: 192.0.2.21         # optional until the API tool is used: the server's IP or DNS name (API on port 8006)
-    ca_file: null               # optional: path to the CA certificate for the API (null: system CAs)
+    address: 192.0.2.21         # the server's IP or DNS name (API on port 8006). The store_api_token step pins it with the token; the tool refuses a different one here
+    ca_file: null               # optional: absolute path to your CA certificate for the API (null: system CAs); pinned with the token the same way
     always_on: false            # ASK
     storage: local-lvm          # ASK: VM disk storage pool
     snippets_storage: coreos    # ASK: storage with content "snippets" (guide 01)

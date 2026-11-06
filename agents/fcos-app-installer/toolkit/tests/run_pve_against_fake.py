@@ -57,7 +57,7 @@ def make_workspace() -> Path:
     secrets.chmod(0o700)
     fd = os.open(secrets / f"proxmox-{HOST}.token", os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(fd, "w", encoding="utf-8") as handle:
-        handle.write(f"{FAKE_PRINCIPAL}={FAKE_SECRET}\n")
+        handle.write(f"{FAKE_PRINCIPAL}={FAKE_SECRET}\naddress=192.0.2.21\n")
     return ws
 
 

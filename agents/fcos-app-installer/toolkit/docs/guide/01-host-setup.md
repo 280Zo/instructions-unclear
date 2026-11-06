@@ -54,8 +54,12 @@ or disks.
 When the token is new, the script prints its secret once, and nothing to run.
 The agent then shows the next step on its own, **virtualization:
 `store_api_token`**: a desktop command that stores the secret in
-`<workspace>/secrets/` from a hidden prompt. The secret never goes into the
-chat, and the agent never reads the file; only `tools/hypervisor.py` does.
+`<workspace>/secrets/` from a hidden prompt, together with the address of the
+server (and the certificate authority's file, if you have your own). The token
+is sent only to the address stored with it, so check that address in the
+command before you run it; a different address in the site file is refused. The
+secret never goes into the chat, and the agent never reads the file; only
+`tools/hypervisor.py` does.
 
 Report back: the checksum lines, the check's output, the apply's output
 without the secret.

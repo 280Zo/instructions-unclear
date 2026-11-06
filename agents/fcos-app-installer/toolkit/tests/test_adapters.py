@@ -217,6 +217,12 @@ class AdapterTests(unittest.TestCase):
         self.assertLess(block.index("install -m 600 /dev/null"), block.index("printf"))
         self.assertNotIn("umask", block)  # it would stay set in the user's shell
         self.assertNotIn("hypervisor.py", block)  # the agent checks the token itself (guide 1.4)
+        # The server's address is stored with the token (the tool sends the token nowhere else), shown in
+        # the command for the user to check, and the optional CA file is appended the same way.
+        self.assertIn("address=%s", text)
+        self.assertIn(f"'{values['HOST_ADDRESS']}'", text)
+        self.assertIn("ca_file=%s", text)
+        self.assertIn(f">> {token_file}", text)
 
     def test_host_must_be_a_workspace_key_for_the_server(self):
         # HOST names the token file and hosts/<HOST>/: it is the site file's hosts key,

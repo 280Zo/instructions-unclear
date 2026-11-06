@@ -234,8 +234,9 @@ class PveCase(unittest.TestCase):
         self.addCleanup(patcher.stop)
         self.env = env
 
-    def write_token(self, secret, mode=0o600):
-        self.token.write_text(f"{PRINCIPAL}={secret}\n")
+    def write_token(self, secret, mode=0o600, pin="address=192.0.2.21\n"):
+        """The token file the user's store step writes: the token line, then the pinned address."""
+        self.token.write_text(f"{PRINCIPAL}={secret}\n{pin}")
         self.token.chmod(mode)
 
     def fake_accepts(self, value):
@@ -708,6 +709,65 @@ class TokenTests(PveCase):
 
     def test_load_token_ok(self):
         self.assertEqual(load_token(self.ws, "host-a"), (PRINCIPAL, SECRET))
+
+    def site_with(self, **host):
+        import yaml
+        site = yaml.safe_load(SITE)
+        site["hosts"]["host-a"].update(host)
+        (self.ws / "site.yaml").write_text(yaml.safe_dump(site))
+        return site["hosts"]["host-a"]
+
+    def test_the_address_the_token_goes_to_is_the_one_stored_with_it(self):
+        self.assertEqual(pve.load_pin(self.ws, "host-a"), ("192.0.2.21", None))
+        cfg = pve.pinned_config(self.ws, "host-a", self.site_with())
+        self.assertEqual(REAL_API_BASE("host-a", cfg), "https://192.0.2.21:8006/api2/json")
+        # With no address in site.yaml at all, the pinned one still works.
+        site = self.site_with()
+        site.pop("address")
+        self.assertEqual(pve.pinned_config(self.ws, "host-a", site)["address"], "192.0.2.21")
+
+    def test_a_site_address_that_differs_is_refused_and_nothing_is_sent(self):
+        self.site_with(address="203.0.113.9")
+        code, out, err = self.run_pve("check")
+        self.assertEqual(code, 1)
+        self.assertEqual(self.fake.log, [])
+        self.assertIn("store_api_token", err)
+        self.assertIn("203.0.113.9", err)
+        self.assertNotIn(SECRET, out + err)
+
+    def test_a_token_file_without_an_address_asks_for_the_store_step(self):
+        self.write_token(SECRET, pin="")
+        code, out, err = self.run_pve("check")
+        self.assertEqual(code, 1)
+        self.assertEqual(self.fake.log, [])
+        self.assertIn("store_api_token", err)
+        self.assertEqual(load_token(self.ws, "host-a"), (PRINCIPAL, SECRET))  # the token itself still loads
+
+    def test_the_ca_file_is_pinned_too(self):
+        ca = self.tmp / "ca.pem"
+        ca.write_text("x")
+        self.write_token(SECRET, pin=f"address=192.0.2.21\nca_file={ca}\n")
+        self.assertEqual(pve.load_pin(self.ws, "host-a"), ("192.0.2.21", str(ca)))
+        self.assertEqual(pve.pinned_config(self.ws, "host-a", self.site_with())["ca_file"], str(ca))
+        for other in (str(self.tmp / "evil.pem"), "elsewhere.pem"):
+            with self.subTest(ca_file=other):
+                site = self.site_with(ca_file=other)
+                with self.assertRaisesRegex(PveError, "store_api_token"):
+                    pve.pinned_config(self.ws, "host-a", site)
+        # A token stored without a ca_file refuses one that site.yaml adds.
+        self.write_token(SECRET)
+        with self.assertRaisesRegex(PveError, "store_api_token"):
+            pve.pinned_config(self.ws, "host-a", self.site_with(ca_file=str(ca)))
+
+    def test_bad_pins_are_refused(self):
+        for pin in ("address=\n", "address=evil host\n", "address=a/b\n", "address=x\naddress=y\n",
+                    "address=192.0.2.21\nunknown=1\n", "ca_file=/x\n", "address=192.0.2.21\nca_file=relative.pem\n",
+                    "address=192.0.2.21\nca_file=\n"):
+            with self.subTest(pin=pin):
+                self.write_token(SECRET, pin=pin)
+                with self.assertRaises(PveError) as caught:
+                    pve.load_pin(self.ws, "host-a")
+                self.assertNotIn(SECRET, str(caught.exception))
 
     def test_host_key_is_validated(self):
         with self.assertRaises(PveError):

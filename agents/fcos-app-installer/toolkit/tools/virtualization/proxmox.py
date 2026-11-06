@@ -10,15 +10,16 @@ Usage:
   hypervisor.py status <vm> [--host KEY]
 
 Runs on the user's desktop. It reads the API token from
-<workspace>/secrets/proxmox-<host>.token itself (one line,
-"fcos-agent@pve!fcos-bootstrap=<secret>", file mode 0600, folder mode 0700) and
-never prints it. It only acts on VMs in the pool "fcos-agent" and has no
+<workspace>/secrets/proxmox-<host>.token itself ("fcos-agent@pve!fcos-bootstrap=<secret>",
+then "address=<server>" and optionally "ca_file=<absolute path>", file mode 0600, folder
+mode 0700) and never prints the secret. It only acts on VMs in the pool "fcos-agent" and has no
 delete, destroy, rebuild, disk-swap or pool-move verb: those stay manual steps.
 
-TLS is always verified: the system CAs, or hosts.<key>.ca_file from site.yaml.
-There is no switch to turn that off. The API endpoint comes only from
-hosts.<key>.address in site.yaml; no environment variable or flag changes it
-(so the token can never be pointed at another listener).
+TLS is always verified: the system CAs, or the ca_file stored with the token. There is no
+switch to turn that off. The API endpoint is the address stored with the token by the user's
+store step, never one from site.yaml (the agent may edit that file): a different address
+there is refused, and no environment variable or flag changes it, so the token can never be
+pointed at another listener.
 """
 
 import argparse
@@ -203,7 +204,10 @@ class PveClient:
         return decoded
 
 
-def load_token(ws: Path, host: str) -> tuple[str, str]:
+def _read_token_file(ws: Path, host: str) -> tuple[str, str, str | None, str | None]:
+    """(principal, secret, pinned address, pinned CA file) from the token file the user's store step wrote:
+    the token line, then `address=<server>` and optionally `ca_file=<absolute path>`. Nothing else is
+    accepted, and the secret is never part of an error message."""
     if not HOST_KEY.match(host):
         raise PveError(f"invalid host name {host!r}")
     vault = Path(ws) / "secrets"
@@ -232,13 +236,50 @@ def load_token(ws: Path, host: str) -> tuple[str, str]:
             raise PveError(f"token file {path} is owned by another user")
         text = handle.read(4096)
     lines = text.strip().splitlines()
-    who, sep, material = lines[0].strip().partition("=") if len(lines) == 1 else ("", "", "")
+    who, sep, material = lines[0].strip().partition("=") if lines else ("", "", "")
     if not sep or not UUID_SHAPE.match(material):
-        raise PveError(f"token file {path} must hold one line: {AGENT_PRINCIPAL}=<secret>")
+        raise PveError(f"token file {path} must start with one line: {AGENT_PRINCIPAL}=<secret>")
     _to_hide.add(material)
     if who != AGENT_PRINCIPAL:
         raise PveError(f"token file {path} must be for {AGENT_PRINCIPAL}")
+    pins: dict[str, str] = {}
+    for line in lines[1:]:
+        key, sep, value = line.strip().partition("=")
+        if key not in ("address", "ca_file") or not sep or key in pins or not value:
+            raise PveError(f"token file {path}: after the token line only address=<server> and "
+                           "ca_file=<absolute path> are allowed, once each; run the store_api_token step again")
+        pins[key] = value
+    address, ca = pins.get("address"), pins.get("ca_file")
+    if address is not None and not ADDRESS.match(address):
+        raise PveError(f"token file {path}: the pinned address is not a host name or IP address")
+    if ca is not None and (address is None or not Path(ca).is_absolute()):
+        raise PveError(f"token file {path}: ca_file needs an address and must be an absolute path")
+    return who, material, address, ca
+
+
+def load_token(ws: Path, host: str) -> tuple[str, str]:
+    who, material, _address, _ca = _read_token_file(ws, host)
     return who, material
+
+
+def load_pin(ws: Path, host: str) -> tuple[str | None, str | None]:
+    """(address, ca_file) the user stored with the token; the API is never reached anywhere else."""
+    return _read_token_file(ws, host)[2:]
+
+
+def pinned_config(ws: Path, host: str, cfg: dict) -> dict:
+    """The host's settings with the address and CA file taken from the token file. site.yaml is something the
+    agent may edit, so it may not move the token to another server: a different value there is refused."""
+    address, ca = load_pin(ws, host)
+    if address is None:
+        raise PveError(f"the token file for {host} does not say which server it belongs to; run the "
+                       "store_api_token step again (it now stores the server's address with the token)")
+    for key, pinned in (("address", address), ("ca_file", ca)):
+        given = cfg.get(key)
+        if given not in (None, "") and str(given) != pinned:
+            raise PveError(f"hosts.{host}.{key} in site.yaml is {given!r}, but the token was stored for "
+                           f"{pinned!r}; if the server really changed, run the store_api_token step again")
+    return dict(cfg, address=address, ca_file=ca)
 
 
 def _positive_int(spec: dict, key: str) -> int:
@@ -794,6 +835,7 @@ def _node(host: str, cfg: dict) -> str:
 
 def _connect(ws: Path, host: str, cfg: dict) -> PveClient:
     who, material = load_token(ws, host)
+    cfg = pinned_config(ws, host, cfg)
     return PveClient(_api_base(host, cfg), who, material, _verify_for(ws, cfg))
 
 

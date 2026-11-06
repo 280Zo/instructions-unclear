@@ -91,12 +91,16 @@ manual_steps:
   store_api_token:
     title: Store the agent's Proxmox token for {{HOST}} on your desktop
     steps:
-      - Run this on your desktop right after the token was created. It creates the file readable only by you, then asks for the secret at a hidden prompt (paste the value row the setup script printed) and writes it to the workspace's token file, readable only by you. Only the adapter's tool (tools/virtualization/proxmox.py) reads that file; the agent never does.
+      - Run this on your desktop right after the token was created. It creates the file readable only by you, then asks for the secret at a hidden prompt (paste the value row the setup script printed) and writes it to the workspace's token file, readable only by you, followed by the address of the server. The token is only ever sent to that address, so check that it is your server's address before you run the command. Only the adapter's tool (tools/virtualization/proxmox.py) reads that file; the agent never does.
+      - If your server's certificate comes from your own certificate authority, also run the second command, which pins the authority's certificate file (the root CA the discovery step saved) the same way. Skip it when the server uses a certificate your desktop already trusts.
     blocks:
       - machine: "desktop (fish)"
         code: |
-          read -s -P "Proxmox token secret: " t; and test -n "$t"; and install -m 600 /dev/null {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token; and printf '%s' 'fcos-agent@pve!fcos-bootstrap='$t > {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token; and chmod 600 {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token; set -e t
-    uses: [HOST, WORKSPACE]
+          read -s -P "Proxmox token secret: " t; and test -n "$t"; and install -m 600 /dev/null {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token; and printf '%s\naddress=%s\n' 'fcos-agent@pve!fcos-bootstrap='$t '{{HOST_ADDRESS}}' > {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token; and chmod 600 {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token; set -e t
+      - machine: "desktop (fish)"
+        code: |
+          printf 'ca_file=%s\n' {{WORKSPACE}}/hosts/{{HOST}}/pve-root-ca.pem >> {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token
+    uses: [HOST, HOST_ADDRESS, WORKSPACE]
     report_back:
       - done (never the secret)
   discover_host:
