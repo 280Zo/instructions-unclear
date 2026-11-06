@@ -33,6 +33,7 @@ CODE_NAME = re.compile(r"(ingress|authgw)\.[a-z][a-z0-9_]*")
 # What the generic tools call, with the parameter names (docs/guide/12-add-a-module.md lists the same).
 CONTRACT = {
     "ingress": {
+        "check_site": ("site",),
         "route_name_problem": ("name",),
         "check_spec": ("spec", "reserved_paths", "errors"),
         "redirect_blocks": ("svc", "host", "redirects"),

@@ -11,11 +11,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import modules  # noqa: E402
-from gen_service import SpecError  # noqa: E402
-from placement import file_entry, folder  # noqa: E402
+from gen_service import SpecError, _plain  # noqa: E402
+from placement import file_entry, folder, site_value  # noqa: E402
 from render import render  # noqa: E402
 
 MODULE = "ingress-traefik"
+EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+")
 REDIRECT_PATH = re.compile(r"/[A-Za-z0-9._~/-]{0,200}")
 MAX_REDIRECTS = 10
 
@@ -30,6 +31,13 @@ def _matches(regex, path) -> bool:
         return re.search(regex, path) is not None
     except (re.error, TypeError):
         return False
+
+
+def check_site(site: dict) -> None:
+    """The site keys this module needs: the address the certificate authority writes to."""
+    email = site_value(site, "acme_email")
+    if not (_plain(email) and EMAIL.fullmatch(email)):
+        raise SpecError("site.yaml: acme_email must be an email address")
 
 
 def route_name_problem(name: str) -> str | None:

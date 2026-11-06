@@ -1,0 +1,49 @@
+# <workspace>/vms/<vm>/vm.yaml for the Proxmox VE tool (tools/virtualization/proxmox.py). The fields are the
+# tool's own; the tool refuses a spec where a setting is missing, unexplained or out of range, and its dry run
+# prints them all as a table. The values are examples: decide each one for the server and say why.
+name: <vm>
+host: <host>
+vmid: <vmid>
+cores: 2
+ram_mib: 3072
+os_disk_gib: 30
+data_disk_gib: 10
+storage: <disk storage>
+bridge: <bridge>
+vlan_tag: <vlan or null>
+mtu: <mtu or null>
+image_volume: <iso storage>:import/<image file>
+ignition:
+  method: nocloud-iso   # the adapter's default; snippet is the fallback
+settings:               # each one: {use: <value>, why: <one line>, source: <doc or discovery>}
+  cpu: {use: host, why: "one server, no live migration; exact host CPU and flags", source: "platform VM docs"}
+  cpu_flags: {use: [], why: "type host already passes every host flag", source: "platform VM docs"}
+  sockets: {use: 1, why: "host has one socket", source: "discovery"}
+  numa: {use: false, why: "host has one NUMA node", source: "discovery; platform VM docs"}
+  cpuunits: {use: 100, why: "equal CPU share with the other VMs", source: "platform VM docs"}
+  cpulimit: {use: 0, why: "no cap", source: "platform VM docs"}
+  balloon: {use: "on", why: "keep the device with no minimum; fixed size, use reported", source: "platform VM docs"}
+  allow_ksm: {use: true, why: "shares identical pages on a small host", source: "platform VM docs"}
+  bios: {use: seabios, why: "OVMF mainly for PCIe passthrough", source: "platform VM docs"}
+  machine: {use: pc, why: "Q35 mainly for PCIe passthrough; newest machine version at each start, fine for Linux", source: "platform VM docs"}
+  disk_cache: {use: none, why: "balance of safety and speed", source: "platform VM docs"}
+  disk_aio: {use: io_uring, why: "the platform's default", source: "platform VM docs"}
+  discard: {use: true, why: "thin storage gets freed space back", source: "platform VM docs"}
+  ssd: {use: true, why: "the disk under the storage is an SSD", source: "discovery (ROTA 0)"}
+  nic_model: {use: virtio, why: "best performance, lowest overhead", source: "platform VM docs"}
+  nic_queues: {use: 2, why: "multiqueue equal to the vCPUs", source: "platform VM docs"}
+  nic_firewall: {use: false, why: "the VM's own nftables filters", source: "base template"}
+  rng: {use: urandom, why: "avoids entropy starvation at boot", source: "platform VM docs"}
+  tablet: {use: false, why: "serial console, no VNC mouse", source: "platform VM docs"}
+  hotplug: {use: "network,disk,usb", why: "the platform's default", source: "platform VM docs"}
+  startup_order: {use: null, why: "starts after VMs that have an order (the router: manual step); setting one needs Sys.Modify on the whole server", source: "platform VM docs; qemu-server permission check"}
+  startup_up: {use: null, why: "no extra delay needed", source: "platform VM docs"}
+  onboot: {use: true, why: "starts with the server", source: "user"}
+  protection: {use: true, why: "no accidental deletion", source: "platform VM docs"}
+  agent: {use: false, why: "no guest agent in FCOS yet", source: "FCOS package list"}
+  watchdog: {use: none, why: "nothing in the VM would feed it", source: "platform VM docs"}
+  acpi: {use: true, why: "clean shutdown", source: "platform VM docs"}
+  kvm: {use: true, why: "hardware virtualization", source: "platform VM docs"}
+  localtime: {use: false, why: "Linux keeps UTC", source: "platform VM docs"}
+  tags: {use: [fcos-agent], why: "easy to spot", source: "user"}
+  description: {use: "<what this VM runs>", why: "easy to spot", source: "user"}

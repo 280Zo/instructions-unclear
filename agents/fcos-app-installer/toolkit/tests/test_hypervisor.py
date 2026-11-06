@@ -156,6 +156,19 @@ class AdapterToolTests(unittest.TestCase):
             with self.subTest(code=bad), self.assertRaises(AdapterError):
                 self.check(code=bad)
 
+    def test_an_adapter_with_a_tool_must_define_the_steps_that_store_and_remove_its_access(self):
+        # The guide relies on these two whenever the agent uses an API token (guide 1.3 and 1.6).
+        self.assertEqual(adapters.TOOL_STEPS["virtualization"], ("store_api_token", "teardown_api_access"))
+        for missing in adapters.TOOL_STEPS["virtualization"]:
+            data = yaml.safe_load((SKILLS / "hypervisor-proxmox" / "adapter.yaml").read_text())
+            del data["manual_steps"][missing]
+            with self.subTest(missing=missing), self.assertRaises(AdapterError) as caught:
+                adapters._check_adapter(data, "virtualization", "proxmox")
+            self.assertIn(missing, str(caught.exception))
+        # An adapter without a tool needs neither.
+        generic = load_adapter("virtualization", "generic")
+        self.assertTrue(generic["generic"])
+
     def test_only_a_role_with_a_tool_contract_may_name_code(self):
         data = yaml.safe_load((SKILLS / "dns-duckdns" / "adapter.yaml").read_text())
         data["code"] = "virtualization.duckdns"
@@ -191,6 +204,15 @@ class ContractDocTests(unittest.TestCase):
         self.assertIn("`code: virtualization.<provider>`", guide)
         self.assertIn("VERBS = (" + ", ".join(f'"{v}"' for v in adapters.TOOL_VERBS["virtualization"]) + ")", guide)
         self.assertIn("python3 tools/hypervisor.py", guide)
+
+    def test_guide_12_says_what_the_adapter_defines_besides_the_verbs(self):
+        guide = " ".join((ROOT / "docs" / "guide" / "12-add-a-module.md").read_text().split())
+        section = guide.split("## 12.4", 1)[1].split("## 12.", 1)[0]
+        for needle in ("`vm.example.yaml`", "`site.example.yaml`", "`name` and `always_on`", "`store_api_token`",
+                       "`teardown_api_access`", "stored with the token", "--dry-run"):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, section)
+        self.assertEqual(adapters.TOOL_STEPS["virtualization"], ("store_api_token", "teardown_api_access"))
 
     def test_no_guide_page_or_prompt_names_the_old_tool(self):
         agent = ROOT.parent / "subagents" / "fcos-app-installer.md"

@@ -8,9 +8,10 @@ Butane fragments next to them) and <out-dir>/secrets.md (secret names and how
 to create them; never a value). A hidden .gen-service-<name>.json lists what
 was written, so a re-run removes files the new spec no longer produces. Fragments are named <service>.bu,
 <service>-port.bu, <service>-backup-<container>.bu and <service>-backup-files.bu.
-A service behind the login page also gets files/route-<service>.yml and
-files/app-<service>.blueprint.yaml, which tools/login_frontend.py places on the
-login front end VM. Everything is filled into templates/ with render.py.
+A service behind the login page also gets files/route-<service> (the ingress's route) and
+files/rules-<service> (the auth gateway's rules), written by the chosen modules for review;
+tools/login_frontend.py places the real ones on the login front end VM. Everything is filled
+into templates/ with render.py.
 
 Spec values are untrusted: nothing is written unless the whole spec passes
 validate_spec. Host network values (IPs, bridges, VLANs) and storage are never
@@ -937,7 +938,7 @@ def _route_files(spec, site) -> dict:
     login front end (tools/login_frontend.py) places them on its VM."""
     svc = spec["name"]
     route, blueprint = route_texts(spec, site)
-    return {f"rendered/files/route-{svc}.yml": route, f"rendered/files/app-{svc}.blueprint.yaml": blueprint}
+    return {f"rendered/files/route-{svc}": route, f"rendered/files/rules-{svc}": blueprint}
 
 
 def main(argv: list[str]) -> int:

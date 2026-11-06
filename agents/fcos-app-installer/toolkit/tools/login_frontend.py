@@ -35,8 +35,6 @@ from gen_service import (DOMAIN, SpecError, _plain, _vm_entry, _write_all, gener
 from adapters import AdapterError, acme_data  # noqa: E402
 from placement import filled, site_value  # noqa: E402
 
-EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+")
-
 
 def _modules(site: dict):
     """(chosen module names, ingress code, gateway code)."""
@@ -70,9 +68,6 @@ def _check_site(site: dict, gateway) -> tuple[str, str]:
     domain = site_value(site, "domain")
     if not (_plain(domain) and DOMAIN.fullmatch(domain)):
         raise SpecError("site.yaml: domain is invalid")
-    email = site_value(site, "acme_email")
-    if not (_plain(email) and EMAIL.fullmatch(email)):
-        raise SpecError("site.yaml: acme_email must be an email address")
     return edge_vm, gateway.host_label(site, domain)
 
 
@@ -118,6 +113,7 @@ def _routed(site: dict, services: list, edge_vm: str, login_label: str) -> list[
 
 def generate_login_frontend(site: dict, services: list, out, icon_dirs: dict | None = None) -> list[Path]:
     names, ingress, gateway = _modules(site)
+    ingress.check_site(site)  # the site keys the chosen ingress needs are its own business
     edge_vm, login_label = _check_site(site, gateway)
     ingress_spec, gateway_spec = frontend_specs(site)
     config = gateway.settings(site)

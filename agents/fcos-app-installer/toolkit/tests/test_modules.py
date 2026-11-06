@@ -422,6 +422,31 @@ class GenericCodeTests(unittest.TestCase):
                     self.assertNotIn(product, text)
 
 
+class SiteKeyOwnershipTests(unittest.TestCase):
+    """Which site keys a product needs is the product module's business, checked by its check_site."""
+
+    def test_the_generic_orchestrator_names_no_product_specific_site_key(self):
+        text = (ROOT / "tools" / "login_frontend.py").read_text()
+        self.assertNotIn("acme_email", text)
+
+    def test_the_ingress_module_checks_its_own_site_keys(self):
+        code = modules.code("ingress-traefik")
+        code.check_site(SITE)  # the fixture site is fine
+        for bad in ({}, {"acme_email": ""}, {"acme_email": "not an email"}, {"acme_email": ["a@example.org"]}):
+            with self.subTest(site=bad), self.assertRaises(SpecError) as caught:
+                code.check_site(dict(SITE, **bad) if bad else {k: v for k, v in SITE.items() if k != "acme_email"})
+            self.assertIn("acme_email", str(caught.exception))
+
+    def test_a_site_without_an_email_stops_the_login_front_end_with_the_modules_message(self):
+        import copy
+        import login_frontend
+        site = copy.deepcopy(SITE)
+        del site["acme_email"]
+        with self.assertRaises(SpecError) as caught:
+            login_frontend.generate_login_frontend(site, [], "/tmp/opencode/x" if Path("/tmp/opencode").is_dir() else "/tmp/x")
+        self.assertIn("acme_email", str(caught.exception))
+
+
 class LoginValueTests(unittest.TestCase):
     def spec(self, **extra):
         data = yaml.safe_load((ROOT / "tests" / "fixtures" / "services" / "single.yaml").read_text())

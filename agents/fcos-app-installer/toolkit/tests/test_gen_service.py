@@ -210,7 +210,7 @@ class CrmTests(GenCase):
         out = self.gen("crm")
         names = {p.name for p in (out / "rendered" / "files").iterdir()}
         self.assertEqual(names, {"crm-app.container", "crm-cron.container", "crm-db.container",
-                                 "crm.network", "route-crm.yml", "app-crm.blueprint.yaml"})
+                                 "crm.network", "route-crm", "rules-crm"})
         self.assertIn("NetworkName=crm", self.read(out, "files/crm.network"))
         app = self.read(out, "files/crm-app.container")
         cron = self.read(out, "files/crm-cron.container")
@@ -249,11 +249,11 @@ class CrmTests(GenCase):
 
     def test_route_and_blueprint(self):
         out = self.gen("crm")
-        route = self.read(out, "files/route-crm.yml")
+        route = self.read(out, "files/route-crm")
         self.assertIn("Host(`crm.example.duckdns.org`)", route)
         self.assertIn('url: "http://192.0.2.30:8110"', route)
         self.assertIn("middlewares: [authentik]", route)
-        blueprint = self.read(out, "files/app-crm.blueprint.yaml")
+        blueprint = self.read(out, "files/rules-crm")
         self.assertIn("^/dav/.*$", blueprint)
         self.assertIn(r"^/\.well-known/(carddav|caldav)$", blueprint)
         # Placing them on the login front end VM is login_frontend.py's job
@@ -269,14 +269,14 @@ class CrmTests(GenCase):
         spec = spec_fixture("crm")
         spec.update(login="app-only", login_reason="Phones use CalDAV with the app's own password")
         out = self.gen(spec)
-        route = yaml.safe_load(self.read(out, "files/route-crm.yml"))["http"]
+        route = yaml.safe_load(self.read(out, "files/route-crm"))["http"]
         self.assertEqual(route["routers"]["crm"]["rule"], "Host(`crm.example.duckdns.org`)")
         self.assertEqual(route["routers"]["crm"]["entryPoints"], ["websecure"])
         self.assertNotIn("middlewares", route["routers"]["crm"])
         self.assertNotIn("crm-outpost", route["routers"])
         self.assertEqual(route["services"]["crm"]["loadBalancer"]["servers"], [{"url": "http://192.0.2.30:8110"}])
         # A dashboard link only: an application with a launch URL and no provider.
-        bookmark = yaml.safe_load(self.read(out, "files/app-crm.blueprint.yaml"))
+        bookmark = yaml.safe_load(self.read(out, "files/rules-crm"))
         self.assertEqual(bookmark["metadata"]["name"], "app-crm")
         (entry,) = bookmark["entries"]
         self.assertEqual(entry["model"], "authentik_core.application")
@@ -300,7 +300,7 @@ class CrmTests(GenCase):
         self.assertTrue(any("hostname" in e and "publish" in e for e in self.errors(no_publisher)))
 
     def test_blueprint_with_several_paths_is_valid_yaml(self):
-        text = self.read(self.gen("crm"), "files/app-crm.blueprint.yaml")
+        text = self.read(self.gen("crm"), "files/rules-crm")
 
         class Loader(yaml.SafeLoader):
             pass
@@ -330,7 +330,7 @@ class AccessGroupTests(GenCase):
         # groups and bindings live only in the login front end's access.yaml.
         spec = spec_fixture("crm")
         spec["groups"] = ["family", "guests"]
-        data = _blueprint(self.read(self.gen(spec), "files/app-crm.blueprint.yaml"))
+        data = _blueprint(self.read(self.gen(spec), "files/rules-crm"))
         models = [e["model"] for e in data["entries"]]
         self.assertNotIn("authentik_core.group", models)
         # Review: until access.yaml binds the groups, the app refuses everyone: a deny policy of
@@ -341,7 +341,7 @@ class AccessGroupTests(GenCase):
         binds = [e for e in data["entries"] if e["model"] == "authentik_policies.policybinding"]
         self.assertEqual(len(binds), 1)
         self.assertEqual(binds[0]["identifiers"]["policy"], ["!KeyOf", deny[0]["id"]])
-        plain = _blueprint(self.read(self.gen("crm"), "files/app-crm.blueprint.yaml"))
+        plain = _blueprint(self.read(self.gen("crm"), "files/rules-crm"))
         self.assertFalse([e for e in plain["entries"] if e["model"] == "authentik_policies.policybinding"])
 
     def test_groups_refused_for_an_app_on_its_own_login(self):
@@ -378,12 +378,12 @@ class SectionTests(GenCase):
     def test_section_sets_the_application_group(self):
         spec = spec_fixture("crm")
         spec["section"] = "Relationships"
-        data = _blueprint(self.read(self.gen(spec), "files/app-crm.blueprint.yaml"))
+        data = _blueprint(self.read(self.gen(spec), "files/rules-crm"))
         app = next(e for e in data["entries"] if e["model"] == "authentik_core.application")
         self.assertEqual(app["attrs"]["group"], "Relationships")
 
     def test_without_section_no_group(self):
-        data = _blueprint(self.read(self.gen("crm"), "files/app-crm.blueprint.yaml"))
+        data = _blueprint(self.read(self.gen("crm"), "files/rules-crm"))
         app = next(e for e in data["entries"] if e["model"] == "authentik_core.application")
         self.assertNotIn("group", app["attrs"])
 
@@ -400,7 +400,7 @@ class RedirectTests(GenCase):
     with https (redirectRegex: doc.traefik.io .../middlewares/redirectregex/)."""
 
     def route(self, spec):
-        return yaml.safe_load(self.read(self.gen(spec), "files/route-crm.yml"))["http"]
+        return yaml.safe_load(self.read(self.gen(spec), "files/route-crm"))["http"]
 
     def test_redirects_are_answered_by_traefik_with_https(self):
         spec = spec_fixture("crm")
@@ -630,12 +630,12 @@ class RuleTests(GenCase):
                 spec = spec_fixture("crm")
                 spec.update(name=name, title=title, hostname="crm")
                 out = self.gen(spec)
-                blueprint = yaml.load(self.read(out, f"files/app-{name}.blueprint.yaml"), Loader=Loader)
+                blueprint = yaml.load(self.read(out, f"files/rules-{name}"), Loader=Loader)
                 provider, app = blueprint["entries"]
                 self.assertEqual(provider["identifiers"]["name"], name)
                 self.assertEqual(app["identifiers"]["slug"], name)
                 self.assertEqual(app["attrs"]["name"], title)
-                route = yaml.safe_load(self.read(out, f"files/route-{name}.yml"))
+                route = yaml.safe_load(self.read(out, f"files/route-{name}"))
                 self.assertIn(name, route["http"]["routers"])
                 self.assertEqual(route["http"]["routers"][name]["service"], name)
                 self.assertIn(name, route["http"]["services"])
@@ -819,7 +819,7 @@ class NetworkRuleTests(GenCase):
         out = self.gen("crm", site=site)
         self.assertEqual(directives(self.read(out, "files/crm-app.container"), "PublishPort"),
                          ["192.0.2.77:8110:80"])
-        self.assertIn('url: "http://192.0.2.77:8110"', self.read(out, "files/route-crm.yml"))
+        self.assertIn('url: "http://192.0.2.77:8110"', self.read(out, "files/route-crm"))
 
 
 class InjectionTests(GenCase):
@@ -919,7 +919,7 @@ class InjectionTests(GenCase):
         spec = spec_fixture("crm")
         spec["api_paths"] = ["^/dav/.*$\u2028  - model: authentik_core.user\u2028    identifiers: {username: evil}"]
         self.assertTrue(validate_spec(spec, SITE))
-        text = self.read(self.gen("crm"), "files/app-crm.blueprint.yaml")
+        text = self.read(self.gen("crm"), "files/rules-crm")
 
         class Loader(yaml.SafeLoader):
             pass
@@ -1258,12 +1258,12 @@ class SafetyTests(GenCase):
         spec = spec_fixture("crm")
         spec["login"], spec["login_reason"] = "app-only", "test"
         generate(spec, SITE, out)  # own login, still a hostname: open route and a dashboard link
-        self.assertTrue((out / "rendered" / "files" / "route-crm.yml").exists())
-        self.assertNotIn("proxyprovider", self.read(out, "files/app-crm.blueprint.yaml"))
+        self.assertTrue((out / "rendered" / "files" / "route-crm").exists())
+        self.assertNotIn("proxyprovider", self.read(out, "files/rules-crm"))
         spec.pop("hostname")
         generate(spec, SITE, out)  # no hostname: no route, no link
-        self.assertFalse((out / "rendered" / "files" / "route-crm.yml").exists())
-        self.assertFalse((out / "rendered" / "files" / "app-crm.blueprint.yaml").exists())
+        self.assertFalse((out / "rendered" / "files" / "route-crm").exists())
+        self.assertFalse((out / "rendered" / "files" / "rules-crm").exists())
 
     def test_command_line(self):
         work = self.tmpdir()

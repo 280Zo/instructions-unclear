@@ -242,6 +242,17 @@ class PrivateValueTests(TempHome):
         init_workspace(ws)
         return ws
 
+    def test_the_hypervisor_adapters_vm_example_is_public(self):
+        ws = self.make()
+        (ws / "site.yaml").write_text("{}\n")
+        (ws / "vms" / "x").mkdir(parents=True)
+        (ws / "vms" / "x" / "vm.yaml").write_text(
+            'settings:\n  description: {use: "<what this VM runs>", why: x, source: user}\n')
+        self.assertEqual(private_values(ws) & {"<what this VM runs>"}, set())
+        (ws / "vms" / "x" / "vm.yaml").write_text(
+            'settings:\n  description: {use: "Kims photo server", why: x, source: user}\n')
+        self.assertIn("Kims photo server", private_values(ws))
+
     def test_values_a_module_shows_in_its_own_example_are_public(self):
         ws = self.make()
         (ws / "site.yaml").write_text(

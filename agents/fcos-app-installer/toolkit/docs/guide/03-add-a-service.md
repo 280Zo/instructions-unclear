@@ -128,7 +128,7 @@ wrong, and writes nothing. Expected: `build-vm: all checks passed`. It writes, u
 | `<svc>-port.bu` | the firewall port, open only to the login front end (not for loopback services) |
 | `<svc>-backup-<container>.bu` | the database backup, by engine |
 | `<svc>-backup-files.bu` | the files backup of its `local` data |
-| `files/route-<svc>.yml`, the login-rules file `files/app-<svc>.*` | the route and login rules, placed on the login front end in 3.9 |
+| `files/route-<svc>`, `files/rules-<svc>` | the route and the login rules, for review; the real files are placed on the login front end in 3.9 |
 
 and `<workspace>/services/<svc>/secrets.md`, which lists each secret's name,
 who uses it, whether it must be kept, and the exact command to create it, and

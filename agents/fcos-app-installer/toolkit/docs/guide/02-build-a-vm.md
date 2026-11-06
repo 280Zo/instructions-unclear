@@ -32,70 +32,25 @@ Report back: done, plus any export path that differs from the site file.
 ## 2.3 [Agent] Write the VM spec
 
 `<workspace>/vms/<vm>/vm.yaml`, every value from the site file and the
-user's answers, none assumed.
+user's answers, none assumed. Its fields (the VM ID, the image, the disks, the
+network, the platform settings) belong to the hypervisor adapter's tool: the
+adapter's `vm.example.yaml` lists every one, and the tool refuses a spec that
+leaves one out.
 
 **Every VM setting is decided, never left to a default.** Research the
 server's facts (discovery: CPU and its flags, NUMA nodes, disk type, memory
 free with every guest running, other VMs' start order) and the official
 guidance (the virtualization platform's VM documentation, the FCOS guide for
 that platform, each app's requirements). Then fill `settings:` with every
-setting below, each with the value to use, why, and the source. The
-platform's tool refuses a spec where one is missing, unexplained or out of
-range, and its dry run prints them all as a table. Show that table to the
-user; the values are used unless the user changes them.
+setting in the adapter's example, each with the value to use, why, and the
+source. The platform's tool refuses a spec where one is missing, unexplained or
+out of range, and its dry run prints them all as a table. Show that table to
+the user; the values are used unless the user changes them.
 
-**Providers.** For Proxmox VE the settings below are what `tools/hypervisor.py`
-checks and sends; the official sources are the Proxmox VE VM chapter and the
-FCOS Proxmox guide, linked in the Proxmox adapter skill (`hypervisor-proxmox`).
-
-```yaml
-name: <vm>
-host: <host>
-vmid: <vmid>
-cores: 2
-ram_mib: 3072
-os_disk_gib: 30
-data_disk_gib: 10
-storage: <disk storage>
-bridge: <bridge>
-vlan_tag: <vlan or null>
-mtu: <mtu or null>
-image_volume: <iso storage>:import/<image file>
-ignition:
-  method: nocloud-iso   # the adapter's default; snippet is the fallback
-settings:               # each one: {use: <value>, why: <one line>, source: <doc or discovery>}
-  cpu: {use: host, why: "one server, no live migration; exact host CPU and flags", source: "platform VM docs"}
-  cpu_flags: {use: [], why: "type host already passes every host flag", source: "platform VM docs"}
-  sockets: {use: 1, why: "host has one socket", source: "discovery"}
-  numa: {use: false, why: "host has one NUMA node", source: "discovery; platform VM docs"}
-  cpuunits: {use: 100, why: "equal CPU share with the other VMs", source: "platform VM docs"}
-  cpulimit: {use: 0, why: "no cap", source: "platform VM docs"}
-  balloon: {use: "on", why: "keep the device with no minimum; fixed size, use reported", source: "platform VM docs"}
-  allow_ksm: {use: true, why: "shares identical pages on a small host", source: "platform VM docs"}
-  bios: {use: seabios, why: "OVMF mainly for PCIe passthrough", source: "platform VM docs"}
-  machine: {use: pc, why: "Q35 mainly for PCIe passthrough; newest machine version at each start, fine for Linux", source: "platform VM docs"}
-  disk_cache: {use: none, why: "balance of safety and speed", source: "platform VM docs"}
-  disk_aio: {use: io_uring, why: "the platform's default", source: "platform VM docs"}
-  discard: {use: true, why: "thin storage gets freed space back", source: "platform VM docs"}
-  ssd: {use: true, why: "the disk under the storage is an SSD", source: "discovery (ROTA 0)"}
-  nic_model: {use: virtio, why: "best performance, lowest overhead", source: "platform VM docs"}
-  nic_queues: {use: 2, why: "multiqueue equal to the vCPUs", source: "platform VM docs"}
-  nic_firewall: {use: false, why: "the VM's own nftables filters", source: "base template"}
-  rng: {use: urandom, why: "avoids entropy starvation at boot", source: "platform VM docs"}
-  tablet: {use: false, why: "serial console, no VNC mouse", source: "platform VM docs"}
-  hotplug: {use: "network,disk,usb", why: "the platform's default", source: "platform VM docs"}
-  startup_order: {use: null, why: "starts after VMs that have an order (the router: manual step); setting one needs Sys.Modify on the whole server", source: "platform VM docs; qemu-server permission check"}
-  startup_up: {use: null, why: "no extra delay needed", source: "platform VM docs"}
-  onboot: {use: true, why: "starts with the server", source: "user"}
-  protection: {use: true, why: "no accidental deletion", source: "platform VM docs"}
-  agent: {use: false, why: "no guest agent in FCOS yet", source: "FCOS package list"}
-  watchdog: {use: none, why: "nothing in the VM would feed it", source: "platform VM docs"}
-  acpi: {use: true, why: "clean shutdown", source: "platform VM docs"}
-  kvm: {use: true, why: "hardware virtualization", source: "platform VM docs"}
-  localtime: {use: false, why: "Linux keeps UTC", source: "platform VM docs"}
-  tags: {use: [fcos-agent], why: "easy to spot", source: "user"}
-  description: {use: "<what this VM runs>", why: "easy to spot", source: "user"}
-```
+**Providers.** For Proxmox VE the example is `vm.example.yaml` in the skill
+`hypervisor-proxmox`; `tools/hypervisor.py` checks and sends those settings,
+and the official sources are the Proxmox VE VM chapter and the FCOS Proxmox
+guide, linked in that skill.
 
 If a VM must start after another one on the server (the router that serves
 its address, the file server), give that one a start order (for example 1,

@@ -44,7 +44,7 @@ place to enforce MFA, lock an account, or see who logged in. And you'd log in to
 | Value | Fills (site file) |
 |---|---|
 | Which VM runs it (built in 6.2), on an always-on server | `edge.vm` |
-| Email for Let's Encrypt notices | `acme_email` |
+| Email for the certificate authority's notices, if the chosen ingress asks for one (its `operations.md`) | `acme_email` |
 | Which ingress and which auth gateway (recommend from the tested pairings, then ask) | `login_frontend.ingress`, `login_frontend.auth_gateway` |
 | The chosen modules' own values: the login page's name, images, UIDs/GIDs | each module's `operations.md`, "Site values" |
 | Which DNS provider handles the certificate (question 3) | the DNS adapter, which carries the `acme` block the ingress reads |

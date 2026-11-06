@@ -38,7 +38,9 @@ Python lives in `tools/ingress/<product>.py` or `tools/authgw/<product>.py`, bec
 (`tools/login_frontend.py`, `tools/gen_service.py`) call these functions and name no product. A test
 (`tests/test_modules.py`) fails if they do.
 
-An ingress module provides: `route_name_problem(name)`, `check_spec(spec, reserved_paths, errors)`,
+An ingress module provides: `check_site(site)` (raises `SpecError` for a site key it needs and finds missing or
+wrong, such as the address a certificate authority writes to; the generic tools check no product's keys),
+`route_name_problem(name)`, `check_spec(spec, reserved_paths, errors)`,
 `redirect_blocks(svc, host, redirects)`, `route_text(kind, gateway, values)` and
 `place(site, spec, gateway, gateway_values, routes, acme)`. `gateway` is the auth gateway module's
 name, `gateway_values` what that module's `forward_auth_values(site)` returned, and `acme` the
@@ -76,8 +78,22 @@ adapter names it in `adapter.yaml`: `code: virtualization.<provider>`, a file in
 file. It runs `python3 tools/hypervisor.py <verb> ...`, which reads `roles.virtualization.provider` from
 the site file, loads the adapter's code and hands it the arguments unchanged. The code must define
 `VERBS = ("check", "list", "create", "start", "status")` and `main(argv)`; `tools/hypervisor.py` refuses
-an adapter whose code doesn't, and `tools/adapters.py` checks the `code:` name. The verbs are all the agent can do through the API: nothing that deletes or
-needs root, because those stay manual steps in the adapter. A hypervisor without an API has no `code:`,
-and `hypervisor.py` says it has no tool.
+an adapter whose code doesn't, and `tools/adapters.py` checks the `code:` name. The verbs are all the
+agent can do through the API: nothing that deletes or needs root, because those stay manual steps in the
+adapter. A hypervisor without an API has no `code:`, and `hypervisor.py` says it has no tool.
+
+What the adapter defines besides the verbs, because the generic tools and the guide leave it to the tool:
+
+- **The VM spec.** The fields of `<workspace>/vms/<vm>/vm.yaml` are the tool's own. The adapter's
+  `vm.example.yaml` lists every one. `create` must refuse a spec where a setting is missing, unexplained or
+  out of range, and `--dry-run` must print the whole plan (the guide has the user review it) before
+  anything is sent.
+- **The server's section of the site file.** The keys under `hosts.<host>` are the tool's own, shown in the
+  adapter's `site.example.yaml`. The generic tools read only `name` and `always_on`.
+- **The token.** The adapter's `store_api_token` step writes the token to `<workspace>/secrets/` from a
+  hidden prompt, together with the address of the server, and the tool sends the token only to the address
+  stored with the token, never to one from the site file (the agent may edit that file). `teardown_api_access`
+  removes the access when the install is done. An adapter with a tool must define both steps, besides the
+  role's own; `tools/adapters.py` refuses one that doesn't.
 
 The module goes in the repository. What the user's own install looks like stays in their workspace.

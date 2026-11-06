@@ -82,6 +82,9 @@ TOP_KEYS = {"role", "provider", "name", "docs", "discovery", "capabilities", "de
 # generic entry point accepts. Only the virtualization role has one: tools/hypervisor.py.
 TOOL_PACKAGES = {"virtualization": "virtualization"}
 TOOL_VERBS = {"virtualization": ("check", "list", "create", "start", "status")}
+# Manual steps an adapter with a tool must define besides the role's own: the guide tells the user to store the
+# token the tool uses and to remove the access when the install is done.
+TOOL_STEPS = {"virtualization": ("store_api_token", "teardown_api_access")}
 TOOL_NAME = re.compile(r"[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*")
 ACME_KEYS = {"provider", "env", "store_as", "notes"}
 ACME_PROVIDER = re.compile(r"[a-z0-9][a-z0-9-]{0,40}")
@@ -208,7 +211,8 @@ def _check_adapter(data, role: str, provider: str) -> dict:
         if not (isinstance(step_id, str) and STEP_ID.fullmatch(step_id)):
             raise AdapterError(f"{where}: step id {step_id!r} must be lowercase letters, digits, _")
         _check_step(f"{where} {step_id}", step)
-    missing = [s for s in ROLE_STEPS[role] if s not in steps]
+    needed = [*ROLE_STEPS[role], *(TOOL_STEPS.get(role, ()) if "code" in data else ())]
+    missing = [s for s in needed if s not in steps]
     if missing:
         raise AdapterError(f"{where}: missing the role's steps {missing}")
     return data
@@ -322,7 +326,7 @@ def acme_data(site: dict) -> dict:
     if not acme:
         raise AdapterError(f"{adapter_skill('dns_certificates', provider)} has no acme data (the certificate client's provider code, the "
                            "token's environment variable and the name it is stored under); add an acme: block to its "
-                           "adapter.yaml (see docs/guide/12-add-a-module.md and the lego provider list)")
+                           "adapter.yaml (see docs/guide/12-add-a-module.md and the chosen ingress's operations.md)")
     return acme
 
 

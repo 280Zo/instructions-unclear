@@ -185,10 +185,11 @@ class SettingsTests(unittest.TestCase):
                 self.params(disk_aio="native", disk_cache=cache)
         self.params(disk_aio="native", disk_cache="none")
 
-    def test_guide_example_passes_the_checks(self):
-        text = (ROOT / "docs" / "guide" / "02-build-a-vm.md").read_text()
-        block = text.split("```yaml\nname: <vm>", 1)[1].split("```", 1)[0]
-        example = yaml.safe_load("name: <vm>" + block)
+    def test_the_adapters_example_passes_the_checks(self):
+        from layout import SKILLS
+        example = yaml.safe_load((SKILLS / "hypervisor-proxmox" / "vm.example.yaml").read_text())
+        # The neutral guide page no longer carries this tool's fields.
+        self.assertNotIn("name: <vm>", (ROOT / "docs" / "guide" / "02-build-a-vm.md").read_text())
         spec = fixture_spec(settings={k: v["use"] for k, v in example["settings"].items()})
         spec["settings"] = example["settings"]
         self.assertEqual(sorted(example["settings"]), sorted(pve.SETTING_KEYS))
