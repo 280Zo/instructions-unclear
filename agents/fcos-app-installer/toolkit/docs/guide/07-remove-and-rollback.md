@@ -2,7 +2,7 @@
 
 ## 7.1 Remove a service
 
-**[Agent]**, after the owner confirms the service name and whether its data
+**[Agent]**, after the user confirms the service name and whether its data
 should be kept:
 
 1. Run its backups one last time and confirm the files (section 4).
@@ -55,13 +55,13 @@ python3 tools/vmssh.py run $vm -- 'while read -r u; do sudo systemctl disable --
    provider: deleting a rules file doesn't delete what it created (its
    `operations.md`, "Removing an app").
 5. Data: its folder on the data disk and its file server folders stay until
-   the owner says to delete them. The user account stays too; the next rebuild
-   drops it. When the owner says to delete, it is an owner step (the agent's
+   the user says to delete them. The user account stays too; the next rebuild
+   drops it. When the user says to delete, it is a manual step (the agent's
    key may be revoked by then): `sudo rm -rf /var/lib/appdata/<svc>` and
    `sudo userdel -r <svc>` on the VM, which also removes the account's home
    folder with its Podman secrets; then check with `getent passwd <svc>` and
    `grep <svc> /etc/subuid /etc/subgid`.
-6. **[Owner]** Remove the DNS name if one per service was used
+6. **[Manual]** Remove the DNS name if one per service was used
    (router_firewall: `dns_wildcard`), and the file server account if nothing
    else uses it.
 7. Update the site file.
@@ -75,7 +75,7 @@ If a client can't work behind the login page even with open paths:
    `hostname`, regenerate it (section 3.6), regenerate the login front end,
    and push both (section 3.9).
 3. Nothing to remove on the login front end (its two files are replaced, see
-   3.9). Have the owner delete its old provider in the auth gateway's
+   3.9). Have the user delete its old provider in the auth gateway's
    interface.
 
 It keeps its HTTPS address, now without the login page: same certificate,
@@ -101,8 +101,8 @@ directly on the LAN instead:
 2. Turn on every app's own password.
 3. Stop the ingress and the auth gateway (each module's `operations.md`,
    "Stop it"), and remove their fragments.
-4. **[Owner]** Remove the `*.<domain>` DNS entry. Clients then use
-   `http://<vm-ip>:<port>`, unencrypted on the LAN; tell the owner that this is
+4. **[Manual]** Remove the `*.<domain>` DNS entry. Clients then use
+   `http://<vm-ip>:<port>`, unencrypted on the LAN; tell the user that this is
    the trade-off.
 
 To return to the login layer, reverse these steps.

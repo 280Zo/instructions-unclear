@@ -84,7 +84,7 @@ class AgentTests(unittest.TestCase):
                 self.assertEqual(effect(self.text, "edit", path), "allow")
         self.assertEqual(effect(self.text, "question", "*"), "allow")
 
-    def test_never_touches_owner_systems(self):
+    def test_never_touches_the_users_systems(self):
         for command in ("qm set 201 --delete scsi0", "pvesm add dir coreos", "pveum role list",
                         "pvesh get /nodes", "ssh root@192.0.2.5 qm list", "scp vms/x.ign root@192.0.2.5:/var/coreos/",
                         "git push origin main", "sudo rm -rf /",
@@ -152,7 +152,7 @@ class AgentTests(unittest.TestCase):
                         "ssh-keygen -R 192.0.2.20 -f /home/owner/agent/README.md"):
             with self.subTest(command=command):
                 self.assertEqual(effect(self.text, "shell", command), "deny")
-        # Searching and fetching need the owner's OK: rg could walk into secrets/,
+        # Searching and fetching need the user's OK: rg could walk into secrets/,
         # and curl has too many ways to send or write data.
         for command in (f"rg . {ws}", f"rg token {ws}", "curl -s -o /dev/null -d@x https://x",
                         "curl -sI https://auth.example.duckdns.org/", "curl -s https://x"):
@@ -216,14 +216,14 @@ class AgentTests(unittest.TestCase):
                 self.assertEqual(effect(self.text, "read", path), "deny")
                 self.assertEqual(effect(self.text, "edit", path), "deny")
 
-    def test_owner_approves_commits_and_downloads(self):
+    def test_user_approves_commits_and_downloads(self):
         for command in ("git commit -m x", "docker pull quay.io/x", "curl -fLO https://x", "curl -s -O https://x"):
             with self.subTest(command=command):
                 self.assertEqual(effect(self.text, "shell", command), "ask")
         self.assertEqual(effect(self.text, "shell", "some-unknown-tool --flag"), "ask")
 
     def test_no_shell_writes_into_the_skills(self):
-        # Review of ff605b1: the owner runs the skills' host scripts as root.
+        # Review of ff605b1: the user runs the skills' host scripts as root.
         for command in (f"python3 tools/render.py t v > {SKILLS_DIR}/adapter-proxmox/scripts/lib.sh",
                         f"python3 tools/render.py t v >{SKILLS_DIR}/x/SKILL.md",
                         f"python3 tools/x.py | tee {SKILLS_DIR}/x/adapter.yaml",
@@ -260,7 +260,7 @@ class AgentTests(unittest.TestCase):
             self.assertIn(needle, text)
 
     def test_how_to_work_matches_the_shared_section(self):
-        # The agent body replaces OpenCode's base prompt; the owner's other agents carry this
+        # The agent body replaces OpenCode's base prompt; the user's other agents carry this
         # section (instructions-unclear agents/generate.py BASE_INSTRUCTIONS, adapted from
         # OpenCode 2.1.3's system prompt, MIT).
         prompt = AGENT.read_text()
@@ -333,7 +333,7 @@ class AgentTests(unittest.TestCase):
     def test_prompt_states_the_rules(self):
         text = body(self.text)
         for phrase in ("docs/guide/README.md", "docs/guide/questions.md", "publish_check.py", "which server",
-                       "5 GB", "[Owner]", "secret", "workspace", "tools/hypervisor.py", "tools/adapters.py",
+                       "5 GB", "[Manual]", "secret", "workspace", "tools/hypervisor.py", "tools/adapters.py",
                        "tools/gen_service.py", "tools/login_frontend.py", "reference.md"):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase.lower(), text.lower())
@@ -358,7 +358,7 @@ class AgentTests(unittest.TestCase):
     def test_prompt_follows_the_design_run_order(self):
         text = body(self.text)
         steps = ["Where to keep the files", "Earlier installs", "Which systems", "Hypervisor access",
-                 "Where the service goes", "Login page", "Research", "Owner decisions", "Owner steps",
+                 "Where the service goes", "Login page", "Research", "User decisions", "Manual steps",
                  "Build, push, verify", "Adapter draft"]
         positions = [text.index(s) for s in steps]
         self.assertEqual(positions, sorted(positions))
@@ -377,13 +377,13 @@ class ReviewFixTests(unittest.TestCase):
                      "/h/tk/.opencode/agents/evil.md", "/h/tk/.opencode/commands/evil.md"):
             with self.subTest(path=path):
                 self.assertEqual(effect(self.text, "edit", path), "deny")
-        # A skill's files are still the owner's to approve.
+        # A skill's files are still the user's to approve.
         for path in (f"/h/tk/{SKILLS_DIR}/adapter-x/SKILL.md", f"/h/tk/{SKILLS_DIR}/adapter-x/tools/y.sh"):
             with self.subTest(path=path):
                 self.assertEqual(effect(self.text, "edit", path), "ask")
 
     def test_the_override_section_settles_the_secure_coding_rule_about_reading_secrets(self):
-        # The owner's global secure-coding rule says to read secrets from the environment or a
+        # The user's global secure-coding rule says to read secrets from the environment or a
         # secret store; this agent must not.
         section = " ".join(self.text.split("## Overrides of global rules", 1)[1].split("## How to work", 1)[0].split())
         self.assertIn("secure-coding rule", section)
@@ -439,7 +439,7 @@ class ReviewFixTests(unittest.TestCase):
             with self.subTest(message=message):
                 self.assertEqual(effect(self.text, "shell", message), "deny")
         self.assertEqual(effect(self.text, "shell", "git commit -F /tmp/opencode/msg.txt"), "ask")
-        self.assertEqual(effect(self.text, "shell", "git add ."), "ask")  # staging is the owner's call
+        self.assertEqual(effect(self.text, "shell", "git add ."), "ask")  # staging is the user's call
 
 
 class CommandTests(unittest.TestCase):

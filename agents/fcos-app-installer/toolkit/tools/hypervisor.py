@@ -11,7 +11,7 @@ Usage:
 
 It reads the product from the site file (roles.virtualization.provider), loads that adapter's tool
 (`code:` in its adapter.yaml, a file in tools/virtualization/) and hands it the arguments unchanged. The
-tool has only these verbs; anything that deletes or needs root stays an owner step from the adapter.
+tool has only these verbs; anything that deletes or needs root stays a manual step from the adapter.
 """
 import argparse
 import sys

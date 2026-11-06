@@ -2,7 +2,7 @@ role: file_server
 provider: truenas
 name: TrueNAS
 notes: >-
-  The agent never touches the NAS. These steps are done by the owner in the
+  The agent never touches the NAS. These steps are done by the user in the
   TrueNAS web interface. Menu names change between versions; when one doesn't
   match, follow the linked documentation for your version.
 docs:
@@ -11,7 +11,7 @@ docs:
 discovery:
   ask: the NFS export path of each share, and the NAS address.
 capabilities: {}
-owner_steps:
+manual_steps:
   nfs_export:
     title: Let VM {{VM_NAME}} mount {{SHARE_EXPORT}}
     steps:
@@ -35,8 +35,8 @@ owner_steps:
     title: Create the backup folder for {{SVC_NAME}} on VM {{VM_NAME}}
     steps:
       - In the backups share, make sure the folder {{VM_NAME}}/ exists, owned by root or the share's admin account, mode 0755. Everyone can enter it and nobody else can add or remove anything in it. It is not group-writable and has no setgid bit; each service has its own group, and group write without a sticky bit would let a member delete another service's backup folder.
-      - Create {{VM_NAME}}/{{SVC_NAME}}/ yourself, owned by UID {{SVC_UID}} and GID {{SVC_GID}}, mode 0750. The service can't create it in a folder it can't write to, and its backups fail until it exists. The VM sends numbers, so the owner's UID must be {{SVC_UID}}; the name of the account or group on the file server doesn't matter.
-      - Check it with `ls -n` in {{VM_NAME}}/. The owner column must show {{SVC_UID}}.
+      - Create {{VM_NAME}}/{{SVC_NAME}}/ yourself, owned by UID {{SVC_UID}} and GID {{SVC_GID}}, mode 0750. The service can't create it in a folder it can't write to, and its backups fail until it exists. The VM sends numbers, so the user's UID must be {{SVC_UID}}; the name of the account or group on the file server doesn't matter.
+      - Check it with `ls -n` in {{VM_NAME}}/. The user column must show {{SVC_UID}}.
     uses: [VM_NAME, SVC_NAME, SVC_UID, SVC_GID]
     report_back:
       - done, and the `ls -n` line for the folder

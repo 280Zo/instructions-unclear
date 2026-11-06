@@ -7,16 +7,16 @@
 # ones. tools/publish_check.py fails if any workspace value shows up in a
 # published file.
 #
-# Values marked "# ASK" must be confirmed with the owner before use.
+# Values marked "# ASK" must be confirmed with the user before use.
 #
 # Never put a secret value in this file. Secrets are listed
-# by NAME only; the owner creates them on the VM with `podman secret create`.
+# by NAME only; the user creates them on the VM with `podman secret create`.
 #
 # "maps to:" names the template placeholder each value fills. Some
 # placeholders are derived (built by the agent from several values); those
 # are listed under `derived:` at the bottom.
 
-# --- Roles: who provides each part of the setup (ASK until the owner answers) ---
+# --- Roles: who provides each part of the setup (ASK until the user answers) ---
 roles:
   virtualization: {provider: ASK}
   router_firewall: {provider: ASK}
@@ -29,13 +29,13 @@ roles:
 # says which more keys it needs; its site.example.yaml shows them all.
 hosts:
   host-a:
-    name: ASK                   # the name the owner uses for this server
+    name: ASK                   # the name the user uses for this server
     always_on: false            # ASK
   host-b:
     name: ASK
     always_on: true             # ASK
 
-# --- Network (the owner sets reservations, DNS and inter-VLAN rules in OPNsense) ---
+# --- Network (the user sets reservations, DNS and inter-VLAN rules in OPNsense) ---
 network:
   gateway: 192.0.2.1            # ASK
   admin_lan_cidr: 192.0.2.0/24  # ASK  maps to: ADMIN_LAN_CIDR (SSH allowed from here; comma-separated list)
@@ -43,7 +43,7 @@ network:
   dns: 192.0.2.1                # ASK: OPNsense Unbound
   timezone: UTC     # ASK  maps to: TIMEZONE
 
-# Tailscale is only the route into the LAN for the owner's desktop and phone.
+# Tailscale is only the route into the LAN for the user's desktop and phone.
 # Their Tailscale DNS points at OPNsense. If the subnet router runs on a host
 # that isn't always_on, remote access stops while that host is off: warn.
 tailscale:
@@ -52,7 +52,7 @@ tailscale:
 # --- Admin user name on every VM ---
 admin_user: admin               # ASK  maps to: ADMIN_USER
 
-# --- NAS (the owner does all NAS work; the agent only asks for these values) ---
+# --- NAS (the user does all NAS work; the agent only asks for these values) ---
 nas:
   nfs_server: 192.0.2.1         # ASK  maps to: NFS_SERVER
   backups_export: /mnt/pool/backups   # ASK; mounted at /var/mnt/backups on every VM
@@ -87,7 +87,7 @@ shared_groups: []
 
 # --- VMs ---
 vms: []
-# Entry shape (one per VM; the owner decides how many):
+# Entry shape (one per VM; the user decides how many):
 #   - name: edge                  # maps to: VM_NAME
 #     vmid: 201                   # ASK: an unused VM ID on that host (if the hypervisor adapter uses one)
 #     host: host-b
@@ -136,7 +136,7 @@ services: []
 #       - host: /var/lib/appdata/opencode/db
 #         container: /data/db
 #         class: local-db         # nfs | local | local-db
-#         expected_gib: 1         # 5 GB rule: over 5 on the data disk needs a talk with the owner
+#         expected_gib: 1         # 5 GB rule: over 5 on the data disk needs a talk with the user
 #         db: { engine: sqlite, file: opencode.db }   # maps to: SVC_DB_FILE
 #       - host: /var/mnt/projects/ai
 #         container: /projects

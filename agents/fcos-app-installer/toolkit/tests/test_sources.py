@@ -96,7 +96,7 @@ class SourceTests(unittest.TestCase):
                 # The login page's name comes from the site file (edge.authentik.host), e.g. login.<domain>.
                 self.assertNotIn("auth.<domain>", text)
                 self.assertNotIn("auth.example.duckdns.org", text)
-                # The owner's machine is a desktop.
+                # The user's machine is a desktop.
                 self.assertNotIn("laptop", text)
         edge = " ".join((SKILLS_FOLDER / "authgw-authentik" / "operations.md").read_text().split())
         # docs.goauthentik.io/users-sources/user/user-interface/: gear icon > Credentials > MFA Devices.

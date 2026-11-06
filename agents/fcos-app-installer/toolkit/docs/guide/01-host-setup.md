@@ -1,7 +1,7 @@
 # 1. Host setup (once per virtualization server)
 
 Do this once on every server listed under `hosts` in the site file. Every
-step that runs on the server is **[Owner]**: the agent never runs commands
+step that runs on the server is **[Manual]**: the agent never runs commands
 there. The agent shows each step from the virtualization adapter with the
 server's values filled in.
 
@@ -10,20 +10,20 @@ the setup and teardown scripts are in its `scripts/` and the agent
 uses the token through `tools/hypervisor.py`. For another platform the agent shows
 the general steps from the skill `adapter-generic`.
 
-## 1.1 Ask the owner, from what the server shows
+## 1.1 Ask the user, from what the server shows
 
-Never assume a network, storage or hardware value. The owner runs the
+Never assume a network, storage or hardware value. The user runs the
 read-only discovery script (adapter step **virtualization: `discover_host`**,
 the discovery script in the virtualization adapter skill), which saves the server's facts as
 `<workspace>/hosts/<host>/discovery.txt`; the agent reads that file and asks
 one question at a time with options taken from it ([questions](questions.md),
 5 and 7). Run it again after the server's hardware, storage or network
 changes. For another platform the agent gives read-only commands instead and
-the owner pastes their output.
+the user pastes their output.
 
 | Value | Fills (site file) |
 |---|---|
-| The name the owner uses for the server, and its node name | `hosts.<host>.name`, `.node` |
+| The name the user uses for the server, and its node name | `hosts.<host>.name`, `.node` |
 | Its address for the API, and the API's CA certificate | `hosts.<host>.address`, `.ca_file` |
 | Always running, or sometimes switched off | `hosts.<host>.always_on` |
 | VM disk storage | `hosts.<host>.storage` |
@@ -31,7 +31,7 @@ the owner pastes their output.
 | Network bridge, VLAN, MTU (never the WAN bridge) | `hosts.<host>.bridge`, VM specs |
 | CPU, memory and disk type (decides cores, RAM, SSD emulation, ballooning) | VM specs |
 
-## 1.2 [Owner] Download the Fedora CoreOS image
+## 1.2 [Manual] Download the Fedora CoreOS image
 
 Adapter step **virtualization: `download_image`**. It downloads the stable
 image for the platform from the official stream metadata, checks its SHA-256,
@@ -40,9 +40,9 @@ so VMs start from a current image.
 
 Report back: the checksum line and the image file name.
 
-## 1.3 [Owner] Give the agent a limited token
+## 1.3 [Manual] Give the agent a limited token
 
-Adapter step **virtualization: `create_api_access`**. The owner copies the
+Adapter step **virtualization: `create_api_access`**. The user copies the
 host scripts to the server, checks their SHA-256 (`tools/adapters.py` fills
 them in, and the agent's own folder, from where the agent is installed; they
 are never typed in by hand), runs the setup script in check mode, then for
@@ -80,7 +80,7 @@ links them).
 
 ## 1.6 When the install is done
 
-**[Owner]** Adapter step **virtualization: `teardown_api_access`**. It moves
+**[Manual]** Adapter step **virtualization: `teardown_api_access`**. It moves
 the agent's VMs into pool `backrooms` (always this
 pool, so nothing is asked; they keep running, the script creates the pool when
 it doesn't exist, and a pool is only a label for a set of VMs), then removes

@@ -11,7 +11,7 @@ because WAL needs shared memory between the processes using the database.
 Postgres and MariaDB on NFS have similar locking and caching risks. A dropped
 NFS connection can corrupt any of them. So the database lives on the VM's data
 disk, and the file server gets copies. The only exception is an accepted risk
-the owner agreed to under the 5 GB rule.
+the user agreed to under the 5 GB rule.
 
 ## The process
 

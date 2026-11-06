@@ -29,7 +29,7 @@ class GuidePageTests(unittest.TestCase):
 
     def test_moving_a_service_to_a_new_release_line(self):
         text = flat(PAGE.read_text().split("## 11.3", 1)[1])
-        for needle in ("[Owner]", "[Agent]", "official release notes", "research.md", "Check a backup",
+        for needle in ("[Manual]", "[Agent]", "official release notes", "research.md", "Check a backup",
                        "image:", "gen_service.py", "3.10", "AutoUpdate=registry", "one release line at a time",
                        "pg_dumpall", "Restore", "Report back"):
             with self.subTest(needle=needle):

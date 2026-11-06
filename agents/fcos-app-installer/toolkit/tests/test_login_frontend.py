@@ -372,7 +372,7 @@ class AcmeTests(FrontendCase):
             "docs": ["https://example.org/dns"],
             "acme": {"provider": "exampledns", "env": "EXAMPLEDNS_API_KEY", "store_as": "exampledns_key",
                      "notes": "Example DNS allows several TXT records."},
-            "owner_steps": {"api_token": step, "acme_provider": step}}))
+            "manual_steps": {"api_token": step, "acme_provider": step}}))
         original = adapters.ADAPTERS
         adapters.ADAPTERS = folder
         self.addCleanup(setattr, adapters, "ADAPTERS", original)
@@ -458,7 +458,7 @@ class PeopleAndIconTests(FrontendCase):
 
     def test_people_become_authentik_users_created_once(self):
         # authentik 2026.8.5 core/models.py: User.groups (ak_groups deprecated). state: created, so
-        # the owner's later group changes in the admin interface are never overwritten.
+        # the user's later group changes in the admin interface are never overwritten.
         out = Path(tempfile.mkdtemp(prefix="login-frontend-", dir=SCRATCH))
         self.addCleanup(shutil.rmtree, out, True)
         site = self.people_site([{"username": "sam", "name": "Sam Example", "groups": ["family"]},
@@ -671,7 +671,7 @@ class SigninSourceTests(FrontendCase):
         self.assertEqual(write["attrs"]["user_type"], "internal")
         ident = next(e for e in entries if e["model"] == "authentik_stages_identification.identificationstage")
         self.assertEqual(ident["attrs"]["sources"], [("!KeyOf", "source-google"), ("!KeyOf", "source-apple")])
-        # The worker gets the secrets as environment variables; secrets.md tells the owner how.
+        # The worker gets the secrets as environment variables; secrets.md tells the user how.
         worker = self.read(out, "files/authentik-worker.container")
         self.assertIn("Secret=authentik_google_secret,type=env,target=SOURCE_GOOGLE_SECRET", worker)
         self.assertIn("Secret=authentik_apple_key,type=env,target=SOURCE_APPLE_KEY", worker)
@@ -697,7 +697,7 @@ class NoProfilePictureTests(FrontendCase):
     """No uploaded pictures. Authentik has no built-in upload page, and a picture
     stored as a user attribute lands in the ID token (proxy scope ak_proxy, include_claims_in_id_token),
     which the outpost's sign-out puts into its redirect URL (proxyv2/application/application.go,
-    handleSignOut, id_token_hint). The Avatars setting stays the owner's choice in the admin interface."""
+    handleSignOut, id_token_hint). The Avatars setting stays the user's choice in the admin interface."""
 
     def gen(self, site):
         out = Path(tempfile.mkdtemp(prefix="login-frontend-", dir=SCRATCH))

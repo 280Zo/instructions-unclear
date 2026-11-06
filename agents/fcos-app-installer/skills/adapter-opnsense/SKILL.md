@@ -1,6 +1,6 @@
 ---
 name: adapter-opnsense
-description: "Owner steps for OPNsense as the router and firewall of the fcos-app-installer toolkit: reserving a VM's address, pointing every name under the domain at the login front end, and allowing only the traffic a VM needs. Use when the owner's router or firewall is OPNsense."
+description: "Manual steps for OPNsense as the router and firewall of the fcos-app-installer toolkit: reserving a VM's address, pointing every name under the domain at the login front end, and allowing only the traffic a VM needs. Use when the user's router or firewall is OPNsense."
 license: MIT
 compatibility: Needs the fcos-app-installer toolkit; tools/adapters.py renders the steps from adapter.yaml.
 ---
@@ -28,7 +28,7 @@ python3 tools/adapters.py show --role router_firewall --provider opnsense
 python3 tools/adapters.py render --role router_firewall --provider opnsense --step <id> --values /tmp/opencode/<id>.json
 ```
 
-Show the rendered step to the owner as it is, then wait for what it asks them
+Show the rendered step to the user as it is, then wait for what it asks them
 to report back. `HOST` is the server's key in the site file, never its display
 or node name.
 

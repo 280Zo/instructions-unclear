@@ -9,11 +9,11 @@ Usage:
   hypervisor.py start  <vm> [--host KEY]               <vm>: name under vms/ or a VMID
   hypervisor.py status <vm> [--host KEY]
 
-Runs on the owner's desktop. It reads the API token from
+Runs on the user's desktop. It reads the API token from
 <workspace>/secrets/proxmox-<host>.token itself (one line,
 "fcos-agent@pve!fcos-bootstrap=<secret>", file mode 0600, folder mode 0700) and
 never prints it. It only acts on VMs in the pool "fcos-agent" and has no
-delete, destroy, rebuild, disk-swap or pool-move verb: those stay owner steps.
+delete, destroy, rebuild, disk-swap or pool-move verb: those stay manual steps.
 
 TLS is always verified: the system CAs, or hosts.<key>.ca_file from site.yaml.
 There is no switch to turn that off. The API endpoint comes only from
@@ -418,11 +418,11 @@ def check_setting_rights(client: "PveClient", params: dict) -> None:
         privs = data.get(path) if isinstance(data, dict) else None
         if not isinstance(privs, dict) or not privs.get(priv):
             raise PveError(f"settings {key} needs {priv} on {path}, which this token deliberately doesn't have; "
-                           f"use null for {key} (an owner step can set it in Proxmox); nothing was sent")
+                           f"use null for {key} (a manual step can set it in Proxmox); nothing was sent")
 
 
 def settings_table(spec: dict) -> list[tuple[str, str, str, str]]:
-    """(setting, value, why, source) for every setting, for the owner to review."""
+    """(setting, value, why, source) for every setting, for the user to review."""
     _settings(spec)
     return [(k, json.dumps(spec["settings"][k]["use"]) if not isinstance(spec["settings"][k]["use"], str)
              else spec["settings"][k]["use"], spec["settings"][k]["why"], spec["settings"][k]["source"])
@@ -555,18 +555,18 @@ def _vlan_ranges(text):
 def check_network(spec: dict, host: str, cfg: dict, interfaces: list) -> tuple[list[str], list[str]]:
     """(problems, warnings) for the VM's NIC against the node's network, read
     with GET /nodes/{node}/network (open to every API user). Pure: sends nothing.
-    Messages are plain words for the owner, the setting in parentheses at the end.
+    Messages are plain words for the user, the setting in parentheses at the end.
 
     Refused: no hosts.<host>.bridge (nothing says which network is allowed); a
     bridge other than it, or listed in hosts.<host>.forbidden_bridges; a bridge
     that doesn't exist; a VLAN tag on a Linux bridge that isn't VLAN-aware
     (Proxmox would then create <port>.<tag> and <bridge>v<tag> on the server,
-    a change to the owner's network: wiki "Network Configuration", VLAN); a tag
+    a change to the user's network: wiki "Network Configuration", VLAN); a tag
     outside the bridge's allowed VLANs, or allowed VLANs that can't be read; a
     NIC MTU above the bridge's (none reported: the Linux default 1500 is assumed,
     which errs on the safe side). Warned: a
-    VLAN-aware bridge that doesn't report its allowed VLANs (the owner's network
-    stays as it is, so the owner checks); an inactive bridge; a tag other than
+    VLAN-aware bridge that doesn't report its allowed VLANs (the user's network
+    stays as it is, so the user checks); an inactive bridge; a tag other than
     the host's usual one. forbidden_bridges is optional (not asked)."""
     problems: list[str] = []
     warnings: list[str] = []
@@ -600,7 +600,7 @@ def check_network(spec: dict, host: str, cfg: dict, interfaces: list) -> tuple[l
     usual = cfg.get("vlan_tag")
     if tag is not None and usual is not None and tag != usual:
         warnings.append(f"this machine goes on VLAN {tag}, not the server's usual VLAN {usual}; "
-                        "confirm with the owner (vlan_tag)")
+                        "confirm with the user (vlan_tag)")
     if tag is not None and found.get("type") == "bridge":
         if not _truthy(found.get("bridge_vlan_aware")):
             port = str(found.get("bridge_ports") or "<port>").split()[0]
@@ -624,7 +624,7 @@ def check_network(spec: dict, host: str, cfg: dict, interfaces: list) -> tuple[l
         limit = int(raw) if str(raw or "").strip().isdigit() else None
         if limit is None and mtu > LINUX_DEFAULT_MTU:
             problems.append(f"network {name} doesn't report its packet size, so a machine packet size of "
-                            f"{mtu} can't be confirmed; use mtu 1 (the network's own size) or ask the owner (mtu)")
+                            f"{mtu} can't be confirmed; use mtu 1 (the network's own size) or ask the user (mtu)")
         elif limit is not None and mtu > limit:
             problems.append(f"the machine's packet size {mtu} is larger than network {name}'s {limit}; "
                             "the machine would not start (mtu)")
@@ -733,7 +733,7 @@ def check_iso_upload(client: PveClient, node: str, storage: str, volume_name: st
     privs = privs if isinstance(privs, dict) else {}
     if "Datastore.AllocateTemplate" not in privs:
         raise PveError(f"the token lacks Datastore.AllocateTemplate on {path}, which uploading an ISO needs; "
-                       "the owner must grant it, or use ignition.method: snippet")
+                       "the user must grant it, or use ignition.method: snippet")
     if "Datastore.Audit" not in privs and "Datastore.AllocateSpace" not in privs:
         raise PveError(f"the token lacks Datastore.Audit (or Datastore.AllocateSpace) on {path}, "
                        "which listing the ISOs already there needs")
@@ -743,7 +743,7 @@ def check_iso_upload(client: PveClient, node: str, storage: str, volume_name: st
                        "refusing, and nothing was uploaded")
     volid = f"{storage}:iso/{volume_name}"
     if any(isinstance(v, dict) and v.get("volid") == volid for v in listing):
-        raise PveError(f"{volid} already exists; not overwriting it. Removing it is an owner step "
+        raise PveError(f"{volid} already exists; not overwriting it. Removing it is a manual step "
                        "(this tool cannot delete), or pick another VM name")
 
 
@@ -911,7 +911,7 @@ def cmd_create(ws: Path, site: dict, args) -> int:
     if problems:
         raise PveError("network check failed, nothing was sent:\n  " + "\n  ".join(problems))
     if args.dry_run:
-        # The owner reviews every setting with its reason before anything is sent.
+        # The user reviews every setting with its reason before anything is sent.
         print("| Setting | Will use | Why | Source |\n|---|---|---|---|")
         for row in settings_table(spec):
             print("| " + " | ".join(cell.replace("|", "/") for cell in row) + " |")

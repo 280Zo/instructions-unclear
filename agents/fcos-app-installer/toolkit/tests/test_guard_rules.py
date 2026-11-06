@@ -1,11 +1,11 @@
 """The agent's guard rules for .opencode/ (its own agents, commands and skills).
 
-The skills hold host scripts the owner runs as root. Review of the skills-setting commit: a shell
+The skills hold host scripts the user runs as root. Review of the skills-setting commit: a shell
 command that starts with an allowed word (git status, dig, sha256sum) and then chains a write
 into .opencode/ was allowed. The rules deny any shell command that names .opencode/ at all, and
 every edit path that reaches .opencode/ in its usual spellings. Guard rails, not a wall: the shell
 expands wildcards, quotes and variables after the rules have matched, and the agent runs as the
-owner's user (README).
+user's user (README).
 """
 import sys
 import unittest

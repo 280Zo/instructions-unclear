@@ -506,7 +506,7 @@ def validate_spec(spec, site) -> list[str]:
         if secret.get("source", "prompt" if secret.get("durable") else "generate") not in ("generate", "prompt", "file"):
             errors.append(f"secret {secret['name']}: source must be generate, prompt or file")
         elif secret.get("durable") is True and secret.get("source") == "generate":
-            errors.append(f"secret {secret['name']}: a durable value must be kept by the owner, so source can't be generate")
+            errors.append(f"secret {secret['name']}: a durable value must be kept by the user, so source can't be generate")
     used = {n for i in info for _, n in i["pairs"]}
     for name in sorted(used - declared_names):
         errors.append(f"secret {name} is used by a container but not listed in secrets")
@@ -596,7 +596,7 @@ def _fill(template: str, values: dict) -> str:
 
 
 def _secret_value_text(secret: dict) -> tuple[str, str]:
-    """(what to enter, keep it) for the owner's secrets table."""
+    """(what to enter, keep it) for the user's secrets table."""
     durable = secret.get("durable", False)
     source = secret.get("source", "prompt" if durable else "generate")
     if source == "generate":
@@ -667,7 +667,7 @@ def _span(number: int) -> str:
 
 
 def _file_server_report(spec, site, svc, vm, uid, gid) -> str:
-    """One table of every folder the owner makes on the file server for this service."""
+    """One table of every folder the user makes on the file server for this service."""
     shares = {s.get("name"): s.get("export") for s in (_vm_entry(site, vm) or {}).get("nfs_shares") or []
               if isinstance(s, dict)}
     gids = {g.get("name"): g.get("gid") for g in site.get("shared_groups") or [] if isinstance(g, dict)}

@@ -39,7 +39,7 @@ place to enforce MFA, lock an account, or see who logged in. And you'd log in to
    the same users and settings.
 5. If the admin account itself is locked out, 6.8 points to the gateway's own recovery.
 
-## 6.1 Ask the owner
+## 6.1 Ask the user
 
 | Value | Fills (site file) |
 |---|---|
@@ -55,7 +55,7 @@ Follow [section 2](02-build-a-vm.md) on an always-on server. Its fragments also 
 (lets the rootless ingress bind 80 and 443, and opens them to the LAN), and its only NFS share is
 `backups`. Two cores, 4 GB of memory, a 20 GB OS disk and a 10 GB data disk are plenty.
 
-**[Owner]** The ingress and the auth gateway write their backups to the backups share as their own
+**[Manual]** The ingress and the auth gateway write their backups to the backups share as their own
 accounts, so the file server needs those accounts and folders, the same as any service (section 3.5):
 adapter steps **file_server: `service_user`** and **file_server: `backup_folder`**, once for each of the
 two accounts (their names are the chosen modules' keys under `edge` in the site file), with the
@@ -78,7 +78,7 @@ The output goes to `<workspace>/login-frontend/`, outside every VM folder. It ho
 auth gateway as ordinary services (from the chosen modules' specs) and `login-frontend.bu` with the
 ingress's settings, the login middleware, every route and login rule, and the gateway's application
 list. If the pairing of the two modules isn't marked tested, the generator prints a note saying so; tell
-the owner. Copy the fragments and `files/` into `<workspace>/vms/<vm>/`, add them to `MERGE_ENTRIES`,
+the user. Copy the fragments and `files/` into `<workspace>/vms/<vm>/`, add them to `MERGE_ENTRIES`,
 render `config.bu`, and build the VM folder.
 
 The certificate step needs the DNS adapter's `acme` block: the generator stops with the fix when the
@@ -86,7 +86,7 @@ site names no DNS provider, or one whose adapter has no such block.
 
 The ingress's `operations.md` ("Ports and the VM") says what its VM needs, and the auth gateway's ("The containers") how its containers are set up.
 
-## 6.4 [Owner] Certificate token and DNS
+## 6.4 [Manual] Certificate token and DNS
 
 1. Adapter step **dns_certificates: `api_token`**. The agent never sees the token.
 2. Adapter step **router_firewall: `dns_wildcard`**: every name under the domain points at this VM, or
@@ -94,7 +94,7 @@ The ingress's `operations.md` ("Ports and the VM") says what its VM needs, and t
 
 Report back: done, and the check's output.
 
-## 6.5 [Owner] Secrets on this VM
+## 6.5 [Manual] Secrets on this VM
 
 Created as in section 3.8 (hidden prompt, no history); `secrets.md` in the output lists the commands.
 They are the DNS provider's token for the ingress, and the secrets of the auth gateway: each module's
@@ -128,7 +128,7 @@ Expected:
 If the page loads endlessly or complains about HTTP vs HTTPS, the gateway doesn't trust the address the
 ingress connects from; its `operations.md` says which setting to check.
 
-## 6.7 [Owner] First login to the auth gateway
+## 6.7 [Manual] First login to the auth gateway
 
 The first admin account and its MFA are set up in the gateway's own interface: its `operations.md`,
 "First login". Keep the admin email and password in your password manager.
@@ -161,6 +161,6 @@ that may open it (guide 3.2); a person in none of them is refused.
 The site file can also hold a sign-up group (people create their own account on the login page), accounts
 made in advance (`people:`: username, display name, groups, never a password or an email) and sign-in
 with an existing account from another provider (`signin_sources:`, non-secret identifiers only). What
-each of these does, the owner steps in the gateway's own interface, and how to turn sign-up off again are
+each of these does, the manual steps in the gateway's own interface, and how to turn sign-up off again are
 in its `operations.md`, "People and access". After a change to the site file, regenerate and push the
 login front end (guide 3.9).

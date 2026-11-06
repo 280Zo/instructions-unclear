@@ -16,7 +16,7 @@ acme:
   env: DUCKDNS_TOKEN
   store_as: duckdns_token
   notes: DuckDNS holds one TXT record at a time, so never add extra names (sans) next to the wildcard.
-owner_steps:
+manual_steps:
   api_token:
     title: Copy your DuckDNS token for {{DOMAIN}}
     steps:

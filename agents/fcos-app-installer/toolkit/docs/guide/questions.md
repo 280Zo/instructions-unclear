@@ -1,7 +1,7 @@
 # Questions the agent asks
 
 The agent asks these in plain language, grouped with the question tool, in this
-order. It never shows the owner a config key, a field path or an internal name.
+order. It never shows the user a config key, a field path or an internal name.
 Options are built from what the agent already found (an earlier install, a
 discovery command's output, the app's official docs); it never assumes a
 network, storage or hardware value.
@@ -56,7 +56,7 @@ certificate client's provider code and the variable for the token); a provider
 without an adapter gets one drafted with that block, from the provider's own
 documentation.
 
-**Fills:** which set of owner steps the agent shows you for each part.
+**Fills:** which set of manual steps the agent shows you for each part.
 
 **Skipped when:** already answered in the site file or an earlier install.
 

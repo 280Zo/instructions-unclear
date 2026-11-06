@@ -71,7 +71,7 @@ not modules; see the README, "What is fixed and what you choose".
 |---|---|
 | `name` | Lowercase letters, digits, underscores. Every secret must be used, and every used one declared. |
 | `durable` | `true` for values data depends on (database passwords, signing keys). `secrets.md` marks it: save the value in your password manager; a rebuild must re-enter the same value. |
-| `value` | What the owner enters, on one line, as the app's docs describe it (e.g. `base64:` followed by 32 random bytes in base64). Shown in `secrets.md`'s table; default "a long random value, no spaces". Never a value itself. |
+| `value` | What the user enters, on one line, as the app's docs describe it (e.g. `base64:` followed by 32 random bytes in base64). Shown in `secrets.md`'s table; default "a long random value, no spaces". Never a value itself. |
 | `source` | `generate` (random, on the VM, never shown) or `prompt` (hidden prompt). Default `generate`, or `prompt` when `durable`; a durable secret can't be `generate`. |
 
 ## Output

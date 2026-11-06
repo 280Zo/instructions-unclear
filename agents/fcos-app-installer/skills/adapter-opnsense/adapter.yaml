@@ -2,7 +2,7 @@ role: router_firewall
 provider: opnsense
 name: OPNsense
 notes: >-
-  The agent never touches OPNsense. These steps are done by the owner in the
+  The agent never touches OPNsense. These steps are done by the user in the
   OPNsense web interface. Menu names change between versions; when one doesn't
   match, follow the linked manual page for your version.
 docs:
@@ -12,7 +12,7 @@ docs:
 discovery:
   ask: which DHCP service hands out addresses on the VM's network (Dnsmasq is the default; KEA, or ISC which is end-of-life), and whether that network gives addresses only to reserved MACs.
 capabilities: {}
-owner_steps:
+manual_steps:
   reserve_ip:
     title: Reserve {{VM_IP}} for VM {{VM_NAME}} (MAC {{VM_MAC}})
     steps:

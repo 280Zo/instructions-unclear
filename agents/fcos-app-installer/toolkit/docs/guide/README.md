@@ -12,14 +12,14 @@ addresses, domains, users, servers) lives only in the private workspace, a
 folder outside the repository (`<workspace>/site.yaml`, `<workspace>/vms/`,
 `<workspace>/services/`). Secret values live only in Podman secrets on the
 machines, in `<workspace>/secrets/` files that only scripts read, and in the
-owner's password manager. Commands and examples here use placeholders:
+user's password manager. Commands and examples here use placeholders:
 `192.0.2.x` addresses, `example.org`, `<admin>`, `<workspace>`.
 `python3 tools/publish_check.py` runs before every commit and fails on any
 workspace value or anything that looks like private data.
 
 ## Roles and providers
 
-The setup has a few roles, and the owner picks a product for each:
+The setup has a few roles, and the user picks a product for each:
 
 | Role | Does |
 |---|---|
@@ -29,10 +29,10 @@ The setup has a few roles, and the owner picks a product for each:
 | DNS for certificates | lets the login front end prove it owns the domain (Let's Encrypt DNS-01) |
 | login front end | built by the agent: an ingress (reverse proxy) and an auth gateway on one always-on machine; the user picks the product for each |
 
-Each product has an adapter: its owner steps, with every value filled in,
+Each product has an adapter: its manual steps, with every value filled in,
 what the agent may do through an API, and links to its official docs. A
 product without an adapter gets the general steps from the skill `adapter-generic`,
-and the agent offers to draft an adapter from what the owner actually did
+and the agent offers to draft an adapter from what the user actually did
 (the `adapter-drafter` subagent, with `tools/adapters.py draft`). Each adapter is
 a skill, `.opencode/skills/adapter-<product>/`: `SKILL.md` says what the product is and when
 to use it, `adapter.yaml` holds the steps, `scripts/` its host scripts, and
@@ -52,7 +52,7 @@ on the product (section 6, section 12).
 In OpenCode, started in the toolkit's folder (the one holding `tools/`), run
 `/add-service <service>` (the agent asks which server and VM). The
 `fcos-app-installer` agent reads this guide and the workspace, asks the questions in
-`questions.md`, and does every **[Agent]** step itself. It stops for **[Owner]**
+`questions.md`, and does every **[Agent]** step itself. It stops for **[Manual]**
 steps, missing values, the 5 GB rule, images that start as root, failed checks,
 anything irreversible, and commits.
 
@@ -76,7 +76,7 @@ anything irreversible, and commits.
 Run every desktop command in this guide (`python3 tools/...`) from the
 toolkit's folder, the one holding `tools/`: the commands are relative to it.
 
-Every action is tagged with who does it. **[Owner]** steps happen on systems
+Every action is tagged with who does it. **[Manual]** steps happen on systems
 the agent never touches: the virtualization server's shell, the router, the
 file server, the DNS provider, remote-access consoles, and anything involving
 a secret value. The agent shows them from the adapter, with every value filled
@@ -144,7 +144,7 @@ lists as open, protected by the app's own password.
 
 ## Who does what
 
-| The owner | The agent |
+| The user | The agent |
 |---|---|
 | Virtualization server: runs the setup script and the delete/rebuild commands from the adapter | Creates, starts and checks VMs with `tools/hypervisor.py` and the limited token |
 | Router: address reservations, the DNS wildcard, traffic rules between networks | Writes the specs, generates and builds every file, runs the checks |
@@ -159,7 +159,7 @@ lists as open, protected by the app's own password.
 | `tools/hypervisor.py` | The only way the agent talks to the virtualization API: `check`, `list`, `create [--dry-run]`, `start`, `status`. Reads the token itself; refuses VMs outside its pool |
 | `tools/gen_service.py <service.yaml> <site.yaml> <out>` | Generates every file for one service from its spec |
 | `tools/login_frontend.py <site.yaml> <out> [<service.yaml>...]` | Generates the login front end and every route and login rule |
-| `tools/adapters.py` | Loads adapters, renders owner steps, drafts new adapters |
+| `tools/adapters.py` | Loads adapters, renders manual steps, drafts new adapters |
 | `tools/render.py <template> <values>` | Fills `{{KEY}}` placeholders for the base templates |
 | `tools/build-vm.sh <folder>` | Butane strict on every fragment, `nft -c` on the firewall, Quadlet dry run, secret scan |
 | `tools/ign_to_script.py <fragment.ign>...` | Turns fragments into one idempotent script for the running VM |

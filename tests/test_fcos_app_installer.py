@@ -372,7 +372,7 @@ class SourceTests(unittest.TestCase):
 
     def test_the_rules_are_root_rules(self):
         rules = sorted((FOLDER / "rules").glob("*.md"))
-        self.assertEqual([p.name for p in rules], ["modules.md", "owner-steps.md", "secret-handling.md"])
+        self.assertEqual([p.name for p in rules], ["manual-steps.md", "modules.md", "secret-handling.md"])
         for path in rules:
             with self.subTest(rule=path.name):
                 meta = frontmatter(path)

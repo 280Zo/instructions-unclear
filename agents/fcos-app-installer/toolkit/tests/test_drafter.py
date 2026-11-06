@@ -1,5 +1,5 @@
 """The adapter-drafter subagent: researches a product that has no adapter
-skill and drafts one from what the owner did, into the workspace only."""
+skill and drafts one from what the user did, into the workspace only."""
 import sys
 import unittest
 from pathlib import Path

@@ -40,7 +40,7 @@ class PinTests(unittest.TestCase):
                 self.assertTrue(runs)
                 for line in runs:
                     self.assertIn("--pull=never", line)
-                self.assertIn("pull", text.split("image inspect", 1)[1].split("\n", 3)[1])  # tells the owner
+                self.assertIn("pull", text.split("image inspect", 1)[1].split("\n", 3)[1])  # tells the user
 
 
 class MissingPinTests(unittest.TestCase):

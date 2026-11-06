@@ -184,7 +184,7 @@ class IgnToScriptTests(unittest.TestCase):
 
     def test_writes_inside_a_service_folder_happen_as_that_account(self):
         # Root writing by path into a folder a service owns can be raced
-        # with a planted symlink; writing as the owner limits it to what the owner can write.
+        # with a planted symlink; writing as the user limits it to what the user can write.
         import os
         me = f"{os.getuid()}:{os.getgid()}"
         with tempfile.TemporaryDirectory() as root:

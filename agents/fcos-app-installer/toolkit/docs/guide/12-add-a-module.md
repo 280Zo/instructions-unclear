@@ -77,7 +77,7 @@ file. It runs `python3 tools/hypervisor.py <verb> ...`, which reads `roles.virtu
 the site file, loads the adapter's code and hands it the arguments unchanged. The code must define
 `VERBS = ("check", "list", "create", "start", "status")` and `main(argv)`; `tools/adapters.py` refuses an
 adapter whose code doesn't. The verbs are all the agent can do through the API: nothing that deletes or
-needs root, because those stay owner steps in the adapter. A hypervisor without an API has no `code:`,
+needs root, because those stay manual steps in the adapter. A hypervisor without an API has no `code:`,
 and `hypervisor.py` says it has no tool.
 
 The module goes in the repository. What the user's own install looks like stays in their workspace.

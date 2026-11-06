@@ -1,6 +1,6 @@
 ---
 name: adapter-duckdns
-description: "Owner steps for DuckDNS as the DNS provider that proves the domain for the login front end's wildcard certificate (Let's Encrypt DNS-01 through Traefik and lego). Use when the owner's domain is a DuckDNS subdomain."
+description: "Manual steps for DuckDNS as the DNS provider that proves the domain for the login front end's wildcard certificate (Let's Encrypt DNS-01 through Traefik and lego). Use when the user's domain is a DuckDNS subdomain."
 license: MIT
 compatibility: Needs the fcos-app-installer toolkit; tools/adapters.py renders the steps from adapter.yaml.
 ---
@@ -9,7 +9,7 @@ compatibility: Needs the fcos-app-installer toolkit; tools/adapters.py renders t
 
 DuckDNS holds one TXT record at a time, so the login front end asks for one
 wildcard certificate (`*.<domain>`) and never adds extra names. The token is a
-secret: the owner stores it on the VM from a hidden prompt.
+secret: the user stores it on the VM from a hidden prompt.
 
 ## How to use it
 
@@ -24,7 +24,7 @@ python3 tools/adapters.py show --role dns_certificates --provider duckdns
 python3 tools/adapters.py render --role dns_certificates --provider duckdns --step <id> --values /tmp/opencode/<id>.json
 ```
 
-Show the rendered step to the owner as it is, then wait for what it asks them
+Show the rendered step to the user as it is, then wait for what it asks them
 to report back. `HOST` is the server's key in the site file, never its display
 or node name.
 

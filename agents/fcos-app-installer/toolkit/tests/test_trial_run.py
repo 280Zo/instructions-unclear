@@ -23,7 +23,7 @@ class TrialRunTests(unittest.TestCase):
 
     def test_live_checks_are_actions_not_questions(self):
         # A model can answer "which skills can you load?" from memory.
-        # Each check makes it do something whose result the owner can see.
+        # Each check makes it do something whose result the user can see.
         section = PAGE.read_text().split("## 10.2", 1)[1].split("## 10.3", 1)[0]
         self.assertNotIn("Which skills can you load", section)
         text = " ".join(section.split())

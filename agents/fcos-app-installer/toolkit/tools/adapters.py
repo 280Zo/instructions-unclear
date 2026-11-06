@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Provider adapters: the owner's steps for systems the agent never touches.
+"""Provider adapters: the user's steps for systems the agent never touches.
 
 Each provider is a skill, adapter-<provider>/ in the skills folder (tools/layout.py): SKILL.md
 says what the product is and when to use it, adapter.yaml holds its steps, and
@@ -11,7 +11,7 @@ adapter.yaml:
   discovery                   what the agent can read, or must ask, about it
   capabilities                what the agent may do through an API (bools)
   defaults                    optional choices for the agent (e.g. ignition_method)
-  owner_steps                 <step id>: {title, steps[], blocks[], uses[], report_back[]}
+  manual_steps                 <step id>: {title, steps[], blocks[], uses[], report_back[]}
                               blocks: [{machine, code}]; machine names the machine
                               and shell, e.g. "<product> {{HOST}} (bash, root)"
   scripts                     host scripts it ships (paths in its skill folder); the
@@ -32,7 +32,7 @@ Usage:
       the adapter (or the generic fallback): capabilities, defaults, and each
       step with the values it uses
   adapters.py render --role <role> [--provider <name>] --step <id> --values <values.json>
-      one owner step as Markdown with every value filled in (refuses unsafe values)
+      one manual step as Markdown with every value filled in (refuses unsafe values)
   adapters.py draft --role <role> --provider <name> --from <recorded.json> [--workspace <path>]
       writes <workspace>/adapters-draft/adapter-<provider>/ (adapter.yaml, SKILL.md, a small test)
 """
@@ -60,7 +60,7 @@ PROVIDER = re.compile(r"[a-z][a-z0-9-]{0,40}")
 STEP_ID = re.compile(r"[a-z][a-z0-9_]{0,40}")
 KEY = re.compile(r"[A-Z][A-Z0-9_]*")
 ANY_PLACEHOLDER = re.compile(r"\{\{([^}]*)\}\}")
-# Values go into commands the owner runs as root. No value may hold spaces,
+# Values go into commands the user runs as root. No value may hold spaces,
 # quotes, $, ;, |, &, <, >, backticks, glob or brace characters (* ? [ ] { }),
 # ~ or %, or start with - (an option). Checked by kind, from the key's name:
 #   *_DIR, *_REPO, *_FOLDER  an absolute local path: no :, no .. segment, not /
@@ -75,7 +75,7 @@ ADDRESS_VALUE = re.compile(r"[A-Za-z0-9][A-Za-z0-9.-]{0,252}")
 PATH_VALUE = re.compile(r"/[A-Za-z0-9._/@+-]{1,199}")
 OPTIONS_VALUE = re.compile(r"[a-z0-9_]+=[A-Za-z0-9._-]+(,[a-z0-9_]+=[A-Za-z0-9._-]+)*")
 MACHINE = re.compile(r".+ \((bash|fish)(, [^)]+)?\)")
-TOP_KEYS = {"role", "provider", "name", "docs", "discovery", "capabilities", "defaults", "owner_steps", "scripts",
+TOP_KEYS = {"role", "provider", "name", "docs", "discovery", "capabilities", "defaults", "manual_steps", "scripts",
             "draft", "notes", "acme", "code"}
 # Roles whose adapter may ship a tool the agent runs (tools/<package>/<product>.py), with the verbs the
 # generic entry point accepts. Only the virtualization role has one: tools/hypervisor.py.
@@ -200,9 +200,9 @@ def _check_adapter(data, role: str, provider: str) -> dict:
         _check_acme(data["acme"], role, where)
     if "code" in data:
         _check_code(data["code"], role, provider, where)
-    steps = data.get("owner_steps")
+    steps = data.get("manual_steps")
     if not isinstance(steps, dict):
-        raise AdapterError(f"{where}: owner_steps is required")
+        raise AdapterError(f"{where}: manual_steps is required")
     for step_id, step in steps.items():
         if not (isinstance(step_id, str) and STEP_ID.fullmatch(step_id)):
             raise AdapterError(f"{where}: step id {step_id!r} must be lowercase letters, digits, _")
@@ -262,7 +262,7 @@ def _read_yaml(path: Path):
 def _generic_steps(role: str) -> dict:
     data = _read_yaml(ADAPTERS / "adapter-generic" / "adapter.yaml")
     try:
-        steps = data["roles"][role]["owner_steps"]
+        steps = data["roles"][role]["manual_steps"]
     except (TypeError, KeyError):
         raise AdapterError(f"adapter-generic/adapter.yaml: no steps for role {role}") from None
     for step_id, step in steps.items():
@@ -284,7 +284,7 @@ def load_adapter(role: str, provider: str | None, root: Path | None = None) -> d
         return dict(data, generic=False, skill_dir=str(folder.resolve()))
     steps = _generic_steps(role)
     return {"role": role, "provider": provider or "generic", "name": provider or "generic", "generic": True,
-            "docs": [], "discovery": {}, "capabilities": {}, "defaults": {}, "scripts": [], "owner_steps": steps}
+            "docs": [], "discovery": {}, "capabilities": {}, "defaults": {}, "scripts": [], "manual_steps": steps}
 
 
 def load_tool(adapter: dict):
@@ -292,7 +292,7 @@ def load_tool(adapter: dict):
     where = f"adapter-{adapter.get('provider')}"
     code = adapter.get("code")
     if adapter.get("generic") or not code:
-        raise AdapterError(f"{where} has no tool: every step it has is an owner step. A tool is a file in "
+        raise AdapterError(f"{where} has no tool: every step it has is a manual step. A tool is a file in "
                            "tools/<role package>/ named by `code:` in adapter.yaml (docs/guide/12-add-a-module.md)")
     try:
         loaded = importlib.import_module(code)
@@ -361,9 +361,9 @@ def _pinned() -> dict[str, str]:
 
 def _pin_state(path: Path, digest: str) -> str:
     """Returns "pinned" when the script's sha256 is the one the list holds for it, "differs" when the
-    list holds another, "unlisted" when the list does not hold it. The owner runs these scripts as root,
+    list holds another, "unlisted" when the list does not hold it. The user runs these scripts as root,
     and a step shows the checksum of the file as it is, so a script the agent (or anything else)
-    changed would pass the owner's sha256sum check (review of ff605b1). The list is a file the
+    changed would pass the user's sha256sum check (review of ff605b1). The list is a file the
     agent's rules keep it from editing (a guard rail; README), outside every skill folder, and it
     needs no git."""
     try:
@@ -392,8 +392,8 @@ def derived_values(adapter: dict) -> dict:
         if state != "pinned":
             what = (f"differs from the pinned checksum in {CHECKSUMS.name}" if state == "differs"
                     else f"isn't listed in {CHECKSUMS.name}")
-            raise AdapterError(f"{adapter.get('provider')}: script {path} {what}; the owner runs it as root, "
-                               "so this step isn't shown. Tell the owner; don't change or restore it yourself")
+            raise AdapterError(f"{adapter.get('provider')}: script {path} {what}; the user runs it as root, "
+                               "so this step isn't shown. Tell the user; don't change or restore it yourself")
         key = _checksum_key(path)
         if key in out:
             raise AdapterError(f"{adapter.get('provider')}: two scripts give the checksum {key}")
@@ -422,7 +422,7 @@ def _check_scripts(scripts: list, where: str) -> None:
 def render_step(adapter: dict, step_id: str, values: dict) -> str:
     """The step as Markdown with every value filled in; refuses missing or unsafe values.
     The agent's folder and the scripts' checksums are filled in here, never passed in."""
-    step = adapter.get("owner_steps", {}).get(step_id)
+    step = adapter.get("manual_steps", {}).get(step_id)
     if step is None:
         raise AdapterError(f"{adapter.get('provider')} has no step {step_id!r}")
     passed = sorted(derived_keys(adapter) & set(values))
@@ -437,7 +437,7 @@ def render_step(adapter: dict, step_id: str, values: dict) -> str:
     if any(k in derived_keys(adapter) for k in uses):
         derived = derived_values(adapter)
         if not all(_value_ok(k, derived[k]) for k in ("AGENT_REPO", "SKILL_DIR") if k in derived):
-            raise AdapterError(f"the agent is installed at {derived['AGENT_REPO']!r}, a path the owner's commands "
+            raise AdapterError(f"the agent is installed at {derived['AGENT_REPO']!r}, a path the user's commands "
                                "can't carry safely; install it in a folder whose path has no spaces or "
                                "shell characters")
         values = dict(values, **derived)
@@ -470,7 +470,7 @@ def render_step(adapter: dict, step_id: str, values: dict) -> str:
 
 
 def draft_adapter(role: str, provider: str, recorded: list) -> str:
-    """YAML for a new adapter from the steps the owner actually did.
+    """YAML for a new adapter from the steps the user actually did.
 
     Role steps nobody recorded come from the generic adapter, so the draft is
     complete; draft: true marks it for review before it joins the repo.
@@ -493,7 +493,7 @@ def draft_adapter(role: str, provider: str, recorded: list) -> str:
         steps.setdefault(step_id, generic[step_id])
     data = {"role": role, "provider": provider, "name": provider, "draft": True,
             "notes": "Drafted while working; check every step against the provider's official docs.",
-            "docs": [], "discovery": {}, "capabilities": {}, "scripts": [], "owner_steps": steps}
+            "docs": [], "discovery": {}, "capabilities": {}, "scripts": [], "manual_steps": steps}
     _check_adapter(data, role, provider)
     return _yaml().safe_dump(data, sort_keys=False, allow_unicode=True)
 
@@ -526,14 +526,14 @@ def _check_host_key(values: dict) -> None:
 
 SKILL_TEMPLATE = """---
 name: adapter-{provider}
-description: "DRAFT owner steps for {provider} in the {role} role of the fcos-app-installer toolkit. Use when the owner's {role} is {provider}. Review every step against {provider}'s official documentation before moving this skill into {skills_dir}/."
+description: "DRAFT manual steps for {provider} in the {role} role of the fcos-app-installer toolkit. Use when the user's {role} is {provider}. Review every step against {provider}'s official documentation before moving this skill into {skills_dir}/."
 license: MIT
 compatibility: Needs the fcos-app-installer toolkit; tools/adapters.py renders the steps.
 ---
 
 # {provider} ({role}), draft
 
-Drafted from the steps the owner actually did. Before use: check each step and
+Drafted from the steps the user actually did. Before use: check each step and
 menu name against {provider}'s official documentation, add the links to
 `docs:` in adapter.yaml and below, then move this folder into `{skills_dir}/`.
 
@@ -571,7 +571,7 @@ from adapters import ROLE_STEPS, derived_keys, example_value, load_adapter, rend
 adapter = load_adapter({role!r}, {provider!r}, root=HERE.parent)
 assert not adapter["generic"]
 for step in ROLE_STEPS[{role!r}]:
-    uses = adapter["owner_steps"][step].get("uses", [])
+    uses = adapter["manual_steps"][step].get("uses", [])
     render_step(adapter, step, {{k: example_value(k) for k in uses if k not in derived_keys(adapter)}})
 print("ok")
 '''
@@ -600,7 +600,7 @@ def main(argv: list[str]) -> int:
             if args.command == "show":
                 out = {"role": adapter["role"], "provider": adapter["provider"], "generic": adapter["generic"],
                        "capabilities": adapter.get("capabilities", {}), "defaults": adapter.get("defaults", {}),
-                       "steps": {k: v.get("uses", []) for k, v in adapter["owner_steps"].items()}}
+                       "steps": {k: v.get("uses", []) for k, v in adapter["manual_steps"].items()}}
                 sys.stdout.write(_yaml().safe_dump(out, sort_keys=False))
             else:
                 values = json.loads(Path(args.values).read_text(encoding="utf-8"))

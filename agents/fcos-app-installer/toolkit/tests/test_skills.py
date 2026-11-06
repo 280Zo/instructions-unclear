@@ -90,7 +90,7 @@ class AdapterSkillTests(unittest.TestCase):
             with self.subTest(provider=provider):
                 adapter = load_adapter(role, provider)
                 for step in ROLE_STEPS[role]:
-                    self.assertIn(step, adapter["owner_steps"])
+                    self.assertIn(step, adapter["manual_steps"])
 
 
 class AppResearchSkillTests(unittest.TestCase):

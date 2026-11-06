@@ -1,7 +1,7 @@
 """tools/vmssh.py: the agent's own, revocable setup key for a VM.
 
 The real ssh, ssh-keygen and ssh-keyscan are replaced by stubs on PATH that log
-their arguments; nothing here reaches a real machine or the owner's keys.
+their arguments; nothing here reaches a real machine or the user's keys.
 """
 import json
 import os
@@ -101,7 +101,7 @@ class VmSshTests(unittest.TestCase):
 
     # keygen
 
-    def test_keygen_makes_a_separate_key_in_secrets_and_prints_the_owner_step(self):
+    def test_keygen_makes_a_separate_key_in_secrets_and_prints_the_manual_step(self):
         code, out, err = self.run_tool("keygen", "edge")
         self.assertEqual(code, 0, err)
         self.assertTrue(self.key.is_file())
@@ -111,15 +111,15 @@ class VmSshTests(unittest.TestCase):
         self.assertIn("ed25519", gen)
         self.assertEqual(gen[gen.index("-N") + 1], "")
         self.assertEqual(gen[gen.index("-C") + 1], "fcos-agent-setup-edge")
-        # The owner step: the public key into its own file beside the owner's, and the host fingerprint.
+        # The manual step: the public key into its own file beside the user's, and the host fingerprint.
         self.assertIn("# vm edge (bash, admin)", out)
         self.assertIn("~/.ssh/authorized_keys.d/fcos-agent", out)
         self.assertIn("ssh-ed25519 AAAAC3agentpub fcos-agent-setup-edge", out)
         self.assertIn("ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub", out)
         self.assertNotIn("PRIVATE-KEY-MATERIAL", out + err)
 
-    def run_owner_step(self, out, hostname):
-        """Paste the printed owner block into a real bash on a machine whose hostname is `hostname`."""
+    def run_manual_step(self, out, hostname):
+        """Paste the printed manual block into a real bash on a machine whose hostname is `hostname`."""
         block = out.split("```bash\n", 1)[1].split("\n```", 1)[0]
         home = self.tmp / ("home-" + hostname)
         home.mkdir()
@@ -133,23 +133,23 @@ class VmSshTests(unittest.TestCase):
         r = subprocess.run(["bash", "-c", block], env=env, capture_output=True, text=True, timeout=30)
         return r, home / ".ssh" / "authorized_keys.d" / "fcos-agent"
 
-    def test_owner_step_adds_the_key_only_on_the_machine_it_is_for(self):
+    def test_manual_step_adds_the_key_only_on_the_machine_it_is_for(self):
         # Seen twice on a real install: the block was pasted on the wrong machine,
         # once overwriting another VM's agent key and once landing on the hypervisor.
         code, out, err = self.run_tool("keygen", "edge")
         self.assertEqual(code, 0, err)
-        right, keyfile = self.run_owner_step(out, "edge")
+        right, keyfile = self.run_manual_step(out, "edge")
         self.assertEqual(right.returncode, 0, right.stderr)
         self.assertEqual(keyfile.read_text(), "ssh-ed25519 AAAAC3agentpub fcos-agent-setup-edge\n")
         self.assertIn("256 SHA256:stub", right.stdout)
-        wrong, wrong_keyfile = self.run_owner_step(out, "hypervisor-1")
+        wrong, wrong_keyfile = self.run_manual_step(out, "hypervisor-1")
         self.assertFalse(wrong_keyfile.exists())
         self.assertFalse(wrong_keyfile.parent.exists(), "not even the folder is made on the wrong machine")
         self.assertIn("STOP: this is not edge", wrong.stdout)
         self.assertIn("hypervisor-1", wrong.stdout)
         self.assertNotIn("SHA256", wrong.stdout)
 
-    def test_owner_step_says_which_machine_in_its_first_line(self):
+    def test_manual_step_says_which_machine_in_its_first_line(self):
         code, out, err = self.run_tool("keygen", "edge")
         block = out.split("```bash\n", 1)[1]
         self.assertEqual(block.splitlines()[0], "# vm edge (bash, admin): run this ONLY on edge")
@@ -185,7 +185,7 @@ class VmSshTests(unittest.TestCase):
 
     # run
 
-    def test_run_uses_only_the_agent_key_never_the_owners(self):
+    def test_run_uses_only_the_agent_key_never_the_users(self):
         self.setup_key()
         code, out, err = self.run_tool("run", "edge", "--", "sudo systemctl --user -M x@ is-active x.service")
         self.assertEqual(code, 0, err)
@@ -313,7 +313,7 @@ class VmSshTests(unittest.TestCase):
         self.run_tool("run", "edge", "--", "true")
         self.assertNotIn("owner-agent.sock", json.dumps(self.calls("ssh")))
 
-    def test_reinstall_after_a_rebuild_reprints_the_owner_step_for_the_same_key(self):
+    def test_reinstall_after_a_rebuild_reprints_the_manual_step_for_the_same_key(self):
         # A rebuild wipes /var/home (the key file) and changes the host key; the local key stays.
         self.setup_key()
         pub = self.key.with_name("id_ed25519.pub").read_text().strip()
@@ -340,7 +340,7 @@ class VmSshTests(unittest.TestCase):
 
 
 class GuideTests(unittest.TestCase):
-    def test_agent_steps_use_vmssh_never_the_owners_ssh(self):
+    def test_agent_steps_use_vmssh_never_the_users_ssh(self):
         guide = ROOT / "docs" / "guide"
         for page in sorted(guide.glob("0[2-7]-*.md")):
             with self.subTest(page=page.name):
@@ -354,7 +354,7 @@ class GuideTests(unittest.TestCase):
         text5 = " ".join((guide / "05-rebuild-a-vm.md").read_text().split())
         self.assertIn("python3 tools/vmssh.py reinstall", text5)
         prompt = " ".join((ROOT / ".opencode" / "agents" / "fcos-app-installer.md").read_text().split())
-        for needle in ("never use the owner's SSH key", "tools/vmssh.py revoke"):
+        for needle in ("never use the user's SSH key", "tools/vmssh.py revoke"):
             self.assertIn(needle, prompt)
 
 
@@ -372,18 +372,18 @@ class UserManagerTests(unittest.TestCase):
                         self.assertNotRegex(line, r"systemctl --user -M")
 
     def test_no_agent_text_uses_machine_connections(self):
-        # Pages 2-7 are the agent's procedure; -M stays only in the owner's interactive
+        # Pages 2-7 are the agent's procedure; -M stays only in the user's interactive
         # bash blocks on the VM ("# vm ... (bash" headings).
         for page in sorted((ROOT / "docs" / "guide").glob("0[2-7]-*.md")):
-            owner_block, in_block = False, False
+            manual_block, in_block = False, False
             for n, line in enumerate(page.read_text().splitlines(), 1):
                 if line.startswith("```"):
                     in_block = not in_block
-                    owner_block = False
+                    manual_block = False
                     continue
                 if in_block and line.startswith("# vm ") and "(bash" in line:
-                    owner_block = True
-                if not owner_block:
+                    manual_block = True
+                if not manual_block:
                     with self.subTest(page=page.name, line=n):
                         self.assertNotRegex(line, r"systemctl --user -M")
 
@@ -403,9 +403,9 @@ class UserManagerTests(unittest.TestCase):
 
 
 class DesktopRouteTests(unittest.TestCase):
-    """The owner's desktop had a leg on the VM's own network, reached the VM
+    """The user's desktop had a leg on the VM's own network, reached the VM
     directly from an address the VM's firewall doesn't allow, and the temporary fix (a route via
-    the router) was lost on restart. The install gives a permanent route as an owner step."""
+    the router) was lost on restart. The install gives a permanent route as a manual step."""
 
     def test_guide_gives_the_permanent_route_step(self):
         text = " ".join((ROOT / "docs" / "guide" / "02-build-a-vm.md").read_text().split())
@@ -418,7 +418,7 @@ class DesktopRouteTests(unittest.TestCase):
 
 
 class AgentRulesTests(unittest.TestCase):
-    """The agent reaches VMs only through vmssh.py, never plain ssh with the owner's key."""
+    """The agent reaches VMs only through vmssh.py, never plain ssh with the user's key."""
 
     def test_plain_ssh_is_denied_and_vmssh_allowed(self):
         sys.path.insert(0, str(ROOT / "tests"))

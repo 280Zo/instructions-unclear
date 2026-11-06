@@ -263,7 +263,7 @@ HOST = {"bridge": "vmbr9", "forbidden_bridges": ["vmbr0"]}
 
 
 class NetworkCheckTests(unittest.TestCase):
-    """pve.check_network: refuse what qemu-server or the owner's network would reject."""
+    """pve.check_network: refuse what qemu-server or the user's network would reject."""
 
     def check(self, spec_changes, host=None, interfaces=None):
         spec = fixture_spec(**dict({"bridge": "vmbr9"}, **spec_changes))
@@ -293,7 +293,7 @@ class NetworkCheckTests(unittest.TestCase):
 
     def test_tag_on_a_plain_bridge_is_refused_for_the_right_reason(self):
         # Proxmox would create <port>.<tag> and <bridge>v<tag> on the server (wiki,
-        # Network Configuration, VLAN): a change to the owner's network.
+        # Network Configuration, VLAN): a change to the user's network.
         problems, _ = self.check({"vlan_tag": 30}, interfaces=[WAN, bridge("vmbr9", mtu=9000, bridge_ports="enp2s0")])
         message = next(p for p in problems if "VLAN 30" in p)
         self.assertIn("vmbr9v30", message)
@@ -773,7 +773,7 @@ class CommandTests(PveCase):
         self.assertEqual(writes[-1], ("PUT", "/nodes/pve-a/qemu/201/config"))
 
     def test_failed_tags_update_still_reports_the_created_vm_and_mac(self):
-        # The VM exists by then; the owner still needs the MAC before the first start.
+        # The VM exists by then; the user still needs the MAC before the first start.
         self.fake.fail[("PUT", "/nodes/pve-a/qemu/201/config")] = (500, False)
         code, out, err = self.run_pve("create", "vms/edge/vm.yaml")
         self.assertEqual(code, 0, out + err)
@@ -1179,7 +1179,7 @@ class SecretScrubbingTests(PveCase):
 
 
 class WrapperTests(PveCase):
-    """tests/run_pve_against_fake.py must never read an owner's workspace or token."""
+    """tests/run_pve_against_fake.py must never read an user's workspace or token."""
 
     WRAPPER = str(ROOT / "tests" / "run_pve_against_fake.py")
 
@@ -1188,7 +1188,7 @@ class WrapperTests(PveCase):
         return subprocess.run([sys.executable, self.WRAPPER, *argv], env=env,
                               capture_output=True, text=True, timeout=60)
 
-    def test_wrapper_uses_its_own_fake_token_not_the_owners(self):
+    def test_wrapper_uses_its_own_fake_token_not_the_users(self):
         self.fake_accepts(WRAPPER_SECRET)
         remembered = Path(self.env["HOME"]) / ".config" / "fcos-agent" / "workspace"
         remembered.parent.mkdir(parents=True)

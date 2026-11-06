@@ -76,7 +76,7 @@ class InitTests(TempHome):
         init_workspace(ws)
         self.assertIn("secrets/", (ws / ".ignore").read_text().splitlines())
         (ws / ".ignore").write_text("own-rule/\n")
-        init_workspace(ws)  # re-run keeps the owner's lines and adds the rule once
+        init_workspace(ws)  # re-run keeps the user's lines and adds the rule once
         lines = (ws / ".ignore").read_text().splitlines()
         self.assertEqual(lines.count("secrets/"), 1)
         self.assertIn("own-rule/", lines)

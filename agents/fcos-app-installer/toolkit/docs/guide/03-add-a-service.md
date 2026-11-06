@@ -9,7 +9,7 @@ The VM must already exist ([section 2](02-build-a-vm.md)). The login front end
 must exist for 3.9 ([section 6](06-edge-vm.md)). Until it does, stop after 3.8
 and reach the service with the break-glass tunnel ([section 8](08-break-glass.md)).
 
-## 3.1 Ask the owner: where it goes
+## 3.1 Ask the user: where it goes
 
 [Questions](questions.md) 5, 6 and 9: which server and which VM (always
 asked), and whether it goes behind the login page. A service on its own login
@@ -47,15 +47,15 @@ If a fact isn't in the official docs, ask (question 14) instead of guessing.
 so what it would send is written to its log. Many apps still refuse to build a message
 without a sender address ("An email must have a From or a Sender header") until its
 sender setting is set, for example `MAIL_FROM_ADDRESS`. Give the app a
-sender address on the owner's domain (nothing is sent from or to it), and find
+sender address on the user's domain (nothing is sent from or to it), and find
 in its docs which log file holds the mail. A link in such a mail can be a
-credential (an invitation lets someone join): the owner reads it from the log
+credential (an invitation lets someone join): the user reads it from the log
 on the VM, and the agent does not.
 
 **Ask who may open it** (apps behind the login page). An auth gateway may let every user open an app
 that has no group, so ask which groups get it (for example `family`, `guests`) and put them in
 `groups:`. The login front end's rules create each group if it's missing and bind it to the app. Tell
-the owner to add themselves (and anyone else) to the group in the gateway's own interface, or they lose
+the user to add themselves (and anyone else) to the group in the gateway's own interface, or they lose
 access too. An app on its own login can't take `groups:`: its route skips the login page. Also ask
 whether anyone new needs an account for it: they go into the site file's `people:` (guide 6.10). The
 gateway's details (how the groups and bindings behave, what to do when a group is removed) are in its
@@ -63,10 +63,10 @@ gateway's details (how the groups and bindings behave, what to do when a group i
 
 **The app's dashboard section and logo.** The gateway's dashboard may list apps under section headings.
 Propose a section from what the app is for (a relationship manager: `Relationships`), reuse an
-existing section when the app fits one, ask the owner, and put it in `section:`. For the logo, find it
+existing section when the app fits one, ask the user, and put it in `section:`. For the logo, find it
 in the app's official repository or website (an SVG or PNG the project publishes), save it as
-`<workspace>/services/<svc>/<file>`, show it to the owner, and use it as `icon:` once they confirm; the
-owner may give their own file instead. The login front end stores it on the VM and the gateway serves it
+`<workspace>/services/<svc>/<file>`, show it to the user, and use it as `icon:` once they confirm; the
+user may give their own file instead. The login front end stores it on the VM and the gateway serves it
 itself, so no browser fetches it from the internet. How the gateway shows both is in its `operations.md`,
 "The dashboard section and the logo".
 
@@ -88,13 +88,13 @@ Images that start as root inside the container (question 13) use
 `CHOWN DAC_OVERRIDE FOWNER SETUID SETGID NET_BIND_SERVICE`. They can't use
 NFS volumes, and can't share a folder with a `map-user` container.
 
-## 3.4 Ask the owner: identity and naming
+## 3.4 Ask the user: identity and naming
 
 [Questions](questions.md) 10, 11 and 15: paths that skip the login page,
 the UID/GID (matching the file server account when it uses NFS), and the
-secrets the owner keeps. Hostname defaults to the service name.
+secrets the user keeps. Hostname defaults to the service name.
 
-## 3.5 [Owner] File server: account and folders
+## 3.5 [Manual] File server: account and folders
 
 Only for services that use NFS or back up to the file server. The agent
 writes the spec and runs the generator first (3.6), then shows the one table
@@ -117,7 +117,7 @@ python3 tools/check_workspace.py $ws; and python3 tools/gen_service.py $ws/servi
 
 `check_workspace.py` refuses a name, UID, GID, web name or port (on the same
 VM) that another service or the login front end already uses. Each clash is
-one line; pick a free value with the owner (UID/GID: [question](questions.md)
+one line; pick a free value with the user (UID/GID: [question](questions.md)
 11) and run it again. The generator refuses the whole spec if anything is
 wrong, and writes nothing. Expected: `build-vm: all checks passed`. It writes, under
 `<workspace>/services/<svc>/rendered/`:
@@ -135,7 +135,7 @@ who uses it, whether it must be kept, and the exact command to create it, and
 `<workspace>/services/<svc>/ids.md`: the UID, GID, the subordinate ID ranges
 pinned from them at boot (`subids-<svc>.service`, so they never depend on the
 order apps were created), and how a container user maps to a file owner on
-disk. Tell the owner to keep a copy with their notes.
+disk. Tell the user to keep a copy with their notes.
 
 Copy the fragments and their `files/` into `<workspace>/vms/<vm>/`, add each
 fragment to `MERGE_ENTRIES` in `values/config.values`, render `config.bu`
@@ -162,7 +162,7 @@ The push creates missing folders with their mode and owner, but leaves a
 folder that already exists as it is (`kept:`), as Ignition does: an app may
 have taken it over, such as a database's data folder. A changed mode or owner
 on an existing folder therefore needs a rebuild (section 5), or ask the
-owner. Files under `/usr/local` go through FCOS's own `/usr/local` link; any
+user. Files under `/usr/local` go through FCOS's own `/usr/local` link; any
 other symlink on the way stops the push.
 
 `loginctl enable-linger` starts the service user's systemd now (the linger
@@ -172,7 +172,7 @@ retry until their secrets exist (3.8). That's expected.
 `systemctl reload nftables` reloads only the host firewall's own table; the
 base config overrides the stock reload, which would also wipe Podman's rules.
 
-## 3.8 [Owner] Secrets, then start
+## 3.8 [Manual] Secrets, then start
 
 The agent shows the table at the top of `secrets.md` (secret, used by, what
 to enter, keep it), then the commands. For each secret, on the VM, as the service user. The value is
@@ -241,12 +241,12 @@ Then apply the change with each chosen module's `operations.md`:
 - The auth gateway ("Applying the login rules"): remove the rules files the new set no longer
   contains, make the gateway apply the rules, and check that every rules file was applied.
 
-Tell the owner which files were removed. What a removed rules file created in the gateway is not
-deleted with it: the owner removes that in the gateway's own interface, as the module says.
+Tell the user which files were removed. What a removed rules file created in the gateway is not
+deleted with it: the user removes that in the gateway's own interface, as the module says.
 
 ## 3.10 [Agent] Verify
 
-Run each check and report its result to the owner:
+Run each check and report its result to the user:
 
 ```fish
 # desktop (fish)
@@ -262,7 +262,7 @@ python3 tools/vmssh.py run $vm -- "sudo -u $svc XDG_RUNTIME_DIR=/run/user/\$(id 
 
 | Check | Expected |
 |---|---|
-| Units active, logs clean | `active`, no errors in the last 30 lines. Some apps print generated credentials at first start (an app may print an OAuth client secret), so logs are read only with `vmssh.py logs`, which hides anything that looks like a secret (`[hidden]`); `vmssh.py run` refuses `journalctl`, `podman logs`, log files, environments and secret stores. If a secret reaches the agent anyway, it stops and tells the owner to rotate it. |
+| Units active, logs clean | `active`, no errors in the last 30 lines. Some apps print generated credentials at first start (an app may print an OAuth client secret), so logs are read only with `vmssh.py logs`, which hides anything that looks like a secret (`[hidden]`); `vmssh.py run` refuses `journalctl`, `podman logs`, log files, environments and secret stores. If a secret reaches the agent anyway, it stops and tells the user to rotate it. |
 | Port from another LAN machine (the desktop) | `refused` or `timeout` (any status code means the port is open to the LAN: fail) |
 | Port from the login front end | an HTTP status from the app |
 | `https://<host>/` | `302` to `https://<login host>/...`; for a service on its own login, the app's own page or login (no redirect to the login page) |
@@ -270,25 +270,25 @@ python3 tools/vmssh.py run $vm -- "sudo -u $svc XDG_RUNTIME_DIR=/run/user/\$(id 
 | Backup | a new timestamped file in `backups/<vm>/<svc>/` |
 | Certificate | the browser shows a valid `*.<domain>` certificate |
 
-When every check passes and the owner has no more work for the agent on this
+When every check passes and the user has no more work for the agent on this
 VM, revoke the agent's setup key (2.7). It removes the key's file on the VM,
 proves the agent can no longer log in, then deletes the key in the workspace;
-only the owner's key remains:
+only the user's key remains:
 
 ```fish
 # desktop (fish)
 python3 tools/vmssh.py revoke $vm
 ```
 
-The final report says it was revoked, and how the owner can confirm it: on
+The final report says it was revoked, and how the user can confirm it: on
 the VM, `ls ~/.ssh/authorized_keys.d/` lists no `fcos-agent` file. If a check
-fails and the owner wants to stop, the agent revokes it anyway; the next run
+fails and the user wants to stop, the agent revokes it anyway; the next run
 makes a new one.
 
 ## 3.11 [Agent] Record it
 
 Update the site file and the spec with the final values and any accepted
-risks. Tell the owner which checks passed, which failed, and which couldn't be
+risks. Tell the user which checks passed, which failed, and which couldn't be
 run and why.
 
 Then rebuild the install's notes, `<workspace>/AGENTS.md`: what exists (VMs,
@@ -308,7 +308,7 @@ python3 tools/install_notes.py <workspace> --note "<one line>"
 When an app must be configured through its own API (settings, users inside
 the app), the agent gets temporary access and gives it back:
 
-1. **[Owner]** Create a time-limited admin token in the app, as its
+1. **[Manual]** Create a time-limited admin token in the app, as its
    official docs describe (the agent gives the exact steps), then store it:
    the agent prints the command with `python3 tools/appapi.py store-step
    <svc>` (a hidden prompt; the token goes into `<workspace>/secrets/`,
@@ -320,7 +320,7 @@ the app), the agent gets temporary access and gives it back:
    only the app's `api_paths` behind the login page, and the token never
    printed.
 3. **[Agent]** When done: `python3 tools/appapi.py forget <svc>` deletes the
-   local copy. **[Owner]** Delete the token in the app itself; the final
+   local copy. **[Manual]** Delete the token in the app itself; the final
    report says where.
 
 ## 3.13 Facts the service files rely on

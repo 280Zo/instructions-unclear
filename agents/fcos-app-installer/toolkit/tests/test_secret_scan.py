@@ -32,7 +32,7 @@ class SecretScanTests(unittest.TestCase):
             'password_hash: "$y$j9T$EXAMPLEONLY$NOTAREAL"',
             "Environment=POSTGRES_USER=authentik",
             "Environment=AUTHENTIK_POSTGRESQL__HOST=authentik-postgres",
-            "# Secrets needed on the VM (the owner creates them): duckdns_token",
+            "# Secrets needed on the VM (the user creates them): duckdns_token",
         ):
             with self.subTest(line=line):
                 self.assertEqual(scan_text(line + "\n"), [], line)

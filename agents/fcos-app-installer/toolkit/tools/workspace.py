@@ -185,7 +185,7 @@ SPEC_IDENTIFYING = ("hostname", "title", "description", "login_reason", "accepte
 
 
 def _identifying(spec) -> list:
-    """The parts of an app spec that can identify the owner."""
+    """The parts of an app spec that can identify the user."""
     if not isinstance(spec, dict):
         return []
     own = str(spec.get("name", "")).lower()
@@ -199,7 +199,7 @@ def _identifying(spec) -> list:
             if isinstance(vol, dict) and vol.get("class") == "nfs":
                 out.append(vol.get("host"))
         # Env values that carry an address, a domain or free text (an admin email,
-        # a person's name, an outside mail host) can identify the owner.
+        # a person's name, an outside mail host) can identify the user.
         env = ctr.get("env") if isinstance(ctr.get("env"), dict) else {}
         out += [v for v in env.values() if isinstance(v, str) and IDENTIFYING_ENV.search(v)]
     return [item for item in out if item is not None]
@@ -229,7 +229,7 @@ def private_values(ws: Path) -> set[str]:
         except _yaml().YAMLError:
             raise WorkspaceError(f"{path} is not valid YAML") from None
         # Site file: every value. App specs: only the fields that can identify
-        # the owner (a public app's image, folders and settings are public; the
+        # the user (a public app's image, folders and settings are public; the
         # domain and addresses inside them are caught through the site file).
         if path.name == "site.yaml":
             source = data

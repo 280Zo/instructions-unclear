@@ -5,7 +5,7 @@
 # with it. The edge VM must go on an always_on host.
 hosts:
   host-a:
-    name: pve-a                 # ASK: the name the owner uses for this server
+    name: pve-a                 # ASK: the name the user uses for this server
     node: pve-a                 # optional: Proxmox node name, if different from the key
     address: 192.0.2.21         # optional until the API tool is used: the server's IP or DNS name (API on port 8006)
     ca_file: null               # optional: path to the CA certificate for the API (null: system CAs)

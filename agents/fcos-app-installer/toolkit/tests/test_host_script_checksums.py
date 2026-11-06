@@ -1,7 +1,7 @@
 """The pinned list of host-script checksums (host-scripts.sha256).
 
-The owner runs the adapters' host scripts as root, after checking the checksum a step shows.
-The step takes that checksum from the script itself, so a changed script would pass the owner's
+The user runs the adapters' host scripts as root, after checking the checksum a step shows.
+The step takes that checksum from the script itself, so a changed script would pass the user's
 check; the pinned list, which the agent's rules keep it from editing, is what makes the tool refuse
 it. The list
 is in `sha256sum -c` format, outside every skill folder, with paths relative to the skills folder.
@@ -85,7 +85,7 @@ class PinnedListTests(unittest.TestCase):
 
 class HonestWordingTests(unittest.TestCase):
     """The rules are a guard rail: the shell expands quoted and globbed names, and the agent runs as
-    the owner's user. No file may say the agent *cannot* edit the list."""
+    the user's user. No file may say the agent *cannot* edit the list."""
 
     def test_nothing_claims_a_wall(self):
         for path in (ROOT / "README.md", ROOT / "tools" / "layout.py", ROOT / "tools" / "adapters.py"):
@@ -115,7 +115,7 @@ class HonestWordingTests(unittest.TestCase):
 class AgentGuardsTheListTests(unittest.TestCase):
     """A guard rail, not a wall: the agent's rules deny edits to the list and any shell command that
     contains its name, its extension or the word "host-script". Spellings that avoid all three
-    (host-s*, a quote inside the word) get through; the agent runs as the owner's user, so only a
+    (host-s*, a quote inside the word) get through; the agent runs as the user's user, so only a
     separate user (README) makes this a hard boundary. The agent reads the list with its read tool
     if it needs to."""
 

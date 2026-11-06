@@ -31,7 +31,7 @@ RESERVED_USERS = {"akadmin"}
 
 def _people(site: dict) -> list[dict]:
     """site.yaml people: local Authentik users (no email, no self sign-up).
-    Each {username, name, groups}; passwords are set by the owner in Authentik."""
+    Each {username, name, groups}; passwords are set by the user in Authentik."""
     people = site.get("people")
     if people is None:
         return []
@@ -42,7 +42,7 @@ def _people(site: dict) -> list[dict]:
         where = f"site.yaml people[{n}]"
         if not isinstance(person, dict) or set(person) != {"username", "name", "groups"}:
             errors.append(f"{where}: needs exactly username, name and groups (no password or email: "
-                          "the owner sets the password in Authentik)")
+                          "the user sets the password in Authentik)")
             continue
         user, name, groups = person["username"], person["name"], person["groups"]
         if not (isinstance(user, str) and PERSON.fullmatch(user)) or user in RESERVED_USERS or user.startswith("ak-"):
@@ -223,7 +223,7 @@ def _access_blueprint(people: list[dict], routed: list[dict], signup: dict | Non
                     | ({signup["group"]} if signup else set()))
     out = ["# Groups, local people and app access in Authentik (site.yaml people, each app's groups).",
            "# Written by tools/login_frontend.py. Users are created once (state: created): later group",
-           "# changes made in the admin interface stay. No passwords: the owner sets each one in Authentik.",
+           "# changes made in the admin interface stay. No passwords: the user sets each one in Authentik.",
            "version: 1", "metadata:", "  name: access",
            "  labels:", '    blueprints.goauthentik.io/instantiate: "true"', "entries:"]
     for spec in bound:
@@ -239,7 +239,7 @@ def _access_blueprint(people: list[dict], routed: list[dict], signup: dict | Non
                 f"      name: {json.dumps(person['name'], ensure_ascii=False)}", "      type: internal",
                 "      path: users", f"      groups: [{member}]"]
     for spec in bound:
-        # Found by app + group, so the owner's own bindings and the other groups are left alone.
+        # Found by app + group, so the user's own bindings and the other groups are left alone.
         for order, group in enumerate(spec["groups"]):
             out += ["  - model: authentik_policies.policybinding", "    identifiers:",
                     f'      target: !Find [authentik_core.application, [slug, "{spec["name"]}"]]',

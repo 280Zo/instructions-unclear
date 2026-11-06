@@ -4,7 +4,7 @@ Builds a new FCOS VM with the base config, its NFS shares and the firewall.
 No services yet; those come from [section 3](03-add-a-service.md). Host setup
 ([section 1](01-host-setup.md)) must be done on the target server.
 
-## 2.1 Ask the owner
+## 2.1 Ask the user
 
 [Questions](questions.md) 5 to 8: which server (always asked), a new machine,
 its size, disks and network (with options from the server's discovery output),
@@ -21,7 +21,7 @@ and the address to reserve. Then the shares it mounts.
 
 Any site value still marked ASK is asked now.
 
-## 2.2 [Owner] File server: allow the VM on each export
+## 2.2 [Manual] File server: allow the VM on each export
 
 For each share: adapter step **file_server: `nfs_export`**. The VM's own
 folder in the backups share comes with its first service
@@ -32,7 +32,7 @@ Report back: done, plus any export path that differs from the site file.
 ## 2.3 [Agent] Write the VM spec
 
 `<workspace>/vms/<vm>/vm.yaml`, every value from the site file and the
-owner's answers, none assumed.
+user's answers, none assumed.
 
 **Every VM setting is decided, never left to a default.** Research the
 server's facts (discovery: CPU and its flags, NUMA nodes, disk type, memory
@@ -42,7 +42,7 @@ that platform, each app's requirements). Then fill `settings:` with every
 setting below, each with the value to use, why, and the source. The
 platform's tool refuses a spec where one is missing, unexplained or out of
 range, and its dry run prints them all as a table. Show that table to the
-owner; the values are used unless the owner changes them.
+user; the values are used unless the user changes them.
 
 **Providers.** For Proxmox VE the settings below are what `tools/hypervisor.py`
 checks and sends; the official sources are the Proxmox VE VM chapter and the
@@ -84,22 +84,22 @@ settings:               # each one: {use: <value>, why: <one line>, source: <doc
   rng: {use: urandom, why: "avoids entropy starvation at boot", source: "platform VM docs"}
   tablet: {use: false, why: "serial console, no VNC mouse", source: "platform VM docs"}
   hotplug: {use: "network,disk,usb", why: "the platform's default", source: "platform VM docs"}
-  startup_order: {use: null, why: "starts after VMs that have an order (the router: owner step); setting one needs Sys.Modify on the whole server", source: "platform VM docs; qemu-server permission check"}
+  startup_order: {use: null, why: "starts after VMs that have an order (the router: manual step); setting one needs Sys.Modify on the whole server", source: "platform VM docs; qemu-server permission check"}
   startup_up: {use: null, why: "no extra delay needed", source: "platform VM docs"}
-  onboot: {use: true, why: "starts with the server", source: "owner"}
+  onboot: {use: true, why: "starts with the server", source: "user"}
   protection: {use: true, why: "no accidental deletion", source: "platform VM docs"}
   agent: {use: false, why: "no guest agent in FCOS yet", source: "FCOS package list"}
   watchdog: {use: none, why: "nothing in the VM would feed it", source: "platform VM docs"}
   acpi: {use: true, why: "clean shutdown", source: "platform VM docs"}
   kvm: {use: true, why: "hardware virtualization", source: "platform VM docs"}
   localtime: {use: false, why: "Linux keeps UTC", source: "platform VM docs"}
-  tags: {use: [fcos-agent], why: "easy to spot", source: "owner"}
-  description: {use: "<what this VM runs>", why: "easy to spot", source: "owner"}
+  tags: {use: [fcos-agent], why: "easy to spot", source: "user"}
+  description: {use: "<what this VM runs>", why: "easy to spot", source: "user"}
 ```
 
 If a VM must start after another one on the server (the router that serves
 its address, the file server), give that one a start order (for example 1,
-with a startup delay) as an owner step in the platform's web interface. The
+with a startup delay) as a manual step in the platform's web interface. The
 agent's VMs keep no start order: VMs without one start after those that have
 one, and setting it needs a right on the whole server that the agent's
 access deliberately doesn't have (the tool refuses it before sending
@@ -154,17 +154,17 @@ network list and refuses a bridge other than the host's `bridge` (the token's
 permissions refuse it too; an optional `forbidden_bridges` list is honored but
 never asked), a VLAN on a bridge that isn't VLAN-aware or doesn't allow it,
 and a network card MTU above the bridge's. A bridge that doesn't report
-which VLANs it allows only gives a warning: tell the owner, who checks it on
-the server. A refusal goes to the owner as it is; never change the owner's
+which VLANs it allows only gives a warning: tell the user, who checks it on
+the server. A refusal goes to the user as it is; never change the user's
 network to get past it.
 
-Show the owner the dry run's exact steps (upload the config disc, create the
+Show the user the dry run's exact steps (upload the config disc, create the
 VM in the agent's pool with protection on, grow the OS disk) and ask before
 running it without `--dry-run`. The VM is created stopped, and `hypervisor.py`
 prints its network card's `MAC address:` for 2.6 (`hypervisor.py status` shows it
 again).
 
-## 2.6 [Owner] Router: reserve the address
+## 2.6 [Manual] Router: reserve the address
 
 Adapter step **router_firewall: `reserve_ip`**, after the VM is created and
 before its first start. On a network that only serves reserved MAC addresses
@@ -174,11 +174,11 @@ network from the file server or the login front end, also
 
 Report back: done, and the reserved address if it differs.
 
-**[Owner] The desktop's route to the VM, when needed.** The agent runs on the
-owner's desktop, so it checks the desktop's own networks first (read-only):
+**[Manual] The desktop's route to the VM, when needed.** The agent runs on the
+user's desktop, so it checks the desktop's own networks first (read-only):
 `ip -4 -br addr`. If the desktop has an address on the VM's network that is
 not one of the VM's SSH or web sources, it reaches the VM directly from that
-address and the VM's firewall drops it. The owner then adds a permanent route
+address and the VM's firewall drops it. The user then adds a permanent route
 for the VM's address through the router, on a desktop network the VM does
 allow (with the router's pass rule for SSH and the web from there). Every
 value is filled in; the router's address on that network is asked if the
@@ -200,8 +200,8 @@ Report back: the first line of `ip route get`, which shows
 
 ## 2.7 [Agent] Start and check the first boot
 
-The agent never uses the owner's SSH key. It works on the VM with its own
-setup key, which the owner adds beside theirs and which is revoked when the
+The agent never uses the user's SSH key. It works on the VM with its own
+setup key, which the user adds beside theirs and which is revoked when the
 services work (3.10). The private key stays in the workspace's `secrets/`
 folder; `tools/vmssh.py` runs ssh with only that key (no ssh config, no
 ssh-agent).
@@ -214,7 +214,7 @@ ssh-agent).
    python3 tools/vmssh.py keygen <vm> --workspace <workspace>
    ```
 
-2. **[Owner]** The key command prints the owner step, with the public key
+2. **[Manual]** The key command prints the manual step, with the public key
    filled in: log in with your own key and put it in its own file,
    `~/.ssh/authorized_keys.d/fcos-agent`, then print the VM's host key
    fingerprint. The block checks the machine's name first and stops with
@@ -247,7 +247,7 @@ FCOS updates itself (Zincati) and reboots inside the update window; that is
 expected.
 
 **If SSH doesn't answer:** first check the address reservation (2.6).
-`tools/hypervisor.py status` shows whether the VM is running. The owner can see in
+`tools/hypervisor.py status` shows whether the VM is running. The user can see in
 the virtualization platform's own view whether it has read from its disks and
 sent network traffic; a VM that read hundreds of MB and sent packets has
 booted. The serial console is not a proven fallback yet (see

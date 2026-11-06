@@ -134,7 +134,7 @@ def render(ws: Path, notes: list[str]) -> str:
             "- **Dashboard:** reuse an existing section when the app fits one, or propose a new one and ask.",
             "- **Numbers:** pick a free UID and port (not in the lists above); `tools/check_workspace.py` checks.",
             "- **File server:** backups go to the backups share under the VM's folder; show the service's "
-            "`file-server.md` table to the owner.",
+            "`file-server.md` table to the user.",
             "- **Secrets:** new names only; never reuse another service's secret.",
             "", "## Notes for future services", "", NOTES_START, *notes, NOTES_END, ""]
     return "\n".join(out)

@@ -24,9 +24,9 @@ class RulesTests(unittest.TestCase):
         self.assertFalse((ROOT / "opencode.json").exists())
         self.assertFalse((ROOT / ".opencode" / "opencode.json").exists())  # no instructions list to depend on
 
-    def test_owner_steps_rule(self):
+    def test_manual_steps_rule(self):
         text = flat(AGENTS_MD)
-        for needle in ("# Owner steps", "one table", "one step per answer", "machine and shell",
+        for needle in ("# Manual steps", "one table", "one step per answer", "machine and shell",
                        "report back", "ends its turn", "fish", "bash", "bash equivalent",
                        "never touch", "root"):
             self.assertIn(needle.lower(), text.lower())
@@ -57,9 +57,9 @@ class RulesTests(unittest.TestCase):
 
     def test_prompt_points_to_the_rules_instead_of_repeating_them(self):
         prompt = PROMPT.read_text()
-        self.assertIn("Owner steps", prompt)
+        self.assertIn("Manual steps", prompt)
         self.assertIn("Secrets and private values", prompt)
-        self.assertNotIn("rules/owner-steps.md", prompt)  # that file is not in this folder
+        self.assertNotIn("rules/manual-steps.md", prompt)  # that file is not in this folder
         self.assertNotIn("rules/secret-handling.md", prompt)
         for moved in ("**Several items of one kind are one table**", "Never ask for, read, print or store",
                       "Real values go only in the workspace"):

@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """The agent's temporary API access to an app.
 
-The owner creates a time-limited admin token in the app itself (its official
+The user creates a time-limited admin token in the app itself (its official
 docs say how), stores it from a hidden prompt, and deletes it in the app when
 the setup is done. The agent never sees the token: this tool reads it from
 <workspace>/secrets/app-<svc>.token and never prints it.
 
-  store-step <svc>                 print the owner's hidden-prompt store command
+  store-step <svc>                 print the user's hidden-prompt store command
   call <svc> <METHOD> <PATH> [--data <json file>] [--scheme Bearer|Token]
                                    one request to https://<hostname>.<domain><PATH>;
                                    behind the login page only the app's api_paths
-  forget <svc>                     delete the local token (the owner deletes it in the app)
+  forget <svc>                     delete the local token (the user deletes it in the app)
 
 Exit status: 0 for a 2xx answer, 1 otherwise. TLS certificates are verified;
 the address is always https://<hostname>.<domain> (no override), and redirects
@@ -48,12 +48,12 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-# The address the owner confirmed when storing the token: https, a plain host name, no path.
+# The address the user confirmed when storing the token: https, a plain host name, no path.
 URL_LINE = re.compile(r"^url=(https://[a-z0-9]([a-z0-9-]{0,62}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,62}[a-z0-9])?)+)$")
 
 
 def _base(ws: Path, svc: str) -> str:
-    """The app's address, from the token file (written by the owner's store step; the
+    """The app's address, from the token file (written by the user's store step; the
     agent can't edit it), never from the spec or site file the agent edits."""
     return _read_file(ws, svc)[0]
 
@@ -84,7 +84,7 @@ def _read_file(ws: Path, svc: str) -> tuple[str, str]:
     try:
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
     except FileNotFoundError:
-        raise ApiError(f"no token for {svc}; the owner stores one first (appapi.py store-step {svc})") from None
+        raise ApiError(f"no token for {svc}; the user stores one first (appapi.py store-step {svc})") from None
     except OSError:
         raise ApiError(f"{path} cannot be opened (is it a symlink?)") from None
     with os.fdopen(fd, "r", encoding="utf-8", errors="replace") as handle:
@@ -177,7 +177,7 @@ def cmd_forget(ws: Path, site: dict, args) -> int:
     _spec(ws, args.svc)
     path = _token_path(ws, args.svc)
     path.unlink(missing_ok=True)
-    print(f"deleted the local token for {args.svc}; the owner must also delete the token in the app itself")
+    print(f"deleted the local token for {args.svc}; the user must also delete the token in the app itself")
     return 0
 
 

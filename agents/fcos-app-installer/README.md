@@ -267,8 +267,8 @@ container files). Nothing pulls them for you.
 
 At the start of every run, right after the workspace question, run
 `python3 tools/check_updates.py`. If it reports an update, show its table and
-offer to run the steps above first; never change a pin without the owner's
-yes, and the owner approves each commit and pulls the image. If the check
+offer to run the steps above first; never change a pin without the user's
+yes, and the user approves each commit and pulls the image. If the check
 can't run (no network), say so and carry on with the current pins.
 
 ## Changing a host script
@@ -330,9 +330,9 @@ at all is an error, not a pass.
 | Folder | Holds |
 |---|---|
 | `.opencode/` | the agents (`fcos-app-installer`, the main one for Fedora CoreOS; `adapter-drafter`, its helper that drafts adapters) and the `/add-service` command, written by rulesync |
-| `.opencode/skills/` | skills: one adapter per provider (its owner steps, notes and host scripts), the generic fallback, `researching-apps-for-self-hosting`, and one module per product the login front end can use (`ingress-*`, `authgw-*`): its data, spec, templates and `operations.md` (the steps that depend on the product). List them with `python3 tools/modules.py list` |
+| `.opencode/skills/` | skills: one adapter per provider (its manual steps, notes and host scripts), the generic fallback, `researching-apps-for-self-hosting`, and one module per product the login front end can use (`ingress-*`, `authgw-*`): its data, spec, templates and `operations.md` (the steps that depend on the product). List them with `python3 tools/modules.py list` |
 | `host-scripts.sha256` | the pinned checksum of every host script; the agent's rules keep it from editing this file |
-| `AGENTS.md` | rules that don't depend on the OS: how owner steps are given, how secrets and private values are handled; written by rulesync |
+| `AGENTS.md` | rules that don't depend on the OS: how manual steps are given, how secrets and private values are handled; written by rulesync |
 | `docs/guide/` | the procedure, provider-neutral |
 | `schemas/` | the service spec's field reference |
 | `templates/` | Butane and Quadlet building blocks |

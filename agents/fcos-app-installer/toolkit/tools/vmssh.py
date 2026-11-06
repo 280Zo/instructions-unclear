@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """The agent's own setup key for one VM, used while it sets services up, then revoked.
 
-The agent never uses the owner's SSH key. It gets a
-separate key that the owner adds beside their own, and removes it when the
+The agent never uses the user's SSH key. It gets a
+separate key that the user adds beside their own, and removes it when the
 services work:
 
   keygen <vm>                     new key in <workspace>/secrets/agent-ssh/<vm>/;
-                                  prints the owner step that adds it to the VM
+                                  prints the manual step that adds it to the VM
   trust <vm> --fingerprint FP     pin the VM's host key, only if it matches the
-                                  fingerprint the owner read on the VM
+                                  fingerprint the user read on the VM
   run <vm> -- <command>           run a command as the admin, with only this key;
                                   its output is redacted (tools/redact.py) and it
                                   refuses direct reads of logs, environments and
@@ -19,12 +19,12 @@ services work:
                                   the agent reads a log
   revoke <vm>                     remove the key from the VM, prove the login now
                                   fails, then delete the key here
-  reinstall <vm>                  after a rebuild: print the owner step again for
+  reinstall <vm>                  after a rebuild: print the manual step again for
                                   the same key, and drop the old pinned host key
 
 The private key stays in the secrets folder, which the agent may not read; this
 tool only hands its path to ssh. ssh runs with no config file, no ssh-agent and
-no other identity, so the owner's keys can never be used.
+no other identity, so the user's keys can never be used.
 """
 from __future__ import annotations
 
@@ -101,7 +101,7 @@ def _known_hosts(ws: Path, vm: str) -> Path:
 
 
 def _clean_env() -> dict:
-    """No ssh-agent: the owner's unlocked keys must never be offered."""
+    """No ssh-agent: the user's unlocked keys must never be offered."""
     env = dict(os.environ)
     for var in ("SSH_AUTH_SOCK", "SSH_AGENT_PID", "SSH_ASKPASS"):
         env.pop(var, None)
@@ -132,11 +132,11 @@ def cmd_keygen(ws: Path, site: dict, args) -> int:
     subprocess.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-C", f"fcos-agent-setup-{args.vm}",
                     "-f", str(key)], check=True, env=_clean_env(), stdin=subprocess.DEVNULL)
     key.chmod(0o600)
-    _print_owner_step(key, args.vm)
+    _print_manual_step(key, args.vm)
     return 0
 
 
-def _print_owner_step(key: Path, vm: str) -> None:
+def _print_manual_step(key: Path, vm: str) -> None:
     pub = key.with_name("id_ed25519.pub").read_text(encoding="utf-8").strip()
     if not PUBKEY.match(pub) or not pub.endswith(f"fcos-agent-setup-{vm}"):
         raise VmSshError("the agent's public key has an unexpected form; nothing to add")
@@ -167,7 +167,7 @@ def cmd_reinstall(ws: Path, site: dict, args) -> int:
     if not key.is_file():
         raise VmSshError(f"no agent key for {args.vm}; run: python3 tools/vmssh.py keygen {args.vm}")
     _known_hosts(ws, args.vm).unlink(missing_ok=True)
-    _print_owner_step(key, args.vm)
+    _print_manual_step(key, args.vm)
     print(f"Then pin the new host key: python3 tools/vmssh.py trust {args.vm} --fingerprint <SHA256:...>")
     return 0
 

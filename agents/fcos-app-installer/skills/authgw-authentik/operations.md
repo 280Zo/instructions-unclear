@@ -60,7 +60,7 @@ HTTPS, check `AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS` against the address the ing
 
 ## First login
 
-**[Owner]**
+**[Manual]**
 
 1. Open `https://<login host>/if/flow/initial-setup/` and set the admin email and password. Keep them
    in your password manager.
@@ -96,11 +96,11 @@ login, and after login the page shows `X-authentik-username` in the request head
 
 Authentik lets every user open an app that has no bindings, so ask which groups get it (for example
 `family`, `guests`) and put them in `groups:`. The login front end's rules file `access.yaml` creates
-each group if it's missing (the one place that does) and binds it to the app. Tell the owner to add
+each group if it's missing (the one place that does) and binds it to the app. Tell the user to add
 themselves (and anyone else) to the group in Authentik's admin interface (**Directory → Groups**), or
-they lose access too. Group names are lowercase; if the owner already has a group with capital
+they lose access too. Group names are lowercase; if the user already has a group with capital
 letters, a new lowercase one is made beside it. Removing a group from `groups:` later doesn't remove
-its old binding; the owner deletes it under the application's **Policy / Group / User Bindings**. Such
+its old binding; the user deletes it under the application's **Policy / Group / User Bindings**. Such
 an app also refuses everyone until its group bindings exist (a `deny-until-bound` policy); that relies
 on the application's policy engine mode staying **any** (Authentik's default): switching it to **all**
 in the admin interface would lock everyone out. An app on its own login can't take `groups:`: its
@@ -112,11 +112,11 @@ new needs an account for it: they go into the site file's `people:` (People and 
 Authentik's dashboard lists apps under section headings, all on one page: each application's `group`
 becomes a heading over its apps (authentik's `web/src/user/LibraryPage/ApplicationList.ts`). Propose a
 section from what the app is for (a relationship manager: `Relationships`), reuse an existing
-section when the app fits one, ask the owner, and put it in `section:`. Apps with the same section
+section when the app fits one, ask the user, and put it in `section:`. Apps with the same section
 are listed together; without one, an app is listed under "Ungrouped".
 
 The logo comes from the app's official repository or website (an SVG or PNG the project publishes);
-save it as `<workspace>/services/<svc>/<file>`, show it to the owner, and use it as `icon:` once they
+save it as `<workspace>/services/<svc>/<file>`, show it to the user, and use it as `icon:` once they
 confirm. The login front end stores it on the VM and Authentik serves it itself, so no browser fetches
 it from the internet
 ([File picker values](https://docs.goauthentik.io/customize/file-picker/)).
@@ -139,7 +139,7 @@ A service switched between the login page and its own login (keeping its `hostna
 removal: its file keeps its name and is replaced by the push (dashboard link with or without the
 login).
 
-Deleting or replacing a blueprint file doesn't delete what it created: for a removed service the owner
+Deleting or replacing a blueprint file doesn't delete what it created: for a removed service the user
 deletes its application and its provider (if it has one) in Authentik's admin interface; for a service
 switched to its own login, only its old provider (the dashboard link sets the application's provider to
 none).
@@ -161,13 +161,13 @@ python3 tools/vmssh.py run <login-vm> -- 'cd / && u=authentik && r=/run/user/$(i
 Expected: one `ok` line per rules file and exit status 0. If a file reports `error`, restart the worker
 and run the check once more before treating it as a failure: a rules file that applies another one
 first can fail when the other wasn't registered yet at that moment. Any `pending` or `error` line after
-5 minutes is a failure: the owner opens **System → Blueprints** in Authentik's admin interface, where
+5 minutes is a failure: the user opens **System → Blueprints** in Authentik's admin interface, where
 the failed file's entry shows why. Each open path must be a valid regex; Authentik skips a pattern it
 can't compile, which leaves that path behind the login.
 
 ## Removing an app
 
-After the guide's steps (7.1, the service's units and its login front end files), the owner deletes the
+After the guide's steps (7.1, the service's units and its login front end files), the user deletes the
 application and provider in Authentik's admin interface: deleting a blueprint file doesn't delete what
 it created. For a service moved to its own login, only its old provider.
 
@@ -179,7 +179,7 @@ outside. Groups decide which apps each person gets:
 - `guests`: the default group. Anyone who can reach the login page (your home networks and Tailscale)
   can create their own account on its **Sign up** link and lands here, with only the apps whose
   `groups:` list `guests`.
-- `family`: the household. The owner moves a person here (or adds more apps per person) in Authentik's
+- `family`: the household. The user moves a person here (or adds more apps per person) in Authentik's
   admin interface: the person's **Groups** tab.
 
 Each app behind the login page lists the groups that may open it (guide 3.2). A person in none of them
@@ -188,14 +188,14 @@ is refused with "Permission denied".
 **[Agent]** The sign-up page comes from the site file; it is Authentik's own example flow
 `flows-enrollment-2-stage.yaml` without the email field (username, password, name), adding new accounts
 to the group (`create_users_group`) and linking the page from the sign-in page (`enrollment_flow`).
-With `approve: true` new accounts start disabled until the owner turns them on
+With `approve: true` new accounts start disabled until the user turns them on
 (`create_users_as_inactive`):
 
 ```yaml
 signup: {group: guests}
 ```
 
-The owner can also have the agent create an account in advance, under `people:` (username, display
+The user can also have the agent create an account in advance, under `people:` (username, display
 name, groups), never a password or an email:
 
 ```yaml
@@ -204,7 +204,7 @@ people:
 ```
 
 Then regenerate and push the login front end (guide 3.9). Its rules file `access.yaml` creates the
-groups, each listed person once (later group changes the owner makes in the admin interface stay) and
+groups, each listed person once (later group changes the user makes in the admin interface stay) and
 the app bindings; a separate `signup.yaml` creates the sign-up page and the sign-in sources, so a
 problem there never undoes who may open which app. Until `access.yaml` has bound an app's groups, that
 app refuses everyone.
@@ -214,12 +214,12 @@ checked on the VM; nothing is sent outside). New accounts are ordinary users who
 password in the user interface.
 
 **Turning sign-up off again:** remove `signup:` from the site file and push; then, because Authentik
-keeps what a rules file created, the owner opens the admin interface, **Flows and Stages → Stages →
+keeps what a rules file created, the user opens the admin interface, **Flows and Stages → Stages →
 default-authentication-identification**, clears **Enrollment flow** (and any sources under
 **Sources**), and deletes the `signup` flow. The sign-in stage's sources are replaced by the ones the
 site file lists; sources added there by hand would be removed.
 
-**[Owner]** For an account made in advance, set its password: in the admin interface, **Directory →
+**[Manual]** For an account made in advance, set its password: in the admin interface, **Directory →
 Users**, click the person's name, **Reset password**
 ([Manage users](https://docs.goauthentik.io/users-sources/user/user_basic_operations/)). Give it to
 them in person; they can change it in the user interface. Keep the admin's own MFA on.
@@ -230,7 +230,7 @@ People can also sign up and sign in with an account they already have. Their bro
 provider and back; the VM checks the result with the provider over HTTPS. Nothing sends mail. New
 people land in the sign-up group, like the sign-up page.
 
-**[Owner]** Register the login page once with each provider; the agent gives each value filled in
+**[Manual]** Register the login page once with each provider; the agent gives each value filled in
 (`<login host>` is the site file's `edge.authentik.host`):
 
 - **Google** ([authentik guide](https://docs.goauthentik.io/users-sources/sources/social-logins/google/cloud/);
@@ -259,7 +259,7 @@ signin_sources:
   apple: {client_id: "<services ID>;<team ID>;<key ID>"}
 ```
 
-**[Owner]** Create the secrets on the VM with the commands in the login front end's `secrets.md`:
+**[Manual]** Create the secrets on the VM with the commands in the login front end's `secrets.md`:
 `authentik_google_secret` from a hidden prompt, and `authentik_apple_key` from the key file (copy it
 to `/dev/shm` on the VM, which lives in memory, not on the VM's disk; the command loads it and removes
 the copy). Keep both in your password manager. Then the agent restarts the worker and runs the rules
@@ -270,7 +270,7 @@ check (Applying the login rules, above).
 Authentik shows each person's picture by its **Avatars** system setting (default `gravatar,initials`:
 the VM asks gravatar.com for a picture by a SHA-256 hash of the email address and browsers then load it
 from there, else initials; [System settings](https://docs.goauthentik.io/sys-mgmt/settings/),
-`authentik/lib/avatars.py`). Ask the owner which they want; changing it is an owner step in the admin
+`authentik/lib/avatars.py`). Ask the user which they want; changing it is a manual step in the admin
 interface (**System → Settings → Avatars**, e.g. `initials` for no outside lookup). Uploaded pictures
 aren't offered: Authentik has no upload page of its own, and a picture stored on the user would end up
 in the ID token, which the outpost's sign-out puts into its redirect address (`id_token_hint`,

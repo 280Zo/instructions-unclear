@@ -1,5 +1,5 @@
 """tools/appapi.py: the agent's temporary API access to an app.
-The owner creates a time-limited token in the app, stores it from a hidden prompt
+The user creates a time-limited token in the app, stores it from a hidden prompt
 into secrets/, and deletes it in the app at the end. The agent never sees it."""
 import http.server
 import json
@@ -97,7 +97,7 @@ class AppApiTests(unittest.TestCase):
         return code, out.getvalue(), err.getvalue()
 
     def store(self, url="https://crm.example.duckdns.org"):
-        # The owner's store step writes the app's address beside the token (agent can't edit it).
+        # The user's store step writes the app's address beside the token (agent can't edit it).
         self.token.write_text(f"url={url}\n{FAKE}\n")
         self.token.chmod(0o600)
 
@@ -109,7 +109,7 @@ class AppApiTests(unittest.TestCase):
         self.assertIn(f"'{self.ws}/secrets/app-crm.token'", out)  # quoted
         self.assertIn("chmod 600", out)
         self.assertIn("set -e t", out)
-        # The address is in plain sight in the owner's command, and stored with the token.
+        # The address is in plain sight in the user's command, and stored with the token.
         self.assertIn("https://crm.example.duckdns.org", out)
         self.assertIn("url=https://crm.example.duckdns.org", out)
 

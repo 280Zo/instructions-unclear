@@ -151,7 +151,7 @@ class GuideTests(unittest.TestCase):
         self.assertIn("/etc/systemd/system/", text)
         self.assertIn("daemon-reload", text)
         self.assertIn("rmdir /etc/containers/systemd/users/", text)
-        # The data folders still stay until the owner says so.
+        # The data folders still stay until the user says so.
         self.assertIn("stay until", text)
 
     def test_app_log_checks_keep_generated_credentials_out_of_view(self):

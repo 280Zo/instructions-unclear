@@ -1,9 +1,9 @@
 # 9. Admin commands
 
-**[Owner]** These are the owner's commands, with their own SSH key; the agent
+**[Manual]** These are the user's commands, with their own SSH key; the agent
 reaches a VM only through `tools/vmssh.py` (section 2.7).
 
-Adapted from the owner's FCOS notes for rootless services. Every service runs under
+Adapted from the user's FCOS notes for rootless services. Every service runs under
 its own user, so most commands name that user. `<svc>` is the service user,
 `<uid>` its UID, `<ctr>` one of its containers: each container is the unit
 `<svc>-<ctr>.service` and the container `<svc>-<ctr>`.

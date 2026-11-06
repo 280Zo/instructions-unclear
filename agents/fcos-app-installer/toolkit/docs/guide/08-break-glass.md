@@ -1,6 +1,6 @@
 # 8. Break-glass access
 
-**[Owner]** These are the owner's steps, with their own SSH key; the agent
+**[Manual]** These are the user's steps, with their own SSH key; the agent
 never runs them.
 
 When the login front end or its auth gateway is down, the services are still running
@@ -59,4 +59,4 @@ Until that is fixed and tested, don't count on it.
 
 **Providers.** On Proxmox VE the serial console is `qm terminal <vmid>` on the
 server (leave with Ctrl+O); see the skill `adapter-proxmox` for the
-platform's other owner steps.
+platform's other manual steps.

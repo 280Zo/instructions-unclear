@@ -6,7 +6,7 @@ rules, sees the skills and lets the agent start its helper. Run these checks
 once on each machine you install the toolkit on, then add one real service as
 a trial.
 
-## 10.1 [Owner] The toolkit itself
+## 10.1 [Manual] The toolkit itself
 
 In the folder you installed the toolkit into:
 
@@ -22,7 +22,7 @@ Expected: an `ok` line for each requirement (OpenCode 2.1.3 or newer, Python 3
 with PyYAML, podman or docker, and the launch folder), `OK` from the tests, and
 `0 hit(s)` from the publish check.
 
-## 10.2 [Owner] What OpenCode loads
+## 10.2 [Manual] What OpenCode loads
 
 Start OpenCode in the toolkit folder and pick the `fcos-app-installer` agent.
 Each check below makes it do something whose result you can see in the
@@ -31,7 +31,7 @@ can't fake a tool call or a refusal. Nothing on your systems changes.
 
 | Ask it to | Expected |
 |---|---|
-| Quote the rule "Commands in full, in the message" (the Owner steps rule in `AGENTS.md`) | The rule's text, with no file read shown before it. A read tool call first means the rules aren't loading: check that `AGENTS.md` is in the folder you started OpenCode in (rulesync writes it; README.md "Install") |
+| Quote the rule "Commands in full, in the message" (the Manual steps rule in `AGENTS.md`) | The rule's text, with no file read shown before it. A read tool call first means the rules aren't loading: check that `AGENTS.md` is in the folder you started OpenCode in (rulesync writes it; README.md "Install") |
 | Load the skill `adapter-proxmox`, then `researching-apps-for-self-hosting` | Two skill tool calls that succeed, each followed by the skill's steps |
 | Load the skill `eli5` | Refused by permission (the skill filter works) |
 | Start the `adapter-drafter` subagent and have it run only `python3 tools/adapters.py show --role file_server`, then report | A subagent session starts and reports the file server steps (`nfs_export`, `service_user`, `backup_folder`). If it can't be started, the agent's `subagent` permission isn't taking effect |
@@ -42,7 +42,7 @@ can't fake a tool call or a refusal. Nothing on your systems changes.
 
 Report back: each result that differs from the expected one.
 
-## 10.3 [Owner] Trial: add one service
+## 10.3 [Manual] Trial: add one service
 
 Run `/add-service <service>` and let the agent work. Along the way, check each
 of these as it happens:

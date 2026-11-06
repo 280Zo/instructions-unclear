@@ -1,6 +1,6 @@
 ---
 name: adapter-truenas
-description: "Owner steps for TrueNAS as the file server of the fcos-app-installer toolkit: letting a VM mount an NFS share, creating a service's user and folders, and creating its backup folder. Use when the owner's file server or NAS is TrueNAS."
+description: "Manual steps for TrueNAS as the file server of the fcos-app-installer toolkit: letting a VM mount an NFS share, creating a service's user and folders, and creating its backup folder. Use when the user's file server or NAS is TrueNAS."
 license: MIT
 compatibility: Needs the fcos-app-installer toolkit; tools/adapters.py renders the steps from adapter.yaml.
 ---
@@ -26,7 +26,7 @@ python3 tools/adapters.py show --role file_server --provider truenas
 python3 tools/adapters.py render --role file_server --provider truenas --step <id> --values /tmp/opencode/<id>.json
 ```
 
-Show the rendered step to the owner as it is, then wait for what it asks them
+Show the rendered step to the user as it is, then wait for what it asks them
 to report back. `HOST` is the server's key in the site file, never its display
 or node name.
 

@@ -287,7 +287,7 @@ def to_script(config: dict, root: str = "") -> str:
         data = base64.b64encode(_contents(entry.get("contents"))).decode()
         owner = _owner(entry) or ""
         overwrite = 1 if entry.get("overwrite") else 0
-        # The owner is set on the temp file before it is moved in place, so the
+        # The user is set on the temp file before it is moved in place, so the
         # file is never briefly root-owned at its final path.
         lines.append(f"put {_mode(entry.get('mode'), 0o644)} {_q(owner)} {overwrite} {at(entry['path'])} '{data}'")
 

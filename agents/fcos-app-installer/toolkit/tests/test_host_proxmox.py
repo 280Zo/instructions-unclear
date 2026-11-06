@@ -51,7 +51,7 @@ def iso_host(content="snippets,backup,import,vztmpl,iso"):
 
 
 def partial_state():
-    """The owner's real half-finished state: everything but the ACLs."""
+    """The user's real half-finished state: everything but the ACLs."""
     state = dict(HOST_FACTS, pools={"fcos-agent": []}, roles={"FCOSAgentVM": ",".join(PRIVS.split())},
                  users=[USER])
     state["tokens"] = [KEYID]
@@ -312,7 +312,7 @@ class SetupTests(HostScriptCase):
         self.assertEqual(",".join(ISO_PRIVS.split()), self.read_state()["roles"]["FCOSAgentISO"])
 
     def test_refuses_to_change_a_role_someone_else_holds(self):
-        # A same-named role the owner grants elsewhere is not the agent's to rewrite.
+        # A same-named role the user grants elsewhere is not the agent's to rewrite.
         for role, args, extra in (("FCOSAgentVM", (), {}),
                                   ("FCOSAgentISO", ("--iso-storage", "local"),
                                    dict(storages=["local-lvm", "local"], storage_content={"local": "iso,import"}))):
@@ -414,7 +414,7 @@ class StrictStubTests(HostScriptCase):
         return subprocess.run([str(STUBS / argv[0]), *argv[1:]], capture_output=True, text=True, env=env)
 
     def test_pvesm_status_rejects_output_format(self):
-        # The exact call that failed on the owner's host.
+        # The exact call that failed on the user's host.
         result = self.stub("pvesm", "status", "--output-format", "json")
         self.assertNotEqual(0, result.returncode)
         self.assertIn("Unknown option: output-format", result.stderr)

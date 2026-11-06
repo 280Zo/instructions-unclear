@@ -1,4 +1,4 @@
-"""Provider adapters: the owner's steps for systems the agent doesn't touch."""
+"""Provider adapters: the user's steps for systems the agent doesn't touch."""
 import json
 import os
 import re
@@ -29,7 +29,7 @@ def every_value(adapter, step_id) -> dict:
     """Example values for every placeholder the step uses (the tool fills in the derived ones)."""
     from adapters import derived_keys, example_value
     skip = derived_keys(adapter)
-    return {key: example_value(key) for key in adapter["owner_steps"][step_id].get("uses", []) if key not in skip}
+    return {key: example_value(key) for key in adapter["manual_steps"][step_id].get("uses", []) if key not in skip}
 
 
 class AcmeDataTests(unittest.TestCase):
@@ -103,7 +103,7 @@ class AdapterTests(unittest.TestCase):
                 self.assertEqual((adapter["role"], adapter["provider"]), (role, provider))
                 self.assertFalse(adapter.get("generic"))
                 for step in ROLE_STEPS[role]:
-                    self.assertIn(step, adapter["owner_steps"])
+                    self.assertIn(step, adapter["manual_steps"])
                     self.assertTrue(render_step(adapter, step, every_value(adapter, step)))
                 self.assertTrue(adapter["docs"], "official doc links")
         for role in ROLE_STEPS:
@@ -116,7 +116,7 @@ class AdapterTests(unittest.TestCase):
         adapter = load_adapter("router_firewall", "pfsense")
         self.assertTrue(adapter["generic"])
         self.assertEqual(adapter["provider"], "pfsense")
-        self.assertEqual(sorted(adapter["owner_steps"]), sorted(ROLE_STEPS["router_firewall"]))
+        self.assertEqual(sorted(adapter["manual_steps"]), sorted(ROLE_STEPS["router_firewall"]))
         text = render_step(adapter, "reserve_ip", every_value(adapter, "reserve_ip"))
         self.assertNotIn("OPNsense", text)
 
@@ -142,7 +142,7 @@ class AdapterTests(unittest.TestCase):
         for role, provider in list(KNOWN.items()) + [(r, None) for r in ROLE_STEPS]:
             adapter = load_adapter(role, provider)
             listed = set(adapter.get("scripts", []))
-            for step_id, step in adapter["owner_steps"].items():
+            for step_id, step in adapter["manual_steps"].items():
                 for block in step.get("blocks", []):
                     with self.subTest(role=role, step=step_id):
                         self.assertNotIn("{{AGENT_REPO}}/", block["code"])  # scripts come from the skill
@@ -157,7 +157,7 @@ class AdapterTests(unittest.TestCase):
 
     def test_hand_typed_checksums_refused_everywhere(self):
         # A drafted adapter ships no scripts, so a *_SHA256 it uses can't be filled in.
-        draft = {"role": "virtualization", "provider": "x", "name": "X", "scripts": [], "owner_steps": {
+        draft = {"role": "virtualization", "provider": "x", "name": "X", "scripts": [], "manual_steps": {
             "s": {"title": "t", "steps": ["a"], "uses": ["X_SHA256"],
                   "blocks": [{"machine": "x (bash, root)", "code": "echo {{X_SHA256}}"}]}}}
         with self.assertRaises(AdapterError) as caught:
@@ -209,7 +209,7 @@ class AdapterTests(unittest.TestCase):
         # Review: no file readable by others for a moment, and no empty token file.
         self.assertLess(block.index('test -n "$t"'), block.index("install -m 600 /dev/null"))
         self.assertLess(block.index("install -m 600 /dev/null"), block.index("printf"))
-        self.assertNotIn("umask", block)  # it would stay set in the owner's shell
+        self.assertNotIn("umask", block)  # it would stay set in the user's shell
         self.assertNotIn("hypervisor.py", block)  # the agent checks the token itself (guide 1.4)
 
     def test_host_must_be_a_workspace_key_for_the_server(self):
@@ -260,15 +260,15 @@ class AdapterTests(unittest.TestCase):
                     render_step(router, "allow_flows", dict(values, LAN_CIDR="0.0.0.0/0"))
 
     def test_network_list_never_lands_in_a_command(self):
-        # Unquoted, "a, b" would split into separate arguments of the owner's command.
-        step = {"role": "router_firewall", "provider": "x", "name": "X", "scripts": [], "owner_steps": {
+        # Unquoted, "a, b" would split into separate arguments of the user's command.
+        step = {"role": "router_firewall", "provider": "x", "name": "X", "scripts": [], "manual_steps": {
             "s": {"title": "t", "steps": ["Allow {{LAN_CIDR}}."], "uses": ["LAN_CIDR"],
                   "blocks": [{"machine": "x (bash, root)", "code": "allow {{LAN_CIDR}}"}]}}}
         with self.assertRaises(AdapterError):
             render_step(step, "s", {"LAN_CIDR": "192.0.2.0/24, 198.51.100.0/24"})
         self.assertIn("allow 192.0.2.0/24", render_step(step, "s", {"LAN_CIDR": "192.0.2.0/24"}))
 
-    # Review of ff605b1: the owner runs the host scripts as root, and the step shows the checksum of
+    # Review of ff605b1: the user runs the host scripts as root, and the step shows the checksum of
     # the file as it is. The pinned list, a file the agent's rules keep it from editing, says what the file must be.
     def pinned(self, text):
         path = Path(tempfile.mkdtemp(dir=SCRATCH)) / "host-scripts.sha256"
@@ -443,7 +443,7 @@ class AdapterTests(unittest.TestCase):
             for path in adapter.get("scripts", []):
                 with self.subTest(role=role, script=path):
                     self.assertTrue((Path(adapter["skill_dir"]) / path).is_file())
-            for step_id, step in adapter["owner_steps"].items():
+            for step_id, step in adapter["manual_steps"].items():
                 for key in step.get("uses", []):
                     if key.endswith("_SHA256"):
                         with self.subTest(role=role, step=step_id, key=key):
@@ -490,7 +490,7 @@ class AdapterTests(unittest.TestCase):
     def test_every_command_block_names_its_machine_and_shell(self):
         for role, provider in list(KNOWN.items()) + [(r, None) for r in ROLE_STEPS]:
             adapter = load_adapter(role, provider)
-            for step_id, step in adapter["owner_steps"].items():
+            for step_id, step in adapter["manual_steps"].items():
                 for block in step.get("blocks", []):
                     with self.subTest(role=role, provider=provider, step=step_id):
                         self.assertRegex(block["machine"], r"\((bash|fish)(, [^)]+)?\)$")
@@ -512,7 +512,7 @@ class AdapterTests(unittest.TestCase):
         self.assertIn("teardown-agent-access.sh --move-to", teardown)
 
     def test_teardown_creates_the_pool_the_vms_move_into(self):
-        # An owner with no pool of their own has nowhere to move the VMs to. The script creates it with --create-pool, so the check and the
+        # A user with no pool of their own has nowhere to move the VMs to. The script creates it with --create-pool, so the check and the
         # real run must both pass it; without it the script stops: "create it first".
         adapter = load_adapter("virtualization", "proxmox")
         teardown = render_step(adapter, "teardown_api_access", every_value(adapter, "teardown_api_access"))
@@ -524,7 +524,7 @@ class AdapterTests(unittest.TestCase):
         # The installs always move to pool backrooms, so nothing is asked.
         for line in runs:
             self.assertIn("--move-to backrooms --create-pool", line)
-        self.assertNotIn("KEEP_POOL", adapter["owner_steps"]["teardown_api_access"]["uses"])
+        self.assertNotIn("KEEP_POOL", adapter["manual_steps"]["teardown_api_access"]["uses"])
 
     def test_truenas_backup_folder_does_not_make_the_vm_folder_group_writable(self):
         # The VM's folder must not be group-writable ("mode 2775" for "the group of the services that
@@ -595,12 +595,12 @@ class AdapterTests(unittest.TestCase):
                                                             dict(values, HOST_ADDRESS="pve-a.example.org")))
 
     def test_remove_vm_checks_the_disc_belongs_to_the_vm(self):
-        code = load_adapter("virtualization", "proxmox")["owner_steps"]["remove_vm"]["blocks"][0]["code"]
+        code = load_adapter("virtualization", "proxmox")["manual_steps"]["remove_vm"]["blocks"][0]["code"]
         guard = code.index('= "{{IGN_ISO_VOLUME}}" ]')
         self.assertLess(guard, code.index("--protection 0"))
 
     def test_scripts_report_any_failure_and_check_the_image_first(self):
-        steps = load_adapter("virtualization", "proxmox")["owner_steps"]
+        steps = load_adapter("virtualization", "proxmox")["manual_steps"]
         for step_id in ("rebuild_os_disk", "remove_vm", "download_image"):
             with self.subTest(step=step_id):
                 self.assertIn("trap 'echo \"STOP: failed at line $LINENO", steps[step_id]["blocks"][0]["code"])
@@ -613,7 +613,7 @@ class AdapterTests(unittest.TestCase):
     def test_teardown_check_and_run_are_separate_blocks(self):
         adapter = load_adapter("virtualization", "proxmox")
         for step_id in ("create_api_access", "teardown_api_access"):
-            for block in adapter["owner_steps"][step_id]["blocks"]:
+            for block in adapter["manual_steps"][step_id]["blocks"]:
                 runs = [line for line in block["code"].splitlines()
                         if line.startswith("bash ") and "-agent-access.sh" in line]
                 with self.subTest(step=step_id, block=block["code"][:40]):
@@ -623,19 +623,19 @@ class AdapterTests(unittest.TestCase):
         adapter = load_adapter("virtualization", "proxmox")
         for step_id in ("rebuild_os_disk", "remove_vm", "download_image"):
             with self.subTest(step=step_id):
-                for block in adapter["owner_steps"][step_id]["blocks"]:
+                for block in adapter["manual_steps"][step_id]["blocks"]:
                     self.assertTrue(block["code"].startswith("bash -euo pipefail <<'EOF'\n"), block["code"][:40])
                     self.assertTrue(block["code"].rstrip().endswith("EOF"))
         for step_id in ("rebuild_os_disk", "remove_vm"):
             with self.subTest(guard=step_id):
-                code = adapter["owner_steps"][step_id]["blocks"][0]["code"]
+                code = adapter["manual_steps"][step_id]["blocks"][0]["code"]
                 guard = code.index('= "{{VM_NAME}}" ]')
                 self.assertLess(guard, code.index("--protection 0"))
-        rebuild = adapter["owner_steps"]["rebuild_os_disk"]["blocks"][0]["code"]
+        rebuild = adapter["manual_steps"]["rebuild_os_disk"]["blocks"][0]["code"]
         self.assertNotIn("sed -n \"s/^\\(unused", rebuild)  # no volume id inside a regex
         self.assertLess(rebuild.index('[ -n "$SLOT" ] ||'), rebuild.index("qm disk unlink"))
         self.assertLess(rebuild.index("grep -q '^scsi1:'"), rebuild.index("qm disk unlink"))
-        download = adapter["owner_steps"]["download_image"]["blocks"][0]["code"]
+        download = adapter["manual_steps"]["download_image"]["blocks"][0]["code"]
         self.assertLess(download.index("sha256sum -c"), download.index("xz -d"))
         self.assertIn("rm -f", download)
 
@@ -643,7 +643,7 @@ class AdapterTests(unittest.TestCase):
         # bash -n only parses; nothing runs. The script inside a heredoc is checked too.
         for role, provider in list(KNOWN.items()) + [(r, None) for r in ROLE_STEPS]:
             adapter = load_adapter(role, provider)
-            for step_id, step in adapter["owner_steps"].items():
+            for step_id, step in adapter["manual_steps"].items():
                 from adapters import derived_values
                 values = dict(every_value(adapter, step_id), **derived_values(adapter))
                 for block in step.get("blocks", []):
@@ -687,7 +687,7 @@ class AdapterTests(unittest.TestCase):
         adapter = load_adapter("virtualization", "proxmox")
         for step in ("rebuild_os_disk", "remove_vm"):
             with self.subTest(step=step):
-                blocks = adapter["owner_steps"][step]["blocks"]
+                blocks = adapter["manual_steps"][step]["blocks"]
                 self.assertTrue(any("destructive" in b["machine"] for b in blocks))
 
     def test_draft_round_trips(self):
@@ -699,8 +699,8 @@ class AdapterTests(unittest.TestCase):
         self.assertEqual((data["role"], data["provider"]), ("router_firewall", "pfsense"))
         self.assertTrue(data["draft"])
         for step in ROLE_STEPS["router_firewall"]:
-            self.assertIn(step, data["owner_steps"])
-        self.assertIn("{{VM_MAC}}", data["owner_steps"]["reserve_ip"]["steps"][0])
+            self.assertIn(step, data["manual_steps"])
+        self.assertIn("{{VM_MAC}}", data["manual_steps"]["reserve_ip"]["steps"][0])
         tmp = Path(tempfile.mkdtemp(dir=SCRATCH))
         self.addCleanup(shutil.rmtree, tmp, True)
         (tmp / "adapter-pfsense").mkdir()

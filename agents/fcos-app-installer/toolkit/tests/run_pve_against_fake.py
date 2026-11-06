@@ -2,7 +2,7 @@
 
 The tool itself has no way to change its API endpoint. This wrapper patches the
 base-URL resolver in-process and then calls pve.main(). It never touches an
-owner's workspace: it builds its own temporary workspace holding a fixed FAKE
+user's workspace: it builds its own temporary workspace holding a fixed FAKE
 token, passes that path explicitly, and deletes it afterwards. It refuses
 --workspace and any --host other than the test host (exit 2), and it ignores
 FCOS_WORKSPACE and the remembered workspace.

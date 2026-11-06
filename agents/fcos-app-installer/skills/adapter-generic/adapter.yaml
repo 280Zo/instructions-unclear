@@ -1,11 +1,11 @@
-# Provider-neutral owner steps, one set per role. Used when the owner's
+# Provider-neutral manual steps, one set per role. Used when the user's
 # provider has no adapter: they say what must happen and what to report back,
-# never how a particular product does it. While the owner works, the agent
+# never how a particular product does it. While the user works, the agent
 # records what they actually did and offers to draft an adapter from it
 # (tools/adapters.py draft). Placeholders are filled from the site file.
 roles:
   virtualization:
-    owner_steps:
+    manual_steps:
       download_image:
         title: Get the current Fedora CoreOS image for your hypervisor
         steps:
@@ -42,7 +42,7 @@ roles:
         report_back:
           - whether the hypervisor has such an API, and the token's name (never its secret)
   router_firewall:
-    owner_steps:
+    manual_steps:
       reserve_ip:
         title: Reserve {{VM_IP}} for VM {{VM_NAME}}
         steps:
@@ -72,7 +72,7 @@ roles:
         report_back:
           - the flows you added, or that none were needed
   file_server:
-    owner_steps:
+    manual_steps:
       nfs_export:
         title: Let VM {{VM_NAME}} mount {{SHARE_EXPORT}} over NFS
         steps:
@@ -93,13 +93,13 @@ roles:
       backup_folder:
         title: Create the backup folder for {{SVC_NAME}} on VM {{VM_NAME}}
         steps:
-          - On the backups share, create {{VM_NAME}}/{{SVC_NAME}}/ yourself, owned by UID {{SVC_UID}} and GID {{SVC_GID}}, mode 0750. The VM sends numbers, so the owner's UID must be {{SVC_UID}}.
+          - On the backups share, create {{VM_NAME}}/{{SVC_NAME}}/ yourself, owned by UID {{SVC_UID}} and GID {{SVC_GID}}, mode 0750. The VM sends numbers, so the user's UID must be {{SVC_UID}}.
           - The folder {{VM_NAME}}/ above it should let everyone enter it but not write in it (mode 0755, not group-writable). The service can't create its own folder there, so its backups fail until you have.
         uses: [VM_NAME, SVC_NAME, SVC_UID, SVC_GID]
         report_back:
           - done
   dns_certificates:
-    owner_steps:
+    manual_steps:
       api_token:
         title: Get the API token for certificates under {{DOMAIN}}
         steps:
