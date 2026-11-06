@@ -26,7 +26,8 @@ SITE = yaml.safe_load((ROOT / "tests" / "fixtures" / "site.yaml").read_text())
 MODULES = {"ingress-traefik": "ingress", "authgw-authentik": "auth_gateway"}
 # Names of products the generic code must not know. Lower case; the modules' own files may.
 PRODUCTS = ("authentik", "traefik", "duckdns")
-GENERIC = ("login_frontend.py", "gen_service.py", "modules.py")
+GENERIC = ("login_frontend.py", "gen_service.py", "modules.py", "placement.py", "adapters.py",
+           "install_notes.py", "check_workspace.py")
 
 
 class ModuleFilesTests(unittest.TestCase):
@@ -113,6 +114,176 @@ class LoaderTests(unittest.TestCase):
         done = subprocess.run([sys.executable, "tools/modules.py", "list"], cwd=ROOT, capture_output=True, text=True)
         self.assertEqual(done.returncode, 0, done.stderr)
         self.assertIn("ingress-traefik", done.stdout)
+
+
+class CraftedModuleTests(unittest.TestCase):
+    """A module folder is data an agent may edit; the loader must refuse a bad one with a clear message
+    instead of importing whatever it names or failing with a traceback."""
+
+    def setUp(self):
+        import shutil
+        import tempfile
+        scratch = "/tmp/opencode" if Path("/tmp/opencode").is_dir() else None
+        self.tmp = Path(tempfile.mkdtemp(prefix="modules-", dir=scratch))
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        for name in MODULES:
+            shutil.copytree(SKILLS / name, self.tmp / name)
+        self.original = modules.SKILLS
+        modules.SKILLS = self.tmp
+        self.addCleanup(setattr, modules, "SKILLS", self.original)
+
+    def edit(self, name, **changes):
+        path = self.tmp / name / "module.yaml"
+        data = yaml.safe_load(path.read_text())
+        data.update(changes)
+        path.write_text(yaml.safe_dump(data))
+
+    def test_a_code_value_that_is_not_one_of_the_toolkits_packages_is_refused(self):
+        for bad in ("os", "login_frontend", ".x", "", "a..b", 5, "ingress.", "ingress.Traefik", "authgw.authentik",
+                    "ingress.nothing_here", "ingress.traefik.extra"):
+            with self.subTest(code=bad):
+                self.edit("ingress-traefik", code=bad)
+                with self.assertRaises(SpecError) as caught:
+                    modules.code("ingress-traefik")
+                self.assertIn("ingress-traefik", str(caught.exception))
+
+    def test_a_spec_path_may_not_leave_the_module_folder(self):
+        for bad in ("../x.yaml", "/etc/passwd", "a/../../b.yaml", 5):
+            with self.subTest(spec=bad):
+                self.edit("ingress-traefik", spec=bad)
+                with self.assertRaises(SpecError):
+                    modules.spec_path("ingress-traefik")
+
+    def test_module_data_is_type_checked_and_the_message_names_the_module(self):
+        cases = {"pairs_with": ["authgw-authentik"], "provides": "tls", "needs": [1],
+                 "pairs_with ": [{"module": "authgw-authentik", "how": "x"}]}
+        for key, bad in cases.items():
+            with self.subTest(key=key):
+                self.edit("ingress-traefik", **{key.strip(): bad})
+                with self.assertRaises(SpecError) as caught:
+                    modules.read("ingress-traefik")
+                self.assertIn("ingress-traefik", str(caught.exception))
+
+    def test_one_broken_module_does_not_hide_the_others(self):
+        self.edit("authgw-authentik", pairs_with="oops")
+        self.assertEqual(modules.installed("ingress"), ["ingress-traefik"])
+        self.assertEqual(modules.installed("auth_gateway"), [])
+        self.assertEqual([name for name, _ in modules.broken()], ["authgw-authentik"])
+        with self.assertRaises(SpecError) as caught:
+            modules.chosen(SITE)
+        self.assertIn("authgw-authentik", str(caught.exception))  # the broken module is named, not hidden
+        out = io.StringIO()
+        with redirect_stdout(out):
+            modules.main(["list"])
+        self.assertIn("ingress-traefik", out.getvalue())
+        self.assertIn("broken: authgw-authentik", out.getvalue())
+
+    def test_the_code_must_have_the_functions_the_contract_names_with_the_same_parameters(self):
+        self.assertEqual(set(modules.CONTRACT), {"ingress", "auth_gateway"})
+        for name, capability in MODULES.items():
+            code = modules.code(name)
+            import inspect
+            for function, params in modules.CONTRACT[capability].items():
+                with self.subTest(module=name, function=function):
+                    self.assertEqual(tuple(inspect.signature(getattr(code, function)).parameters), params)
+
+    def test_a_pairing_that_is_not_marked_tested_is_noted_but_still_works(self):
+        self.assertIsNone(modules.pairing_note(modules.chosen(SITE)))
+        self.edit("ingress-traefik", pairs_with=[{"module": "authgw-authentik", "tested": False, "how": "x"}])
+        note = modules.pairing_note(modules.chosen(SITE))
+        self.assertIn("not marked tested", note)
+        self.assertIn("ingress-traefik", note)
+        self.assertIn("authgw-authentik", note)
+        self.edit("ingress-traefik", pairs_with=[])
+        self.assertIn("not marked tested", modules.pairing_note(modules.chosen(SITE)))
+
+
+class UntestedPairingTests(CraftedModuleTests):
+    def test_the_generator_prints_the_note_and_still_writes_its_files(self):
+        import login_frontend
+        self.edit("ingress-traefik", pairs_with=[])
+        site = self.tmp / "site.yaml"
+        site.write_text(yaml.safe_dump(SITE))
+        err = io.StringIO()
+        with redirect_stderr(err):
+            code = login_frontend.main(["login_frontend.py", str(site), str(self.tmp / "out")])
+        self.assertEqual(code, 0, err.getvalue())
+        self.assertIn("not marked tested", err.getvalue())
+        self.assertTrue((self.tmp / "out" / "rendered" / "login-frontend.bu").is_file())
+
+
+class WorkspaceToolsFollowTheChosenModulesTests(CraftedModuleTests):
+    """The workspace tools read the login front end's section under the name the chosen module's
+    spec gives its service, so another product with another name is checked the same way."""
+
+    def rename_gateway_service(self, new):
+        import copy
+        path = self.tmp / "authgw-authentik" / "spec.yaml"
+        data = yaml.safe_load(path.read_text())
+        data["name"] = new
+        path.write_text(yaml.safe_dump(data))
+        site = copy.deepcopy(SITE)
+        site["edge"][new] = site["edge"].pop("authentik")
+        return site
+
+    def test_frontend_services_names_the_edge_sections_of_the_chosen_modules(self):
+        self.assertEqual(modules.frontend_services(SITE), {"ingress": "traefik", "auth_gateway": "authentik"})
+        self.assertEqual(modules.frontend_services({}), {})
+        self.assertEqual(modules.frontend_services({"login_frontend": {"ingress": "nope", "auth_gateway": "x"}}), {})
+
+    def test_the_login_page_name_and_web_ports_are_claimed_whatever_the_products_are_called(self):
+        from check_workspace import workspace_problems
+        site = self.rename_gateway_service("sso")
+        clash = yaml.safe_load((ROOT / "tests" / "fixtures" / "services" / "monica.yaml").read_text())
+        clash["hostname"] = site["edge"]["sso"]["host"].split(".")[0]
+        problems = workspace_problems(site, [clash])
+        self.assertTrue(any(": hostname " in p and "login page" in p for p in problems), problems)
+        port = dict(clash, hostname="other", vm=site["edge"]["vm"], port=443)
+        self.assertTrue(any(": port " in p for p in workspace_problems(site, [port])))
+
+    def test_the_install_notes_take_the_login_page_and_ids_from_the_same_section(self):
+        import install_notes
+        site = self.rename_gateway_service("sso")
+        ws = self.tmp / "ws"
+        ws.mkdir()
+        (ws / "site.yaml").write_text(yaml.safe_dump(site))
+        text = install_notes.render(ws, [])
+        self.assertIn(f"https://{site['edge']['sso']['host']}/", text)
+        self.assertIn(str(site["edge"]["sso"]["uid"]), text)
+
+
+class ServicesCommandTests(unittest.TestCase):
+    def run_cli(self, *args):
+        return subprocess.run([sys.executable, str(ROOT / "tools" / "modules.py"), *args],
+                              capture_output=True, text=True)
+
+    def test_services_prints_the_service_names_of_the_chosen_modules(self):
+        result = self.run_cli("services", str(ROOT / "tests" / "fixtures" / "site.yaml"))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(sorted(result.stdout.split()), ["authentik", "traefik"])
+
+    def test_services_fails_with_the_choices_when_the_site_names_none(self):
+        import tempfile
+        site = Path(tempfile.mkdtemp(prefix="site-", dir="/tmp/opencode" if Path("/tmp/opencode").is_dir() else None)) / "site.yaml"
+        self.addCleanup(lambda: (site.unlink(), site.parent.rmdir()))
+        site.write_text("domain: example.org\n")
+        result = self.run_cli("services", str(site))
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("modules.py list", result.stderr)
+
+    def test_validate_script_skips_fixtures_by_the_chosen_modules_not_by_a_product_name(self):
+        text = (ROOT / "tools" / "validate.sh").read_text()
+        self.assertNotRegex(text.lower(), r"authentik|traefik")
+        self.assertRegex(text, r'modules\.py"? services')
+
+
+class ContractDocTests(unittest.TestCase):
+    def test_guide_12_lists_exactly_the_functions_and_parameters_the_loader_checks(self):
+        guide = " ".join((ROOT / "docs" / "guide" / "12-add-a-module.md").read_text().split())
+        for capability, functions in modules.CONTRACT.items():
+            for function, params in functions.items():
+                with self.subTest(capability=capability, function=function):
+                    self.assertIn(f"`{function}({', '.join(params)})`", guide)
 
 
 class GenericCodeTests(unittest.TestCase):

@@ -80,6 +80,7 @@ ACME_KEYS = {"provider", "env", "store_as", "notes"}
 ACME_PROVIDER = re.compile(r"[a-z0-9][a-z0-9-]{0,40}")
 ACME_ENV = re.compile(r"[A-Z][A-Z0-9_]{0,60}")
 ACME_STORE_AS = re.compile(r"[a-z][a-z0-9_]{0,60}")
+ACME_ENV_REFUSED = {"PATH", "HOME", "USER", "SHELL", "IFS", "TMPDIR", "LANG", "PWD", "XDG_RUNTIME_DIR"}
 STEP_KEYS = {"title", "steps", "blocks", "uses", "report_back"}
 
 
@@ -149,9 +150,12 @@ def _check_acme(acme, role: str, where: str) -> None:
         raise AdapterError(f"{where}: acme env must be the environment variable that holds the token (capitals, digits, _)")
     if not (isinstance(acme["store_as"], str) and ACME_STORE_AS.fullmatch(acme["store_as"])):
         raise AdapterError(f"{where}: acme store_as must be the name the token is stored under (lowercase letters, digits, _)")
+    if acme["env"] in ACME_ENV_REFUSED or acme["env"].startswith(("LD_", "SYSTEMD_", "PODMAN_", "CONTAINERS_")):
+        raise AdapterError(f"{where}: acme env {acme['env']} would change how every program on the VM runs; "
+                           "use the variable the DNS provider's documentation names for its token")
     note = acme.get("notes", "")
-    if not (isinstance(note, str) and len(note) <= 300 and note.isprintable()):
-        raise AdapterError(f"{where}: acme notes must be one printable line of at most 300 characters")
+    if not (isinstance(note, str) and len(note) <= 300 and note.isprintable() and "{{" not in note):
+        raise AdapterError(f"{where}: acme notes must be one printable line of at most 300 characters, with no {{ }}")
 
 
 def _check_adapter(data, role: str, provider: str) -> dict:

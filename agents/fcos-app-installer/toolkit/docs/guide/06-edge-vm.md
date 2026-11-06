@@ -40,7 +40,7 @@ app separately.
 |---|---|
 | Which VM runs it (built in 6.2), on an always-on server | `edge.vm` |
 | Email for Let's Encrypt notices | `acme_email` |
-| The login page's name under the domain (default `auth`) | `edge.authentik.host` |
+| The login page's name under the domain (the user picks it; `auth` or `login` are common) | `edge.authentik.host` |
 | Authentik image: the current release from Authentik's docs, pinned to `YYYY.M` | `edge.authentik.image` |
 | Postgres image for Authentik (the official compose file names the major version) | `edge.authentik.postgres_image` |
 | UIDs/GIDs for the `traefik` and `authentik` accounts | `edge.traefik.uid/gid`, `edge.authentik.uid/gid` |
@@ -145,7 +145,7 @@ Since 2026.8, Authentik only trusts forwarded headers from its trusted proxy
 networks; the defaults include `127.0.0.0/8` and the private ranges. If the
 page loads endlessly or complains about HTTP vs HTTPS, check
 `AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS` against the address Traefik connects
-from (research notes row 16).
+from (the auth gateway module's `reference.md`, "Authentik facts used by the login front end").
 
 ## 6.7 [Owner] First Authentik login
 

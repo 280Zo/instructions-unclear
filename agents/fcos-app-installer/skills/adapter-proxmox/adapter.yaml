@@ -141,7 +141,7 @@ owner_steps:
     title: Give VM {{VMID}} its Ignition file as a snippet (fallback)
     steps:
       - Only when config disc uploads are not allowed. Storage {{SNIPPETS_STORAGE}} needs content type snippets; its folder on the node is {{SNIPPETS_DIR}}.
-      - Fedora's Proxmox guide uses this cloud-init drive together with ciupgrade 0. Not tested here, a forum report says that on this path Proxmox also sets the hostname, and an Ignition-written /etc/hostname then drops Fedora CoreOS into the emergency shell (research notes row 14). Tell the agent you're using this path before the first boot.
+      - Fedora's Proxmox guide uses this cloud-init drive together with ciupgrade 0. Not tested here, a forum report says that on this path Proxmox also sets the hostname, and an Ignition-written /etc/hostname then drops Fedora CoreOS into the emergency shell (this skill's reference.md, "Hostname with the ISO delivery"). Tell the agent you're using this path before the first boot.
     blocks:
       - machine: "desktop (fish)"
         code: |

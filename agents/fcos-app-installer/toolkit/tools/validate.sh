@@ -37,8 +37,10 @@ if [[ ${#templates[@]} -gt 0 ]]; then
 fi
 
 # Generated output: each service fixture on its own, then the login front end
-# with the fixtures behind the login page (the authentik fixture is a
-# stand-alone example and would clash with the front end's own Authentik).
+# with the fixtures behind the login page (a fixture named like one of the
+# chosen login front end modules' own services is a stand-alone example and
+# would clash with it).
+mapfile -t own < <(python3 "$root/tools/modules.py" services "$site")
 routed=()
 for spec in "$root"/tests/fixtures/services/*.yaml; do
     name="$(basename "$spec" .yaml)"
@@ -49,7 +51,9 @@ for spec in "$root"/tests/fixtures/services/*.yaml; do
     else
         failures=$((failures + 1))
     fi
-    [[ "$name" != authentik ]] && routed+=("$spec")
+    if [[ " ${own[*]} " != *" $name "* ]]; then
+        routed+=("$spec")
+    fi
 done
 echo "validate: generate the login front end"
 if python3 "$root/tools/login_frontend.py" "$site" "$gen/login-frontend" "${routed[@]}" >/dev/null \

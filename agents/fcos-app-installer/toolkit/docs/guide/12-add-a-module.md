@@ -24,9 +24,10 @@ A folder in the skills folder, named `<prefix>-<product>`: `ingress-<product>` o
 | `reference.md` | Optional. Facts the templates rely on, each with its source link and no date. |
 
 `pairs_with` lists other modules with `module`, `tested` (true only if the pairing was built and
-worked on a real install) and `how` (one sentence). A product pairing that nobody has tested stays
-out of the list or is `tested: false`; the tools refuse an untested pairing's glue because none
-exists. Tight coupling goes here, in data, so the agent can recommend without forcing one choice.
+worked on a real install) and `how` (one sentence). A pairing that nobody has tested is
+`tested: false` or left out. It can still have glue, marked experimental, so someone can try it; the
+generator then prints a note that the pairing is untested. Without glue it stops with an error.
+Tight coupling goes here, in data, so the agent can recommend without forcing one choice.
 
 ## 12.2 The code
 
@@ -36,9 +37,11 @@ Python lives in `tools/ingress/<product>.py` or `tools/authgw/<product>.py`, bec
 (`tests/test_modules.py`) fails if they do.
 
 An ingress module provides: `route_name_problem(name)`, `check_spec(spec, reserved_paths, errors)`,
-`redirect_blocks(svc, host, redirects)`, `route_text(kind, gateway_module, values)` and
-`place(site, spec, gateway_module, gateway_values, routes)`. The glue for each tested gateway is a
-folder `templates/gateways/<gateway module>/` with `middleware.yml.tmpl` and `route.yml.tmpl`.
+`redirect_blocks(svc, host, redirects)`, `route_text(kind, gateway, values)` and
+`place(site, spec, gateway, gateway_values, routes, acme)`. `gateway` is the auth gateway module's
+name, `gateway_values` what that module's `forward_auth_values(site)` returned, and `acme` the
+certificate data the DNS adapter carries. The glue for a gateway is a folder
+`templates/gateways/<gateway module>/` with `middleware.yml.tmpl` and `route.yml.tmpl`.
 
 An auth gateway module provides: `reserved_route_names()`, `reserved_route_suffix()`,
 `reserved_paths()`, `forward_auth_values(site)`, `host_label(site, domain)`, `check_spec(spec, errors)`,
@@ -60,6 +63,6 @@ Read the two existing modules' code before writing a third; the contract is what
 5. Add the skill's name pattern to the agent's skill allow-list if its prefix is new, and add its
    folder to the FCOS skills count tests.
 6. Mark the pairing `tested: true` only after the user has built it on a real install and told you
-   it worked. Until then it is `tested: false` and carries no glue.
+   it worked. Until then it is `tested: false`, and any glue is experimental.
 
 The module goes in the repository. What the user's own install looks like stays in their workspace.

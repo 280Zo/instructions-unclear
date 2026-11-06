@@ -63,6 +63,15 @@ class AcmeDataTests(unittest.TestCase):
             acme_data(self.site("generic"))
         self.assertIn("acme", str(caught.exception))
 
+    def test_notes_with_a_placeholder_and_system_variables_are_refused(self):
+        from adapters import _check_adapter
+        base = load_adapter("dns_certificates", "duckdns")
+        base = {k: v for k, v in base.items() if k not in ("generic", "skill_dir")}
+        for bad in (dict(base["acme"], notes="x {{DOMAIN}} y"), dict(base["acme"], env="LD_PRELOAD"),
+                    dict(base["acme"], env="PATH"), dict(base["acme"], env="HOME")):
+            with self.subTest(acme=bad), self.assertRaises(AdapterError):
+                _check_adapter(dict(base, acme=bad), "dns_certificates", "duckdns")
+
     def test_acme_is_checked_and_only_for_the_dns_role(self):
         from adapters import _check_adapter
         base = load_adapter("dns_certificates", "duckdns")

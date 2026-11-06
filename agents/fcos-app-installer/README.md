@@ -36,9 +36,9 @@ plain text and not links.
   once yourself; the tools say the exact command.
 - `python3 tools/check_requirements.py` checks all of these and changes nothing.
 - A virtualization platform, a router, a file server with NFS, and a DNS
-  provider for Let's Encrypt DNS-01 (DuckDNS only today: the login front end's
-  Traefik settings name it, and another provider needs that changed). Each
-  product has an adapter skill in `.opencode/skills/adapter-<product>/` with
+  provider for Let's Encrypt DNS-01 (the adapter's `acme` block gives the
+  certificate client's provider code, so any provider the client supports
+  works once it has an adapter). Each product has an adapter skill in `.opencode/skills/adapter-<product>/` with
   the steps you do yourself. A product without one gets general steps, and the
   agent can draft an adapter as you go.
 
@@ -47,18 +47,23 @@ plain text and not links.
 The agents' skill and subagent filters were tested on OpenCode 2.1.3, so the toolkit needs 2.1.3
 or newer; `tools/check_requirements.py` checks it. The toolkit's rules are in the folder's
 `AGENTS.md`, so it doesn't depend on the config's instructions list, which OpenCode parsed but
-never loaded from 2.0.0 to 2.0.29 (issue 51341); the loader arrived in 2.0.30.
+never loaded from 2.0.0 to 2.0.29 (issue 51341); the loader (`configuredSource` in
+`packages/core/src/config/plugin/instruction.ts`) arrived in 2.0.30.
 
-OpenCode collects `AGENTS.md` from the launch folder up to the project root, or up to the home
-folder when the launch folder is under it, so a toolkit under the home folder also loads
-`~/AGENTS.md` and every `AGENTS.md` in between, git checkout or not. This was read in OpenCode's
-source at v2.1.3 and not tested on a live session. OpenCode's Skills docs say project skills are
+A relative instructions pattern, which this toolkit doesn't use, is resolved with
+`globUp(pattern, start, root)`: it is globbed in the launch folder and every folder above it up to
+the project root (the git root), so it also matches in any enclosing checkout. OpenCode collects
+`AGENTS.md` the same way, from the launch folder up to the project root, or up to the home folder
+when the launch folder is under it (`stop = FSUtil.contains(home, start) ? home : root`), so a
+toolkit under the home folder also loads `~/AGENTS.md` and every `AGENTS.md` in between, git
+checkout or not. This was read in OpenCode's source at v2.1.3 and not tested on a live session. OpenCode's Skills docs say project skills are
 searched the same way, from the current directory up to the project root, at every level. That is
 why the toolkit belongs in a folder of its own.
 
 Sources: https://github.com/anomalyco/opencode/issues/51341 ·
 https://github.com/anomalyco/opencode/pull/51422 ·
 https://github.com/anomalyco/opencode/blob/v2.0.30/packages/core/src/config/plugin/instruction.ts ·
+https://github.com/anomalyco/opencode/blob/v2.0.29/packages/core/src/config/plugin/instruction.ts ·
 https://github.com/anomalyco/opencode/blob/v2.1.3/packages/core/src/config/plugin/instruction.ts
 (`match`, `projectSource`) · https://opencode.ai/v2/docs/skills/ (Discovery)
 

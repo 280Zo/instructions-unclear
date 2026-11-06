@@ -88,7 +88,8 @@ no web address works; fix Traefik first.
 If SSH itself is unreachable, the last way in is the VM's serial console on
 the virtualization server, logging in as `<admin>` with its password. **Not
 proven yet:** in the first test the serial console stayed silent although the
-VM had booted with its console on the serial port (research notes row 13).
+VM had booted with its console on the serial port (the virtualization
+adapter's `reference.md`, "Console on the `proxmoxve` image").
 Until that is fixed and tested, don't count on it.
 
 **Providers.** On Proxmox VE the serial console is `qm terminal <vmid>` on the

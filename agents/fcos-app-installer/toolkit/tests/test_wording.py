@@ -204,8 +204,9 @@ class GuideTests(unittest.TestCase):
         self.assertIn("service_user", text)
 
     def test_dns_provider_gap_is_stated_where_the_choice_is_offered(self):
-        self.assertIn("only one", (GUIDE / "questions.md").read_text().split("## 4.")[0])
-        self.assertIn("DuckDNS only today", (ROOT / "README.md").read_text())
+        self.assertIn("`acme` block", (GUIDE / "questions.md").read_text().split("## 4.")[0])
+        self.assertIn("`acme` block", (ROOT / "README.md").read_text())
+        self.assertNotIn("only today", (ROOT / "README.md").read_text())
 
     def test_login_front_end_output_outside_vm_folders(self):
         for page in guide_pages():

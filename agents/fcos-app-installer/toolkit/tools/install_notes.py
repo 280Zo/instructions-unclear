@@ -18,6 +18,7 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import modules  # noqa: E402
 from workspace import load_site  # noqa: E402
 
 NOTES_START = "<!-- notes for future services: kept when this file is rebuilt -->"
@@ -60,7 +61,8 @@ def render(ws: Path, notes: list[str]) -> str:
     domain = site.get("domain", "<domain>")
     edge = site.get("edge") or {}
     edge_vm = edge.get("vm", "none yet")
-    login_host = (edge.get("authentik") or {}).get("host", f"login.{domain}")
+    chosen = modules.frontend_services(site)
+    login_host = (edge.get(chosen.get("auth_gateway")) or {}).get("host", f"login.{domain}")
     by_vm: dict[str, list[str]] = {}
     for spec in specs:
         by_vm.setdefault(spec.get("vm"), []).append(spec["name"])
@@ -76,7 +78,8 @@ def render(ws: Path, notes: list[str]) -> str:
         shares = ", ".join(s.get("name", "?") for s in vm.get("nfs_shares") or [] if isinstance(s, dict)) or "none"
         names = list(by_vm.get(vm.get("name"), []))
         if vm.get("name") == edge_vm:
-            names = ["login front end (Traefik, Authentik)"] + names
+            products = ", ".join(modules.frontend_products(site))
+            names = [f"login front end ({products})" if products else "login front end"] + names
         out.append(f"| {vm.get('name')} | {vm.get('host', '?')} | {vm.get('ip', '?')} | {vm.get('vlan_tag', 'none')} "
                    f"| {shares} | {', '.join(names) or 'none'} |")
 
@@ -106,7 +109,7 @@ def render(ws: Path, notes: list[str]) -> str:
                    f"| {spec.get('port', 'none')} | {uid}/{spec.get('gid', uid)} | {', '.join(classes) or 'none'} "
                    f"| {backups} |")
 
-    uids = sorted({s.get("uid") for s in specs} | {(edge.get(k) or {}).get("uid") for k in ("traefik", "authentik")} - {None})
+    uids = sorted({s.get("uid") for s in specs} | {(edge.get(k) or {}).get("uid") for k in chosen.values()} - {None})
     ports: dict[str, list] = {}
     for spec in specs:
         if spec.get("port"):
@@ -124,9 +127,9 @@ def render(ws: Path, notes: list[str]) -> str:
 
     out += ["", "## How a new service hooks in", "",
             "- **Where:** ask which server and VM; the table above shows what each VM already runs.",
-            "- **Login:** behind the login front end by default (route plus Authentik application). An app on "
-            "another VM binds to its VM address, and that VM's firewall accepts its port only from the login "
-            "front end.",
+            "- **Login:** ask whether the app goes behind the login page (`login: gateway`, with a route and the "
+            "gateway's rules) or keeps its own login (`login: app-only`). An app on another VM binds to its VM "
+            "address, and that VM's firewall accepts its port only from the login front end.",
             "- **Who sees it:** reuse an existing group when it fits, or ask to create one; no groups means every user.",
             "- **Dashboard:** reuse an existing section when the app fits one, or propose a new one and ask.",
             "- **Numbers:** pick a free UID and port (not in the lists above); `tools/check_workspace.py` checks.",

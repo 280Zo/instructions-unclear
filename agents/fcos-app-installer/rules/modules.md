@@ -22,6 +22,7 @@ provides, what it needs and what it pairs with.
 - **Keep the user's own values out of the module.** Their names, addresses, domains and rendered
   files stay in their workspace. A module holds only what any user of that product needs.
 - **Mark a pairing `tested: false`** until the user has built it on a real install and told you it
-  worked. An untested pairing gets no glue.
+  worked. Glue for an untested pairing is experimental: the generator prints a note, and you tell
+  the user the pairing is unconfirmed.
 - **Ask before you change the toolkit's files.** Editing `tools/`, `templates/`, a skill or a guide
   page needs the user's yes; show the change first.

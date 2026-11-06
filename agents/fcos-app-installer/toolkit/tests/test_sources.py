@@ -61,6 +61,14 @@ class SourceTests(unittest.TestCase):
             block = (GUIDE / name).read_text().split(marker, 1)[1].split("\n## ", 1)[0]
             self.assertNotRegex(block, ISO_DATE, name)
 
+    def test_nothing_points_at_the_deleted_notes_by_row_number(self):
+        pages = list(GUIDE.glob("*.md")) + list(SKILLS_FOLDER.rglob("*.md")) + list(SKILLS_FOLDER.rglob("*.yaml"))
+        for path in pages:
+            text = " ".join(path.read_text().split())
+            with self.subTest(file=str(path.relative_to(ROOT))):
+                self.assertNotRegex(text, r"(?i)research[- ]notes")
+                self.assertNotRegex(text, r"(?i)\brows? \d+")
+
     def test_no_ledger_file_exists(self):
         self.assertFalse((GUIDE / "research-notes.md").exists())
 

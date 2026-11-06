@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Check that no two services in a workspace share what must be unique:
 
-- the name (it is also the VM user, its group, and the Traefik route name),
+- the name (it is also the VM user, its group, and the route name),
 - the UID, and the GID (each gives the app's pinned subordinate ID range),
 - the port on one VM (strict: also when one service binds only to loopback),
 - the web name (hostname), including the login page's own name.
 
-Also taken: the login front end's own services (Traefik, Authentik, from
-site.yaml) and Traefik's web ports 80 and 443 on its VM; and what every VM
+Also taken: the login front end's own services (the modules site.yaml
+chooses) and the ingress's web ports 80 and 443 on its VM; and what every VM
 has: the admin account (name, and UID/GID 1000 and 1001, which useradd picks
 from next to FCOS's core user; build-vm.sh makes base-config merge first),
 core, root, nobody, wheel, sudo, and the shared groups (name and GID). The
@@ -22,6 +22,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import modules  # noqa: E402
 from gen_service import MAX_ID, MIN_ID, SpecError  # noqa: E402
 
 KINDS = ("name", "uid", "gid", "port", "hostname")
@@ -91,13 +92,14 @@ def workspace_problems(site: dict, specs: list) -> list[str]:
 
     # The login front end.
     edge = site.get("edge") if isinstance(site.get("edge"), dict) else {}
-    authentik = edge.get("authentik") if isinstance(edge.get("authentik"), dict) else {}
-    host = authentik.get("host")
+    chosen = modules.frontend_services(site)
+    section = edge.get(chosen.get("auth_gateway"))
+    host = section.get("host") if isinstance(section, dict) else None
     if isinstance(host, str) and host:
-        claim("hostname", host.split(".")[0], "authentik (the login page)")
-    if _scalar(edge.get("vm")):
+        claim("hostname", host.split(".")[0], f"{chosen['auth_gateway']} (the login page)")
+    if _scalar(edge.get("vm")) and "ingress" in chosen:
         for port in (80, 443):
-            claim("port", (edge["vm"], port), "traefik (the login front end's web ports)")
+            claim("port", (edge["vm"], port), f"{chosen['ingress']} (the login front end's web ports)")
 
     for spec in _frontend(site, problems) + list(specs):
         if not isinstance(spec, dict):

@@ -168,6 +168,9 @@ def main(argv: list[str]) -> int:
         services = [yaml.safe_load(Path(p).read_text(encoding="utf-8")) for p in argv[3:]]
         # Each service's icon file sits next to its spec.
         icon_dirs = {s.get("name"): Path(p).parent for s, p in zip(services, argv[3:]) if isinstance(s, dict)}
+        note = modules.pairing_note(modules.chosen(site))
+        if note:
+            print(f"login_frontend: note: {note}", file=sys.stderr)
         for path in generate_login_frontend(site, services, argv[2], icon_dirs):
             print(path)
     except (OSError, yaml.YAMLError, SpecError) as error:

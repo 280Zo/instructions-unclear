@@ -387,20 +387,31 @@ class AcmeTests(FrontendCase):
 
     def test_the_default_site_uses_the_provider_it_names(self):
         out = self.gen(site=self.site("duckdns"))
-        self.assertIn("provider: duckdns", self.read(out, "files/traefik.yml"))
+        self.assertIn('provider: "duckdns"', self.read(out, "files/traefik.yml"))
         self.assertIn("DUCKDNS_TOKEN", "".join(self.all_containers(out).values()))
 
     def test_another_dns_provider_changes_the_settings_secret_and_variable(self):
         self.other_provider()
         out = self.gen(site=self.site("exampledns"))
         static = self.read(out, "files/traefik.yml")
-        self.assertIn("provider: exampledns", static)
+        self.assertIn('provider: "exampledns"', static)
         self.assertIn("Example DNS allows several TXT records.", static)
         text = "".join(self.all_containers(out).values()) + (out / "secrets.md").read_text()
         self.assertIn("EXAMPLEDNS_API_KEY", text)
         self.assertIn("exampledns_key", text)
         everything = "".join(p.read_text() for p in out.rglob("*") if p.is_file())
         self.assertNotIn("duckdns", everything.lower())
+
+    def test_the_provider_code_is_written_quoted_so_a_yaml_word_stays_text(self):
+        self.other_provider()
+        import adapters
+        path = adapters.ADAPTERS / "adapter-exampledns" / "adapter.yaml"
+        data = yaml.safe_load(path.read_text())
+        data["acme"]["provider"] = "null"
+        path.write_text(yaml.safe_dump(data))
+        out = self.gen(site=self.site("exampledns"))
+        static = yaml.safe_load(self.read(out, "files/traefik.yml"))
+        self.assertEqual(static["certificatesResolvers"]["letsencrypt"]["acme"]["dnsChallenge"]["provider"], "null")
 
     def test_no_dns_provider_chosen_stops_the_generator_with_the_fix(self):
         site = copy.deepcopy(SITE)

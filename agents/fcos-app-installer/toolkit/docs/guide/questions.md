@@ -51,8 +51,10 @@ your domain's certificates?"
 
 **Options:** the products the agent has adapters for; "something else" (then
 the agent uses general steps and offers to write an adapter as you go). For
-the certificate's DNS, only one provider is wired into the login page today;
-another needs a change to the agent first, and the agent says so.
+the certificate's DNS, the provider's adapter carries an `acme` block (the
+certificate client's provider code and the variable for the token); a provider
+without an adapter gets one drafted with that block, from the provider's own
+documentation.
 
 **Fills:** which set of owner steps the agent shows you for each part.
 
