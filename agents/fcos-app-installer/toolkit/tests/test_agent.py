@@ -334,7 +334,7 @@ class AgentTests(unittest.TestCase):
         text = body(self.text)
         for phrase in ("docs/guide/README.md", "docs/guide/questions.md", "publish_check.py", "which server",
                        "5 GB", "[Owner]", "secret", "workspace", "tools/pve.py", "tools/adapters.py",
-                       "tools/gen_service.py", "tools/login_frontend.py", "research-notes.md"):
+                       "tools/gen_service.py", "tools/login_frontend.py", "reference.md"):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase.lower(), text.lower())
 

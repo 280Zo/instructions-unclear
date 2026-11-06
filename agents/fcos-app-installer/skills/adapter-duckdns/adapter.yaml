@@ -11,6 +11,11 @@ docs:
 discovery:
   ask: the DuckDNS domain (the site file's domain).
 capabilities: {}
+acme:
+  provider: duckdns
+  env: DUCKDNS_TOKEN
+  store_as: duckdns_token
+  notes: DuckDNS holds one TXT record at a time, so never add extra names (sans) next to the wildcard.
 owner_steps:
   api_token:
     title: Copy your DuckDNS token for {{DOMAIN}}
@@ -20,9 +25,9 @@ owner_steps:
     uses: [DOMAIN]
     report_back:
       - done (never the token itself)
-  traefik_provider:
-    title: Traefik's DuckDNS provider (nothing to do)
+  acme_provider:
+    title: The certificate client's DuckDNS provider (nothing to do)
     steps:
-      - Traefik's built-in duckdns provider uses the environment variable DUCKDNS_TOKEN, which the login front end fills from the secret duckdns_token. There is nothing for you to set up.
+      - The certificate client's duckdns provider uses the environment variable DUCKDNS_TOKEN, which the login front end fills from the secret duckdns_token. There is nothing for you to set up.
     uses: []
     report_back: []

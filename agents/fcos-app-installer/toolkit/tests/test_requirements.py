@@ -86,7 +86,7 @@ class RequirementsTests(unittest.TestCase):
         expected = " ".join(guide.split("Expected:", 1)[1].split("\n\n", 1)[0].split())
         self.assertNotIn("git", expected)
         self.assertIn("launch folder", expected)
-        notes = (ROOT / "docs" / "guide" / "research-notes.md").read_text()
+        notes = (ROOT / "README.md").read_text()
         self.assertIn("2.0.30", notes)
         self.assertIn("51341", notes)
 

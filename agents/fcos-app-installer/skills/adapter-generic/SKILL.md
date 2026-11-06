@@ -40,4 +40,4 @@ or node name.
 | virtualization | `download_image`, `copy_ignition_snippet`, `rebuild_os_disk`, `create_api_access` |
 | router firewall | `reserve_ip`, `dns_wildcard`, `allow_flows` |
 | file server | `nfs_export`, `service_user`, `backup_folder` |
-| dns certificates | `api_token`, `traefik_provider` |
+| dns certificates | `api_token`, `acme_provider` |

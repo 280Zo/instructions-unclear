@@ -53,7 +53,7 @@ ROLE_STEPS = {
     "virtualization": ["download_image", "copy_ignition_snippet", "rebuild_os_disk", "create_api_access"],
     "router_firewall": ["reserve_ip", "dns_wildcard", "allow_flows"],
     "file_server": ["nfs_export", "service_user", "backup_folder"],
-    "dns_certificates": ["api_token", "traefik_provider"],
+    "dns_certificates": ["api_token", "acme_provider"],
 }
 PROVIDER = re.compile(r"[a-z][a-z0-9-]{0,40}")
 STEP_ID = re.compile(r"[a-z][a-z0-9_]{0,40}")
@@ -75,7 +75,11 @@ PATH_VALUE = re.compile(r"/[A-Za-z0-9._/@+-]{1,199}")
 OPTIONS_VALUE = re.compile(r"[a-z0-9_]+=[A-Za-z0-9._-]+(,[a-z0-9_]+=[A-Za-z0-9._-]+)*")
 MACHINE = re.compile(r".+ \((bash|fish)(, [^)]+)?\)")
 TOP_KEYS = {"role", "provider", "name", "docs", "discovery", "capabilities", "defaults", "owner_steps", "scripts",
-            "draft", "notes"}
+            "draft", "notes", "acme"}
+ACME_KEYS = {"provider", "env", "store_as", "notes"}
+ACME_PROVIDER = re.compile(r"[a-z0-9][a-z0-9-]{0,40}")
+ACME_ENV = re.compile(r"[A-Z][A-Z0-9_]{0,60}")
+ACME_STORE_AS = re.compile(r"[a-z][a-z0-9_]{0,60}")
 STEP_KEYS = {"title", "steps", "blocks", "uses", "report_back"}
 
 
@@ -132,6 +136,24 @@ def _check_step(where: str, step) -> None:
                 raise AdapterError(f"{where}: {{{{{name}}}}} is used but not listed in uses")
 
 
+def _check_acme(acme, role: str, where: str) -> None:
+    """How a certificate client proves the domain through this DNS provider (dns_certificates only):
+    its provider code, the environment variable that holds the token, and the name the token is stored under."""
+    if role != "dns_certificates":
+        raise AdapterError(f"{where}: acme is only for the dns_certificates role")
+    if not (isinstance(acme, dict) and set(acme) <= ACME_KEYS and {"provider", "env", "store_as"} <= set(acme)):
+        raise AdapterError(f"{where}: acme needs provider, env and store_as (and may have notes)")
+    if not (isinstance(acme["provider"], str) and ACME_PROVIDER.fullmatch(acme["provider"])):
+        raise AdapterError(f"{where}: acme provider must be the client's provider code (lowercase letters, digits, -)")
+    if not (isinstance(acme["env"], str) and ACME_ENV.fullmatch(acme["env"])):
+        raise AdapterError(f"{where}: acme env must be the environment variable that holds the token (capitals, digits, _)")
+    if not (isinstance(acme["store_as"], str) and ACME_STORE_AS.fullmatch(acme["store_as"])):
+        raise AdapterError(f"{where}: acme store_as must be the name the token is stored under (lowercase letters, digits, _)")
+    note = acme.get("notes", "")
+    if not (isinstance(note, str) and len(note) <= 300 and note.isprintable()):
+        raise AdapterError(f"{where}: acme notes must be one printable line of at most 300 characters")
+
+
 def _check_adapter(data, role: str, provider: str) -> dict:
     where = f"adapter-{provider}/adapter.yaml"
     if not isinstance(data, dict):
@@ -154,6 +176,8 @@ def _check_adapter(data, role: str, provider: str) -> dict:
     if not _strings(data.get("scripts", [])) and data.get("scripts", []) != []:
         raise AdapterError(f"{where}: scripts must be a list of paths")
     _check_scripts(data.get("scripts", []), where)
+    if "acme" in data:
+        _check_acme(data["acme"], role, where)
     steps = data.get("owner_steps")
     if not isinstance(steps, dict):
         raise AdapterError(f"{where}: owner_steps is required")
@@ -239,6 +263,26 @@ def load_adapter(role: str, provider: str | None, root: Path | None = None) -> d
     steps = _generic_steps(role)
     return {"role": role, "provider": provider or "generic", "name": provider or "generic", "generic": True,
             "docs": [], "discovery": {}, "capabilities": {}, "defaults": {}, "scripts": [], "owner_steps": steps}
+
+
+def acme_data(site: dict) -> dict:
+    """The certificate-client data (provider code, token variable, secret name) of the DNS provider
+    the site names under roles.dns_certificates.provider. Nothing is assumed: an unset provider, or
+    an adapter without acme data, is an error that says what to do."""
+    roles = site.get("roles") if isinstance(site, dict) else None
+    entry = roles.get("dns_certificates") if isinstance(roles, dict) else None
+    provider = entry.get("provider") if isinstance(entry, dict) else None
+    if provider in (None, "ASK"):
+        raise AdapterError("site.yaml: roles.dns_certificates.provider is not set; ask the user which DNS provider "
+                           "holds the domain, then name its adapter (python3 tools/adapters.py show --role "
+                           "dns_certificates --provider <name>)")
+    adapter = load_adapter("dns_certificates", provider)
+    acme = adapter.get("acme")
+    if not acme:
+        raise AdapterError(f"adapter-{provider} has no acme data (the certificate client's provider code, the "
+                           "token's environment variable and the name it is stored under); add an acme: block to its "
+                           "adapter.yaml (see docs/guide/12-add-a-module.md and the lego provider list)")
+    return acme
 
 
 def _checksum_key(path: str) -> str:

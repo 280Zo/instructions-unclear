@@ -38,6 +38,13 @@ class RulesTests(unittest.TestCase):
                        "[hidden]", "placeholders", "192.0.2.", "workspace"):
             self.assertIn(needle.lower(), text.lower())
 
+    def test_modules_rule_tells_the_agent_how_to_add_support_for_another_tool(self):
+        text = flat(AGENTS_MD).lower()
+        for needle in ("# adding support for another tool", "never choose a product for the user",
+                       "python3 tools/modules.py list", "docs/guide/12-add-a-module.md", "reference.md",
+                       "tested: false", "workspace", "write the tests first"):
+            self.assertIn(needle, text)
+
     def test_rules_are_portable(self):
         text = AGENTS_MD.read_text()
         for word in ("Butane", "Ignition", "Quadlet", "Fedora CoreOS", "Proxmox", "Authentik"):

@@ -2,8 +2,9 @@
 
 This guide is the procedure for building Fedora CoreOS (FCOS) virtual machines
 and adding services to them. A person can follow it by hand, and the
-`fcos-app-installer` agent follows it step by step. Verified facts and their sources:
-[`research-notes.md`](research-notes.md). The questions the agent asks, in
+`fcos-app-installer` agent follows it step by step. The facts it relies on, with their
+sources, are on the pages that use them and in each module's or adapter's `reference.md`.
+The questions the agent asks, in
 order and in plain language: [`questions.md`](questions.md).
 
 **Private data stays out of this repository.** Every real value (names,

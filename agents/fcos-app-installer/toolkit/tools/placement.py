@@ -7,7 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from gen_service import SpecError, _volume_host  # noqa: E402
 
-PLACEHOLDER = re.compile(r"<site: ([a-z_]+(?:\.[a-z_]+)*)>")
+PLACEHOLDER = re.compile(r"<(site|acme): ([a-z_]+(?:\.[a-z_]+)*)>")
 
 
 def site_value(site: dict, dotted: str):
@@ -19,17 +19,23 @@ def site_value(site: dict, dotted: str):
     return node
 
 
-def filled(node, site: dict):
-    """A spec with every "<site: a.b.c>" value filled in from the site file."""
+def filled(node, site: dict, acme: dict | None = None):
+    """A spec with every "<site: a.b.c>" value filled in from the site file, and every
+    "<acme: key>" value from the certificate data of the site's DNS provider."""
     if isinstance(node, dict):
-        return {k: filled(v, site) for k, v in node.items()}
+        return {k: filled(v, site, acme) for k, v in node.items()}
     if isinstance(node, list):
-        return [filled(v, site) for v in node]
+        return [filled(v, site, acme) for v in node]
     if isinstance(node, str):
         match = PLACEHOLDER.fullmatch(node)
         if match:
-            return site_value(site, match.group(1))
-        if "<site:" in node:
+            if match.group(1) == "acme":
+                if not acme or match.group(2) not in acme:
+                    raise SpecError(f"login front end spec: no certificate data {match.group(2)!r} "
+                                    "(the DNS provider's adapter needs an acme block)")
+                return acme[match.group(2)]
+            return site_value(site, match.group(2))
+        if "<site:" in node or "<acme:" in node:
             raise SpecError(f"login front end spec: malformed placeholder {node!r}")
     return node
 

@@ -26,6 +26,7 @@ SITE = {
     "admin_user": "admin",
     "backups": {"keep": 14, "oncalendar": "*-*-* 02:15:00",
                 "sqlite_image": "docker.io/library/python:3-alpine"},
+    "roles": {"dns_certificates": {"provider": "duckdns"}},
     "login_frontend": {"ingress": "ingress-traefik", "auth_gateway": "authgw-authentik"},
     "edge": {"traefik": {"uid": 3202, "gid": 3202}, "authentik": {"uid": 3201, "gid": 3201}},
     "vms": [

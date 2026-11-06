@@ -371,7 +371,7 @@ Saved selections, so you don't have to list folders. [`groups/README.md`](groups
 | `career`              | Career skills in a folder you choose; the `career` agent comes with `default`                                                                 |
 | `reverse_engineering` | REA, the `reverse-engineering` agent and its helpers, and disabled ReVa/radare2 connections, in a folder you choose; IoTHackBot is native-owned                                      |
 | `design`              | Design skills for graphics, UI, palettes and brand, in a folder you choose                                                                    |
-| `fcos_app_installer`  | The FCOS app installer agent, helper, command, 8 skills and 2 rules, in a folder of its own; run `install.py` first                           |
+| `fcos_app_installer`  | The FCOS app installer agent, helper, command, 8 skills and 3 rules, in a folder of its own; run `install.py` first                           |
 
 ```bash
 npx rulesync@41.0.0 generate --config groups/default.jsonc --global

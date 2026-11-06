@@ -32,13 +32,59 @@ def every_value(adapter, step_id) -> dict:
     return {key: example_value(key) for key in adapter["owner_steps"][step_id].get("uses", []) if key not in skip}
 
 
+class AcmeDataTests(unittest.TestCase):
+    """The DNS adapter says how a certificate client proves the domain through that provider; the
+    ingress module reads it, so no provider is written into any proxy template."""
+
+    def site(self, provider):
+        return {"roles": {"dns_certificates": {"provider": provider}}}
+
+    def test_the_dns_adapter_carries_the_certificate_provider_data(self):
+        acme = load_adapter("dns_certificates", "duckdns")["acme"]
+        self.assertEqual(acme["provider"], "duckdns")
+        self.assertEqual(acme["env"], "DUCKDNS_TOKEN")
+        self.assertEqual(acme["store_as"], "duckdns_token")
+        self.assertTrue(acme["notes"])
+
+    def test_acme_data_is_read_for_the_provider_the_site_names(self):
+        from adapters import acme_data
+        self.assertEqual(acme_data(self.site("duckdns")), load_adapter("dns_certificates", "duckdns")["acme"])
+
+    def test_no_provider_chosen_is_an_error_that_says_what_to_do(self):
+        from adapters import acme_data
+        for site in ({}, {"roles": {}}, self.site("ASK"), self.site(None)):
+            with self.subTest(site=site), self.assertRaises(AdapterError) as caught:
+                acme_data(site)
+            self.assertIn("roles.dns_certificates.provider", str(caught.exception))
+
+    def test_an_adapter_without_acme_data_is_named(self):
+        from adapters import acme_data
+        with self.assertRaises(AdapterError) as caught:
+            acme_data(self.site("generic"))
+        self.assertIn("acme", str(caught.exception))
+
+    def test_acme_is_checked_and_only_for_the_dns_role(self):
+        from adapters import _check_adapter
+        base = load_adapter("dns_certificates", "duckdns")
+        base = {k: v for k, v in base.items() if k not in ("generic", "skill_dir")}
+        for bad in ({"provider": "x"}, {"provider": "x y", "env": "T", "store_as": "s"},
+                    {"provider": "x", "env": "lower", "store_as": "s"},
+                    {"provider": "x", "env": "T", "store_as": "Bad Name"}, "text"):
+            with self.subTest(acme=bad), self.assertRaises(AdapterError):
+                _check_adapter(dict(base, acme=bad), "dns_certificates", "duckdns")
+        file_server = load_adapter("file_server", "truenas")
+        file_server = {k: v for k, v in file_server.items() if k not in ("generic", "skill_dir")}
+        with self.assertRaises(AdapterError):
+            _check_adapter(dict(file_server, acme=base["acme"]), "file_server", "truenas")
+
+
 class AdapterTests(unittest.TestCase):
     def test_role_steps_are_the_planned_ones(self):
         self.assertEqual(ROLE_STEPS, {
             "virtualization": ["download_image", "copy_ignition_snippet", "rebuild_os_disk", "create_api_access"],
             "router_firewall": ["reserve_ip", "dns_wildcard", "allow_flows"],
             "file_server": ["nfs_export", "service_user", "backup_folder"],
-            "dns_certificates": ["api_token", "traefik_provider"],
+            "dns_certificates": ["api_token", "acme_provider"],
         })
 
     def test_every_adapter_has_role_steps(self):

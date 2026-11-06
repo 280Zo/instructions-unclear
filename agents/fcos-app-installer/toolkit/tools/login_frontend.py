@@ -32,6 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import modules  # noqa: E402
 from gen_service import (DOMAIN, SpecError, _plain, _vm_entry, _write_all, generate, has_route,  # noqa: E402
                          route_texts, validate_spec)
+from adapters import AdapterError, acme_data  # noqa: E402
 from placement import filled, site_value  # noqa: E402
 
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+")
@@ -43,11 +44,20 @@ def _modules(site: dict):
     return names, modules.code(names["ingress"]), modules.code(names["auth_gateway"])
 
 
+def _acme(site: dict) -> dict:
+    """The certificate data of the DNS provider the site names (its adapter's acme block)."""
+    try:
+        return acme_data(site)
+    except AdapterError as error:
+        raise SpecError(str(error)) from None
+
+
 def frontend_specs(site: dict) -> tuple[dict, dict]:
-    """The ingress and gateway specs with every <site: ...> value filled in."""
+    """The ingress and gateway specs with every <site: ...> and <acme: ...> value filled in."""
     import yaml
     names = modules.chosen(site)
-    specs = [filled(yaml.safe_load(modules.spec_path(names[key]).read_text(encoding="utf-8")), site)
+    acme = _acme(site)
+    specs = [filled(yaml.safe_load(modules.spec_path(names[key]).read_text(encoding="utf-8")), site, acme)
              for key in ("ingress", "auth_gateway")]
     return specs[0], specs[1]
 
@@ -130,7 +140,7 @@ def generate_login_frontend(site: dict, services: list, out, icon_dirs: dict | N
     for spec in routed:
         routes[spec["name"]], bindings[spec["name"]] = route_texts(spec, site)
     files, entries = ingress.place(site, ingress_spec, names["auth_gateway"],
-                                   gateway.forward_auth_values(site), routes)
+                                   gateway.forward_auth_values(site), routes, _acme(site))
     more_files, more_entries, directories = gateway.place(site, gateway_spec, config, routed, bindings, icon_dirs)
     files.update(more_files)
     entries += more_entries

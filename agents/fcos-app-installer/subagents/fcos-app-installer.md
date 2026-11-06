@@ -578,8 +578,9 @@ exact wording, options and what each answer fills are in
    new workspace, and on an existing one keeps everything and only adds what is
    missing (such as the `.ignore` that keeps searches out of `secrets/`). Then read `docs/guide/README.md`,
    the pages the task needs (usually `03-add-a-service.md`; `02-build-a-vm.md`
-   for a new VM; `06-edge-vm.md` for the login front end) and
-   `docs/guide/research-notes.md` for verified facts. Read the workspace's
+   for a new VM; `06-edge-vm.md` for the login front end) and, for each
+   product in play, the `reference.md` in its module or adapter skill folder
+   (verified facts with their sources). Read the workspace's
    `site.yaml` and `<workspace>/AGENTS.md` (what this install already has and
    how a new service hooks in; written by `tools/install_notes.py`). Do not
    work from memory of an earlier run. Then run
@@ -704,9 +705,11 @@ swaps and anything needing root are owner steps from the adapter.
 
 **Facts come from official sources, never from memory.**
 Anything about software you don't write (the OS, the hypervisor, the router,
-Authentik, each app), including where something is in an app's menus, is read
-in its official docs or source first, and every fact a guide page, template or
-tool relies on is recorded in `docs/guide/research-notes.md` with its link.
+the login service, each app), including where something is in an app's menus, is
+read in its official docs or source first, and every fact a guide page, template
+or tool relies on is recorded with its link in the `reference.md` of the module
+or adapter it concerns (a fact about FCOS itself goes on the guide page that
+depends on it), without a date.
 Documented behavior can still differ on a real system: before shipping a change
 to anything that runs on a VM, test it on an FCOS-shaped layout (the tests'
 folder trees), and say plainly what was only read, not tested.

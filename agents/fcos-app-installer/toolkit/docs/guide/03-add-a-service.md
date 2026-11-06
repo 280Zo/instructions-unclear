@@ -379,3 +379,33 @@ the app), the agent gets temporary access and gives it back:
 3. **[Agent]** When done: `python3 tools/appapi.py forget <svc>` deletes the
    local copy. **[Owner]** Delete the token in the app itself; the final
    report says where.
+
+## 3.13 Facts the service files rely on
+
+Each fact comes from the official source linked under it, not from memory. Re-check one when its source changes.
+
+### Rootless Quadlet path and linger
+
+Quadlets for a non-root user can live in `/etc/containers/systemd/users/${UID}/`. Linger comes from an empty file at `/var/lib/systemd/linger/<user>`, written by Butane. The installed Podman is 5.8.9
+
+Source: https://github.com/containers/podman/blob/main/docs/source/markdown/podman-systemd.unit.5.md · https://github.com/coreos/fedora-coreos-docs/blob/main/modules/ROOT/pages/tutorial-user-systemd-unit-on-boot.adoc
+
+### subuid/subgid for Ignition users
+
+Created automatically for normal users. Users created with `system: true` get **none**, which breaks rootless Podman. Service users are therefore normal users with fixed `uid`, not `system: true`. First-boot checks confirm `/etc/subuid`
+
+Source: https://github.com/coreos/fedora-coreos-tracker/issues/472
+
+### How the templates handle rootless services
+
+These are design choices, not facts from a source.
+
+- **Container auto-update:** the system `podman-auto-update.timer` updates only root's containers, so
+  rootless containers need the user-level `podman-auto-update.timer`. The base config enables it for
+  all users through `/etc/systemd/user/timers.target.wants/` and sets its schedule with a drop-in
+  under `/etc/systemd/user/podman-auto-update.timer.d/`.
+- **"Won't start if storage is missing":** a user systemd manager can't order itself after the
+  system's `.mount` units, so `RequiresMountsFor=` isn't reliable there. Each Quadlet runs
+  `ExecStartPre=/usr/bin/mountpoint -q <mount-root>` for every mount root it uses. Accessing an
+  automount point triggers the NFS mount, and if the mount fails the service fails. Rootful
+  exceptions also add `RequiresMountsFor=`.

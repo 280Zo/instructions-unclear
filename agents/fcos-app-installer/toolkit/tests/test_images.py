@@ -143,7 +143,7 @@ class DocsTests(unittest.TestCase):
         section = readme.split("## Updating", 1)[1].split("\n## ", 1)[0]
         text = " ".join(section.split())
         for needle in ("python3 tools/check_updates.py", "tools/images.env", "official release notes",
-                       "research-notes.md", "test-first", "10-trial-run.md",
+                       "relies on it", "test-first", "10-trial-run.md",
                        "For the agent", "For a person"):
             with self.subTest(needle=needle):
                 self.assertIn(needle, text)

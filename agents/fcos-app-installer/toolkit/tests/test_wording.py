@@ -3,7 +3,7 @@
 - Questions are plain language: no config keys, field paths or internal names.
 - The procedure pages are provider-neutral: provider commands and names live in
   the adapter skills (adapter-* in the skills folder). A paragraph that starts with **Providers.** may name providers and
-  link their adapters. research-notes.md is exempt: it cites provider sources.
+  link their adapters.
 - Real values live in the private workspace, never in a repo config.yaml or vms/.
 """
 import re
@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 GUIDE = ROOT / "docs" / "guide"
 QUESTIONS = GUIDE / "questions.md"
-PROVIDER_EXEMPT = {"research-notes.md"}  # cites provider sources; still checked for workspace paths and links
+PROVIDER_EXEMPT = set()
 PROVIDER_WORDS = [r"\bqm ", r"\bpvesm\b", r"\bpveum\b", r"\bpvesh\b", r"OPNsense", r"TrueNAS", r"Proxmox",
                   r"DuckDNS"]
 

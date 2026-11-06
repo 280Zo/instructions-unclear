@@ -146,3 +146,20 @@ temporary server). The two count lines must be equal. The run removes the
 throwaway container when it ends. The files archive of a service can hold
 credentials, such as an app's own key files and its logs, so keep its folder on
 the file server readable by the service's account only (mode 0750 or 0700).
+
+## How SQLite backups run
+
+This is a design choice, not a fact from a source. FCOS doesn't ship `sqlite3`, and app images may
+not include it. SQLite backups run Python's `sqlite3.Connection.backup()` (the online backup API) in
+the official `docker.io/library/python:3-alpine` image, mounting the database read-write and the
+file-server folder.
+
+## Facts the restore test relies on
+
+Each fact comes from the official source linked under it, not from memory. Re-check one when its source changes.
+
+### MariaDB restore and its test (MariaDB 11 image, on a real install)
+
+The image needs one of `MARIADB_RANDOM_ROOT_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MARIADB_ROOT_PASSWORD_HASH` or `MARIADB_ALLOW_EMPTY_ROOT_PASSWORD` (the empty one is fine for a throwaway with no network). The entrypoint starts a temporary server for initialization and logs `MariaDB init process done. Ready for start up.` when it stops it. `mariadb-dump` enables `--opt` by default; the real dump had a `DROP TABLE IF EXISTS` per table (95) and no `CREATE DATABASE`. Loading that dump into a throwaway server restored the same counts as the live database. Loading into a live database was not tested
+
+Source: https://raw.githubusercontent.com/docker-library/docs/master/mariadb/README.md · https://raw.githubusercontent.com/MariaDB/mariadb-docker/master/docker-entrypoint.sh · https://mariadb.com/docs/server/clients-and-utilities/backup-restore-and-import-clients/mariadb-dump

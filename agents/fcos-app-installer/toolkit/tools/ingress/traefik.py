@@ -104,15 +104,18 @@ def route_text(kind: str, gateway: str, values: dict) -> str:
     raise SpecError(f"login {kind!r} has no route kind")  # fail closed on a new value
 
 
-def place(site: dict, spec: dict, gateway: str, gateway_values: dict, routes: dict) -> tuple[dict, list]:
-    """(files, Butane entries) for the ingress on the login VM: static settings, the shared glue file
-    for the auth gateway, and one route file per routed service."""
+def place(site: dict, spec: dict, gateway: str, gateway_values: dict, routes: dict,
+          acme: dict) -> tuple[dict, list]:
+    """(files, Butane entries) for the ingress on the login VM: static settings (with the DNS
+    provider's certificate data), the shared glue file for the auth gateway, and one route file per
+    routed service."""
     uid, gid = spec["uid"], spec.get("gid", spec["uid"])
     config, dynamic = folder(spec, "/etc/traefik"), folder(spec, "/dynamic")
     glue_name = f"00-{gateway}.yml"
     files = {
         "rendered/files/traefik.yml": _fill("traefik.yml.tmpl", {
-            "DOMAIN": site["domain"], "ACME_EMAIL": site["acme_email"]}),
+            "DOMAIN": site["domain"], "ACME_EMAIL": site["acme_email"], "ACME_PROVIDER": acme["provider"],
+            "ACME_NOTE": f"# {acme['notes']}" if acme.get("notes") else "#"}),
         f"rendered/files/{glue_name}": _fill(_glue(gateway, "middleware.yml.tmpl"), gateway_values),
     }
     entries = [file_entry(f"{config}/traefik.yml", "files/traefik.yml", uid, gid),

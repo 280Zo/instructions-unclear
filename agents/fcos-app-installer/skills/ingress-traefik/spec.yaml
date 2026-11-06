@@ -8,7 +8,8 @@
 # apps on the LAN. Routes come only from files in /dynamic (no container
 # socket). Its settings and routes are written by login_frontend.py into the
 # config and dynamic folders, which the container mounts read-only.
-# One wildcard certificate via DuckDNS DNS-01; it is kept in acme/.
+# One wildcard certificate via the ACME DNS-01 challenge, with the site's DNS provider
+# (<acme: ...> values come from its adapter); it is kept in acme/.
 name: traefik
 vm: "<site: edge.vm>"
 uid: "<site: edge.traefik.uid>"
@@ -22,10 +23,10 @@ containers:
     image: "<site: edge.traefik.image>"
     user_mode: map-user
     network: host
-    secrets: [{env: DUCKDNS_TOKEN, name: duckdns_token}]
+    secrets: [{env: "<acme: env>", name: "<acme: store_as>"}]
     volumes:
       - {path: /etc/traefik, class: local, name: config, read_only: true, expected_gib: 0.1}
       - {path: /dynamic, class: local, name: dynamic, read_only: true, expected_gib: 0.1}
       - {path: /acme, class: local, name: acme, expected_gib: 0.1}
 secrets:
-  - {name: duckdns_token, durable: true, source: prompt}
+  - {name: "<acme: store_as>", durable: true, source: prompt}

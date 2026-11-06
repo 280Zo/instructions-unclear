@@ -3,7 +3,7 @@ provider: proxmox
 name: Proxmox VE
 notes: >-
   Tested on Proxmox VE 9.2 with the Fedora CoreOS stable proxmoxve image
-  (docs/guide/research-notes.md rows 10-15). The agent creates, starts and
+  (this skill's reference.md). The agent creates, starts and
   checks VMs through tools/pve.py with a pool-scoped API token; it never runs
   commands on the host. Everything that deletes, or needs root, is an owner
   step. Blocks that change or delete things run as one strict script
@@ -23,7 +23,7 @@ capabilities:
   api_start_vm: true
   api_delete_vm: false
 defaults:
-  # Ignition on an uploaded NoCloud ISO (ide2) works (research-notes.md, row 12).
+  # Ignition on an uploaded NoCloud ISO (ide2) works (this skill's reference.md).
   # copy_ignition_snippet is the fallback when uploads are not allowed.
   ignition_method: nocloud-iso
 scripts:

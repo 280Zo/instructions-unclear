@@ -108,10 +108,10 @@ roles:
         uses: [DOMAIN]
         report_back:
           - done (never the token itself)
-      traefik_provider:
-        title: Tell the agent which certificate provider Traefik should use
+      acme_provider:
+        title: Tell the agent which certificate provider the proxy should use
         steps:
-          - Find your DNS provider in lego's list of DNS providers (go-acme.github.io/lego/dns/; Traefik uses lego for certificates) and note its provider code and the environment variable names it needs.
+          - Find your DNS provider in lego's list of DNS providers (go-acme.github.io/lego/dns/; many certificate clients use lego) and note its provider code and the environment variable names it needs.
         uses: []
         report_back:
           - the provider code and the variable names (never their values)

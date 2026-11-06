@@ -257,3 +257,43 @@ booted. The serial console is not a proven fallback yet (see
 under `/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi1`. Check the
 `by-id` name on the VM, fix the device path in the base template, and rebuild
 ([section 5](05-rebuild-a-vm.md)).
+
+## 2.8 Facts the base configuration relies on
+
+Each fact comes from the official source linked under it, not from memory. Re-check one when its source changes.
+
+### Latest stable Butane FCOS spec
+
+`version: 1.7.0` (emits Ignition spec 3.6.0). Ignition 2.26.0 marked 3.6.0 stable. FCOS stable ships Ignition 2.27.0.
+
+Source: https://github.com/coreos/butane/blob/main/docs/specs.md · https://github.com/coreos/ignition/blob/main/docs/release-notes.md
+
+### `qemu-guest-agent` in FCOS
+
+**Not shipped** (absent from the FCOS package lock). Layering packages with rpm-ostree is avoided.
+
+Source: https://github.com/coreos/fedora-coreos-config/blob/testing-devel/manifest-lock.x86_64.json
+
+### Firewall on FCOS
+
+`nftables` and `iptables-nft` ship; `firewalld` does not. `nftables.service` runs `nft -f /etc/sysconfig/nftables.conf`. It's disabled by default; Butane enables it
+
+Source: the FCOS package lock (above) · https://src.fedoraproject.org/rpms/nftables/blob/rawhide/f/nftables.service
+
+### sudo on FCOS
+
+`/etc/sudoers.d/coreos-sudo-group`: `%sudo ALL=(ALL) NOPASSWD: ALL`. `wheel` uses Fedora's stock rule. Users in `sudo` get non-interactive sudo, so no sudoers drop-in is needed
+
+Source: https://github.com/coreos/fedora-coreos-config/blob/testing-devel/overlay.d/05core/etc/sudoers.d/coreos-sudo-group · https://github.com/coreos/fedora-coreos-docs/blob/main/modules/ROOT/pages/authentication.adoc
+
+### Automatic updates
+
+Zincati is active by default: FCOS updates itself and reboots.
+
+Source: https://github.com/coreos/fedora-coreos-docs/blob/main/modules/ROOT/pages/auto-updates.adoc
+
+### The keys Ignition writes
+
+Ignition writes the user's SSH key to `~/.ssh/authorized_keys.d/ignition`, so that file in a key listing is the user's, not the agent's.
+
+Source: https://github.com/coreos/fedora-coreos-docs/blob/main/modules/ROOT/pages/authentication.adoc

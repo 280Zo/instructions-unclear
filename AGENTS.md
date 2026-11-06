@@ -251,6 +251,29 @@ rulesync installs rules, skills, agents, commands, hooks and MCP servers, not pl
 5. Plugins install from upstream, so nothing goes in `THIRD_PARTY_LICENSES.md` unless you copy their files here.
 6. If the plugin brings skills, give them an owning agent and regenerate, as [Adding a plugin that brings skills](agents/README.md#adding-a-plugin-that-brings-skills) describes; the same applies to a native plugin tree kept under `skills/`, such as Trail of Bits. Without that step, OpenCode's `build`, `plan` and `general` agents see every one of its skills in every request.
 
+### FCOS service modules
+
+The FCOS app installer (`agents/fcos-app-installer/`) keeps one skill folder per product it can
+deploy or work with, so only the products a user chose are loaded and nothing is a default:
+
+- `adapter-<product>`: a system the user runs by hand (hypervisor, router, file server, DNS
+  provider). Its `adapter.yaml` holds the manual steps; a DNS provider's also holds an `acme` block
+  that the ingress reads.
+- `ingress-<product>` and `authgw-<product>`: the login front end's reverse proxy and auth gateway.
+  Each has `SKILL.md`, `module.yaml` (capability, provides, needs, `pairs_with` with a `tested`
+  flag), `spec.yaml`, `templates/` and `reference.md`; its Python is in `tools/ingress/` or
+  `tools/authgw/`, because the agent runs `python3 tools/*`.
+
+To add a module, follow `agents/fcos-app-installer/toolkit/docs/guide/12-add-a-module.md`. The
+installed agent gets the same instruction from `agents/fcos-app-installer/rules/modules.md`. Copy the
+closest module, write the tests first (`tests/test_modules.py` and `tests/test_login_frontend.py`
+show the pattern), and keep every site value a `<site: ...>` placeholder: a user's own working
+setup belongs in their workspace, never in a module. Facts a module relies on go in its
+`reference.md` with a source link and no date. Then update the lists of the installer's skills in
+`tests/check_fcos_app_installer.py` and `tests/test_opencode_agents.py`, the agent's skill allow
+patterns if the prefix is new, run `python3 agents/generate.py`, and update the skill counts in
+`groups/README.md` and the READMEs that state them.
+
 ### MCP servers
 
 - One `mcp.jsonc` per tool folder; rulesync merges them all.

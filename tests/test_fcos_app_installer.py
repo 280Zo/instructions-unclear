@@ -372,7 +372,7 @@ class SourceTests(unittest.TestCase):
 
     def test_the_rules_are_root_rules(self):
         rules = sorted((FOLDER / "rules").glob("*.md"))
-        self.assertEqual([p.name for p in rules], ["owner-steps.md", "secret-handling.md"])
+        self.assertEqual([p.name for p in rules], ["modules.md", "owner-steps.md", "secret-handling.md"])
         for path in rules:
             with self.subTest(rule=path.name):
                 meta = frontmatter(path)
@@ -467,6 +467,12 @@ class GroupTests(unittest.TestCase):
     def test_the_root_readme_says_default_leaves_out_the_installer(self):
         text = " ".join((ROOT / "README.md").read_text().split())
         self.assertIn("except REA and the FCOS app installer", text)
+
+    def test_agents_md_explains_how_to_add_a_service_module(self):
+        text = " ".join((ROOT / "AGENTS.md").read_text().split())
+        for needle in ("### FCOS service modules", "docs/guide/12-add-a-module.md", "module.yaml",
+                       "tools/ingress", "tools/authgw", "tests/test_modules.py"):
+            self.assertIn(needle, text)
 
     def test_the_groups_readme_shows_the_install_commands(self):
         section = (ROOT / "groups" / "README.md").read_text().split("## fcos_app_installer", 1)[1]

@@ -23,7 +23,7 @@ plain text and not links.
   OpenCode loads the `AGENTS.md` in that folder and in each folder above it
   (searched upward), up to the git root, or up to your home folder when the
   toolkit is under it. Project skills are searched upward too, but only as far
-  as the project root (see `docs/guide/research-notes.md`). Keep the toolkit in
+  as the project root (see "OpenCode versions and where it looks" below). Keep the toolkit in
   a folder of its own, outside any other checkout and outside folders that hold
   their own `AGENTS.md` or skills, or those files load into every session.
   The agents' skill and subagent filters were tested on OpenCode 2.1.3.
@@ -41,6 +41,26 @@ plain text and not links.
   product has an adapter skill in `.opencode/skills/adapter-<product>/` with
   the steps you do yourself. A product without one gets general steps, and the
   agent can draft an adapter as you go.
+
+### OpenCode versions and where it looks
+
+The agents' skill and subagent filters were tested on OpenCode 2.1.3, so the toolkit needs 2.1.3
+or newer; `tools/check_requirements.py` checks it. The toolkit's rules are in the folder's
+`AGENTS.md`, so it doesn't depend on the config's instructions list, which OpenCode parsed but
+never loaded from 2.0.0 to 2.0.29 (issue 51341); the loader arrived in 2.0.30.
+
+OpenCode collects `AGENTS.md` from the launch folder up to the project root, or up to the home
+folder when the launch folder is under it, so a toolkit under the home folder also loads
+`~/AGENTS.md` and every `AGENTS.md` in between, git checkout or not. This was read in OpenCode's
+source at v2.1.3 and not tested on a live session. OpenCode's Skills docs say project skills are
+searched the same way, from the current directory up to the project root, at every level. That is
+why the toolkit belongs in a folder of its own.
+
+Sources: https://github.com/anomalyco/opencode/issues/51341 ·
+https://github.com/anomalyco/opencode/pull/51422 ·
+https://github.com/anomalyco/opencode/blob/v2.0.30/packages/core/src/config/plugin/instruction.ts ·
+https://github.com/anomalyco/opencode/blob/v2.1.3/packages/core/src/config/plugin/instruction.ts
+(`match`, `projectSource`) · https://opencode.ai/v2/docs/skills/ (Discovery)
 
 ## Install
 
@@ -215,8 +235,8 @@ container files). Nothing pulls them for you.
    quay.io's public tag list and changes nothing. "up to date" means you're
    done.
 2. For a newer release or a rebuilt tag, read the image's official release
-   notes first, and write what changed and its link into
-   `docs/guide/research-notes.md`.
+   notes first, and write what changed and its link on the guide page that relies
+   on it (for the Butane spec, section 2.8 of `docs/guide/02-build-a-vm.md`).
 3. Change the pin in `tools/images.env` (tag and digest, as the check shows
    them on quay.io), test-first: a test for any change in behavior, then
    `python3 -m unittest discover tests`, both fixture validations and
@@ -318,7 +338,7 @@ step: the installer copies files and rulesync writes the agent files, so both
 change the user's disk. Run the dry run first and show the user its list,
 especially any "changed" line, since those files get replaced. The group installs
 the installer agent, `adapter-drafter`, the `/add-service` command, 8 skills and
-2 rules, and writes no MCP settings, so it can't replace the user's MCP list. It
+3 rules, and writes no MCP settings, so it can't replace the user's MCP list. It
 is not part of the `default` group; it needs `--output-roots`, never `--global`.
 To verify, ask the user to start OpenCode in the new folder, pick
 `fcos-app-installer`, and work through `docs/guide/10-trial-run.md`. Its checks

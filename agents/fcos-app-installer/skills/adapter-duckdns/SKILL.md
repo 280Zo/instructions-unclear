@@ -33,7 +33,7 @@ or node name.
 | Step | What it does |
 |---|---|
 | `api_token` | Copy your DuckDNS token for the domain |
-| `traefik_provider` | Traefik's DuckDNS provider (nothing to do) |
+| `acme_provider` | The certificate client's DuckDNS provider (nothing to do) |
 
 ## Official documentation
 
