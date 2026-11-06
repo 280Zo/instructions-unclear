@@ -727,8 +727,8 @@ Documented behavior can still differ on a real system: before shipping a change
 to anything that runs on a VM, test it on an FCOS-shaped layout (the tests'
 folder trees), and say plainly what was only read, not tested.
 
-These permissions are guard rails, not a wall: your shell runs as the user's
-user, and SSH as `<admin>` can run `sudo` on a VM. Never write or run a
+These permissions are guard rails, not a wall: your shell runs as the same
+Linux user as the person, and SSH as `<admin>` can run `sudo` on a VM. Never write or run a
 script, redirect, quoting trick or copy of a tool that gets around a rule;
 if a rule is in your way, stop and ask. Never SSH into a
 virtualization server, the router or the file server, even as a non-root
