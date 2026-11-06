@@ -166,17 +166,14 @@ Start from `site.example.yaml`. Every value there is a placeholder.
 
 ## Giving the agent access to your hypervisor
 
-The agent never runs commands on your servers. For Proxmox VE you run one
-script as root on each server, after checking its checksum:
-`.opencode/skills/adapter-proxmox/scripts/setup-agent-access.sh --storage <id> --bridge <name> --iso-storage <id>`
-(run it with `--check` first). It creates a pool, a limited role, a user and a
-token. The token can only see and manage VMs in its pool, use one disk
-storage, one bridge, and upload config discs. The agent uses it only through
-`tools/pve.py`, which has no delete or disk-swap command; those stay steps you
-run yourself. The script prints the secret once, and the agent's next step
-stores it in `<workspace>/secrets/` from a hidden prompt. When the install is done, `teardown-agent-access.sh
---move-to backrooms --create-pool` moves the VMs into pool `backrooms`, then
-removes the access and the agent's pool; the VMs keep running.
+The agent never runs commands on your servers. Where the hypervisor has an API, its adapter has a step
+you run yourself, as the server's administrator, that creates a limited token. The token can only see
+and manage the VMs in its own pool, use one disk storage and one bridge, and upload config discs. The
+agent uses it only through the adapter's tool (`tools/pve.py` for Proxmox VE), which has no delete or
+disk-swap command; those stay steps you run yourself. The step prints the secret once, and the agent's
+next step stores it in `<workspace>/secrets/` from a hidden prompt. When the install is done, the
+adapter's teardown step removes the access; the VMs keep running. The adapter's `SKILL.md` lists its
+steps (`python3 tools/adapters.py show --role virtualization`).
 
 On a VM the agent never uses your SSH key. It makes its own setup key
 (`tools/vmssh.py`), you add it beside yours, and it is revoked when the
@@ -320,7 +317,7 @@ It checks every file in the folder, with no exemptions. It scans the toolkit's
 own folder only, or the one folder you pass as an argument (pass a checkout's
 top level to scan all of it). Run it in the folder you installed the toolkit
 into. In the repository the skills sit at `skills/`, not `.opencode/skills/`,
-so it can't find the adapters and reports product names such as `proxmox`
+so it can't find the adapters and reports product names such as an adapter's name
 from your workspace as hits. Its last line says how
 it found the files: `git list` (git's list for the folder, ignored files
 excluded) or `walked` (every file in a plain copy, or when git can't answer;

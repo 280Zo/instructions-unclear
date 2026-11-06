@@ -241,10 +241,10 @@ class VmSshTests(unittest.TestCase):
 
     def test_run_refuses_direct_log_environment_and_secret_reads(self):
         self.setup_key()
-        for command in ("sudo journalctl -u x", "sudo -u monica podman logs monica-app",
+        for command in ("sudo journalctl -u x", "sudo -u crm podman logs crm-app",
                         "podman --remote logs x", "docker logs x", "podman secret inspect --showsecret x",
                         "sudo podman secret inspect x", "printenv", "sudo -u x env", "env | grep KEY",
-                        "cat /proc/1/environ", "sudo tail /var/lib/appdata/monica/storage/logs/laravel.log",
+                        "cat /proc/1/environ", "sudo tail /var/lib/appdata/crm/storage/logs/laravel.log",
                         "cat /var/www/html/.env", "ls /run/secrets", "podman exec x cat /run/secrets/k",
                         "sudo systemctl status nftables", "sudo -u x systemctl --user status x.service",
                         "podman exec x sh -c 'echo $APP_KEY'",
@@ -256,7 +256,7 @@ class VmSshTests(unittest.TestCase):
         self.assertEqual([c for c in self.calls("ssh") if c["args"][-1] != "true"], [])
         # Ordinary commands still run.
         for command in ("sudo -u x XDG_RUNTIME_DIR=/run/user/3203 systemctl --user is-active x.service",
-                        "sudo ls /var/lib/appdata/traefik/dynamic/", "id -u monica",
+                        "sudo ls /var/lib/appdata/traefik/dynamic/", "id -u crm",
                         'for m in /var/mnt/*; do /usr/local/bin/require-mounts $m && echo "$m mounted"; done'):
             with self.subTest(command=command):
                 self.assertEqual(self.run_tool("run", "edge", "--", command)[0], 0)
@@ -272,16 +272,16 @@ class VmSshTests(unittest.TestCase):
 
     def test_logs_reads_one_unit_and_hides_secrets(self):
         self.setup_key()
-        code, out, err = self.run_tool("logs", "edge", "monica-app.service", "-n", "40")
+        code, out, err = self.run_tool("logs", "edge", "crm-app.service", "-n", "40")
         self.assertEqual(code, 0, err)
         self.assertEqual(self.calls("ssh")[-1]["args"][-1],
-                         "sudo journalctl _SYSTEMD_USER_UNIT=monica-app.service -n 40 --no-pager -o short-iso")
+                         "sudo journalctl _SYSTEMD_USER_UNIT=crm-app.service -n 40 --no-pager -o short-iso")
         code, out, err = self.run_tool("logs", "edge", "nftables.service", "--system")
         self.assertEqual(code, 0, err)
         self.assertEqual(self.calls("ssh")[-1]["args"][-1],
                          "sudo journalctl _SYSTEMD_UNIT=nftables.service -n 30 --no-pager -o short-iso")
-        for bad in (["x; rm -rf /"], ["../x.service"], ["x"], ["monica-app.service", "-n", "0"],
-                    ["monica-app.service", "-n", "501"]):
+        for bad in (["x; rm -rf /"], ["../x.service"], ["x"], ["crm-app.service", "-n", "0"],
+                    ["crm-app.service", "-n", "501"]):
             with self.subTest(bad=bad):
                 self.assertNotEqual(self.run_tool("logs", "edge", *bad)[0], 0)
 
@@ -464,7 +464,7 @@ class AgentRulesTests(unittest.TestCase):
                         "python3 tools/vmssh.py run edge -- 'cat /proc/1/environ'"):
             with self.subTest(command=command):
                 self.assertEqual(effect(text, "shell", command), "deny")
-        self.assertEqual(effect(text, "shell", "python3 tools/vmssh.py logs edge monica-app.service -n 40"), "allow")
+        self.assertEqual(effect(text, "shell", "python3 tools/vmssh.py logs edge crm-app.service -n 40"), "allow")
         prompt = " ".join(text.split())
         self.assertIn("vmssh.py logs", prompt)
 

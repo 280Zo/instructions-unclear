@@ -155,7 +155,7 @@ class GuideTests(unittest.TestCase):
         self.assertIn("stay until", text)
 
     def test_app_log_checks_keep_generated_credentials_out_of_view(self):
-        # Monica prints an OAuth client secret into its log at first start; the
+        # Crm prints an OAuth client secret into its log at first start; the
         # agent read it. Logs are read only through vmssh.py logs (redacted), and the page says why.
         text = (GUIDE / "03-add-a-service.md").read_text()
         self.assertIn("python3 tools/vmssh.py logs $vm $svc-app.service", text)
@@ -183,7 +183,7 @@ class GuideTests(unittest.TestCase):
         self.assertIn("not tested", restore.split("MariaDB", 1)[1].split("Then run", 1)[0])
 
     def test_break_glass_says_the_tunnel_fails_for_apps_that_force_their_own_https(self):
-        # Tested on a real install: Monica's login page loaded through the SSH
+        # Tested on a real install: Crm's login page loaded through the SSH
         # tunnel, but signing in redirected to https://localhost:<port> and failed. The
         # working way in is the app's route without the login, edited by hand and put back.
         text = (GUIDE / "08-break-glass.md").read_text()
@@ -207,19 +207,14 @@ class GuideTests(unittest.TestCase):
         self.assertIn("fixed parts of the design", schema)
         self.assertIn("What is fixed and what you choose", schema)
 
-    def test_procedure_pages_name_no_example_app_outside_the_tested_on_a_real_install_notes(self):
-        # Examples use <svc>; what was observed with one app is kept as a note, with its sources.
-        notes = "### Apps tested on a real install"
+    def test_procedure_pages_name_no_example_app(self):
+        # Examples use <svc>; the symptoms a reader needs are described without naming the app.
         for page in guide_pages():
-            text = page.read_text()
-            if page.name == "03-add-a-service.md":
-                self.assertIn(notes, text)
-                text = text.split(notes, 1)[0]
             with self.subTest(page=page.name):
-                self.assertNotRegex(text, r"(?i)monica")
+                self.assertNotRegex(page.read_text(), r"(?i)monica|tested on a real install")
 
     def test_apps_that_mail_need_a_sender_address_for_the_log_mailer(self):
-        # Monica's invitations failed with 'An email must have a From or a Sender header'
+        # Crm's invitations failed with 'An email must have a From or a Sender header'
         # until MAIL_FROM_ADDRESS was set, although the mail only goes to the log.
         text = (GUIDE / "03-add-a-service.md").read_text()
         self.assertIn("sender address", text)
@@ -259,7 +254,7 @@ class GuideTests(unittest.TestCase):
 class ReadmeTests(unittest.TestCase):
     def test_root_readme(self):
         text = (ROOT / "README.md").read_text()
-        for needle in ("OpenCode", "workspace", "setup-agent-access.sh", "docs/guide/README.md", "publish_check.py"):
+        for needle in ("OpenCode", "workspace", "Giving the agent access to your hypervisor", "docs/guide/README.md", "publish_check.py"):
             self.assertIn(needle, text)
 
 

@@ -44,7 +44,7 @@ for _tag in ("!Find", "!KeyOf", "!Env"):
 
 
 class FrontendCase(unittest.TestCase):
-    def gen(self, services=("monica", "single"), site=None) -> Path:
+    def gen(self, services=("crm", "single"), site=None) -> Path:
         path = Path(tempfile.mkdtemp(prefix="login-frontend-", dir=SCRATCH))
         self.addCleanup(shutil.rmtree, path, True)
         generate_login_frontend(copy.deepcopy(SITE if site is None else site),
@@ -182,11 +182,11 @@ class RouteTests(FrontendCase):
         open_app.update(name="dav", uid=3151, hostname="dav", login="app-only", login_reason="Phones sync directly")
         path = Path(tempfile.mkdtemp(prefix="login-frontend-", dir=SCRATCH))
         self.addCleanup(shutil.rmtree, path, True)
-        generate_login_frontend(copy.deepcopy(SITE), [spec_fixture("monica"), spec_fixture("single"), app_only,
+        generate_login_frontend(copy.deepcopy(SITE), [spec_fixture("crm"), spec_fixture("single"), app_only,
                                                       open_app], path)
         out = path
         files = self.files(out, "login-frontend.bu")
-        self.assertIn("/var/lib/appdata/traefik/dynamic/monica.yml", files)
+        self.assertIn("/var/lib/appdata/traefik/dynamic/crm.yml", files)
         self.assertIn("/var/lib/appdata/traefik/dynamic/opencode.yml", files)
         self.assertNotIn("/var/lib/appdata/traefik/dynamic/notes.yml", files)  # app-only, no web name
         self.assertFalse((out / "rendered" / "files" / "route-notes.yml").exists())
@@ -202,16 +202,16 @@ class RouteTests(FrontendCase):
         metas = [e["attrs"]["identifiers"]["name"] for e in yaml.load(
             self.read(out, "files/outpost-providers.blueprint.yaml"), Loader=TagLoader)["entries"]
             if e["model"] == "authentik_blueprints.metaapplyblueprint"]
-        self.assertEqual(metas, ["app-monica", "app-opencode"])
+        self.assertEqual(metas, ["app-crm", "app-opencode"])
         outpost = yaml.load(self.read(out, "files/outpost-providers.blueprint.yaml"), Loader=TagLoader)
         names = [p[1][1][1] for p in outpost["entries"][-1]["attrs"]["providers"]]
-        self.assertEqual(names, ["monica", "opencode"])
-        route = yaml.safe_load(self.read(out, "files/route-monica.yml"))["http"]
-        self.assertEqual(route["routers"]["monica"]["rule"], "Host(`monica.example.duckdns.org`)")
-        self.assertEqual(route["routers"]["monica"]["middlewares"], ["authentik"])
-        self.assertEqual(route["routers"]["monica-outpost"]["priority"], 15)
-        self.assertIn("PathPrefix(`/outpost.goauthentik.io/`)", route["routers"]["monica-outpost"]["rule"])
-        self.assertEqual(route["services"]["monica"]["loadBalancer"]["servers"], [{"url": "http://192.0.2.30:8110"}])
+        self.assertEqual(names, ["crm", "opencode"])
+        route = yaml.safe_load(self.read(out, "files/route-crm.yml"))["http"]
+        self.assertEqual(route["routers"]["crm"]["rule"], "Host(`crm.example.duckdns.org`)")
+        self.assertEqual(route["routers"]["crm"]["middlewares"], ["authentik"])
+        self.assertEqual(route["routers"]["crm-outpost"]["priority"], 15)
+        self.assertIn("PathPrefix(`/outpost.goauthentik.io/`)", route["routers"]["crm-outpost"]["rule"])
+        self.assertEqual(route["services"]["crm"]["loadBalancer"]["servers"], [{"url": "http://192.0.2.30:8110"}])
 
     def test_files_land_in_the_mounted_folders_and_survive_rebuilds(self):
         out = self.gen()
@@ -219,8 +219,8 @@ class RouteTests(FrontendCase):
         expected = {
             "/var/lib/appdata/traefik/config/traefik.yml": (3202, "files/traefik.yml"),
             "/var/lib/appdata/traefik/dynamic/00-authgw-authentik.yml": (3202, "files/00-authgw-authentik.yml"),
-            "/var/lib/appdata/traefik/dynamic/monica.yml": (3202, "files/route-monica.yml"),
-            "/var/lib/appdata/authentik/blueprints/app-monica.yaml": (3201, "files/app-monica.blueprint.yaml"),
+            "/var/lib/appdata/traefik/dynamic/crm.yml": (3202, "files/route-crm.yml"),
+            "/var/lib/appdata/authentik/blueprints/app-crm.yaml": (3201, "files/app-crm.blueprint.yaml"),
             "/var/lib/appdata/authentik/blueprints/outpost-providers.yaml":
                 (3201, "files/outpost-providers.blueprint.yaml"),
         }
@@ -236,7 +236,7 @@ class RouteTests(FrontendCase):
     def test_multiline_api_paths_indented(self):
         # Deferred fix #6: every regex on its own line of the block scalar.
         out = self.gen()
-        blueprint = yaml.load(self.read(out, "files/app-monica.blueprint.yaml"), Loader=TagLoader)
+        blueprint = yaml.load(self.read(out, "files/app-crm.blueprint.yaml"), Loader=TagLoader)
         provider = blueprint["entries"][0]
         self.assertEqual(provider["attrs"]["skip_path_regex"].splitlines(),
                          ["^/dav/.*$", r"^/\.well-known/(carddav|caldav)$"])
@@ -249,19 +249,19 @@ class RouteTests(FrontendCase):
         data = yaml.load(self.read(out, "files/outpost-providers.blueprint.yaml"), Loader=TagLoader)
         entries = data["entries"]
         metas = [e for e in entries if e["model"] == "authentik_blueprints.metaapplyblueprint"]
-        self.assertEqual([m["attrs"]["identifiers"]["name"] for m in metas], ["app-monica", "app-opencode"])
+        self.assertEqual([m["attrs"]["identifiers"]["name"] for m in metas], ["app-crm", "app-opencode"])
         self.assertTrue(all(m["attrs"].get("required", True) for m in metas))
         outpost = entries[-1]
         self.assertEqual(outpost["model"], "authentik_outposts.outpost")
         self.assertLess(max(entries.index(m) for m in metas), entries.index(outpost))
         self.assertEqual(outpost["identifiers"], {"managed": "goauthentik.io/outposts/embedded"})
         self.assertEqual(outpost["attrs"]["providers"], [
-            ("!Find", ["authentik_providers_proxy.proxyprovider", ["name", "monica"]]),
+            ("!Find", ["authentik_providers_proxy.proxyprovider", ["name", "crm"]]),
             ("!Find", ["authentik_providers_proxy.proxyprovider", ["name", "opencode"]]),
         ])
 
     def test_outpost_names_stay_strings(self):
-        spec = spec_fixture("monica")
+        spec = spec_fixture("crm")
         spec.update(name="null", hostname="crm")
         path = Path(tempfile.mkdtemp(dir=SCRATCH))
         self.addCleanup(shutil.rmtree, path, True)
@@ -280,11 +280,11 @@ class RouteTests(FrontendCase):
 
     def test_clashing_hostnames_refused(self):
         other = spec_fixture("single")
-        other["hostname"] = "monica"
+        other["hostname"] = "crm"
         with self.assertRaises(SpecError) as caught:
-            generate_login_frontend(copy.deepcopy(SITE), [spec_fixture("monica"), other],
+            generate_login_frontend(copy.deepcopy(SITE), [spec_fixture("crm"), other],
                                     tempfile.mkdtemp(dir=SCRATCH))
-        self.assertIn("monica", str(caught.exception))
+        self.assertIn("crm", str(caught.exception))
         auth_label = SITE["edge"]["authentik"]["host"].split(".")[0]
         other["hostname"] = auth_label
         with self.assertRaises(SpecError):
@@ -302,12 +302,12 @@ class RouteTests(FrontendCase):
     def test_names_that_clash_with_traefik_routers_refused(self):
         # 00-authgw-authentik.yml defines authentik-server and authentik-outpost; every
         # route adds <svc>-outpost. A duplicate name would break the shared ones.
-        for name in ("authentik-server", "authentik-outpost", "monica-outpost", "x-outpost"):
+        for name in ("authentik-server", "authentik-outpost", "crm-outpost", "x-outpost"):
             with self.subTest(name=name):
                 spec = spec_fixture("single")
                 spec.update(name=name, hostname="other")
                 with self.assertRaises(SpecError) as caught:
-                    generate_login_frontend(copy.deepcopy(SITE), [spec_fixture("monica"), spec],
+                    generate_login_frontend(copy.deepcopy(SITE), [spec_fixture("crm"), spec],
                                             tempfile.mkdtemp(dir=SCRATCH))
                 self.assertIn(name, str(caught.exception))
 
@@ -322,22 +322,22 @@ class RouteTests(FrontendCase):
         self.assertEqual(list(out.iterdir()), [])
 
     def test_app_blueprint_is_a_forward_auth_provider(self):
-        blueprint = yaml.load(self.read(self.gen(), "files/app-monica.blueprint.yaml"), Loader=TagLoader)
-        self.assertEqual(blueprint["metadata"]["name"], "app-monica")
+        blueprint = yaml.load(self.read(self.gen(), "files/app-crm.blueprint.yaml"), Loader=TagLoader)
+        self.assertEqual(blueprint["metadata"]["name"], "app-crm")
         provider, app = blueprint["entries"]
         self.assertEqual(provider["model"], "authentik_providers_proxy.proxyprovider")
         self.assertEqual(provider["attrs"]["mode"], "forward_single")
-        self.assertEqual(provider["attrs"]["external_host"], "https://monica.example.duckdns.org")
+        self.assertEqual(provider["attrs"]["external_host"], "https://crm.example.duckdns.org")
         self.assertEqual(provider["attrs"]["invalidation_flow"],
                          ("!Find", ["authentik_flows.flow", ["slug", "default-provider-invalidation-flow"]]))
         self.assertEqual(app["model"], "authentik_core.application")
 
     def test_service_list_with_a_non_mapping_refused(self):
         with self.assertRaises(SpecError):
-            generate_login_frontend(copy.deepcopy(SITE), ["monica"], tempfile.mkdtemp(dir=SCRATCH))
+            generate_login_frontend(copy.deepcopy(SITE), ["crm"], tempfile.mkdtemp(dir=SCRATCH))
 
     def test_invalid_service_spec_refused(self):
-        bad = spec_fixture("monica")
+        bad = spec_fixture("crm")
         bad["api_paths"] = ["^/a$\u2028  - model: authentik_core.user"]
         with self.assertRaises(SpecError):
             generate_login_frontend(copy.deepcopy(SITE), [bad], tempfile.mkdtemp(dir=SCRATCH))
@@ -463,7 +463,7 @@ class PeopleAndIconTests(FrontendCase):
         self.addCleanup(shutil.rmtree, out, True)
         site = self.people_site([{"username": "sam", "name": "Sam Example", "groups": ["family"]},
                                  {"username": "guest1", "name": "A Guest", "groups": ["guests"]}])
-        generate_login_frontend(site, [spec_fixture("monica")], out)
+        generate_login_frontend(site, [spec_fixture("crm")], out)
         entries = self.blueprint(out)["entries"]
         groups = {e["identifiers"]["name"] for e in entries if e["model"] == "authentik_core.group"}
         self.assertEqual(groups, {"family", "guests"})
@@ -496,7 +496,7 @@ class PeopleAndIconTests(FrontendCase):
         # One file creates each group (people's and apps'), so nothing races on the unique name.
         out = Path(tempfile.mkdtemp(prefix="login-frontend-", dir=SCRATCH))
         self.addCleanup(shutil.rmtree, out, True)
-        spec = spec_fixture("monica")
+        spec = spec_fixture("crm")
         spec["groups"] = ["family", "guests"]
         site = self.people_site([{"username": "sam", "name": "Sam 😀 Example", "groups": ["family"]}])
         generate_login_frontend(site, [spec], out)
@@ -506,12 +506,12 @@ class PeopleAndIconTests(FrontendCase):
         groups = [e["identifiers"]["name"] for e in entries if e["model"] == "authentik_core.group"]
         self.assertEqual(sorted(groups), ["family", "guests"])
         meta = [e for e in entries if e["model"] == "authentik_blueprints.metaapplyblueprint"]
-        self.assertEqual([m["attrs"]["identifiers"]["name"] for m in meta], ["app-monica"])
+        self.assertEqual([m["attrs"]["identifiers"]["name"] for m in meta], ["app-crm"])
         self.assertTrue(all(m["attrs"]["required"] for m in meta))
         binds = [e for e in entries if e["model"] == "authentik_policies.policybinding"]
         self.assertEqual(len(binds), 2)
         for order, bind in enumerate(binds):
-            self.assertEqual(bind["identifiers"]["target"], ("!Find", ["authentik_core.application", ["slug", "monica"]]))
+            self.assertEqual(bind["identifiers"]["target"], ("!Find", ["authentik_core.application", ["slug", "crm"]]))
             self.assertEqual(bind["identifiers"]["group"][0], "!KeyOf")
             self.assertEqual(bind["attrs"], {"order": order})
         self.assertLess(entries.index(meta[0]), entries.index(binds[0]))
@@ -526,29 +526,29 @@ class PeopleAndIconTests(FrontendCase):
                     "<svg><foreignObject/></svg>"):
             src = Path(tempfile.mkdtemp(dir=SCRATCH))
             self.addCleanup(shutil.rmtree, src, True)
-            (src / "monica.svg").write_text(svg)
-            spec = spec_fixture("monica")
-            spec["icon"] = "monica.svg"
+            (src / "crm.svg").write_text(svg)
+            spec = spec_fixture("crm")
+            spec["icon"] = "crm.svg"
             with self.subTest(svg=svg), self.assertRaisesRegex(SpecError, "icon"):
                 generate_login_frontend(copy.deepcopy(SITE), [spec], tempfile.mkdtemp(dir=SCRATCH),
-                                        icon_dirs={"monica": src})
+                                        icon_dirs={"crm": src})
 
     def test_icon_is_stored_on_the_vm_and_referenced_locally(self):
         # docs.goauthentik.io/customize/file-picker/: /data/media/public/<rel> is referenced as <rel>.
         src = Path(tempfile.mkdtemp(dir=SCRATCH))
         self.addCleanup(shutil.rmtree, src, True)
-        (src / "monica.svg").write_text("<svg/>")
-        spec = spec_fixture("monica")
-        spec["icon"] = "monica.svg"
+        (src / "crm.svg").write_text("<svg/>")
+        spec = spec_fixture("crm")
+        spec["icon"] = "crm.svg"
         out = Path(tempfile.mkdtemp(prefix="login-frontend-", dir=SCRATCH))
         self.addCleanup(shutil.rmtree, out, True)
-        generate_login_frontend(copy.deepcopy(SITE), [spec], out, icon_dirs={"monica": src})
-        app = yaml.load(self.read(out, "files/app-monica.blueprint.yaml"), Loader=TagLoader)
+        generate_login_frontend(copy.deepcopy(SITE), [spec], out, icon_dirs={"crm": src})
+        app = yaml.load(self.read(out, "files/app-crm.blueprint.yaml"), Loader=TagLoader)
         application = next(e for e in app["entries"] if e["model"] == "authentik_core.application")
-        self.assertEqual(application["attrs"]["icon"], "app-icons/monica.svg")
-        self.assertEqual((out / "rendered" / "files" / "icon-monica.svg").read_text(), "<svg/>")
+        self.assertEqual(application["attrs"]["icon"], "app-icons/crm.svg")
+        self.assertEqual((out / "rendered" / "files" / "icon-crm.svg").read_text(), "<svg/>")
         bu = yaml.safe_load(self.read(out, "login-frontend.bu"))
-        icon = next(f for f in bu["storage"]["files"] if f["path"].endswith("/media/public/app-icons/monica.svg"))
+        icon = next(f for f in bu["storage"]["files"] if f["path"].endswith("/media/public/app-icons/crm.svg"))
         dirs = {d["path"]: d for d in bu["storage"].get("directories", [])}
         media = next(p for p in dirs if p.endswith("/media"))
         # Folders Authentik writes to keep its own owner (else its uploads would break).
@@ -557,7 +557,7 @@ class PeopleAndIconTests(FrontendCase):
 
     def test_bad_icon_refused(self):
         for bad in ("../x.svg", "x.exe", "a b.png", "/etc/x.png"):
-            spec = spec_fixture("monica")
+            spec = spec_fixture("crm")
             spec["icon"] = bad
             with self.subTest(bad=bad):
                 from gen_service import validate_spec
@@ -570,7 +570,7 @@ class SignupTests(FrontendCase):
     flows-enrollment-2-stage.yaml; fields from authentik 2026.8.5 stages/user_write/models.py
     (create_users_group) and stages/identification/models.py (enrollment_flow)."""
 
-    def gen_signup(self, signup, services=("monica",)):
+    def gen_signup(self, signup, services=("crm",)):
         out = Path(tempfile.mkdtemp(prefix="login-frontend-", dir=SCRATCH))
         self.addCleanup(shutil.rmtree, out, True)
         site = copy.deepcopy(SITE)
@@ -651,7 +651,7 @@ class SigninSourceTests(FrontendCase):
         site = copy.deepcopy(SITE)
         site["signup"] = signup
         site["signin_sources"] = sources
-        generate_login_frontend(site, [spec_fixture("monica")], out)
+        generate_login_frontend(site, [spec_fixture("crm")], out)
         return out
 
     def test_sources_are_created_with_secrets_from_the_environment(self):
@@ -702,7 +702,7 @@ class NoProfilePictureTests(FrontendCase):
     def gen(self, site):
         out = Path(tempfile.mkdtemp(prefix="login-frontend-", dir=SCRATCH))
         self.addCleanup(shutil.rmtree, out, True)
-        generate_login_frontend(site, [spec_fixture("monica")], out)
+        generate_login_frontend(site, [spec_fixture("crm")], out)
         return out
 
     def test_user_pictures_refused_with_the_reason(self):

@@ -57,7 +57,7 @@ class MountRootTests(unittest.TestCase):
         import yaml
         from gen_service import generate
         site = yaml.safe_load((ROOT / "tests" / "fixtures" / "site.yaml").read_text())
-        for fixture in ("single", "monica", "authentik"):
+        for fixture in ("single", "crm", "authentik"):
             with self.subTest(fixture=fixture):
                 out = Path(tempfile.mkdtemp())
                 self.addCleanup(shutil.rmtree, out, True)

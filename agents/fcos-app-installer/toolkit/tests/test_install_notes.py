@@ -29,9 +29,9 @@ class InstallNotesTests(unittest.TestCase):
         site["signin_sources"] = {"google": {"client_id": "x.apps.googleusercontent.com"}}
         site["shared_groups"] = [{"name": "ai-projects", "gid": 3100}]
         (self.ws / "site.yaml").write_text(yaml.safe_dump(site))
-        monica = spec_fixture("monica")
-        monica.update(login="gateway", hostname="monica", groups=["family"], section="Relationships")
-        for spec in (monica, spec_fixture("single")):
+        crm = spec_fixture("crm")
+        crm.update(login="gateway", hostname="crm", groups=["family"], section="Relationships")
+        for spec in (crm, spec_fixture("single")):
             folder = self.ws / "services" / spec["name"]
             folder.mkdir(parents=True)
             (folder / "service.yaml").write_text(yaml.safe_dump(spec))
@@ -49,9 +49,9 @@ class InstallNotesTests(unittest.TestCase):
     def test_lists_what_exists(self):
         text = self.text()
         for needle in ("## Machines", "| ai |", "| apps |", "## Login front end", "login.example.duckdns.org",
-                       "guests", "google", "## Services", "| monica | apps |", "family", "Relationships",
+                       "guests", "google", "## Services", "| crm | apps |", "family", "Relationships",
                        "| opencode | ai |", "## Numbers in use", "3110", "3101", "## Secrets (names only)",
-                       "monica_db_password", "ai-projects (GID 3100)"):
+                       "crm_db_password", "ai-projects (GID 3100)"):
             self.assertIn(needle, text)
 
     def test_says_how_a_new_service_hooks_in(self):
@@ -67,12 +67,12 @@ class InstallNotesTests(unittest.TestCase):
 
     def test_hand_written_notes_survive_regeneration(self):
         self.text()
-        add_note(self.ws, "Monica has no single sign-on (monicahq/monica#1154); share it by invitation.")
+        add_note(self.ws, "Crm has no single sign-on (crmhq/crm#1154); share it by invitation.")
         text = self.text()
         notes = text.split(NOTES_START, 1)[1].split(NOTES_END, 1)[0]
-        self.assertIn("Monica has no single sign-on", notes)
+        self.assertIn("Crm has no single sign-on", notes)
         add_note(self.ws, "Second note.")
-        self.assertEqual(self.text().count("Monica has no single sign-on"), 1)
+        self.assertEqual(self.text().count("Crm has no single sign-on"), 1)
         self.assertIn("Second note.", self.text())
 
     def test_bad_notes_refused(self):

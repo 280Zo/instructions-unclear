@@ -16,9 +16,9 @@ TOOL = ROOT / "tools" / "appapi.py"
 FAKE = "fake-abcdefghijklmnopqrstuvwxyz-0123456789"
 
 SITE = "domain: example.duckdns.org\n"
-SPEC = """name: monica
+SPEC = """name: crm
 login: gateway
-hostname: monica
+hostname: crm
 api_paths:
   - "^/api/.*$"
   - "^/dav(/.*)?$"
@@ -71,10 +71,10 @@ class AppApiTests(unittest.TestCase):
         self.ws = Path(tempfile.mkdtemp(prefix="fcos-appapi-"))
         self.addCleanup(subprocess.run, ["rm", "-rf", str(self.ws)])
         (self.ws / "secrets").mkdir(mode=0o700)
-        (self.ws / "services" / "monica").mkdir(parents=True)
+        (self.ws / "services" / "crm").mkdir(parents=True)
         (self.ws / "site.yaml").write_text(SITE)
-        (self.ws / "services" / "monica" / "service.yaml").write_text(SPEC)
-        self.token = self.ws / "secrets" / "app-monica.token"
+        (self.ws / "services" / "crm" / "service.yaml").write_text(SPEC)
+        self.token = self.ws / "secrets" / "app-crm.token"
 
     def run_tool(self, *args, test_http=True):
         # In-process with the base address patched: the tool itself has no test switch.
@@ -96,26 +96,26 @@ class AppApiTests(unittest.TestCase):
             appapi._base = saved
         return code, out.getvalue(), err.getvalue()
 
-    def store(self, url="https://monica.example.duckdns.org"):
+    def store(self, url="https://crm.example.duckdns.org"):
         # The owner's store step writes the app's address beside the token (agent can't edit it).
         self.token.write_text(f"url={url}\n{FAKE}\n")
         self.token.chmod(0o600)
 
     def test_store_step_is_a_hidden_prompt_with_the_workspace_filled_in(self):
-        code, out, err = self.run_tool("store-step", "monica")
+        code, out, err = self.run_tool("store-step", "crm")
         self.assertEqual(code, 0, err)
         self.assertIn("# desktop (fish)", out)
-        self.assertIn('read -s -P "token for monica: " t', out)
-        self.assertIn(f"'{self.ws}/secrets/app-monica.token'", out)  # quoted
+        self.assertIn('read -s -P "token for crm: " t', out)
+        self.assertIn(f"'{self.ws}/secrets/app-crm.token'", out)  # quoted
         self.assertIn("chmod 600", out)
         self.assertIn("set -e t", out)
         # The address is in plain sight in the owner's command, and stored with the token.
-        self.assertIn("https://monica.example.duckdns.org", out)
-        self.assertIn("url=https://monica.example.duckdns.org", out)
+        self.assertIn("https://crm.example.duckdns.org", out)
+        self.assertIn("url=https://crm.example.duckdns.org", out)
 
     def test_call_sends_the_token_and_never_prints_it(self):
         self.store()
-        code, out, err = self.run_tool("call", "monica", "GET", "/api/me")
+        code, out, err = self.run_tool("call", "crm", "GET", "/api/me")
         self.assertEqual(code, 0, err)
         self.assertEqual(Handler.seen[-1]["auth"], f"Bearer {FAKE}")
         self.assertEqual(Handler.seen[-1]["path"], "/api/me")
@@ -125,7 +125,7 @@ class AppApiTests(unittest.TestCase):
     def test_secrets_in_the_answer_are_hidden(self):
         # An API answer (e.g. a new OAuth client) can carry a secret.
         self.store()
-        code, out, err = self.run_tool("call", "monica", "GET", "/api/oauth")
+        code, out, err = self.run_tool("call", "crm", "GET", "/api/oauth")
         self.assertEqual(code, 0, err)
         for value in ("abc", "xyz", "N8qQ2mJ7xYz0kLpR4sT6vW9bC1dE3fG5hI7jK9lM"):
             self.assertNotIn(value, out)
@@ -137,22 +137,22 @@ class AppApiTests(unittest.TestCase):
         self.store()
         data = self.ws / "body.json"
         data.write_text('{"name": "x"}')
-        code, out, err = self.run_tool("call", "monica", "POST", "/api/contacts", "--data", str(data))
+        code, out, err = self.run_tool("call", "crm", "POST", "/api/contacts", "--data", str(data))
         self.assertEqual(code, 0, err)
         self.assertEqual(json.loads(Handler.seen[-1]["body"]), {"name": "x"})
 
     def test_only_the_apps_api_paths(self):
         # Behind the login page only the paths that skip it are reachable with a token.
         self.store()
-        code, out, err = self.run_tool("call", "monica", "GET", "/settings")
+        code, out, err = self.run_tool("call", "crm", "GET", "/settings")
         self.assertEqual(code, 1)
         self.assertIn("api_paths", err)
         self.assertEqual(Handler.seen, [])
 
     def test_errors_exit_1_and_bad_inputs_are_refused(self):
         self.store()
-        self.assertEqual(self.run_tool("call", "monica", "GET", "/api/fail")[0], 1)
-        for args in (("call", "monica", "TRACE", "/api/x"), ("call", "monica", "GET", "api/x"),
+        self.assertEqual(self.run_tool("call", "crm", "GET", "/api/fail")[0], 1)
+        for args in (("call", "crm", "TRACE", "/api/x"), ("call", "crm", "GET", "api/x"),
                      ("call", "../x", "GET", "/api/x")):
             with self.subTest(args=args):
                 self.assertNotEqual(self.run_tool(*args)[0], 0)
@@ -160,22 +160,22 @@ class AppApiTests(unittest.TestCase):
     def test_token_file_must_be_private(self):
         self.store()
         self.token.chmod(0o644)
-        code, out, err = self.run_tool("call", "monica", "GET", "/api/me")
+        code, out, err = self.run_tool("call", "crm", "GET", "/api/me")
         self.assertEqual(code, 1)
         self.assertIn("chmod 600", err)
         self.assertEqual(Handler.seen, [])
 
     def test_https_only_outside_tests(self):
         self.store()
-        code, out, err = self.run_tool("call", "monica", "GET", "/api/me", test_http=False)
-        # The real address is https://monica.example.duckdns.org (not reachable here): no plain http fallback.
+        code, out, err = self.run_tool("call", "crm", "GET", "/api/me", test_http=False)
+        # The real address is https://crm.example.duckdns.org (not reachable here): no plain http fallback.
         self.assertNotEqual(code, 0)
         self.assertEqual(Handler.seen, [])
 
     def test_redirects_are_not_followed(self):
         # Review: urllib would resend the Authorization header to the redirect's host.
         self.store()
-        code, out, err = self.run_tool("call", "monica", "GET", "/api/moved")
+        code, out, err = self.run_tool("call", "crm", "GET", "/api/moved")
         self.assertEqual(code, 1)
         self.assertIn("302", out)
         self.assertIn("not followed", out + err)
@@ -192,7 +192,7 @@ class AppApiTests(unittest.TestCase):
         link.symlink_to(evil)
         for data in (str(evil), str(link)):
             with self.subTest(data=data):
-                code, out, err = self.run_tool("call", "monica", "POST", "/api/x", "--data", data)
+                code, out, err = self.run_tool("call", "crm", "POST", "/api/x", "--data", data)
                 self.assertEqual(code, 1)
                 self.assertIn("secrets", err)
         self.assertEqual(Handler.seen, [])
@@ -201,13 +201,13 @@ class AppApiTests(unittest.TestCase):
         self.store()
         for path in ("/api/%2e%2e/admin", "/api/%2F/x", "/api/../settings", "/api/%5c"):
             with self.subTest(path=path):
-                self.assertEqual(self.run_tool("call", "monica", "GET", path)[0], 1)
+                self.assertEqual(self.run_tool("call", "crm", "GET", path)[0], 1)
         self.assertEqual(Handler.seen, [])
 
     def test_odd_token_characters_refused(self):
-        self.token.write_text("url=https://monica.example.duckdns.org\nabc<def>\n")
+        self.token.write_text("url=https://crm.example.duckdns.org\nabc<def>\n")
         self.token.chmod(0o600)
-        code, out, err = self.run_tool("call", "monica", "GET", "/api/me")
+        code, out, err = self.run_tool("call", "crm", "GET", "/api/me")
         self.assertEqual(code, 1)
         self.assertNotIn("abc<def>", out + err)
 
@@ -215,25 +215,25 @@ class AppApiTests(unittest.TestCase):
         # Review: hostname/domain are files the agent edits; a crafted one sent the token elsewhere.
         sys.path.insert(0, str(ROOT / "tools"))
         import appapi
-        self.store("https://monica.example.duckdns.org")
-        (self.ws / "services" / "monica" / "service.yaml").write_text(
-            SPEC.replace("hostname: monica", "hostname: x@example.com/a#"))
-        self.assertEqual(appapi._base(self.ws, "monica"), "https://monica.example.duckdns.org")
-        for bad in ("http://monica.example.duckdns.org", "https://x@example.com", "https://a.b/c", "https://a b"):
+        self.store("https://crm.example.duckdns.org")
+        (self.ws / "services" / "crm" / "service.yaml").write_text(
+            SPEC.replace("hostname: crm", "hostname: x@example.com/a#"))
+        self.assertEqual(appapi._base(self.ws, "crm"), "https://crm.example.duckdns.org")
+        for bad in ("http://crm.example.duckdns.org", "https://x@example.com", "https://a.b/c", "https://a b"):
             self.store(bad)
             with self.subTest(bad=bad), self.assertRaises(appapi.ApiError):
-                appapi._base(self.ws, "monica")
+                appapi._base(self.ws, "crm")
 
     def test_store_step_refuses_a_crafted_hostname(self):
-        (self.ws / "services" / "monica" / "service.yaml").write_text(
-            SPEC.replace("hostname: monica", "hostname: x@example.com/a#"))
-        code, out, err = self.run_tool("store-step", "monica")
+        (self.ws / "services" / "crm" / "service.yaml").write_text(
+            SPEC.replace("hostname: crm", "hostname: x@example.com/a#"))
+        code, out, err = self.run_tool("store-step", "crm")
         self.assertEqual(code, 1)
         self.assertNotIn("x@example.com", out)
 
     def test_forget_deletes_the_local_token(self):
         self.store()
-        code, out, err = self.run_tool("forget", "monica")
+        code, out, err = self.run_tool("forget", "crm")
         self.assertEqual(code, 0, err)
         self.assertFalse(self.token.exists())
         self.assertIn("delete the token in the app", out)
@@ -244,8 +244,8 @@ class RulesTests(unittest.TestCase):
         sys.path.insert(0, str(ROOT / "tests"))
         from test_agent import AGENT, effect
         text = AGENT.read_text()
-        self.assertEqual(effect(text, "shell", "python3 tools/appapi.py call monica GET /api/me"), "allow")
-        self.assertEqual(effect(text, "read", "/home/owner/fcos-ws/secrets/app-monica.token"), "deny")
+        self.assertEqual(effect(text, "shell", "python3 tools/appapi.py call crm GET /api/me"), "allow")
+        self.assertEqual(effect(text, "read", "/home/owner/fcos-ws/secrets/app-crm.token"), "deny")
         prompt = " ".join(text.split())
         self.assertIn("tools/appapi.py", prompt)
         self.assertIn("forget", prompt)

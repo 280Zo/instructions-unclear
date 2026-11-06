@@ -286,14 +286,14 @@ class PrivateValueTests(TempHome):
         svc = ws / "services" / "app"
         svc.mkdir(parents=True)
         (svc / "service.yaml").write_text(
-            "name: monica\nhostname: secret-crm\ntitle: Grandmas Contacts\ndescription: Family CRM of Mrs X\n"
+            "name: crm\nhostname: secret-crm\ntitle: Grandmas Contacts\ndescription: Family CRM of Mrs X\n"
             "login_reason: only the Example household uses it\naccepted_risks: ['over the 5 GB rule: photos of Kim']\n"
-            "containers:\n  - name: app\n    image: docker.io/library/monica:4-apache\n"
-            "    env: {APP_ENV: production, DB_HOST: monica-db}\n    add_capabilities: [CHOWN]\n"
+            "containers:\n  - name: app\n    image: docker.io/library/crm:4-apache\n"
+            "    env: {APP_ENV: production, DB_HOST: crm-db}\n    add_capabilities: [CHOWN]\n"
             "    volumes:\n      - {path: /var/www/html/storage, class: local}\n"
             "      - {path: /photos, class: nfs, host: /var/mnt/kims-photos/2026}\n")
         values = private_values(ws)
-        for public in ("monica", "docker.io/library/monica:4-apache", "production", "monica-db", "CHOWN",
+        for public in ("crm", "docker.io/library/crm:4-apache", "production", "crm-db", "CHOWN",
                        "/var/www/html/storage", "/photos"):
             self.assertNotIn(public, values)
         for private in ("secret-crm", "Grandmas Contacts", "Family CRM of Mrs X", "only the Example household uses it",
@@ -301,12 +301,12 @@ class PrivateValueTests(TempHome):
             self.assertIn(private, values)
         # Env values that carry an address, a domain or free text still count.
         (svc / "service.yaml").write_text(
-            "name: monica\ncontainers:\n  - name: app\n    env: {MAIL_FROM: kim@example.net, ADMIN_NAME: Kim Example, "
-            "MAIL_HOST: smtp.mailer.example, APP_ENV: production, DB_HOST: monica-db}\n")
+            "name: crm\ncontainers:\n  - name: app\n    env: {MAIL_FROM: kim@example.net, ADMIN_NAME: Kim Example, "
+            "MAIL_HOST: smtp.mailer.example, APP_ENV: production, DB_HOST: crm-db}\n")
         values = private_values(ws)
         for private in ("kim@example.net", "Kim Example", "smtp.mailer.example"):
             self.assertIn(private, values)
-        self.assertEqual(values & {"production", "monica-db"}, set())
+        self.assertEqual(values & {"production", "crm-db"}, set())
         # A VM spec's free-text description counts.
         (ws / "vms" / "x").mkdir(parents=True)
         (ws / "vms" / "x" / "vm.yaml").write_text(
@@ -315,11 +315,11 @@ class PrivateValueTests(TempHome):
         self.assertNotIn("fcos-agent", private_values(ws))
         (ws / "vms" / "x" / "vm.yaml").write_text("settings: [1]\n")  # malformed: no crash
         private_values(ws)
-        (svc / "service.yaml").write_text("name: monica\ncontainers:\n  - name: app\n    env: {RELAY: 203.0.113.5}\n")
+        (svc / "service.yaml").write_text("name: crm\ncontainers:\n  - name: app\n    env: {RELAY: 203.0.113.5}\n")
         self.assertIn("203.0.113.5", private_values(ws))
         # A web name or title that is just the app's own name is public too.
-        (svc / "service.yaml").write_text("name: monica\nhostname: monica\ntitle: Monica\ncontainers: []\n")
-        self.assertEqual(private_values(ws) & {"monica", "Monica"}, set())
+        (svc / "service.yaml").write_text("name: crm\nhostname: crm\ntitle: Crm\ncontainers: []\n")
+        self.assertEqual(private_values(ws) & {"crm", "Crm"}, set())
 
     def test_shipped_adapter_names_are_public(self):
         # The roles answer names products the agent ships adapters for; those

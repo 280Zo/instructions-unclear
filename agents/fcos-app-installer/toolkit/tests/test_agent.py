@@ -66,19 +66,19 @@ class AgentTests(unittest.TestCase):
         ws = "/home/owner/fcos-workspace"
         for command in (f"python3 tools/pve.py check --host host-a --workspace {ws}",
                         f"python3 tools/pve.py create {ws}/vms/apps/vm.yaml --host host-a --dry-run",
-                        f"python3 tools/gen_service.py {ws}/services/monica/service.yaml {ws}/site.yaml {ws}/services/monica",
+                        f"python3 tools/gen_service.py {ws}/services/crm/service.yaml {ws}/site.yaml {ws}/services/crm",
                         f"python3 tools/login_frontend.py {ws}/site.yaml {ws}/login-frontend",
                         "python3 tools/adapters.py draft --role file_server --provider synology --from x.json",
                         "python3 tools/workspace.py init /home/owner/fcos-workspace",
                         f"bash tools/build-vm.sh {ws}/vms/edge",
                         "python3 tools/publish_check.py",
                         "python3 -m unittest discover tests",
-                        "python3 tools/http_check.py https://monica.example.duckdns.org/",
+                        "python3 tools/http_check.py https://crm.example.duckdns.org/",
                         f"python3 tools/vmssh.py run edge --workspace {ws} -- sudo systemctl --user -M x@ start x.service",
                         "git status --short"):
             with self.subTest(command=command):
                 self.assertEqual(effect(self.text, "shell", command), "allow")
-        for path in (f"{ws}/site.yaml", f"{ws}/vms/apps/vm.yaml", f"{ws}/services/monica/service.yaml",
+        for path in (f"{ws}/site.yaml", f"{ws}/vms/apps/vm.yaml", f"{ws}/services/crm/service.yaml",
                      f"{ws}/adapters-draft/adapter-synology/adapter.yaml", "/tmp/opencode/x.sh"):
             with self.subTest(path=path):
                 self.assertEqual(effect(self.text, "edit", path), "allow")
@@ -160,7 +160,7 @@ class AgentTests(unittest.TestCase):
                 self.assertEqual(effect(self.text, "shell", command), "ask")
         # The verification commands the guide uses still run hands-off.
         for command in ("python3 tools/http_check.py --timeout 3 http://192.0.2.30:8110/",
-                        "python3 tools/http_check.py https://monica.example.duckdns.org/",
+                        "python3 tools/http_check.py https://crm.example.duckdns.org/",
                         "python3 tools/workspace.py where",
                         "python3 -m unittest discover tests",
                         "python3 -m unittest tests.test_pve",
@@ -168,7 +168,7 @@ class AgentTests(unittest.TestCase):
                         "python3 tools/adapters.py render --role router_firewall --provider opnsense --step reserve_ip --values /tmp/opencode/v.json"):
             with self.subTest(command=command):
                 self.assertEqual(effect(self.text, "shell", command), "allow")
-        self.assertEqual(effect(self.text, "edit", "tests/fixtures/services/monica.yaml"), "ask")
+        self.assertEqual(effect(self.text, "edit", "tests/fixtures/services/crm.yaml"), "ask")
 
     def test_prompt_says_how_to_run_the_guides_desktop_commands(self):
         text = body(self.text)
@@ -280,7 +280,7 @@ class AgentTests(unittest.TestCase):
         for command in ("cat secrets/proxmox-a.token", "ls secrets", "ls -la secrets/"):
             with self.subTest(command=command):
                 self.assertEqual(effect(self.text, "shell", command), "deny")
-        self.assertNotEqual(effect(self.text, "read", "services/monica/secrets.md"), "deny")
+        self.assertNotEqual(effect(self.text, "read", "services/crm/secrets.md"), "deny")
 
     def test_overrides_cover_document_tools(self):
         section = AGENT.read_text().split("## Overrides of global rules", 1)[1].split("\n## ", 1)[0]
@@ -402,7 +402,7 @@ class ReviewFixTests(unittest.TestCase):
         self.assertIn("Hand work only to `adapter-drafter`", prompt)
 
     def test_removing_its_own_scratch_file_is_allowed_and_extra_arguments_are_not(self):
-        for name in ("apply-edge.sh", "apply-login-frontend.sh", "apply-monica.sh"):
+        for name in ("apply-edge.sh", "apply-login-frontend.sh", "apply-crm.sh"):
             self.assertEqual(effect(self.text, "shell", f"rm -f /tmp/opencode/{name}"), "allow")
         # Nothing but a generated apply script: not a bare glob, not another scratch file.
         for command in ("rm -f /tmp/opencode/*", "rm -f /tmp/opencode/other.txt", "rm -f /tmp/opencode/a*"):

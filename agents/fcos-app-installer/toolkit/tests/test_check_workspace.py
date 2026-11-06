@@ -24,7 +24,7 @@ def spec(name):
 
 class CheckWorkspaceTests(unittest.TestCase):
     def test_distinct_services_pass(self):
-        self.assertEqual(workspace_problems(SITE, [spec("single"), spec("monica")]), [])
+        self.assertEqual(workspace_problems(SITE, [spec("single"), spec("crm")]), [])
 
     def test_duplicates_refused(self):
         cases = {
@@ -36,24 +36,24 @@ class CheckWorkspaceTests(unittest.TestCase):
         }
         for what, mutate in cases.items():
             with self.subTest(what=what):
-                a, b = spec("single"), spec("monica")
+                a, b = spec("single"), spec("crm")
                 mutate(a, b)
                 problems = workspace_problems(SITE, [a, b])
                 self.assertTrue(any(f": {what} " in p for p in problems), problems)
 
     def test_same_port_on_different_vms_is_fine(self):
-        a, b = spec("single"), spec("monica")
-        b["port"] = a["port"]  # monica is on vm apps, single on ai
+        a, b = spec("single"), spec("crm")
+        b["port"] = a["port"]  # crm is on vm apps, single on ai
         self.assertEqual(workspace_problems(SITE, [a, b]), [])
 
     def test_login_front_end_accounts_and_names_are_taken(self):
-        b = spec("monica")
+        b = spec("crm")
         b["uid"] = SITE["edge"]["authentik"]["uid"]
         self.assertTrue(any("uid" in p and "authentik" in p for p in workspace_problems(SITE, [b])))
-        b = spec("monica")
+        b = spec("crm")
         b["hostname"] = SITE["edge"]["authentik"]["host"].split(".")[0]
         self.assertTrue(any(": hostname " in p and "login page" in p for p in workspace_problems(SITE, [b])))
-        b = spec("monica")
+        b = spec("crm")
         b["name"] = "traefik"
         self.assertTrue(any(": name " in p for p in workspace_problems(SITE, [b])))
 
@@ -70,35 +70,35 @@ class CheckWorkspaceTests(unittest.TestCase):
                              ("gid", lambda s: s.update(gid=1001)),
                              ("gid", lambda s: s.update(gid=3100))):
             with self.subTest(what=what):
-                b = spec("monica")
+                b = spec("crm")
                 mutate(b)
                 self.assertTrue(any(f": {what} " in p for p in workspace_problems(site, [b])))
 
     def test_login_front_end_web_ports_are_taken(self):
-        b = spec("monica")
+        b = spec("crm")
         b.update(vm=SITE["edge"]["vm"], port=443)
         problems = workspace_problems(SITE, [b])
         self.assertTrue(any(": port 443 " in p and "traefik" in p for p in problems), problems)
 
     def test_uid_equal_to_another_gid_is_fine(self):
         # /etc/subuid and /etc/subgid are separate, and so are UIDs and GIDs.
-        a, b = spec("single"), spec("monica")
+        a, b = spec("single"), spec("crm")
         a["gid"] = 3150
         b["uid"] = 3150
         b["gid"] = 3151
         self.assertEqual(workspace_problems(SITE, [a, b]), [])
 
     def test_clash_suggests_a_free_value(self):
-        a, b = spec("single"), spec("monica")
+        a, b = spec("single"), spec("crm")
         b["uid"] = a["uid"]
         problem = next(p for p in workspace_problems(SITE, [a, b]) if ": uid " in p)
         self.assertRegex(problem, r"free: \d+")
 
     def test_free_hint_skips_numbers_taken_as_the_other_kind(self):
-        # monica takes opencode's UID; the next number up is a shared group's GID,
-        # and monica's GID follows its UID, so that number is not free.
+        # crm takes opencode's UID; the next number up is a shared group's GID,
+        # and crm's GID follows its UID, so that number is not free.
         site = copy.deepcopy(SITE)
-        a, b = spec("single"), spec("monica")
+        a, b = spec("single"), spec("crm")
         b.pop("gid", None)
         b["uid"] = a["uid"]
         site["shared_groups"] = [{"name": "ai-projects", "gid": a["uid"] + 1}]
@@ -111,21 +111,21 @@ class CheckWorkspaceTests(unittest.TestCase):
         # groups in templates/base/base-config.bu.tmpl.
         for name in ("root", "nobody", "wheel", "sudo"):
             with self.subTest(name=name):
-                b = spec("monica")
+                b = spec("crm")
                 b["name"] = name
                 self.assertTrue(any(": name " in p for p in workspace_problems(SITE, [b])))
 
     def test_broken_front_end_section_still_reports_other_clashes(self):
         site = copy.deepcopy(SITE)
         del site["edge"]["authentik"]["uid"]
-        a, b = spec("single"), spec("monica")
+        a, b = spec("single"), spec("crm")
         b["uid"] = a["uid"]
         problems = workspace_problems(site, [a, b])
         self.assertTrue(any("login front end" in p for p in problems), problems)
         self.assertTrue(any(": uid " in p for p in problems), problems)
 
     def test_odd_specs_reported_not_crashing(self):
-        b = spec("monica")
+        b = spec("crm")
         b["uid"] = [1, 2]
         problems = workspace_problems(SITE, [b, ["not", "a", "mapping"]])
         self.assertTrue(any("uid" in p and "number" in p for p in problems), problems)
@@ -143,15 +143,15 @@ class CheckWorkspaceTests(unittest.TestCase):
         ws = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, ws, True)
         (ws / "site.yaml").write_text(yaml.safe_dump(SITE))
-        for name, data in (("opencode", spec("single")), ("monica", spec("monica"))):
+        for name, data in (("opencode", spec("single")), ("crm", spec("crm"))):
             (ws / "services" / name).mkdir(parents=True)
             (ws / "services" / name / "service.yaml").write_text(yaml.safe_dump(data))
         tool = [sys.executable, str(ROOT / "tools" / "check_workspace.py"), str(ws)]
         ok = subprocess.run(tool, capture_output=True, text=True)
         self.assertEqual(ok.returncode, 0, ok.stdout + ok.stderr)
-        clash = copy.deepcopy(spec("monica"))
+        clash = copy.deepcopy(spec("crm"))
         clash["uid"] = spec("single")["uid"]
-        (ws / "services" / "monica" / "service.yaml").write_text(yaml.safe_dump(clash))
+        (ws / "services" / "crm" / "service.yaml").write_text(yaml.safe_dump(clash))
         bad = subprocess.run(tool, capture_output=True, text=True)
         self.assertEqual(bad.returncode, 1)
         self.assertIn("uid", bad.stdout)

@@ -84,7 +84,7 @@ class GenCase(unittest.TestCase):
 
 class HardeningTests(GenCase):
     def test_fixtures_are_valid(self):
-        for name in ("single", "monica", "authentik"):
+        for name in ("single", "crm", "authentik"):
             with self.subTest(fixture=name):
                 self.assertEqual(validate_spec(spec_fixture(name), SITE), [])
 
@@ -170,22 +170,22 @@ class HardeningTests(GenCase):
         self.assertEqual(directives(server, "PublishPort"), ["127.0.0.1:9000:9000"])
 
 
-class MonicaTests(GenCase):
-    def test_monica_three_containers(self):
-        out = self.gen("monica")
+class CrmTests(GenCase):
+    def test_crm_three_containers(self):
+        out = self.gen("crm")
         names = {p.name for p in (out / "rendered" / "files").iterdir()}
-        self.assertEqual(names, {"monica-app.container", "monica-cron.container", "monica-db.container",
-                                 "monica.network", "route-monica.yml", "app-monica.blueprint.yaml"})
-        self.assertIn("NetworkName=monica", self.read(out, "files/monica.network"))
-        app = self.read(out, "files/monica-app.container")
-        cron = self.read(out, "files/monica-cron.container")
-        db = self.read(out, "files/monica-db.container")
+        self.assertEqual(names, {"crm-app.container", "crm-cron.container", "crm-db.container",
+                                 "crm.network", "route-crm.yml", "app-crm.blueprint.yaml"})
+        self.assertIn("NetworkName=crm", self.read(out, "files/crm.network"))
+        app = self.read(out, "files/crm-app.container")
+        cron = self.read(out, "files/crm-cron.container")
+        db = self.read(out, "files/crm-db.container")
         for text in (app, cron, db):
-            self.assertIn("Network=monica.network", text.splitlines())
+            self.assertIn("Network=crm.network", text.splitlines())
         for text in (app, cron):
-            self.assertIn("Requires=monica-db.service", text.splitlines())
-            self.assertIn("After=monica-db.service", text.splitlines())
-        self.assertNotIn("Requires=monica", db)
+            self.assertIn("Requires=crm-db.service", text.splitlines())
+            self.assertIn("After=crm-db.service", text.splitlines())
+        self.assertNotIn("Requires=crm", db)
         self.assertEqual(directives(app, "PublishPort"), ["192.0.2.30:8110:80"])
         self.assertNotIn("PublishPort", cron)
         self.assertNotIn("PublishPort", db)
@@ -194,9 +194,9 @@ class MonicaTests(GenCase):
         self.assertEqual(directives(app, "Volume"), directives(cron, "Volume"))
 
     def test_root_start_drops_all_and_adds_back_listed(self):
-        out = self.gen("monica")
-        app = self.read(out, "files/monica-app.container")
-        db = self.read(out, "files/monica-db.container")
+        out = self.gen("crm")
+        app = self.read(out, "files/crm-app.container")
+        db = self.read(out, "files/crm-db.container")
         for text in (app, db):
             self.assertNotIn("UserNS", text)
             self.assertIn("DropCapability=ALL", text.splitlines())
@@ -205,20 +205,20 @@ class MonicaTests(GenCase):
                          ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETUID", "SETGID", "NET_BIND_SERVICE"])
         self.assertEqual(directives(db, "AddCapability"), ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETUID", "SETGID"])
 
-    def test_monica_backups_and_files(self):
-        out = self.gen("monica")
-        files = self.fragment(out, "monica-backup-db.bu")
-        self.assertIn("/usr/local/bin/monica-db-mariadb-backup", files)
-        self.assertTrue((out / "rendered" / "monica-backup-files.bu").exists())
-        self.assertFalse((out / "rendered" / "monica-backup-app.bu").exists())
+    def test_crm_backups_and_files(self):
+        out = self.gen("crm")
+        files = self.fragment(out, "crm-backup-db.bu")
+        self.assertIn("/usr/local/bin/crm-db-mariadb-backup", files)
+        self.assertTrue((out / "rendered" / "crm-backup-files.bu").exists())
+        self.assertFalse((out / "rendered" / "crm-backup-app.bu").exists())
 
     def test_route_and_blueprint(self):
-        out = self.gen("monica")
-        route = self.read(out, "files/route-monica.yml")
-        self.assertIn("Host(`monica.example.duckdns.org`)", route)
+        out = self.gen("crm")
+        route = self.read(out, "files/route-crm.yml")
+        self.assertIn("Host(`crm.example.duckdns.org`)", route)
         self.assertIn('url: "http://192.0.2.30:8110"', route)
         self.assertIn("middlewares: [authentik]", route)
-        blueprint = self.read(out, "files/app-monica.blueprint.yaml")
+        blueprint = self.read(out, "files/app-crm.blueprint.yaml")
         self.assertIn("^/dav/.*$", blueprint)
         self.assertIn(r"^/\.well-known/(carddav|caldav)$", blueprint)
         # Placing them on the login front end VM is login_frontend.py's job
@@ -231,31 +231,31 @@ class MonicaTests(GenCase):
         self.assertFalse((out / "rendered" / "files" / "route-authentik.yml").exists())
 
     def test_app_only_with_hostname_gets_https_route_without_login(self):
-        spec = spec_fixture("monica")
+        spec = spec_fixture("crm")
         spec.update(login="app-only", login_reason="Phones use CalDAV with the app's own password")
         out = self.gen(spec)
-        route = yaml.safe_load(self.read(out, "files/route-monica.yml"))["http"]
-        self.assertEqual(route["routers"]["monica"]["rule"], "Host(`monica.example.duckdns.org`)")
-        self.assertEqual(route["routers"]["monica"]["entryPoints"], ["websecure"])
-        self.assertNotIn("middlewares", route["routers"]["monica"])
-        self.assertNotIn("monica-outpost", route["routers"])
-        self.assertEqual(route["services"]["monica"]["loadBalancer"]["servers"], [{"url": "http://192.0.2.30:8110"}])
+        route = yaml.safe_load(self.read(out, "files/route-crm.yml"))["http"]
+        self.assertEqual(route["routers"]["crm"]["rule"], "Host(`crm.example.duckdns.org`)")
+        self.assertEqual(route["routers"]["crm"]["entryPoints"], ["websecure"])
+        self.assertNotIn("middlewares", route["routers"]["crm"])
+        self.assertNotIn("crm-outpost", route["routers"])
+        self.assertEqual(route["services"]["crm"]["loadBalancer"]["servers"], [{"url": "http://192.0.2.30:8110"}])
         # A dashboard link only: an application with a launch URL and no provider.
-        bookmark = yaml.safe_load(self.read(out, "files/app-monica.blueprint.yaml"))
-        self.assertEqual(bookmark["metadata"]["name"], "app-monica")
+        bookmark = yaml.safe_load(self.read(out, "files/app-crm.blueprint.yaml"))
+        self.assertEqual(bookmark["metadata"]["name"], "app-crm")
         (entry,) = bookmark["entries"]
         self.assertEqual(entry["model"], "authentik_core.application")
-        self.assertEqual(entry["identifiers"], {"slug": "monica"})
-        self.assertEqual(entry["attrs"]["meta_launch_url"], "https://monica.example.duckdns.org")
+        self.assertEqual(entry["identifiers"], {"slug": "crm"})
+        self.assertEqual(entry["attrs"]["meta_launch_url"], "https://crm.example.duckdns.org")
         self.assertIsNone(entry["attrs"]["provider"])
-        self.assertEqual(entry["attrs"]["name"], "Monica")
+        self.assertEqual(entry["attrs"]["name"], "Crm")
         # The port stays open only to the login front end.
-        self.assertIn("edge_tcp", self.read(out, "monica-port.bu"))
+        self.assertIn("edge_tcp", self.read(out, "crm-port.bu"))
 
     def test_app_only_hostname_is_checked(self):
         def bad(spec):
             spec.update(login="app-only", login_reason="own login", hostname="Not A Label")
-        self.assertTrue(any("hostname" in e for e in self.errors(bad, base="monica")))
+        self.assertTrue(any("hostname" in e for e in self.errors(bad, base="crm")))
 
         def no_publisher(spec):
             spec.update(login="app-only", login_reason="own login", hostname="x")
@@ -265,7 +265,7 @@ class MonicaTests(GenCase):
         self.assertTrue(any("hostname" in e and "publish" in e for e in self.errors(no_publisher)))
 
     def test_blueprint_with_several_paths_is_valid_yaml(self):
-        text = self.read(self.gen("monica"), "files/app-monica.blueprint.yaml")
+        text = self.read(self.gen("crm"), "files/app-crm.blueprint.yaml")
 
         class Loader(yaml.SafeLoader):
             pass
@@ -293,9 +293,9 @@ class AccessGroupTests(GenCase):
     def test_app_rules_never_create_groups(self):
         # Two rules files creating the same group race on its unique name;
         # groups and bindings live only in the login front end's access.yaml.
-        spec = spec_fixture("monica")
+        spec = spec_fixture("crm")
         spec["groups"] = ["family", "guests"]
-        data = _blueprint(self.read(self.gen(spec), "files/app-monica.blueprint.yaml"))
+        data = _blueprint(self.read(self.gen(spec), "files/app-crm.blueprint.yaml"))
         models = [e["model"] for e in data["entries"]]
         self.assertNotIn("authentik_core.group", models)
         # Review: until access.yaml binds the groups, the app refuses everyone: a deny policy of
@@ -306,14 +306,14 @@ class AccessGroupTests(GenCase):
         binds = [e for e in data["entries"] if e["model"] == "authentik_policies.policybinding"]
         self.assertEqual(len(binds), 1)
         self.assertEqual(binds[0]["identifiers"]["policy"], ["!KeyOf", deny[0]["id"]])
-        plain = _blueprint(self.read(self.gen("monica"), "files/app-monica.blueprint.yaml"))
+        plain = _blueprint(self.read(self.gen("crm"), "files/app-crm.blueprint.yaml"))
         self.assertFalse([e for e in plain["entries"] if e["model"] == "authentik_policies.policybinding"])
 
     def test_groups_refused_for_an_app_on_its_own_login(self):
         # Its route skips the login page; a binding would only hide the dashboard link.
         def mutate(spec):
             spec.update(login="app-only", login_reason="own login", groups=["family"])
-        errors = self.errors(mutate, base="monica")
+        errors = self.errors(mutate, base="crm")
         self.assertTrue(any("groups" in e and "login page" in e for e in errors), errors)
 
     def test_guide_and_prompt_ask_for_groups(self):
@@ -331,7 +331,7 @@ class AccessGroupTests(GenCase):
     def test_bad_groups_refused(self):
         for bad in ("family", ["Family"], ["a b"], ["x", "x"], [f"g{i}" for i in range(11)], ["-x"], [""]):
             with self.subTest(bad=bad):
-                errors = self.errors(lambda s: s.update(groups=bad), base="monica")
+                errors = self.errors(lambda s: s.update(groups=bad), base="crm")
                 self.assertTrue(any("groups" in e for e in errors), errors)
 
 
@@ -341,48 +341,48 @@ class SectionTests(GenCase):
     web/src/user/LibraryPage/ApplicationList.ts; core/models.py Application.group)."""
 
     def test_section_sets_the_application_group(self):
-        spec = spec_fixture("monica")
+        spec = spec_fixture("crm")
         spec["section"] = "Relationships"
-        data = _blueprint(self.read(self.gen(spec), "files/app-monica.blueprint.yaml"))
+        data = _blueprint(self.read(self.gen(spec), "files/app-crm.blueprint.yaml"))
         app = next(e for e in data["entries"] if e["model"] == "authentik_core.application")
         self.assertEqual(app["attrs"]["group"], "Relationships")
 
     def test_without_section_no_group(self):
-        data = _blueprint(self.read(self.gen("monica"), "files/app-monica.blueprint.yaml"))
+        data = _blueprint(self.read(self.gen("crm"), "files/app-crm.blueprint.yaml"))
         app = next(e for e in data["entries"] if e["model"] == "authentik_core.application")
         self.assertNotIn("group", app["attrs"])
 
     def test_bad_sections_refused(self):
         for bad in ("", "a" * 51, "Line\nbreak", 'Quote"s', 5):
             with self.subTest(bad=bad):
-                errors = self.errors(lambda s: s.update(section=bad), base="monica")
+                errors = self.errors(lambda s: s.update(section=bad), base="crm")
                 self.assertTrue(any("section" in e for e in errors), errors)
 
 
 class RedirectTests(GenCase):
-    """Monica's public/.htaccess redirects /.well-known/carddav with an
+    """Crm's public/.htaccess redirects /.well-known/carddav with an
     Apache rewrite that builds http:// behind the proxy; Traefik answers these paths itself
     with https (redirectRegex: doc.traefik.io .../middlewares/redirectregex/)."""
 
     def route(self, spec):
-        return yaml.safe_load(self.read(self.gen(spec), "files/route-monica.yml"))["http"]
+        return yaml.safe_load(self.read(self.gen(spec), "files/route-crm.yml"))["http"]
 
     def test_redirects_are_answered_by_traefik_with_https(self):
-        spec = spec_fixture("monica")
+        spec = spec_fixture("crm")
         spec["redirects"] = [{"path": "/.well-known/carddav", "to": "/dav/"},
                              {"path": "/.well-known/caldav", "to": "/dav/"}]
         http = self.route(spec)
         host = f"{spec['hostname']}.{SITE['domain']}"
-        router = http["routers"]["monica-redirect-0"]
+        router = http["routers"]["crm-redirect-0"]
         self.assertEqual(router["rule"], f"Host(`{host}`) && Path(`/.well-known/carddav`)")
-        self.assertEqual(router["middlewares"], ["monica-redirect-0"])
-        self.assertGreater(router["priority"], http["routers"]["monica-outpost"]["priority"])
-        mw = http["middlewares"]["monica-redirect-1"]["redirectRegex"]
+        self.assertEqual(router["middlewares"], ["crm-redirect-0"])
+        self.assertGreater(router["priority"], http["routers"]["crm-outpost"]["priority"])
+        mw = http["middlewares"]["crm-redirect-1"]["redirectRegex"]
         self.assertEqual(mw, {"regex": "^.*$", "replacement": f"https://{host}/dav/", "permanent": True})
 
     def test_without_redirects_nothing_is_added(self):
-        http = self.route(spec_fixture("monica"))
-        self.assertNotIn("monica-redirect-0", http["routers"])
+        http = self.route(spec_fixture("crm"))
+        self.assertNotIn("crm-redirect-0", http["routers"])
         self.assertFalse(http.get("middlewares"))
 
     def test_bad_redirects_refused(self):
@@ -394,7 +394,7 @@ class RedirectTests(GenCase):
                     # behind the login page, the target must be one of the app's api_paths
                     [{"path": "/.well-known/carddav", "to": "/settings/"}]):
             with self.subTest(bad=bad):
-                errors = self.errors(lambda s: s.update(redirects=bad), base="monica")
+                errors = self.errors(lambda s: s.update(redirects=bad), base="crm")
                 self.assertTrue(any("redirects" in e for e in errors), errors)
 
 
@@ -402,8 +402,8 @@ class RouteNameTests(unittest.TestCase):
     def test_names_that_would_clash_with_route_names_are_refused(self):
         # Review: routers are named <svc>-outpost and <svc>-redirect-<n>.
         import login_frontend
-        for name in ("monica-redirect-0", "x-outpost"):
-            spec = spec_fixture("monica")
+        for name in ("crm-redirect-0", "x-outpost"):
+            spec = spec_fixture("crm")
             spec["name"] = name
             with self.subTest(name=name), self.assertRaisesRegex(Exception, "clashes"):
                 login_frontend._routed(copy.deepcopy(SITE), [spec], spec["vm"], "auth")
@@ -501,9 +501,9 @@ class RuleTests(GenCase):
     def test_subuid_ranges_pinned(self):
         # Deferred fix 4: each service's sub-ID range comes from its UID/GID, so
         # creation order (rebuilds, pushes) never changes it.
-        out = self.gen("monica")
-        unit = next(u for u in yaml.safe_load(self.read(out, "monica.bu"))["systemd"]["units"]
-                    if u["name"] == "subids-monica.service")
+        out = self.gen("crm")
+        unit = next(u for u in yaml.safe_load(self.read(out, "crm.bu"))["systemd"]["units"]
+                    if u["name"] == "subids-crm.service")
         self.assertTrue(unit["enabled"])
         text = unit["contents"]
         first = 600113152 + (3110 - 1000) * 65536
@@ -551,10 +551,10 @@ class RuleTests(GenCase):
         self.assertTrue(any("uid" in e for e in self.errors(lambda s: s.update(uid=999))))
 
     def test_ids_record(self):
-        out = self.gen("monica")
+        out = self.gen("crm")
         text = (out / "ids.md").read_text()
         first = 600113152 + 2110 * 65536
-        for needle in ("monica", "3110", f"{first}-{first + 65535}", "container root",
+        for needle in ("crm", "3110", f"{first}-{first + 65535}", "container root",
                        "first ID + n - 1", "same for groups", "uid_map", "Lasting"):
             self.assertIn(needle, text)
         self.assertEqual(scan_text(text), [])
@@ -562,7 +562,7 @@ class RuleTests(GenCase):
     def test_no_network_online_in_user_units(self):
         # Podman docs (podman-systemd.unit, "Implicit network dependencies"): user units
         # can't wait for system targets; Quadlet adds podman-user-wait-network-online.service.
-        for fixture in ("single", "monica", "authentik"):
+        for fixture in ("single", "crm", "authentik"):
             out = self.gen(fixture)
             for path in (out / "rendered").rglob("*"):
                 if path.is_file() and path.suffix in (".container", ".bu", ".network"):
@@ -572,7 +572,7 @@ class RuleTests(GenCase):
     def test_every_generated_file_may_be_replaced(self):
         # The push tool honours overwrite: false like Ignition, so a re-push of an
         # updated service needs every generated file marked overwrite: true.
-        for fixture in ("single", "monica", "authentik"):
+        for fixture in ("single", "crm", "authentik"):
             out = self.gen(fixture)
             for fragment in sorted((out / "rendered").glob("*.bu")):
                 for path, entry in self.fragment(out, fragment.name).items():
@@ -592,8 +592,8 @@ class RuleTests(GenCase):
             Loader.add_constructor(tag, lambda loader, node: "tag")
         for name, title in (("null", "yes"), ("on", "123"), ("no", "0x1A"), ("true", "1.5")):
             with self.subTest(name=name, title=title):
-                spec = spec_fixture("monica")
-                spec.update(name=name, title=title, hostname="monica")
+                spec = spec_fixture("crm")
+                spec.update(name=name, title=title, hostname="crm")
                 out = self.gen(spec)
                 blueprint = yaml.load(self.read(out, f"files/app-{name}.blueprint.yaml"), Loader=Loader)
                 provider, app = blueprint["entries"]
@@ -635,29 +635,29 @@ class RuleTests(GenCase):
             cron = spec["containers"][1]
             cron["user_mode"] = "map-user"
             cron.pop("add_capabilities")
-        errors = self.errors(mutate, base="monica")
+        errors = self.errors(mutate, base="crm")
         self.assertTrue(any("user_mode" in e and "shared" in e for e in errors), errors)
 
         def separate(spec):
             mutate(spec)
             spec["containers"][1]["volumes"][0]["name"] = "cron-storage"
-        self.assertEqual(self.errors(separate, base="monica"), [])
+        self.assertEqual(self.errors(separate, base="crm"), [])
 
     def test_shared_volume_counted_once(self):
         def mutate(spec):
             for container in spec["containers"][:2]:
                 container["volumes"][0]["expected_gib"] = 2.5
             spec["containers"][2]["volumes"][0]["expected_gib"] = 0.1
-        self.assertEqual(self.errors(mutate, base="monica"), [])
+        self.assertEqual(self.errors(mutate, base="crm"), [])
 
     def test_dependency_problems(self):
         def unknown(spec):
             spec["containers"][0]["depends_on"] = ["nope"]
-        self.assertTrue(any("nope" in e for e in self.errors(unknown, base="monica")))
+        self.assertTrue(any("nope" in e for e in self.errors(unknown, base="crm")))
 
         def cycle(spec):
             spec["containers"][2]["depends_on"] = ["app"]
-        self.assertTrue(any("cycle" in e for e in self.errors(cycle, base="monica")))
+        self.assertTrue(any("cycle" in e for e in self.errors(cycle, base="crm")))
 
     def test_host_network_container(self):
         def mutate(spec):
@@ -705,7 +705,7 @@ class RuleTests(GenCase):
     def test_mariadb_needs_its_variables(self):
         def mutate(spec):
             del spec["containers"][2]["env"]["MARIADB_USER"]
-        self.assertTrue(any("MARIADB_USER" in e for e in self.errors(mutate, base="monica")))
+        self.assertTrue(any("MARIADB_USER" in e for e in self.errors(mutate, base="crm")))
 
     def test_custom_engine_needs_command(self):
         def mutate(spec):
@@ -739,7 +739,7 @@ class NetworkRuleTests(GenCase):
 
     def test_missing_vm_ip_names_the_vm_and_field(self):
         site = self.site_without(lambda s: s["vms"][1].pop("ip"))
-        errors = self.errors(lambda s: None, base="monica", site=site)
+        errors = self.errors(lambda s: None, base="crm", site=site)
         self.assertTrue(any("apps" in e and "ip" in e for e in errors), errors)
 
     def test_loopback_needs_no_vm_ip(self):
@@ -747,9 +747,9 @@ class NetworkRuleTests(GenCase):
         self.assertEqual(self.errors(lambda s: None, base="authentik", site=site), [])
 
     def test_missing_domain_and_edge_ids_are_named(self):
-        errors = self.errors(lambda s: None, base="monica", site=self.site_without(lambda s: s.pop("domain")))
+        errors = self.errors(lambda s: None, base="crm", site=self.site_without(lambda s: s.pop("domain")))
         self.assertTrue(any("domain" in e for e in errors), errors)
-        errors = self.errors(lambda s: None, base="monica",
+        errors = self.errors(lambda s: None, base="crm",
                              site=self.site_without(lambda s: s["edge"]["traefik"].pop("uid")))
         self.assertTrue(any("edge.traefik.uid" in e for e in errors), errors)
 
@@ -765,11 +765,11 @@ class NetworkRuleTests(GenCase):
 
     def test_vm_without_backups_share_is_flagged(self):
         site = self.site_without(lambda s: s["vms"][1].update(nfs_shares=[]))
-        errors = self.errors(lambda s: None, base="monica", site=site)
+        errors = self.errors(lambda s: None, base="crm", site=site)
         self.assertTrue(any("backups" in e for e in errors), errors)
 
     def test_output_holds_no_address_that_is_not_from_the_site(self):
-        for name in ("single", "monica", "authentik"):
+        for name in ("single", "crm", "authentik"):
             with self.subTest(name):
                 out = self.gen(name)
                 allowed = {"127.0.0.1", "192.0.2.20", "192.0.2.30"}
@@ -781,10 +781,10 @@ class NetworkRuleTests(GenCase):
     def test_changing_the_site_ip_changes_the_output(self):
         site = copy.deepcopy(SITE)
         site["vms"][1]["ip"] = "192.0.2.77"
-        out = self.gen("monica", site=site)
-        self.assertEqual(directives(self.read(out, "files/monica-app.container"), "PublishPort"),
+        out = self.gen("crm", site=site)
+        self.assertEqual(directives(self.read(out, "files/crm-app.container"), "PublishPort"),
                          ["192.0.2.77:8110:80"])
-        self.assertIn('url: "http://192.0.2.77:8110"', self.read(out, "files/route-monica.yml"))
+        self.assertIn('url: "http://192.0.2.77:8110"', self.read(out, "files/route-crm.yml"))
 
 
 class InjectionTests(GenCase):
@@ -881,10 +881,10 @@ class InjectionTests(GenCase):
                 self.assertTrue(validate_spec(spec, SITE))
 
     def test_hostile_api_paths_cannot_add_blueprint_entries(self):
-        spec = spec_fixture("monica")
+        spec = spec_fixture("crm")
         spec["api_paths"] = ["^/dav/.*$\u2028  - model: authentik_core.user\u2028    identifiers: {username: evil}"]
         self.assertTrue(validate_spec(spec, SITE))
-        text = self.read(self.gen("monica"), "files/app-monica.blueprint.yaml")
+        text = self.read(self.gen("crm"), "files/app-crm.blueprint.yaml")
 
         class Loader(yaml.SafeLoader):
             pass
@@ -913,22 +913,22 @@ class InjectionTests(GenCase):
     def test_vm_name_is_checked(self):
         site = copy.deepcopy(SITE)
         site["vms"][1]["name"] = "apps\nevil"
-        spec = spec_fixture("monica")
+        spec = spec_fixture("crm")
         spec["vm"] = "apps\nevil"
         self.assertTrue(validate_spec(spec, site))
 
     def test_vm_ip_must_be_text(self):
         site = copy.deepcopy(SITE)
         site["vms"][1]["ip"] = 3232235777
-        self.assertTrue(any("ip" in e for e in self.errors(lambda s: None, base="monica", site=site)))
+        self.assertTrue(any("ip" in e for e in self.errors(lambda s: None, base="crm", site=site)))
 
     def test_site_values_are_checked_too(self):
         site = copy.deepcopy(SITE)
         site["domain"] = "example.org\nevil"
-        self.assertTrue(self.errors(lambda s: None, base="monica", site=site))
+        self.assertTrue(self.errors(lambda s: None, base="crm", site=site))
         site = copy.deepcopy(SITE)
         site["vms"][1]["ip"] = "192.0.2.30\nevil"
-        self.assertTrue(self.errors(lambda s: None, base="monica", site=site))
+        self.assertTrue(self.errors(lambda s: None, base="crm", site=site))
 
     def test_generate_refuses_and_writes_nothing(self):
         spec = spec_fixture("single")
@@ -980,24 +980,24 @@ class BackupTests(GenCase):
 
         # mariadb and mysql
         for engine in ("mariadb", "mysql"):
-            spec = spec_fixture("monica")
+            spec = spec_fixture("crm")
             spec["containers"][2]["volumes"][0]["engine"] = engine
             out = self.gen(spec)
-            files = self.fragment(out, "monica-backup-db.bu")
-            script = files["/usr/local/bin/monica-db-mariadb-backup"]
+            files = self.fragment(out, "crm-backup-db.bu")
+            script = files["/usr/local/bin/crm-db-mariadb-backup"]
             self.assertEqual(script["mode"], 0o755)
             body = script["contents"]["inline"]
-            self.assertIn("podman exec monica-db sh -c", body)
+            self.assertIn("podman exec crm-db sh -c", body)
             self.assertIn('mariadb-dump --single-transaction --quick "-u$MARIADB_USER" '
                           '"-p$MARIADB_PASSWORD" "$MARIADB_DATABASE"', body)
             self.assertIn("gzip", body)
             self.assertIn('.tmp', body)
             self.assertIn("mv ", body)
             self.assertIn("tail -n +$((14 + 1))", body)
-            unit = inline(files, "/etc/systemd/user/monica-backup-db.service")
-            self.assertIn("ExecStart=/usr/local/bin/monica-db-mariadb-backup", unit)
+            unit = inline(files, "/etc/systemd/user/crm-backup-db.service")
+            self.assertIn("ExecStart=/usr/local/bin/crm-db-mariadb-backup", unit)
             self.assertNotIn("MARIADB_", unit, "credentials must not pass through systemd quoting")
-            self.assert_skips_without_nas(unit, "monica")
+            self.assert_skips_without_nas(unit, "crm")
 
         # custom
         spec = spec_fixture("single")
@@ -1088,24 +1088,24 @@ class OwnerTablesTests(GenCase):
         self.assertIn("numbers", text)  # the VM sends UIDs and GIDs; names don't matter
 
     def test_file_server_table_for_a_service_without_nfs_folders(self):
-        rows = [l for l in (self.gen("monica") / "file-server.md").read_text().splitlines() if l.startswith("| `")]
-        self.assertEqual([r.split(" | ")[0] for r in rows], ["| `/mnt/pool/backups/apps/`", "| `/mnt/pool/backups/apps/monica/`"])
+        rows = [l for l in (self.gen("crm") / "file-server.md").read_text().splitlines() if l.startswith("| `")]
+        self.assertEqual([r.split(" | ")[0] for r in rows], ["| `/mnt/pool/backups/apps/`", "| `/mnt/pool/backups/apps/crm/`"])
 
     def test_secrets_are_one_table_with_what_to_enter(self):
-        spec = spec_fixture("monica")
-        spec["secrets"][1]["value"] = "base64: followed by 32 random bytes in base64 (Monica's .env.example)"
+        spec = spec_fixture("crm")
+        spec["secrets"][1]["value"] = "base64: followed by 32 random bytes in base64 (Crm's .env.example)"
         text = (self.gen(spec) / "secrets.md").read_text()
         self.assertIn("| Secret | Used by | What to enter | Keep it |", text)
         rows = {l.split(" | ")[0]: l for l in text.splitlines() if l.startswith("| `")}
-        self.assertIn("base64: followed by 32 random bytes", rows["| `monica_app_key`"])
-        self.assertIn("password manager", rows["| `monica_app_key`"])
-        self.assertIn("a long random value", rows["| `monica_db_password`"])
+        self.assertIn("base64: followed by 32 random bytes", rows["| `crm_app_key`"])
+        self.assertIn("password manager", rows["| `crm_app_key`"])
+        self.assertIn("a long random value", rows["| `crm_db_password`"])
         self.assertLess(text.index("| Secret |"), text.index("```bash"))
 
     def test_bad_secret_values_refused(self):
         for bad in ("", "a" * 201, "two\nlines", "pipe | here", 5):
             with self.subTest(bad=bad):
-                errors = self.errors(lambda s: s["secrets"][0].update(value=bad), base="monica")
+                errors = self.errors(lambda s: s["secrets"][0].update(value=bad), base="crm")
                 self.assertTrue(any("value" in e for e in errors), errors)
 
 
@@ -1113,15 +1113,15 @@ class BackupsReportTests(GenCase):
     """The final report says how backups work, when they run and how to restore."""
 
     def test_backups_report_names_what_when_where_and_restore(self):
-        text = (self.gen("monica") / "backups.md").read_text()
+        text = (self.gen("crm") / "backups.md").read_text()
         self.assertIn("| What | Unit | File | When |", text)
         rows = [l for l in text.splitlines() if l.startswith("| ")][1:]
         self.assertEqual(rows, [
-            "| database of db (mariadb) | `monica-backup-db.timer` | `db-<UTC time>.sql.gz` | *-*-* 02:15:00 |",
-            "| files of monica (data disk, without the database) | `monica-backup-files.timer` | "
+            "| database of db (mariadb) | `crm-backup-db.timer` | `db-<UTC time>.sql.gz` | *-*-* 02:15:00 |",
+            "| files of crm (data disk, without the database) | `crm-backup-files.timer` | "
             "`files-<UTC time>.tar.gz` | *-*-* 02:15:00 |",
         ])
-        for needle in ("/mnt/pool/backups/apps/monica/", "newest 14", "Persistent", "skips",
+        for needle in ("/mnt/pool/backups/apps/crm/", "newest 14", "Persistent", "skips",
                        "guide 4, Check a backup", "guide 4, Test a restore", "guide 4, Restore"):
             self.assertIn(needle, text)
         self.assertNotIn("](", text)  # the file lives in the workspace: no repo-relative links
@@ -1129,7 +1129,7 @@ class BackupsReportTests(GenCase):
     def test_no_backups_share_says_backups_cannot_run(self):
         site = copy.deepcopy(SITE)
         site["vms"][1]["nfs_shares"] = []
-        spec = spec_fixture("monica")
+        spec = spec_fixture("crm")
         spec["accepted_risks"] = ["no backups: test VM"]
         text = (self.gen(spec, site=site) / "backups.md").read_text()
         self.assertIn("can't run", text)
@@ -1144,12 +1144,12 @@ class BackupsReportTests(GenCase):
 
 class SecretsReportTests(GenCase):
     def test_secrets_report_marks_durable(self):
-        text = (self.gen("monica") / "secrets.md").read_text()
+        text = (self.gen("crm") / "secrets.md").read_text()
         durable_line = "save this value in your password manager; a rebuild must re-enter the same value"
-        for name in ("monica_db_password", "monica_app_key"):
+        for name in ("crm_db_password", "crm_app_key"):
             section = text.split(f"## {name}", 1)[1].split("\n## ", 1)[0]
             self.assertIn(durable_line, section)
-            self.assertIn("user `monica`", section)
+            self.assertIn("user `crm`", section)
             self.assertIn(f"podman secret create {name} -", section)
         self.assertIn("XDG_RUNTIME_DIR=/run/user/3110", text)
         self.assertIn("# vm apps (bash, admin)", text)
@@ -1160,9 +1160,9 @@ class SecretsReportTests(GenCase):
         self.assertNotIn("password manager", text)
 
     def test_generated_vs_prompted_secrets(self):
-        text = (self.gen("monica") / "secrets.md").read_text()
-        app_key = text.split("## monica_app_key", 1)[1].split("\n## ", 1)[0]
-        self.assertIn('read -rs -p "value for monica_app_key: "', app_key)
+        text = (self.gen("crm") / "secrets.md").read_text()
+        app_key = text.split("## crm_app_key", 1)[1].split("\n## ", 1)[0]
+        self.assertIn('read -rs -p "value for crm_app_key: "', app_key)
         spec = spec_fixture("authentik")
         spec["secrets"][1].update(durable=False)
         text = (self.gen(spec) / "secrets.md").read_text()
@@ -1171,7 +1171,7 @@ class SecretsReportTests(GenCase):
         self.assertNotIn("read -rs", key)
 
     def test_no_secret_value_anywhere(self):
-        for name in ("single", "monica", "authentik"):
+        for name in ("single", "crm", "authentik"):
             with self.subTest(name):
                 out = self.gen(name)
                 self.assertEqual(scan_text((out / "secrets.md").read_text()), [])
@@ -1183,7 +1183,7 @@ class SecretsReportTests(GenCase):
 class OutputTests(GenCase):
     def test_returns_every_written_path_inside_out(self):
         out = self.tmpdir()
-        written = generate(spec_fixture("monica"), SITE, out)
+        written = generate(spec_fixture("crm"), SITE, out)
         on_disk = {p for p in out.rglob("*") if p.is_file()}
         self.assertEqual(set(written), on_disk)
         for path in written:
@@ -1191,14 +1191,14 @@ class OutputTests(GenCase):
 
     def test_regenerating_removes_stale_files(self):
         out = self.tmpdir()
-        generate(spec_fixture("monica"), SITE, out)
-        spec = spec_fixture("monica")
+        generate(spec_fixture("crm"), SITE, out)
+        spec = spec_fixture("crm")
         spec["backups"] = {"schedule": "daily", "keep": 3}
         spec["containers"][2]["volumes"][0]["engine"] = "custom"
         spec["containers"][2]["volumes"][0]["command"] = "dump-it"
         written = generate(spec, SITE, out)
-        self.assertFalse((out / "rendered" / "monica-backup-db.bu").exists() and
-                         "mariadb-backup" in (out / "rendered" / "monica-backup-db.bu").read_text())
+        self.assertFalse((out / "rendered" / "crm-backup-db.bu").exists() and
+                         "mariadb-backup" in (out / "rendered" / "crm-backup-db.bu").read_text())
         self.assertEqual(set(written), {p for p in out.rglob("*") if p.is_file()})
 
 
@@ -1219,27 +1219,27 @@ class SafetyTests(GenCase):
 
     def test_rerun_removes_files_the_spec_no_longer_produces(self):
         out = self.tmpdir()
-        generate(spec_fixture("monica"), SITE, out)
-        spec = spec_fixture("monica")
+        generate(spec_fixture("crm"), SITE, out)
+        spec = spec_fixture("crm")
         spec["login"], spec["login_reason"] = "app-only", "test"
         generate(spec, SITE, out)  # own login, still a hostname: open route and a dashboard link
-        self.assertTrue((out / "rendered" / "files" / "route-monica.yml").exists())
-        self.assertNotIn("proxyprovider", self.read(out, "files/app-monica.blueprint.yaml"))
+        self.assertTrue((out / "rendered" / "files" / "route-crm.yml").exists())
+        self.assertNotIn("proxyprovider", self.read(out, "files/app-crm.blueprint.yaml"))
         spec.pop("hostname")
         generate(spec, SITE, out)  # no hostname: no route, no link
-        self.assertFalse((out / "rendered" / "files" / "route-monica.yml").exists())
-        self.assertFalse((out / "rendered" / "files" / "app-monica.blueprint.yaml").exists())
+        self.assertFalse((out / "rendered" / "files" / "route-crm.yml").exists())
+        self.assertFalse((out / "rendered" / "files" / "app-crm.blueprint.yaml").exists())
 
     def test_command_line(self):
         work = self.tmpdir()
         (work / "site.yaml").write_text(yaml.safe_dump(SITE))
         run = lambda *args: subprocess.run([sys.executable, str(ROOT / "tools" / "gen_service.py"), *args],
                                            capture_output=True, text=True)
-        good = run(str(FIXTURES / "services" / "monica.yaml"), str(work / "site.yaml"), str(work / "out"))
+        good = run(str(FIXTURES / "services" / "crm.yaml"), str(work / "site.yaml"), str(work / "out"))
         self.assertEqual(good.returncode, 0, good.stderr)
         self.assertTrue((work / "out" / "secrets.md").is_file())
-        bad_spec = spec_fixture("monica")
-        bad_spec["containers"][0]["image"] = "docker.io/library/monica:latest"
+        bad_spec = spec_fixture("crm")
+        bad_spec["containers"][0]["image"] = "docker.io/library/crm:latest"
         (work / "bad.yaml").write_text(yaml.safe_dump(bad_spec))
         bad = run(str(work / "bad.yaml"), str(work / "site.yaml"), str(work / "out2"))
         self.assertEqual(bad.returncode, 1)
@@ -1267,7 +1267,7 @@ class BuildTests(GenCase):
         if not self.runtime():
             self.skipTest("no container runtime with the Butane and Podman images already pulled")
         base = load_values(str(FIXTURES / "ai-vm.values"))
-        for name in ("single", "monica", "authentik"):
+        for name in ("single", "crm", "authentik"):
             with self.subTest(fixture=name):
                 spec = spec_fixture(name)
                 out = self.tmpdir()

@@ -256,7 +256,7 @@ class WorkspaceToolsFollowTheChosenModulesTests(CraftedModuleTests):
     def test_the_login_page_name_and_web_ports_are_claimed_whatever_the_products_are_called(self):
         from check_workspace import workspace_problems
         site = self.rename_gateway_service("sso")
-        clash = yaml.safe_load((ROOT / "tests" / "fixtures" / "services" / "monica.yaml").read_text())
+        clash = yaml.safe_load((ROOT / "tests" / "fixtures" / "services" / "crm.yaml").read_text())
         clash["hostname"] = site["edge"]["sso"]["host"].split(".")[0]
         problems = workspace_problems(site, [clash])
         self.assertTrue(any(": hostname " in p and "login page" in p for p in problems), problems)

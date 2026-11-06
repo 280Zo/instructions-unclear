@@ -1,16 +1,16 @@
 # Test fixture: three containers (app, cron, MariaDB), root-start images,
 # a private network, a MariaDB backup and a files backup. Example values only.
-name: monica
+name: crm
 vm: apps
 uid: 3110
-title: Monica
+title: Crm
 login: gateway
-hostname: monica
+hostname: crm
 api_paths: ["^/dav/.*$", "^/\\.well-known/(carddav|caldav)$"]
 port: 8110
 containers:
   - name: app
-    image: docker.io/library/monica:4-apache
+    image: docker.io/library/crm:4-apache
     user_mode: root-start
     add_capabilities: [CHOWN, DAC_OVERRIDE, FOWNER, SETUID, SETGID, NET_BIND_SERVICE]
     publish: 80
@@ -18,24 +18,24 @@ containers:
     env:
       APP_ENV: production
       APP_NAME: Example CRM
-      DB_HOST: monica-db
-      DB_DATABASE: monica
-      DB_USERNAME: monica
-    secrets: [{env: APP_KEY, name: monica_app_key}, {env: DB_PASSWORD, name: monica_db_password}]
+      DB_HOST: crm-db
+      DB_DATABASE: crm
+      DB_USERNAME: crm
+    secrets: [{env: APP_KEY, name: crm_app_key}, {env: DB_PASSWORD, name: crm_db_password}]
     volumes:
       - {path: /var/www/html/storage, class: local, expected_gib: 1}
   - name: cron
-    image: docker.io/library/monica:4-apache
+    image: docker.io/library/crm:4-apache
     user_mode: root-start
     add_capabilities: [CHOWN, DAC_OVERRIDE, FOWNER, SETUID, SETGID, NET_BIND_SERVICE]
     command: [cron.sh]
     depends_on: [db]
     env:
       APP_ENV: production
-      DB_HOST: monica-db
-      DB_DATABASE: monica
-      DB_USERNAME: monica
-    secrets: [{env: APP_KEY, name: monica_app_key}, {env: DB_PASSWORD, name: monica_db_password}]
+      DB_HOST: crm-db
+      DB_DATABASE: crm
+      DB_USERNAME: crm
+    secrets: [{env: APP_KEY, name: crm_app_key}, {env: DB_PASSWORD, name: crm_db_password}]
     volumes:
       - {path: /var/www/html/storage, class: local, expected_gib: 1}
   - name: db
@@ -43,13 +43,13 @@ containers:
     user_mode: root-start
     add_capabilities: [CHOWN, DAC_OVERRIDE, FOWNER, SETUID, SETGID]
     env:
-      MARIADB_DATABASE: monica
-      MARIADB_USER: monica
+      MARIADB_DATABASE: crm
+      MARIADB_USER: crm
       MARIADB_RANDOM_ROOT_PASSWORD: "1"
-    secrets: [{env: MARIADB_PASSWORD, name: monica_db_password}]
+    secrets: [{env: MARIADB_PASSWORD, name: crm_db_password}]
     volumes:
       - {path: /var/lib/mysql, class: local-db, engine: mariadb, expected_gib: 1}
 secrets:
-  - {name: monica_db_password, durable: true}
-  - {name: monica_app_key, durable: true, source: prompt}
+  - {name: crm_db_password, durable: true}
+  - {name: crm_app_key, durable: true, source: prompt}
 backups: {schedule: daily, keep: 14}

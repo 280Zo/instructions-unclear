@@ -67,27 +67,27 @@ class RedactTests(unittest.TestCase):
         self.assertIn("after", out)
 
     def test_ordinary_output_is_kept(self):
-        for line in ("ok\tcustom/app-monica.yaml", "active", "applied",
+        for line in ("ok\tcustom/app-crm.yaml", "active", "applied",
                      "kept: /var/lib/appdata/authentik/data/media/public/app-icons",
                      "302 https://login.example.duckdns.org/", "/run/user/3203/containers",
-                     "a1b2c3d4e5f6a7b8c9d0e1f2a monica_db_password  file  2 days ago",
-                     "monica_app_key", "/home/owner/AI/fcos-app-installer/tools/vmssh.py",
-                     "drwxr-x---. 2 3203 3203 4096 Nov  3 12:00 monica",
+                     "a1b2c3d4e5f6a7b8c9d0e1f2a crm_db_password  file  2 days ago",
+                     "crm_app_key", "/home/owner/AI/fcos-app-installer/tools/vmssh.py",
+                     "drwxr-x---. 2 3203 3203 4096 Nov  3 12:00 crm",
                      "Started notes-app.service - Example notes app (app).",
                      "IdentificationStage", "both archives are intact"):
             with self.subTest(line=line):
                 self.assertEqual(redact_text(line), line)
 
     def test_json_keeps_its_shape(self):
-        data = {"id": 5, "name": "Monica", "client_secret": "abc", "nested": {"api_key": "xyz", "ok": True},
-                "items": [{"password": "p"}, RANDOM40], "redirect_uris": "https://monica.example.duckdns.org/"}
+        data = {"id": 5, "name": "Crm", "client_secret": "abc", "nested": {"api_key": "xyz", "ok": True},
+                "items": [{"password": "p"}, RANDOM40], "redirect_uris": "https://crm.example.duckdns.org/"}
         out = redact_json(data)
         self.assertEqual(out["id"], 5)
-        self.assertEqual(out["name"], "Monica")
+        self.assertEqual(out["name"], "Crm")
         self.assertEqual(out["client_secret"], HIDDEN)
         self.assertEqual(out["nested"], {"api_key": HIDDEN, "ok": True})
         self.assertEqual(out["items"], [{"password": HIDDEN}, HIDDEN])
-        self.assertEqual(out["redirect_uris"], "https://monica.example.duckdns.org/")
+        self.assertEqual(out["redirect_uris"], "https://crm.example.duckdns.org/")
         json.dumps(out)
 
 
