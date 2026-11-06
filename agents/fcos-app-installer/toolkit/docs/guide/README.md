@@ -76,7 +76,7 @@ anything irreversible, and commits.
 Run every desktop command in this guide (`python3 tools/...`) from the
 toolkit's folder, the one holding `tools/`: the commands are relative to it.
 
-Every action is tagged with who does it. **[Manual]** steps happen on systems
+Every action is tagged with how it is done. **[Manual]** steps happen on systems
 the agent never touches: the virtualization server's shell, the router, the
 file server, the DNS provider, remote-access consoles, and anything involving
 a secret value. The agent shows them from the adapter, with every value filled

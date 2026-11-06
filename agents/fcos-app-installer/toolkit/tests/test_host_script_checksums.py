@@ -85,7 +85,7 @@ class PinnedListTests(unittest.TestCase):
 
 class HonestWordingTests(unittest.TestCase):
     """The rules are a guard rail: the shell expands quoted and globbed names, and the agent runs as
-    the user's user. No file may say the agent *cannot* edit the list."""
+    the same Linux user as the person. No file may say the agent *cannot* edit the list."""
 
     def test_nothing_claims_a_wall(self):
         for path in (ROOT / "README.md", ROOT / "tools" / "layout.py", ROOT / "tools" / "adapters.py"):
@@ -115,7 +115,7 @@ class HonestWordingTests(unittest.TestCase):
 class AgentGuardsTheListTests(unittest.TestCase):
     """A guard rail, not a wall: the agent's rules deny edits to the list and any shell command that
     contains its name, its extension or the word "host-script". Spellings that avoid all three
-    (host-s*, a quote inside the word) get through; the agent runs as the user's user, so only a
+    (host-s*, a quote inside the word) get through; the agent runs as the same Linux user as the person, so only a
     separate user (README) makes this a hard boundary. The agent reads the list with its read tool
     if it needs to."""
 

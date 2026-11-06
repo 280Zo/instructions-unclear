@@ -235,7 +235,9 @@ class AgentTests(unittest.TestCase):
 
     # Only its own skills plus an approved list, so the others' descriptions
     # aren't sent with every request; MCP servers it doesn't need are denied (Exa stays, for research).
-    ALLOWED_SKILLS = ("hypervisor-proxmox", "adapter-generic", "researching-apps-for-self-hosting", "opencode",
+    ALLOWED_SKILLS = ("hypervisor-proxmox", "router-opnsense", "fileserver-truenas", "dns-duckdns",
+                      "ingress-traefik", "authgw-authentik", "adapter-generic",
+                      "researching-apps-for-self-hosting", "opencode",
                       "package-management", "search", "exa-agent", "docker-compose-patterns",
                       "docker-destructive-guardrails", "systematic-debugging", "verification-before-completion")
 
@@ -243,7 +245,9 @@ class AgentTests(unittest.TestCase):
         for skill in self.ALLOWED_SKILLS:
             with self.subTest(skill=skill):
                 self.assertEqual(effect(self.text, "skill", skill), "allow")
-        for skill in ("eli5", "brainstorming", "frontend-design", "axolotl", "career-intake", "humanizer"):
+        # The old adapter-<product> names are not loaded from an install that still has those folders.
+        for skill in ("eli5", "brainstorming", "frontend-design", "axolotl", "career-intake", "humanizer",
+                      "adapter-proxmox", "adapter-opnsense", "adapter-truenas", "adapter-duckdns"):
             with self.subTest(skill=skill):
                 self.assertEqual(effect(self.text, "skill", skill), "deny")
 

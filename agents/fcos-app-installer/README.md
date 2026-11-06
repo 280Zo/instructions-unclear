@@ -372,10 +372,7 @@ in the guide remove them (the adapter's teardown step), so tell the user if they
 are still in place. rulesync uses `delete: false`, so regenerating after a
 change to the repository never removes an old agent, skill or command file;
 delete stale names yourself, with approval, from `.opencode/agents/`,
-`.opencode/commands/` and `.opencode/skills/`. The four product adapters were once named
-`adapter-proxmox`, `adapter-opnsense`, `adapter-truenas` and `adapter-duckdns`; an install made
-before the rename still has those folders, with the same host scripts. Their pinned checksums are
-listed under the new names, so the old folders are only dead weight; delete them with approval.
+`.opencode/commands/` and `.opencode/skills/`.
 
 Update. The toolkit has no upstream. It is written for this repo, so edit the
 files under `agents/fcos-app-installer/` in the repository. Keep the tool

@@ -55,7 +55,7 @@ python3 tools/vmssh.py run $vm -- 'while read -r u; do sudo systemctl disable --
    provider: deleting a rules file doesn't delete what it created (its
    `operations.md`, "Removing an app").
 5. Data: its folder on the data disk and its file server folders stay until
-   the user says to delete them. The user account stays too; the next rebuild
+   the user says to delete them. The service's account stays too; the next rebuild
    drops it. When the user says to delete, it is a manual step (the agent's
    key may be revoked by then): `sudo rm -rf /var/lib/appdata/<svc>` and
    `sudo userdel -r <svc>` on the VM, which also removes the account's home

@@ -43,7 +43,4 @@ or node name.
 | dns certificates | `api_token`, `acme_provider` |
 
 A DNS adapter also carries an `acme` block (the certificate client's provider code, the variable the
-token goes in, the secret's name). An adapter drafted for an earlier version names its second step
-`traefik_provider`: rename it `acme_provider` and add the block, or the check reports the role's
-steps as missing. An adapter drafted before steps were called manual steps has the key
-`owner_steps`: rename it `manual_steps`.
+token goes in, the secret's name).

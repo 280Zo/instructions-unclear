@@ -5,7 +5,7 @@ command that starts with an allowed word (git status, dig, sha256sum) and then c
 into .opencode/ was allowed. The rules deny any shell command that names .opencode/ at all, and
 every edit path that reaches .opencode/ in its usual spellings. Guard rails, not a wall: the shell
 expands wildcards, quotes and variables after the rules have matched, and the agent runs as the
-user's user (README).
+same Linux user as the person (README).
 """
 import sys
 import unittest

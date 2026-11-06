@@ -808,6 +808,14 @@ class AdapterNamingTests(unittest.TestCase):
         shutil.copytree(PROXMOX, root / "adapter-proxmox")
         self.assertTrue(load_adapter("virtualization", "proxmox", root=root)["generic"])
 
+    def test_file_owner_wording_does_not_read_as_the_person(self):
+        # "owner" in an adapter step means the owner of a folder (the UID `ls -n` shows), not the user.
+        for path in adapter_files("adapter.yaml"):
+            text = path.read_text()
+            with self.subTest(folder=path.parent.name):
+                self.assertNotIn("user's UID", text)
+                self.assertNotIn("user column", text)
+
     def test_the_pinned_checksum_list_uses_the_new_folder_names(self):
         from layout import CHECKSUMS
         paths = [line.split("  ", 1)[1] for line in CHECKSUMS.read_text().splitlines() if line.strip()]

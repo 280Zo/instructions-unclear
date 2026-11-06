@@ -148,7 +148,7 @@ opencode:
       resource: "*"
       effect: deny
     - action: skill
-      resource: "adapter-*"
+      resource: "adapter-generic"
       effect: allow
     - action: skill
       resource: "hypervisor-*"
