@@ -321,10 +321,12 @@ class AccessGroupTests(GenCase):
         guide = " ".join((root / "docs" / "guide" / "03-add-a-service.md").read_text().split())
         self.assertIn("Ask who may open it", guide)
         self.assertIn("apps behind the login page", guide)
-        self.assertIn("capital letters", guide)
         self.assertIn("`groups:`", guide)
+        from layout import SKILLS
+        operations = " ".join((SKILLS / "authgw-authentik" / "operations.md").read_text().split())
+        self.assertIn("capital letters", operations)
         prompt = " ".join((root / ".opencode" / "agents" / "fcos-app-installer.md").read_text().split())
-        self.assertIn("ask which Authentik groups may open it", prompt)
+        self.assertIn("ask which groups of the auth gateway may open it", prompt)
 
     def test_bad_groups_refused(self):
         for bad in ("family", ["Family"], ["a b"], ["x", "x"], [f"g{i}" for i in range(11)], ["-x"], [""]):

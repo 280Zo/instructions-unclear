@@ -277,6 +277,41 @@ class ServicesCommandTests(unittest.TestCase):
         self.assertRegex(text, r'modules\.py"? services')
 
 
+class OperationsFileTests(unittest.TestCase):
+    """The guide pages stay product-free by handing over to each module's operations.md."""
+    SECTIONS = {
+        "ingress-traefik": ("Site values", "The certificate and the DNS provider", "Secrets on the login VM",
+                            "Start and check", "Applying route changes", "Stop it",
+                            "Break-glass: an app's route without the login"),
+        "authgw-authentik": ("Site values", "The containers", "Secrets on the login VM", "Start and check",
+                             "First login", "Admin recovery", "End-to-end check", "Who may open an app",
+                             "The dashboard section and the logo", "Applying the login rules", "Removing an app",
+                             "People and access", "Stop it", "Restoring the database"),
+    }
+
+    def test_each_module_has_the_sections_the_guide_cites(self):
+        for name, sections in self.SECTIONS.items():
+            text = (SKILLS / name / "operations.md").read_text()
+            headings = re.findall(r"^#{2,3} (.+)$", text, re.M)
+            for section in sections:
+                with self.subTest(module=name, section=section):
+                    self.assertIn(section, headings)
+
+    def test_each_module_names_its_operations_file_and_guide_12_lists_the_sections(self):
+        guide = " ".join((ROOT / "docs" / "guide" / "12-add-a-module.md").read_text().split())
+        for name, sections in self.SECTIONS.items():
+            with self.subTest(module=name):
+                self.assertIn("`operations.md`", (SKILLS / name / "SKILL.md").read_text())
+                for section in sections:
+                    self.assertIn(f'"{section}"', guide)
+
+    def test_the_wording_test_covers_both_products(self):
+        source = (Path(__file__).parent / "test_wording.py").read_text()
+        words = source.split("PROVIDER_WORDS = [", 1)[1].split("]", 1)[0].lower()
+        self.assertIn("traefik", words)
+        self.assertIn("authentik", words)
+
+
 class ContractDocTests(unittest.TestCase):
     def test_guide_12_lists_exactly_the_functions_and_parameters_the_loader_checks(self):
         guide = " ".join((ROOT / "docs" / "guide" / "12-add-a-module.md").read_text().split())

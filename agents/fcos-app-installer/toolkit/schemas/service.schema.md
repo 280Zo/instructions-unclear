@@ -19,7 +19,7 @@ error that names it.
 | `gid` | no | Defaults to `uid`. Same range and uniqueness as `uid`. |
 | `extra_groups` | no | Shared groups the user joins (names only). |
 | `title`, `description` | no | Plain text. `title` defaults to `name`. |
-| `login` | yes | `gateway` (route and rules behind the login page) or `app-only` (needs `login_reason`, one sentence; with a `hostname` it gets an HTTPS route without the login page and an Authentik dashboard link, without one no route). |
+| `login` | yes | `gateway` (route and rules behind the login page) or `app-only` (needs `login_reason`, one sentence; with a `hostname` it gets an HTTPS route without the login page and a dashboard link on the auth gateway, without one no route). |
 | `hostname` | with `gateway`; optional with `app-only` | One name under the site domain (no dots). Needs a container that publishes. |
 | `api_paths` | no | Regular expressions for paths clients call directly (skip the login). Must compile. |
 | `port` | with a publisher | Host port, 1024-65535. |

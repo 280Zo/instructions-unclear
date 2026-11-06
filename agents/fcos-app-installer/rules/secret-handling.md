@@ -31,4 +31,4 @@ How secrets and the owner's real values are handled.
   the owner's private workspace, a folder outside the repository.
 - Never write a real value into a published file: guides, templates, tools,
   skills, rules, tests, examples, agents or commands. Use placeholders there:
-  `192.0.2.x` addresses, `example.duckdns.org`, `<admin>`, "the owner".
+  `192.0.2.x` addresses, `example.org`, `<admin>`, "the owner".

@@ -29,6 +29,7 @@ Ask the user which auth gateway they want, or recommend from the modules install
 
 - `spec.yaml`: the service spec (placeholders `<site: ...>` are filled from the site file).
 - `templates/`: the per-app rules (a provider and an application, or a dashboard link only) and the outpost binding.
+- `operations.md`: the steps that depend on this product (site values, secrets, start and check, first login, recovery, groups and people, applying the login rules). The guide pages hand over to it.
 - Code: `tools/authgw/authentik.py`, called by `tools/login_frontend.py`.
 
 To add another auth gateway, follow the module guide (`docs/guide/12-add-a-module.md`).

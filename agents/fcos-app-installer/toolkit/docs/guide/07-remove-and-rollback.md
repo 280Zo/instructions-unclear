@@ -49,9 +49,11 @@ python3 tools/vmssh.py run $vm -- 'while read -r u; do sudo systemctl disable --
    Render `config.bu` and run `bash tools/build-vm.sh <workspace>/vms/<vm>`.
 4. Login front end: move the spec out of `<workspace>/services/` (keep it in
    an archive folder), regenerate and push the login front end (section 3.9),
-   and delete its leftover `dynamic/<svc>.yml` and `blueprints/app-<svc>.yaml`
-   there. In Authentik's admin interface, delete the application and provider:
-   deleting a blueprint file doesn't delete what it created.
+   and delete its leftover route and login-rules files there (each chosen
+   module's `operations.md`, "Applying route changes" and "Applying the login
+   rules"). In the auth gateway's own interface, delete the application and
+   provider: deleting a rules file doesn't delete what it created (its
+   `operations.md`, "Removing an app").
 5. Data: its folder on the data disk and its file server folders stay until
    the owner says to delete them. The user account stays too; the next rebuild
    drops it. When the owner says to delete, it is an owner step (the agent's
@@ -73,11 +75,12 @@ If a client can't work behind the login page even with open paths:
    `hostname`, regenerate it (section 3.6), regenerate the login front end,
    and push both (section 3.9).
 3. Nothing to remove on the login front end (its two files are replaced, see
-   3.9). Have the owner delete its old provider in Authentik.
+   3.9). Have the owner delete its old provider in the auth gateway's
+   interface.
 
 It keeps its HTTPS address, now without the login page: same certificate,
 and its port still open only to the login front end. It also stays on the
-Authentik dashboard as a link that opens the app. Without a `hostname` it
+gateway's dashboard as a link that opens the app. Without a `hostname` it
 would get no address at all, and be reachable only through the break-glass
 tunnel (section 8).
 
@@ -96,9 +99,8 @@ directly on the LAN instead:
    so this edit has to be repeated after every regeneration until it has an
    option for it.
 2. Turn on every app's own password.
-3. Stop Traefik and Authentik (`python3 tools/vmssh.py run <login-vm> -- "sudo -u traefik XDG_RUNTIME_DIR=/run/user/\$(id -u traefik) systemctl --user stop traefik-traefik.service"`,
-   and the same for the three `authentik-*` services as `authentik`), and
-   remove their fragments.
+3. Stop the ingress and the auth gateway (each module's `operations.md`,
+   "Stop it"), and remove their fragments.
 4. **[Owner]** Remove the `*.<domain>` DNS entry. Clients then use
    `http://<vm-ip>:<port>`, unencrypted on the LAN; tell the owner that this is
    the trade-off.

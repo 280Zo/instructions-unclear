@@ -52,39 +52,23 @@ in its docs which log file holds the mail. A link in such a mail can be a
 credential (an invitation lets someone join): the owner reads it from the log
 on the VM, and the agent does not.
 
-**Ask who may open it** (apps behind the login page). Authentik lets every
-user open an app that has no bindings, so ask which groups get it (for
-example `family`, `guests`) and put them in `groups:`. The login front end's
-rules file `access.yaml` creates each group if it's missing (the one place
-that does) and binds it to the app. Tell the owner to
-add themselves (and anyone else) to the group in Authentik's admin interface
-(**Directory → Groups**), or they lose access too. Group names are lowercase;
-if the owner already has a group with capital letters, a new lowercase one is
-made beside it. Removing a group from `groups:` later doesn't remove its old
-binding; the owner deletes it under the application's **Policy / Group / User
-Bindings**. Such an app also refuses everyone until its group bindings exist (a
-`deny-until-bound` policy); that relies on the application's policy engine
-mode staying **any** (Authentik's default): switching it to **all** in the
-admin interface would lock everyone out. An app on its own login can't take `groups:`: its route skips the
-login page, so a binding would only hide its dashboard link. Also ask whether
-anyone new needs an account for it: they go into the site file's `people:`
-(guide 6.10).
+**Ask who may open it** (apps behind the login page). An auth gateway may let every user open an app
+that has no group, so ask which groups get it (for example `family`, `guests`) and put them in
+`groups:`. The login front end's rules create each group if it's missing and bind it to the app. Tell
+the owner to add themselves (and anyone else) to the group in the gateway's own interface, or they lose
+access too. An app on its own login can't take `groups:`: its route skips the login page. Also ask
+whether anyone new needs an account for it: they go into the site file's `people:` (guide 6.10). The
+gateway's details (how the groups and bindings behave, what to do when a group is removed) are in its
+`operations.md`, "Who may open an app".
 
-**The app's dashboard section.** Authentik's dashboard lists apps under
-section headings, all on one page: each application's `group` becomes a
-heading over its apps (authentik's `web/src/user/LibraryPage/ApplicationList.ts`).
-Propose a section from what the app is for (Monica, a relationship manager:
-`Relationships`), reuse an existing section when the app fits one, ask the
-owner, and put it in `section:`. Apps with the same section are listed
-together; without one, an app is listed under "Ungrouped".
-
-**The app's logo.** Find it in the app's official repository or website (an
-SVG or PNG the project publishes), save it as
-`<workspace>/services/<svc>/<file>`, show it to the owner, and use it as
-`icon:` once they confirm; the owner may give their own file instead. The
-login front end stores it on the VM and Authentik serves it itself, so no
-browser fetches it from the internet
-([File picker values](https://docs.goauthentik.io/customize/file-picker/)).
+**The app's dashboard section and logo.** The gateway's dashboard may list apps under section headings.
+Propose a section from what the app is for (Monica, a relationship manager: `Relationships`), reuse an
+existing section when the app fits one, ask the owner, and put it in `section:`. For the logo, find it
+in the app's official repository or website (an SVG or PNG the project publishes), save it as
+`<workspace>/services/<svc>/<file>`, show it to the owner, and use it as `icon:` once they confirm; the
+owner may give their own file instead. The login front end stores it on the VM and the gateway serves it
+itself, so no browser fetches it from the internet. How the gateway shows both is in its `operations.md`,
+"The dashboard section and the logo".
 
 ## 3.3 [Agent] Classify storage and apply the 5 GB rule
 
@@ -144,7 +128,7 @@ wrong, and writes nothing. Expected: `build-vm: all checks passed`. It writes, u
 | `<svc>-port.bu` | the firewall port, open only to the login front end (not for loopback services) |
 | `<svc>-backup-<container>.bu` | the database backup, by engine |
 | `<svc>-backup-files.bu` | the files backup of its `local` data |
-| `files/route-<svc>.yml`, `files/app-<svc>.blueprint.yaml` | the route and login rules, placed on the login front end in 3.9 |
+| `files/route-<svc>.yml`, the login-rules file `files/app-<svc>.*` | the route and login rules, placed on the login front end in 3.9 |
 
 and `<workspace>/services/<svc>/secrets.md`, which lists each secret's name,
 who uses it, whether it must be kept, and the exact command to create it, and
@@ -220,7 +204,7 @@ python3 tools/vmssh.py run $vm -- "sudo -u $svc XDG_RUNTIME_DIR=/run/user/\$(id 
 
 For services behind the login page, and services on their own login that
 have a `hostname` (an HTTPS route without the login page). Regenerate the
-whole login front end from every service spec, so its routes and outpost list
+whole login front end from every service spec, so its routes and application list
 always match:
 
 ```fish
@@ -233,9 +217,9 @@ bash tools/build-vm.sh $ws/login-frontend/rendered
 The output goes to `<workspace>/login-frontend/`, outside every VM folder, so
 a VM build never picks up a second copy. It refuses clashing web names and
 route names, and services bound to loopback on another VM.
-`rendered/login-frontend.bu` places Traefik's settings, every route, every
-app's login rules and the outpost list. Each app's rules are applied before
-the outpost list that names it, because Authentik applies blueprints in no
+`rendered/login-frontend.bu` places the ingress's settings, every route, every
+app's login rules and the gateway's application list. Each app's rules are
+applied before the list that names it where the gateway applies its rules in no
 fixed order.
 
 Copy `rendered/login-frontend.bu` and all of `rendered/files/` into the login
@@ -249,57 +233,16 @@ rm -f /tmp/opencode/apply-login-frontend.sh
 python3 tools/ign_to_script.py $ws/vms/$vm/igns/login-frontend.ign > /tmp/opencode/apply-login-frontend.sh; and python3 tools/vmssh.py run $vm -- 'f=$(mktemp) && cat > "$f" && sudo bash "$f"; rc=$?; rm -f "$f"; exit $rc' < /tmp/opencode/apply-login-frontend.sh; or echo "STOP: push failed"
 ```
 
-Then remove route and login-rule
-files the new set no longer contains (a removed service, or one switched to
-its own login): Ignition never deletes files, so the push leaves them behind.
-These folders belong to the `traefik` and `authentik` accounts, so the
-commands use `sudo`:
+Then apply the change with each chosen module's `operations.md`:
 
-```fish
-# desktop (fish)
-python3 tools/vmssh.py run <login-vm> -- 'sudo ls /var/lib/appdata/traefik/dynamic/ /var/lib/appdata/authentik/blueprints/'
-# a service removed, or on its own login without a hostname: route and blueprint go
-set gone oldsvc
-python3 tools/vmssh.py run <login-vm> -- "sudo rm -f /var/lib/appdata/traefik/dynamic/$gone.yml /var/lib/appdata/authentik/blueprints/app-$gone.yaml"
-```
+- The ingress ("Applying route changes"): remove the route files the new set no longer contains (a
+  removed service, or one switched to its own login), because Ignition never deletes files, and
+  restart it if its static settings changed too.
+- The auth gateway ("Applying the login rules"): remove the rules files the new set no longer
+  contains, make the gateway apply the rules, and check that every rules file was applied.
 
-A service switched between the login page and its own login (keeping its
-`hostname`) needs no removal: both its files keep their names and are
-replaced by the push (open route plus dashboard link, or the reverse).
-
-Tell the owner which ones were removed. Deleting or replacing a blueprint file
-doesn't delete what it created: for a removed service the owner deletes its
-application and its provider (if it has one) in Authentik's admin interface; for a service
-switched to its own login, only its old provider (the dashboard link sets the
-application's provider to none).
-
-Traefik reloads route files on change. If its static settings
-(`traefik.yml`) changed too, restart it:
-`python3 tools/vmssh.py run <login-vm> -- "sudo -u traefik XDG_RUNTIME_DIR=/run/user/\$(id -u traefik) systemctl --user restart traefik-traefik.service"`.
-Then make Authentik apply its login rules. Its file watcher reacts only to
-new and modified files; the push replaces each file by renaming a copy into
-place, so the automatic apply races the push and may wait for the hourly
-rescan. Restarting the worker rescans every rules file at startup, registers
-new ones and applies changed ones (the login page itself stays up). The
-check then runs inside the worker: it waits (up to 5 minutes) until each
-rules file's record says `successful` for the file as it is now, because
-Authentik records an invalid file only there, never in its log. The VM
-hashes the files itself and passes the hashes in: a `podman exec` process
-lacks the worker's extra group and can't list the rules folder:
-
-```fish
-# desktop (fish)
-python3 tools/vmssh.py run <login-vm> -- 'cd / && u=authentik && r=/run/user/$(id -u $u) && sudo -u $u XDG_RUNTIME_DIR=$r systemctl --user restart authentik-worker.service && for i in $(seq 30); do sudo -u $u XDG_RUNTIME_DIR=$r podman exec authentik-worker true 2>/dev/null && break; sleep 5; done && { printf "EXPECTED = {"; for f in $(sudo find /var/lib/appdata/authentik/blueprints -maxdepth 1 -name "*.yaml" | sort); do printf "\"custom/%s\": \"%s\", " "$(basename "$f")" "$(sudo sha512sum "$f" | cut -d" " -f1)"; done; echo "}"; cat; } | sudo -u $u XDG_RUNTIME_DIR=$r podman exec -i authentik-worker sh -c "exec ak shell -c \"\$(cat)\""' < tools/authgw/authentik_rules_status.py
-```
-
-Expected: one `ok` line per rules file and exit status 0. If a file reports
-`error`, restart the worker and run the check once more before treating it
-as a failure: a rules file that applies another one first can fail when the
-other wasn't registered yet at that moment. Any `pending` or
-`error` line after 5 minutes is a failure: the owner opens **System →
-Blueprints** in Authentik's admin interface, where the failed file's entry
-shows why. Each open path must be a valid regex; Authentik skips a pattern it
-can't compile, which leaves that path behind the login.
+Tell the owner which files were removed. What a removed rules file created in the gateway is not
+deleted with it: the owner removes that in the gateway's own interface, as the module says.
 
 ## 3.10 [Agent] Verify
 
@@ -307,7 +250,7 @@ Run each check and report its result to the owner:
 
 ```fish
 # desktop (fish)
-set vm apps; set ip 192.0.2.30; set svc monica; set port 8110; set host monica.example.duckdns.org
+set vm apps; set ip 192.0.2.30; set svc monica; set port 8110; set host monica.example.org
 python3 tools/vmssh.py run $vm -- "sudo -u $svc XDG_RUNTIME_DIR=/run/user/\$(id -u $svc) systemctl --user is-active $svc-app.service"
 python3 tools/vmssh.py logs $vm $svc-app.service -n 30
 python3 tools/http_check.py --timeout 3 http://$ip:$port/

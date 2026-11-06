@@ -31,6 +31,7 @@ Ask the user which ingress they want, or recommend from the modules installed: r
 - `spec.yaml`: the service spec (placeholders `<site: ...>` are filled from the site file).
 - In this folder's `templates` folder: `traefik.yml.tmpl` (the static settings) and `route-open.yml.tmpl` (a route with no login in front).
 - In `templates/gateways`, one folder per auth gateway this module has been tested with: the forward-auth middleware and the route behind it.
+- `operations.md`: the steps that depend on this product (site values, the certificate, secrets, start and check, applying route changes, the break-glass route edit). The guide pages hand over to it.
 - Code: `tools/ingress/traefik.py`, called by `tools/login_frontend.py`.
 
 ## An install built before the glue file was renamed

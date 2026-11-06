@@ -1,7 +1,7 @@
 # 4. Databases and backups
 
 Any service whose spec has a `local-db` volume follows this page. That covers
-SQLite in WAL mode, Postgres (Authentik's) and MariaDB, plus a `custom` engine
+SQLite in WAL mode, Postgres and MariaDB, plus a `custom` engine
 with its own dump command.
 
 ## Why databases stay off NFS
@@ -79,17 +79,21 @@ sudo -u <svc> rm -f /var/lib/appdata/<svc>/db/<container>/<db-file>-wal /var/lib
 sudo systemctl --user -M <svc>@ start <svc>-<container>.service
 ```
 
-Postgres (Authentik shown; the database must exist and be empty; `<pg user>`
-and `<pg db>` are its Postgres user and database from the site file):
+Postgres (the database must exist and be empty; `<pg user>` and `<pg db>` are its Postgres user and
+database from the service's spec or the site file; `<app units>` are the units that use the database,
+not the database's own):
 
 ```bash
-# vm <login front end vm> (bash, <admin>)
-sudo systemctl --user -M authentik@ stop authentik-server.service authentik-worker.service
-sudo -u authentik ls -t /var/mnt/backups/<vm>/authentik/ | grep '\.dump$' | head -n 1
-sudo -u authentik cat /var/mnt/backups/<vm>/authentik/<newest>.dump | sudo -u authentik XDG_RUNTIME_DIR=/run/user/<uid> podman exec -i authentik-postgres \
+# vm <vm> (bash, <admin>)
+sudo systemctl --user -M <svc>@ stop <app units>
+sudo -u <svc> ls -t /var/mnt/backups/<vm>/<svc>/ | grep '\.dump$' | head -n 1
+sudo -u <svc> cat /var/mnt/backups/<vm>/<svc>/<newest>.dump | sudo -u <svc> XDG_RUNTIME_DIR=/run/user/<uid> podman exec -i <svc>-<container> \
     pg_restore --clean --if-exists -U <pg user> -d <pg db>
-sudo systemctl --user -M authentik@ start authentik-server.service authentik-worker.service
+sudo systemctl --user -M <svc>@ start <app units>
 ```
+
+For the login front end's auth gateway the units and names are in its `operations.md`, "Restoring the
+database".
 
 MariaDB (Monica shown). The dump has a `DROP TABLE IF EXISTS` before every
 table and no `CREATE DATABASE` (`mariadb-dump` enables `--opt` by default;

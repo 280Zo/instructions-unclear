@@ -9,6 +9,9 @@ from hashlib import sha512
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools"))
+from layout import SKILLS  # noqa: E402
+
 SCRIPT = ROOT / "tools" / "authgw" / "authentik_rules_status.py"
 
 
@@ -145,7 +148,7 @@ class RulesStatusTests(unittest.TestCase):
         self.assertIn("no rules files found", out)
 
     def test_guide_runs_it_after_the_worker_restart(self):
-        guide = " ".join((ROOT / "docs" / "guide" / "03-add-a-service.md").read_text().split())
+        guide = " ".join((SKILLS / "authgw-authentik" / "operations.md").read_text().split())  # the module's operations
         # As an argument, never through the interactive shell (Django falls back to it).
         self.assertIn('ak shell -c \\"\\$(cat)\\"', guide)
         self.assertIn("< tools/authgw/authentik_rules_status.py", guide)

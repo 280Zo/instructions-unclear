@@ -63,7 +63,7 @@ line (for example `2026.8` to `2026.11`) is a planned change.
    between the current one and the new one, and write what changes into
    `<workspace>/services/<svc>/research.md`, with links. Look for:
    - an upgrade order: some apps must move **one release line at a time**,
-     never skipping (Authentik says so in its upgrade docs);
+     never skipping (the app's upgrade docs say so);
    - a database major version change: a new major version of the database
      can't read the old one's data until it is converted (for example with
      `pg_dumpall` and a restore), so it needs a planned dump and restore, not

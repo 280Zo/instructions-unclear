@@ -21,6 +21,7 @@ A folder in the skills folder, named `<prefix>-<product>`: `ingress-<product>` o
 | `module.yaml` | `capability` (`ingress` or `auth_gateway`), `product`, `summary`, `provides`, `needs`, `pairs_with`, `spec`, `code`, optional `notes`. |
 | `spec.yaml` | The product as a normal service spec (`schemas/service.schema.md`). Values that come from the site are written `<site: a.b.c>`. No real values. |
 | `templates/` | The files the product needs, with `{{PLACEHOLDERS}}`. |
+| `operations.md` | The steps that depend on the product, which the guide pages (6, 3.9, 7, 8) hand over to. For an ingress: "Site values", "The certificate and the DNS provider", "Secrets on the login VM", "Start and check", "Applying route changes", "Stop it" and "Break-glass: an app's route without the login". For an auth gateway: "Site values", "The containers", "Secrets on the login VM", "Start and check", "First login", "Admin recovery", "End-to-end check", "Who may open an app", "The dashboard section and the logo", "Applying the login rules", "Removing an app", "People and access", "Stop it" and "Restoring the database". |
 | `reference.md` | Optional. Facts the templates rely on, each with its source link and no date. |
 
 `pairs_with` lists other modules with `module`, `tested` (true only if the pairing was built and

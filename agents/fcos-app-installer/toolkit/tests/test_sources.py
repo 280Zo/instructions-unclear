@@ -75,7 +75,7 @@ class SourceTests(unittest.TestCase):
     def test_pushed_blueprints_are_applied_explicitly(self):
         # Authentik's watcher only reacts to created/modified files
         # (authentik/blueprints/v1/tasks.py); the push renames a temp file into place.
-        guide = (ROOT / "docs" / "guide" / "03-add-a-service.md").read_text()
+        guide = (SKILLS_FOLDER / "authgw-authentik" / "operations.md").read_text()  # the module's steps
         # Review: ak apply_blueprint never registers a new file, so the outpost file's
         # required metaapplyblueprint fails for a new app; a worker restart rescans (apps.py
         # send_on_startup).
@@ -98,14 +98,14 @@ class SourceTests(unittest.TestCase):
                 self.assertNotIn("auth.example.duckdns.org", text)
                 # The owner's machine is a desktop.
                 self.assertNotIn("laptop", text)
-        edge = pages["06-edge-vm.md"]
+        edge = " ".join((SKILLS_FOLDER / "authgw-authentik" / "operations.md").read_text().split())
         # docs.goauthentik.io/users-sources/user/user-interface/: gear icon > Credentials > MFA Devices.
         self.assertIn("gear icon", edge)
         self.assertIn("**Credentials** tab", edge)
         self.assertIn("Static tokens", edge)
         self.assertIn("users-sources/user/user-interface", edge)
         # Services start at boot and retry (RestartSec=30) until their secrets exist.
-        self.assertIn("retry every 30 seconds until", edge)
+        self.assertIn("retry every 30 seconds", pages["06-edge-vm.md"])
 
     def test_people_icons_and_access_are_in_the_procedure(self):
         guide = ROOT / "docs" / "guide"
@@ -113,9 +113,12 @@ class SourceTests(unittest.TestCase):
         for needle in ("anyone new", "`people:`", "official repository or website", "`icon:`"):
             self.assertIn(needle, three)
         edge = " ".join((guide / "06-edge-vm.md").read_text().split())
-        for needle in ("## 6.10", "Reset password", "users-sources/user/user_basic_operations", "no email",
-                       "`guests`", "`family`"):
+        for needle in ("## 6.10", "no email"):
             self.assertIn(needle, edge)
+        ops = " ".join((SKILLS_FOLDER / "authgw-authentik" / "operations.md").read_text().split())
+        for needle in ("Reset password", "users-sources/user/user_basic_operations", "no email",
+                       "`guests`", "`family`"):
+            self.assertIn(needle, ops)
         prompt = " ".join(AGENT.read_text().split())
         for needle in ("anyone new needs an account", "logo", "never set a password"):
             self.assertIn(needle, prompt)

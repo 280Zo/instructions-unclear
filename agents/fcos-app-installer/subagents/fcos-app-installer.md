@@ -606,7 +606,7 @@ exact wording, options and what each answer fills are in
 6. **Login page.** Ask whether the app goes behind the login page, and say
    which app paths (APIs, sync) would stay open and why. The login
    front end works as an Okta-style dashboard: every app appears on
-   Authentik's dashboard, behind the login page or, for an app on its own
+   the auth gateway's dashboard, behind the login page or, for an app on its own
    login with a web name, as a link. If no login front end exists, ask to set
    it up first (guide section 6). Its two parts are modules the site chooses
    under `login_frontend` (an ingress and an auth gateway). Never pick one for
@@ -721,11 +721,11 @@ if a rule is in your way, stop and ask. Never SSH into a
 virtualization server, the router or the file server, even as a non-root
 user.
 
-For every app behind the login page, ask which Authentik groups may open it
-(guide 3.2, spec `groups:`): with none, every Authentik user can. Ask
-too whether anyone new needs an account (site `people:`, guide 6.10). People
+For every app behind the login page, ask which groups of the auth gateway may open it
+(guide 3.2, spec `groups:`): with none, the gateway may let every user in (its `operations.md`
+says). Ask too whether anyone new needs an account (site `people:`, guide 6.10). People
 are local accounts without email; you never set a password: the owner sets it
-in Authentik. For each app, propose a dashboard section from what it is for (reuse an
+in the gateway's own interface. For each app, propose a dashboard section from what it is for (reuse an
 existing one when it fits) and ask (spec `section:`). Find its logo in its official sources, show it to
 the owner and use it as `icon:` once they confirm (or their own file).
 

@@ -13,7 +13,7 @@ folder outside the repository (`<workspace>/site.yaml`, `<workspace>/vms/`,
 `<workspace>/services/`). Secret values live only in Podman secrets on the
 machines, in `<workspace>/secrets/` files that only scripts read, and in the
 owner's password manager. Commands and examples here use placeholders:
-`192.0.2.x` addresses, `example.duckdns.org`, `<admin>`, `<workspace>`.
+`192.0.2.x` addresses, `example.org`, `<admin>`, `<workspace>`.
 `python3 tools/publish_check.py` runs before every commit and fails on any
 workspace value or anything that looks like private data.
 
@@ -27,7 +27,7 @@ The setup has a few roles, and the owner picks a product for each:
 | router and firewall | hands out reserved addresses, local DNS (one wildcard name), traffic between networks |
 | file server | shared folders over NFS, one account per service, a backups share |
 | DNS for certificates | lets the login front end prove it owns the domain (Let's Encrypt DNS-01) |
-| login front end | built by the agent: Traefik and Authentik on one always-on machine |
+| login front end | built by the agent: an ingress (reverse proxy) and an auth gateway on one always-on machine; the user picks the product for each |
 
 Each product has an adapter: its owner steps, with every value filled in,
 what the agent may do through an API, and links to its official docs. A
@@ -43,6 +43,9 @@ host scripts and API access through `tools/pve.py`), OPNsense
 (`adapter-opnsense`), TrueNAS (`adapter-truenas`) and DuckDNS
 (`adapter-duckdns`). Pages in this guide name the
 adapter step to show, for example "virtualization: `create_api_access`".
+The login front end's two parts are modules in the same way, `ingress-traefik`
+and `authgw-authentik`, each with an `operations.md` for the steps that depend
+on the product (section 6, section 12).
 
 ## Running it with the agent
 
@@ -60,7 +63,7 @@ anything irreversible, and commits.
 3. [Add a service](03-add-a-service.md): the core procedure
 4. [Databases and backups](04-databases-and-backups.md)
 5. [Rebuild a VM](05-rebuild-a-vm.md) while keeping its data disk
-6. [Login front end](06-edge-vm.md): Traefik, Authentik, certificates
+6. [Login front end](06-edge-vm.md): ingress, auth gateway, certificates
 7. [Remove a service, roll back the login layer](07-remove-and-rollback.md)
 8. [Break-glass access](08-break-glass.md)
 9. [Admin commands](09-admin-commands.md)
@@ -131,11 +134,11 @@ Quadlets with all capabilities dropped and no new privileges. `map-user`
 containers keep the user's IDs; `root-start` images (that start as root inside
 the container) get only the capabilities the spec lists, and no NFS volumes.
 
-**One login front end.** One always-on VM runs Traefik and Authentik for every
-service (section 6 explains why one, and how to get in when it's down). Every
-name under the domain points at it. Traefik serves HTTPS with one wildcard
-certificate and asks Authentik to log the user in, then forwards to the
-service's VM. Each service VM's firewall accepts the service port only from
+**One login front end.** One always-on VM runs an ingress and an auth gateway for
+every service (section 6 explains why one, and how to get in when it's down).
+Every name under the domain points at it. The ingress serves HTTPS with one
+wildcard certificate and asks the auth gateway to log the user in, then
+forwards to the service's VM. Each service VM's firewall accepts the service port only from
 the login front end. Clients that can't do a web login use the paths the spec
 lists as open, protected by the app's own password.
 

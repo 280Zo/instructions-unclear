@@ -7,15 +7,17 @@
 - Real values live in the private workspace, never in a repo config.yaml or vms/.
 """
 import re
+import sys
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "tools"))
 GUIDE = ROOT / "docs" / "guide"
 QUESTIONS = GUIDE / "questions.md"
 PROVIDER_EXEMPT = set()
 PROVIDER_WORDS = [r"\bqm ", r"\bpvesm\b", r"\bpveum\b", r"\bpvesh\b", r"OPNsense", r"TrueNAS", r"Proxmox",
-                  r"DuckDNS"]
+                  r"DuckDNS", r"(?i)traefik", r"(?i)authentik", r"(?i)\boutpost\b", r"(?i)blueprint"]
 
 
 def guide_pages(provider_check=False):
@@ -69,7 +71,7 @@ class GuideTests(unittest.TestCase):
             for para in paragraphs(page.read_text()):
                 if para.lstrip().startswith("**Providers.**"):
                     found += 1
-                    self.assertIn("adapter-", para, page.name)
+                    self.assertRegex(para, r"adapter-|ingress-|authgw-", page.name)
         self.assertGreaterEqual(found, 1)
 
     def test_guide_refers_to_workspace(self):
@@ -89,8 +91,10 @@ class GuideTests(unittest.TestCase):
     def test_one_login_front_end_explained(self):
         text = (GUIDE / "06-edge-vm.md").read_text()
         self.assertIn("## Why one login front end", text)
-        for needle in ("create_recovery_key", "break-glass", "always on"):
+        for needle in ("break-glass", "always on", "Admin recovery"):
             self.assertIn(needle, text)
+        from layout import SKILLS
+        self.assertIn("create_recovery_key", (SKILLS / "authgw-authentik" / "operations.md").read_text())
 
     def test_verification_checklist_stays_at_3_10(self):
         self.assertIn("## 3.10 ", (GUIDE / "03-add-a-service.md").read_text())
@@ -185,10 +189,14 @@ class GuideTests(unittest.TestCase):
         text = (GUIDE / "08-break-glass.md").read_text()
         self.assertIn("builds every link from its own `https://` address", text)
         self.assertIn("SSL_ERROR_RX_RECORD_TOO_LONG", text)
-        self.assertIn("middlewares: [authentik]", text)
-        self.assertIn('[ "$(hostnamectl hostname)" = "<login-vm>" ]', text)
-        self.assertIn("monica.yml.login", text)
-        self.assertIn("put it back", text.lower())
+        # The edit itself is the ingress module's procedure.
+        from layout import SKILLS
+        ops = (SKILLS / "ingress-traefik" / "operations.md").read_text()
+        self.assertIn("middlewares: [authentik]", ops)
+        self.assertIn('[ "$(hostnamectl hostname)" = "<login-vm>" ]', ops)
+        self.assertIn("<svc>.yml.login", ops)
+        self.assertIn("put it back", ops.lower())
+        self.assertIn("ingress module's `operations.md`", text)
 
     def test_apps_that_mail_need_a_sender_address_for_the_log_mailer(self):
         # Monica's invitations failed with 'An email must have a From or a Sender header'
