@@ -142,6 +142,43 @@ class AgentTests(unittest.TestCase):
         # A redirect to an allowed place does not let a chain through.
         self.assertEqual(effect(self.text, "shell", f"python3 tools/modules.py list; id > /tmp/opencode/a"), "ask")
 
+    def test_an_allowed_redirect_target_cannot_climb_out_or_borrow_a_later_word(self):
+        ws = "/home/owner/fcos-workspace"
+        # `..` anywhere after a redirect is never needed.
+        for command in ("git status . > /tmp/opencode/../../home/owner/.bashrc",
+                        f"git status . > {ws}/vms/../.bashrc",
+                        "git log -1 --format=PAYLOAD > /tmp/opencode/../../home/owner/.bashrc",
+                        "git status . > /tmp/opencode/../../home/owner/fcos-app/t*s/x.py",
+                        "git status . > /tmp/opencode/../../home/owner/fcos-app/tool?/x.py"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "deny")
+        # The workspace folders are allowed only for the redirect's own target, not for a later word.
+        for command in ("git status . > /home/owner/.bashrc /vms/x", "git status . > /home/owner/.bashrc x/services/y",
+                        "git status . > /home/owner/.profile /login-frontend/z",
+                        "git status . > /home/owner/.ssh/vms/x", "git status . > $HOME/.config/services/x",
+                        "git status . > ~/.bashrc", "git status . > /tmp/opencode/.hidden"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "ask")
+        for command in (f"python3 tools/render.py templates/a {ws}/v > {ws}/vms/apps/a.bu",
+                        "python3 tools/render.py templates/a $ws/vms/$vm/values/a.values > $ws/vms/$vm/a.bu",
+                        f"python3 tools/ign_to_script.py {ws}/vms/apps/igns/x.ign > /tmp/opencode/apply-x.sh"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "allow")
+
+    def test_git_and_dig_cannot_be_pointed_at_files_outside_the_checkout(self):
+        for command in ("git diff /dev/null /home/owner/.ssh/id_ed25519", "git diff --stat /etc/passwd",
+                        "git diff --no-ind /dev/null x", "git diff --no-i a b", "git diff ../other/file",
+                        "git diff HEAD..HEAD~3", "git diff ~/.ssh/config", "git diff $HOME/x", "git diff . $x",
+                        "git log --no-index /etc/passwd", "git log -p /etc/passwd", "git log $HOME/x",
+                        "dig -f/etc/shadow", "dig -k/etc/shadow", "dig x -ffile", "dig x -kfile",
+                        "dig @192.0.2.1 -f /etc/passwd"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "deny")
+        for command in ("git diff --cached .", "git diff .", "git diff --stat .", "git status .", "git log -3 --oneline",
+                        "dig login-frontend.example.org", "dig +short fs-kvm.example.org", "dig @192.0.2.1 a.example.org"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "allow")
+
     def test_allowed_commands_cannot_read_arbitrary_files_through_their_own_options(self):
         for command in ("git diff --no-index /dev/null /home/owner/other/file", "git diff --no-index a b",
                         "dig -f /home/owner/other/file", "dig -k /home/owner/other/file", "dig x -f /etc/passwd"):

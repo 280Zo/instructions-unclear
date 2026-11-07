@@ -9,11 +9,13 @@ library, and fails unless all of this holds:
 
 - the first 16 sectors (where boot code would sit) are empty, and the volume descriptors are exactly one primary,
   one Joliet and the end marker, each once;
-- the volume label is "cidata";
+- the volume label is "cidata", in both the primary and the Joliet descriptor;
 - the Joliet tree holds exactly "user-data" and "meta-data", no folders; user-data is byte for byte the input and
   meta-data is empty;
-- the primary tree, which a machine may read instead (with Rock Ridge names, if it has them), leads to the same
-  bytes under the same names: same start and size for every file, and the same Rock Ridge names as Joliet shows;
+- the primary tree, which a machine may read instead, has Rock Ridge names (with the SP marker that makes a
+  reader use them, and with files that are plain files) and leads to the same bytes under the same names as
+  Joliet: same start and size for every file. An image without Rock Ridge names is refused, because its short
+  primary names could not be matched to the Joliet ones; xorriso -r always writes them;
 - no file is hidden, split over several pieces, interleaved or given an extended attribute area (each of those
   changes which bytes a machine reads), and no Rock Ridge entry points elsewhere (CE, SL, CL, PL, RE).
 
@@ -27,7 +29,7 @@ SECTOR = 2048
 MAX_BYTES = 16 * 1024 * 1024
 MAX_DESCRIPTORS = 8
 JOLIET_ESCAPES = (b"%/@", b"%/C", b"%/E")
-ROCK_RIDGE_KEPT = {"SP", "RR", "ER", "ST", "PX", "TF", "NM", "PD"}
+ROCK_RIDGE_KEPT = {"SP", "RR", "ER", "PX", "TF", "NM", "PD"}  # no ST: a reader stops reading entries at it
 ROCK_RIDGE_LEAVING = {"CE", "SL", "CL", "PL", "RE"}
 
 
@@ -128,7 +130,7 @@ def _entries(iso: bytes, descriptor: bytes, joliet: bool) -> list[tuple[str, int
     start, length = _both(root, 2, 4) * SECTOR, _both(root, 10, 4)
     if start + length > len(iso) or length > SECTOR * 64:
         raise IsoError("the root folder of the ISO lies outside the file")
-    data, position, found = iso[start:start + length], 0, []
+    data, position, found, root_rock = iso[start:start + length], 0, [], []
     while position < len(data):
         size = data[position]
         if size == 0:  # records never straddle a sector: the rest of this one is padding
@@ -145,6 +147,8 @@ def _entries(iso: bytes, descriptor: bytes, joliet: bool) -> list[tuple[str, int
         extent, file_length = _both(record, 2, 4), _both(record, 10, 4)
         if file_length and (extent * SECTOR + file_length > len(iso)):
             raise IsoError("a file or folder in the ISO lies outside the image")
+        if first:
+            root_rock = rock
         if name in (b"\0", b"\1"):
             continue
         if record[1] != 0:
@@ -158,21 +162,30 @@ def _entries(iso: bytes, descriptor: bytes, joliet: bool) -> list[tuple[str, int
         except UnicodeDecodeError:
             raise IsoError("a file name in the ISO cannot be read") from None
         shown = _rock_ridge_name(rock) if not joliet else None
-        found.append((shown if shown is not None else text.split(";")[0], file_length, extent, shown is not None))
-    if joliet:
-        return [(name, size, extent) for name, size, extent, _ in found]
-    have = {flag for *_rest, flag in found}
-    if len(have) > 1:
-        raise IsoError("some files in the primary tree of the ISO have Rock Ridge names and some do not")
-    # With Rock Ridge names the names are the reader's; without, only starts and sizes can be compared.
-    return [(name if have == {True} else "", size, extent) for name, size, extent, _ in found]
+        if joliet:
+            found.append((text.split(";")[0], file_length, extent))
+            continue
+        if shown is None:
+            raise IsoError("a file in the primary tree of the ISO has no Rock Ridge name, so its name cannot be "
+                           "checked against the Joliet tree")
+        for signature, payload in rock:
+            if signature == "PX" and (len(payload) < 32 or _both(payload, 0, 4) & 0o170000 != 0o100000):
+                raise IsoError("a Rock Ridge entry in the ISO says a file is not a plain file")
+        found.append((shown, file_length, extent))
+    if not joliet:
+        marker = [payload for signature, payload in root_rock if signature == "SP"]
+        if not marker or marker[0] != bytes([0xBE, 0xEF, 0]):
+            raise IsoError("the primary tree of the ISO lacks the Rock Ridge marker (SP), so a reader would not "
+                           "use its Rock Ridge names")
+    return found
 
 
 def verify(iso: bytes, ign: bytes) -> None:
     primary, joliet = _descriptors(iso)
     label = primary[40:72].decode("ascii", "replace").strip()
-    if label != "cidata":
-        raise IsoError(f"the volume label is {label!r}, not 'cidata'")
+    joliet_label = joliet[40:72].decode("utf-16-be", "replace").strip()
+    if label != "cidata" or joliet_label != "cidata":
+        raise IsoError(f"the volume label is {label!r} (Joliet {joliet_label!r}), not 'cidata'")
     for descriptor in (primary, joliet):
         if _both(descriptor, 80, 4) * SECTOR > len(iso):
             raise IsoError("the ISO is shorter than it says")
@@ -181,11 +194,7 @@ def verify(iso: bytes, ign: bytes) -> None:
     if sorted(name for name, *_ in tree) != ["meta-data", "user-data"]:
         raise IsoError("the ISO must hold exactly user-data and meta-data, found: "
                        + ", ".join(sorted(name for name, *_ in tree)))
-    if any(name == "" for name, *_ in flat):
-        # No Rock Ridge names: the primary tree can only be compared by where its files start and how long they are.
-        if sorted((size, extent) for _n, size, extent in flat) != sorted((size, extent) for _n, size, extent in tree):
-            raise IsoError("the two file trees of the ISO disagree about where the files are")
-    elif sorted(flat) != sorted(tree):
+    if sorted(flat) != sorted(tree):
         raise IsoError("the two file trees of the ISO disagree about names, sizes or where the files are")
     by_name = {name: (size, extent) for name, size, extent in tree}
     size, extent = by_name["user-data"]

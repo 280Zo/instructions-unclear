@@ -782,6 +782,12 @@ def _write_all(out: Path, svc: str, files: dict[str, str]) -> list[Path]:
     """Write files, remove ones an earlier run wrote that this run does not, return every path."""
     root = _check_output_folder(out)
     manifest = out / f".gen-service-{svc}.json"
+    for rel in files:  # before anything is changed: no folder on the way to a file may be a link
+        here = out
+        for part in Path(rel).parts[:-1]:
+            here = here / part
+            if here.is_symlink():
+                raise SpecError(f"{rel}: {here} is a link; remove it and run again (nothing is written through links)")
     if manifest.is_symlink():  # never read or write through a link; the link itself goes
         manifest.unlink()
     try:
@@ -795,11 +801,6 @@ def _write_all(out: Path, svc: str, files: dict[str, str]) -> list[Path]:
     written = []
     for rel, text in files.items():
         path = out / rel
-        here = out
-        for part in Path(rel).parts[:-1]:  # before anything is created: no folder on the way may be a link
-            here = here / part
-            if here.is_symlink():
-                raise SpecError(f"{rel}: {here} is a link; remove it and run again (nothing is written through links)")
         path.parent.mkdir(parents=True, exist_ok=True)
         if path.is_symlink():
             path.unlink()

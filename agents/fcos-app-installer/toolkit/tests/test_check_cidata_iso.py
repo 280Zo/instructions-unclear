@@ -47,9 +47,9 @@ SP = susp(b"SP", bytes([0xBE, 0xEF, 0]))
 
 
 def build(files: dict[str, bytes], label: str = "cidata", subdir: bool = False, extra_primary: int = 0,
-          joliet: bool = True, rock: bool = False, primary_edit: dict | None = None, joliet_edit: dict | None = None,
+          joliet: bool = True, rock: bool = True, primary_edit: dict | None = None, joliet_edit: dict | None = None,
           system: bytes | None = None, extra_descriptors: tuple = (), spare: bytes = b"",
-          root_su: bytes | None = None) -> bytes:
+          root_su: bytes | None = None, joliet_label: str | None = None) -> bytes:
     """Sectors: 0-15 system area, 16 primary descriptor, 17 Joliet descriptor, then any extra descriptors, the
     terminator, the primary root, the Joliet root, the file data and last the spare data a test may point at."""
     primary_edit, joliet_edit = primary_edit or {}, joliet_edit or {}
@@ -85,7 +85,10 @@ def build(files: dict[str, bytes], label: str = "cidata", subdir: bool = False, 
     def descriptor(kind: int, root: int, escapes: bytes = b"") -> bytes:
         d = bytearray(SECTOR)
         d[0:7] = bytes([kind]) + b"CD001" + b"\1"
-        d[40:72] = label.encode().ljust(32, b" ")
+        if kind == 2:  # a Joliet label is UTF-16, padded with spaces
+            d[40:72] = ((joliet_label or label).encode("utf-16-be") + b"\0 " * 16)[:32]
+        else:
+            d[40:72] = label.encode().ljust(32, b" ")
         d[80:88] = both(at, 4)
         d[88:88 + len(escapes)] = escapes
         d[128:132] = both(SECTOR, 2)
@@ -113,9 +116,12 @@ def block(kind: int, escapes: bytes = b"") -> bytes:
 
 
 class VerifyTests(unittest.TestCase):
-    def test_an_iso_with_exactly_the_input_passes_with_or_without_rock_ridge(self):
+    def test_an_iso_with_exactly_the_input_passes(self):
         verify(build(GOOD), IGN)
-        verify(build(GOOD, rock=True), IGN)
+
+    def test_an_iso_without_rock_ridge_names_is_refused_because_the_primary_names_cannot_be_checked(self):
+        with self.assertRaisesRegex(IsoError, "Rock Ridge"):
+            verify(build(GOOD, rock=False), IGN)
 
     def test_changed_content_is_refused(self):
         evil = b'{"ignition":{"version":"3.6.0"},"x":1}'
@@ -151,9 +157,34 @@ class TwoReadersTests(unittest.TestCase):
     lead to the same bytes under the same names."""
 
     def test_the_primary_tree_pointing_at_other_bytes_is_refused(self):
-        for rock in (False, True):
-            with self.subTest(rock=rock), self.assertRaisesRegex(IsoError, "disagree"):
-                verify(build(GOOD, rock=rock, spare=EVIL, primary_edit={"user-data": {"extent": SPARE}}), IGN)
+        with self.assertRaisesRegex(IsoError, "disagree"):
+            verify(build(GOOD, spare=EVIL, primary_edit={"user-data": {"extent": SPARE}}), IGN)
+
+    def test_the_two_files_swapped_in_the_primary_tree_are_refused(self):
+        # The primary tree would give a reader an empty user-data and the Ignition file as meta-data.
+        swapped = {"user-data": {"extent": SPARE, "size": 0}, "meta-data": {"extent": SPARE - 1, "size": len(IGN)}}
+        with self.assertRaisesRegex(IsoError, "disagree"):
+            verify(build(GOOD, primary_edit=swapped), IGN)
+
+    def test_rock_ridge_names_need_the_marker_that_makes_a_reader_use_them(self):
+        for label, root in (("no SP", b""), ("skip length", susp(b"SP", bytes([0xBE, 0xEF, 1]))),
+                            ("wrong check bytes", susp(b"SP", bytes([0x00, 0x00, 0])))):
+            with self.subTest(label), self.assertRaisesRegex(IsoError, "Rock Ridge"):
+                verify(build(GOOD, root_su=root), IGN)
+
+    def test_a_terminator_entry_or_a_mode_that_is_not_a_plain_file_is_refused(self):
+        def px(mode):
+            return susp(b"PX", both(mode, 4) + both(1, 4) + both(0, 4) + both(0, 4))
+
+        verify(build(GOOD, primary_edit={"user-data": {"su": nm(b"user-data") + px(0o100444)}}), IGN)
+        for label, tail in (("ST", susp(b"ST")), ("directory", px(0o040755)), ("symlink", px(0o120777)),
+                            ("device", px(0o060000))):
+            with self.subTest(label), self.assertRaises(IsoError):
+                verify(build(GOOD, primary_edit={"user-data": {"su": nm(b"user-data") + tail}}), IGN)
+
+    def test_the_joliet_label_must_match_too(self):
+        with self.assertRaisesRegex(IsoError, "label"):
+            verify(build(GOOD, joliet_label="evil"), IGN)
 
     def test_the_joliet_tree_pointing_at_other_bytes_is_refused(self):
         with self.assertRaises(IsoError):
@@ -267,8 +298,10 @@ class CommandLineTests(unittest.TestCase):
         script = (ROOT / "tools" / "make_cidata_iso.sh").read_text()
         self.assertIn("mktemp -d", script)
         self.assertIn("check_cidata_iso.py", script)
-        self.assertNotIn("mv -n", script)
         self.assertLess(script.index("check_cidata_iso.py"), script.index('ln -- "$tmp_out" "$out"'))
+        # The trap is set before the first temporary folder is made, and a move is only the fallback.
+        self.assertLess(script.index("trap "), script.index('stage="$(mktemp -d)"'))
+        self.assertLess(script.index('ln -- "$tmp_out" "$out"'), script.index("mv -n"))
 
     def test_module_has_no_third_party_import(self):
         text = Path(check_cidata_iso.__file__).read_text()

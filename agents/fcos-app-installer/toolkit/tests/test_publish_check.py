@@ -72,6 +72,7 @@ class GenericRuleTests(unittest.TestCase):
 
     def test_the_domain_rule_sees_quoted_keys_other_key_names_and_list_values(self):
         for line in (j('"domain": "myhome.', 'duckdns.org"'), j("base_domain: real.", "net"), j("domain: [real.", "net]"),
+                     j("domain_name: real.", "net"),
                      j("domain: 'real.", "net'"), j("{domain: real.", "net}"), j("site_domain = \"real.", "net\"")):
             with self.subTest(line=line):
                 self.assertEqual([h.split(": ", 1)[1] for h in check_text(line + "\n", set())],
@@ -96,6 +97,12 @@ class GenericRuleTests(unittest.TestCase):
         started = time.monotonic()
         check_text(slow, set())
         self.assertLess(time.monotonic() - started, 5)
+        # A piece boundary must not hide that a word is the end of a longer one: "…adomain: x" is not a key.
+        for pad in (1499, 1500, 3000, 4500):
+            line = "a" * pad + j("domain: real.", "net")
+            with self.subTest(pad=pad):
+                self.assertEqual(check_text(line + "\n", set()), [])
+        self.assertTrue(check_text(" " * 3000 + j("domain: real.", "net\n"), set()))
         for at in (0, 1990, 29990, 39990):
             line = "x" * at + j(" ip: 10.0", ".30.1 ") + "x" * (40000 - at)
             with self.subTest(at=at):

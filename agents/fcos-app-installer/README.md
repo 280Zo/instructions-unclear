@@ -188,7 +188,11 @@ container that can't read those.
 
 What the rules do and don't cover. They match the whole command text, so a
 command chained behind an allowed one (`;`, `&&`, `|`, a newline, a backtick)
-asks first instead of running. Command substitution with `$( )` is not covered,
+asks first instead of running. So does any `&` and any redirect except one to
+`/tmp/opencode/` or to a `vms/`, `services/` or `login-frontend/` folder of the
+workspace; a redirect with `..` in it is refused. The rules look at the text,
+not at what a path points to, so a link inside an allowed folder is not seen.
+Command substitution with `$( )` is not covered,
 because the guide's remote commands use it. The tools that run without asking
 limit what they read and write: `render.py` reads only templates from the
 toolkit and values files from the workspace, the fixtures or `/tmp/opencode`,

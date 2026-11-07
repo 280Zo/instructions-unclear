@@ -166,6 +166,8 @@ class OutputFolderTests(GenCase):
             generate(spec_fixture("single"), copy.deepcopy(SITE), out2)
         self.assertIn("link", str(caught.exception))
         self.assertEqual(list(victim.iterdir()), [])
+        # Every path is checked before the first file is written: nothing else came out either.
+        self.assertEqual([p.name for p in out2.iterdir()], ["rendered"])
 
     def test_forgetting_a_module_does_not_follow_a_linked_manifest(self):
         from gen_service import forget_other_services

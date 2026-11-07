@@ -33,13 +33,14 @@ runtime="$(command -v podman || command -v docker || true)"
 "$runtime" image inspect "$IMAGE" >/dev/null 2>&1 \
     || die "image $IMAGE is not pulled; pull it once yourself (nothing is downloaded for you): $runtime pull $IMAGE" 3
 
+stage="" log="" work=""
+trap 'rm -rf "${stage:-}" "${work:-}"; rm -f "${log:-}"' EXIT  # set first: a failing mktemp below leaves nothing behind
 stage="$(mktemp -d)"
 log="$(mktemp)"
 # A private folder (mode 0700) beside the output: nobody else can swap the file between the check and its
 # placement, and the final link is on the same filesystem.
-work="$(mktemp -d "$(dirname "$out")/.cidata-XXXXXX")"
+work="$(mktemp -d "$(dirname "$out")/.cidata-XXXXXX")" || die "cannot create a work folder beside $out" 1
 tmp_out="$work/out.iso"
-trap 'rm -rf "$stage" "$work"; rm -f "$log"' EXIT
 
 cp -- "$ign" "$stage/user-data"
 : >"$stage/meta-data"
@@ -60,6 +61,11 @@ fi
 python3 "$(dirname "$0")/check_cidata_iso.py" "$tmp_out" "$ign" >/dev/null || die "the ISO does not match the input; not using it" 1
 
 chmod 0600 "$tmp_out"
-# A hard link, not a move: it fails if $out has appeared in the meantime instead of skipping silently.
-ln -- "$tmp_out" "$out" 2>/dev/null || die "$out appeared while the ISO was being built; not overwriting" 1
+# A hard link, not a move: it fails if $out has appeared in the meantime instead of skipping silently. Where
+# the filesystem has no hard links, a move that never overwrites is used instead, and checked.
+if ! why="$(ln -- "$tmp_out" "$out" 2>&1)"; then
+    [[ ! -e "$out" && ! -L "$out" ]] || die "$out appeared while the ISO was being built; not overwriting" 1
+    mv -n -- "$tmp_out" "$out" 2>/dev/null && [[ ! -e "$tmp_out" ]] \
+        || die "could not place $out ($why)" 1
+fi
 echo "make_cidata_iso: wrote $out (label cidata, user-data $size bytes)"

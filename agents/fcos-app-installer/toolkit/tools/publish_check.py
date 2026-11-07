@@ -51,7 +51,7 @@ RULES = [
     # no `example` label anywhere and not ending in test, local, invalid or localhost. A name that appears
     # elsewhere is caught by the workspace's own values, or by its publish-rules.yaml.
     ("domain name that is not an example",
-     re.compile(r"(?i)(?<![a-z0-9])domain[\"']?\s*[:=][\s\[\"']*"
+     re.compile(r"(?i)(?<![a-z0-9])domain(?:_name)?[\"']?\s*[:=][\s\[\"']*"
                 r"(?!(?:[a-z0-9-]+\.)*example(?![a-z0-9-]))"
                 r"(?!(?:[a-z0-9-]+\.)*(?:test|local|invalid|localhost)(?![a-z0-9-])(?!\.[a-z0-9]))"
                 r"(?![<*])[a-z0-9-]+(?:\.[a-z0-9-]+)+(?![a-z0-9._-]*\()")),  # not a call such as re.compile(...)
@@ -102,14 +102,13 @@ def load_workspace_rules(ws: Path) -> list[tuple[str, "re.Pattern"]]:
 LINE_PIECE, LINE_STEP = 2000, 1500
 
 
-def _pieces(line: str):
-    """A line, or for a very long one overlapping pieces of it, so that the patterns' work stays bounded by
-    the piece size however long the line is (a minified file is one line) and nothing slips between pieces."""
+def _found_in(pattern, line: str) -> bool:
+    """Whether the pattern matches the line; a very long line is searched in overlapping pieces, so that the
+    patterns' work stays bounded by the piece size however long the line is (a minified file is one line).
+    The pieces are windows into the same string, so a lookbehind still sees what comes before a window."""
     if len(line) <= LINE_PIECE:
-        yield line
-        return
-    for start in range(0, len(line), LINE_STEP):
-        yield line[start:start + LINE_PIECE]
+        return bool(pattern.search(line))
+    return any(pattern.search(line, start, start + LINE_PIECE) for start in range(0, len(line), LINE_STEP))
 
 
 def check_text(text: str, private: set[str], extra: list | tuple = ()) -> list[str]:
@@ -122,7 +121,7 @@ def check_text(text: str, private: set[str], extra: list | tuple = ()) -> list[s
                     hits.append(f"{number}: value from workspace")
     for number, line in enumerate(text.splitlines(), start=1):
         for name, pattern in [*RULES, *extra]:
-            if any(pattern.search(piece) for piece in _pieces(line)):
+            if _found_in(pattern, line):
                 hits.append(f"{number}: {name}")
     for hit in secret_lines(text):
         hits.append(f"{hit.split(':', 1)[0]}: secret-looking assignment")

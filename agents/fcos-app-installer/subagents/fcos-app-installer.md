@@ -94,6 +94,21 @@ opencode:
     - action: shell
       resource: "*> */login-frontend/*"
       effect: allow
+    # The three workspace folders are allowed only for the redirect's own target: another word between
+    # the ">" and the folder name ("> ~/.bashrc x/vms/y") asks, and so does any target with a dot
+    # folder or file in its path ("~/.ssh/vms/x", "~/.bashrc").
+    - action: shell
+      resource: "*> * */vms/*"
+      effect: ask
+    - action: shell
+      resource: "*> * */services/*"
+      effect: ask
+    - action: shell
+      resource: "*> * */login-frontend/*"
+      effect: ask
+    - action: shell
+      resource: "*>*/.*"
+      effect: ask
     - action: shell
       resource: "*>*>*"
       effect: ask
@@ -320,21 +335,56 @@ opencode:
     - action: shell
       resource: "*>tools/*"
       effect: deny
-    # Options of allowed commands that read any file they are given.
+    # No ".." after a redirect: it would climb out of the folder the allow rules name (and a glob in
+    # such a path could reach a tools folder).
     - action: shell
-      resource: "git diff *--no-index*"
+      resource: "*>*..*"
+      effect: deny
+    # Allowed commands that read any file they are given: git reads a path outside the checkout as
+    # a plain file (also by itself, without --no-index), and dig reads its -f and -k files. Paths
+    # outside the checkout, home and variable forms, and ranges with ".." are refused; the options
+    # are matched in their attached forms too ("dig -f/etc/x"), and by the start of their names.
+    - action: shell
+      resource: "git diff *--no-i*"
       effect: deny
     - action: shell
-      resource: "dig -f *"
+      resource: "git log *--no-i*"
       effect: deny
     - action: shell
-      resource: "dig -k *"
+      resource: "git diff /*"
       effect: deny
     - action: shell
-      resource: "dig * -f *"
+      resource: "git diff * /*"
       effect: deny
     - action: shell
-      resource: "dig * -k *"
+      resource: "git log /*"
+      effect: deny
+    - action: shell
+      resource: "git log * /*"
+      effect: deny
+    - action: shell
+      resource: "git diff *..*"
+      effect: deny
+    - action: shell
+      resource: "git diff *~*"
+      effect: deny
+    - action: shell
+      resource: "git diff *$*"
+      effect: deny
+    - action: shell
+      resource: "git log *$*"
+      effect: deny
+    - action: shell
+      resource: "dig -f*"
+      effect: deny
+    - action: shell
+      resource: "dig -k*"
+      effect: deny
+    - action: shell
+      resource: "dig * -f*"
+      effect: deny
+    - action: shell
+      resource: "dig * -k*"
       effect: deny
     - action: shell
       resource: "*tee *tools/*"
