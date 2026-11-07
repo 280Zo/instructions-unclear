@@ -782,6 +782,8 @@ def _write_all(out: Path, svc: str, files: dict[str, str]) -> list[Path]:
     """Write files, remove ones an earlier run wrote that this run does not, return every path."""
     root = _check_output_folder(out)
     manifest = out / f".gen-service-{svc}.json"
+    if manifest.is_symlink():  # never read or write through a link; the link itself goes
+        manifest.unlink()
     try:
         old = json.loads(manifest.read_text(encoding="utf-8")) if manifest.is_file() else []
     except ValueError:
@@ -793,6 +795,11 @@ def _write_all(out: Path, svc: str, files: dict[str, str]) -> list[Path]:
     written = []
     for rel, text in files.items():
         path = out / rel
+        here = out
+        for part in Path(rel).parts[:-1]:  # before anything is created: no folder on the way may be a link
+            here = here / part
+            if here.is_symlink():
+                raise SpecError(f"{rel}: {here} is a link; remove it and run again (nothing is written through links)")
         path.parent.mkdir(parents=True, exist_ok=True)
         if path.is_symlink():
             path.unlink()
@@ -813,7 +820,7 @@ def forget_other_services(out, keep: set[str]) -> None:
         svc = manifest.name[len(".gen-service-"):-len(".json")]
         if svc not in keep:
             _write_all(Path(out), svc, {})  # deletes the files the old manifest lists, inside the folder only
-            manifest.unlink(missing_ok=True)
+            manifest.unlink(missing_ok=True)  # (a manifest that is a link is removed, never followed)
 
 
 def generate(spec: dict, site: dict, out) -> list[Path]:

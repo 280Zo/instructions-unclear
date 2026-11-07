@@ -412,6 +412,21 @@ class IgnToScriptTests(unittest.TestCase):
             with self.subTest(bad=bad), self.assertRaises(UnsupportedIgnition):
                 to_script(bad)
 
+    def test_ids_must_be_plain_non_negative_numbers_and_base64_must_be_valid(self):
+        owner = lambda ident: {"storage": {"files": [{"path": "/etc/x", "user": {"id": ident}}]}}  # noqa: E731
+        for bad in (owner(-1), owner(True), owner("1"), owner(1.5), owner(None),
+                    {"storage": {"files": [{"path": "/etc/x", "group": {"id": -5}}]}},
+                    {"passwd": {"groups": [{"name": "g", "gid": -1}]}},
+                    {"passwd": {"groups": [{"name": "g", "gid": True}]}},
+                    {"passwd": {"users": [{"name": "u", "uid": -1}]}},
+                    {"passwd": {"users": [{"name": "u", "uid": True}]}},
+                    {"storage": {"files": [{"path": "/etc/x", "contents": {"source": "data:;base64,@@@@"}}]}},
+                    {"storage": {"files": [{"path": "/etc/x", "contents": {"source": "data:;base64,QUJD!"}}]}}):
+            with self.subTest(bad=bad), self.assertRaises(UnsupportedIgnition):
+                to_script(bad)
+        to_script(owner(0))
+        to_script({"passwd": {"users": [{"name": "u", "uid": 3101}], "groups": [{"name": "g", "gid": 3101}]}})
+
     def test_wrong_typed_or_broken_fragments_are_an_error_line_not_a_traceback(self):
         import base64
         bad_gzip = "data:;base64," + base64.b64encode(b"not gzip").decode()

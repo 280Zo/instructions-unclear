@@ -197,13 +197,19 @@ def _mode(value, default: int) -> str:
     return f"{mode:04o}"
 
 
+def _id(value, what: str) -> str:
+    if type(value) is not int or value < 0:
+        raise UnsupportedIgnition(f"invalid {what}: {value!r}")
+    return str(value)
+
+
 def _owner(entry: dict) -> str | None:
     parts = []
     for key in ("user", "group"):
         ref = entry.get(key) or {}
         _check_keys(ref, {"id", "name"}, key)
         if "id" in ref:
-            parts.append(str(int(ref["id"])))
+            parts.append(_id(ref["id"], f"{key} id"))
         elif "name" in ref:
             parts.append(_name(ref["name"], NAME, f"{key} name"))
         else:
@@ -223,7 +229,10 @@ def _contents(contents: dict | None) -> bytes:
     if not source.startswith("data:"):
         raise UnsupportedIgnition("only data: URLs are allowed (no remote sources)")
     head, _, body = source.partition(",")
-    raw = base64.b64decode(body) if head.endswith(";base64") else urllib.parse.unquote_to_bytes(body)
+    try:
+        raw = base64.b64decode(body, validate=True) if head.endswith(";base64") else urllib.parse.unquote_to_bytes(body)
+    except ValueError:
+        raise UnsupportedIgnition("a data: URL holds invalid base64") from None
     compression = contents.get("compression")
     if compression == "gzip":
         raw = gzip.decompress(raw)
@@ -254,7 +263,7 @@ def to_script(config: dict, root: str = "") -> str:
     for group in accounts.get("groups", []):
         _check_keys(group, {"name", "gid"}, "group")
         name = _name(group["name"], NAME, "group name")
-        gid = f"-g {int(group['gid'])} " if "gid" in group else ""
+        gid = f"-g {_id(group['gid'], 'gid')} " if "gid" in group else ""
         lines.append(f"getent group {name} >/dev/null || priv groupadd {gid}{name}")
 
     for user in accounts.get("users", []):
@@ -262,7 +271,7 @@ def to_script(config: dict, root: str = "") -> str:
         name = _name(user["name"], NAME, "user name")
         args = []
         if "uid" in user:
-            args.append(f"-u {int(user['uid'])}")
+            args.append(f"-u {_id(user['uid'], 'uid')}")
         if user.get("primaryGroup"):
             args.append(f"-g {_name(user['primaryGroup'], NAME, 'group name')}")
         extra = [_name(g, NAME, "group name") for g in user.get("groups", [])]

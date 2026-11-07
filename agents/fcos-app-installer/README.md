@@ -330,8 +330,9 @@ domains, an SSH key, password hash or secret-looking value. Names that only
 you know (a pool, a family name, a provider's hostname pattern) go in
 `publish-rules.yaml` in your workspace, a list of `name` and `pattern`
 (a regular expression each). It lives with your install files and is read
-only from there, so the toolkit holds none of it; a file it can't use is an
-error.
+only from there, so the toolkit holds none of it; a file it can't use, or that
+is a link, is an error. Keep the patterns plain: one that backtracks badly,
+such as `(a+)+$`, makes the scan slow.
 It checks every file in the folder, with no exemptions. It scans the toolkit's
 own folder only, or the one folder you pass as an argument (pass a checkout's
 top level to scan all of it). Run it in the folder you installed the toolkit

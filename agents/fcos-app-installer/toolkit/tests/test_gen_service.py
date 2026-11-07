@@ -149,6 +149,33 @@ class OutputFolderTests(GenCase):
             planted.unlink()
         self.assertTrue(victim.exists())
 
+    def test_a_link_inside_the_output_folder_is_never_written_through(self):
+        name = spec_fixture("single")["name"]
+        # A manifest that is a link to another file: the link goes, the file is left alone.
+        out = self.tmpdir()
+        decoy = self.tmpdir() / "decoy.txt"
+        decoy.write_text("precious")
+        (out / f".gen-service-{name}.json").symlink_to(decoy)
+        generate(spec_fixture("single"), copy.deepcopy(SITE), out)
+        self.assertEqual(decoy.read_text(), "precious")
+        self.assertFalse((out / f".gen-service-{name}.json").is_symlink())
+        # A folder inside it that is a link out: nothing is written through it.
+        out2, victim = self.tmpdir(), self.tmpdir()
+        (out2 / "rendered").symlink_to(victim)
+        with self.assertRaises(SpecError) as caught:
+            generate(spec_fixture("single"), copy.deepcopy(SITE), out2)
+        self.assertIn("link", str(caught.exception))
+        self.assertEqual(list(victim.iterdir()), [])
+
+    def test_forgetting_a_module_does_not_follow_a_linked_manifest(self):
+        from gen_service import forget_other_services
+        out, decoy = self.tmpdir(), self.tmpdir() / "decoy.txt"
+        decoy.write_text("precious")
+        (out / ".gen-service-oldproxy.json").symlink_to(decoy)
+        forget_other_services(out, {"keep"})
+        self.assertEqual(decoy.read_text(), "precious")
+        self.assertFalse(list(out.glob(".gen-service-*")))
+
     def test_an_ordinary_folder_and_the_scratch_folder_are_fine(self):
         self.assertTrue((self.gen("single") / "rendered").is_dir())
 

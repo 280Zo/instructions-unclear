@@ -87,6 +87,10 @@ def _outside_repo(path: Path) -> Path:
     """A workspace holds private values, so it may sit neither in the toolkit's folder nor anywhere
     else in the checkout that folder belongs to: that checkout is what gets published."""
     resolved = path.expanduser().resolve()
+    if resolved == Path(resolved.anchor) or resolved == Path.home().resolve() or resolved in REPO_ROOT.parents:
+        raise WorkspaceError(
+            f"workspace {resolved} is the root, the home folder or a folder around the toolkit; tools read "
+            "your values from the workspace, so give it a folder of its own, for example ~/fcos-<place>/")
     base = _enclosing_checkout(REPO_ROOT)
     if resolved == base or base in resolved.parents:
         raise WorkspaceError(

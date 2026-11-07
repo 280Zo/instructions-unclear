@@ -73,6 +73,30 @@ opencode:
     - action: shell
       resource: "podman pull *"
       effect: ask
+    # A redirect writes a file the edit rules never see, and a rendered template can be made into
+    # runnable code, so a redirect asks unless it goes to the scratch folder or a workspace folder; a
+    # second redirect asks again, and any redirect into a tools folder is denied below.
+    - action: shell
+      resource: "*>*"
+      effect: ask
+    - action: shell
+      resource: "*> /tmp/opencode/*"
+      effect: allow
+    - action: shell
+      resource: "*>/tmp/opencode/*"
+      effect: allow
+    - action: shell
+      resource: "*> */vms/*"
+      effect: allow
+    - action: shell
+      resource: "*> */services/*"
+      effect: allow
+    - action: shell
+      resource: "*> */login-frontend/*"
+      effect: allow
+    - action: shell
+      resource: "*>*>*"
+      effect: ask
     # The rules match the whole command string, so an allowed first word could carry any other
     # command behind a separator. A chain asks (the guide chains some pushes on purpose), and the
     # denies below still win over this. Command substitution with $( ) is not covered: the guide's
@@ -84,7 +108,7 @@ opencode:
       resource: "*&&*"
       effect: ask
     - action: shell
-      resource: "* & *"
+      resource: "*&*"
       effect: ask
     - action: shell
       resource: "*|*"
@@ -295,6 +319,22 @@ opencode:
       effect: deny
     - action: shell
       resource: "*>tools/*"
+      effect: deny
+    # Options of allowed commands that read any file they are given.
+    - action: shell
+      resource: "git diff *--no-index*"
+      effect: deny
+    - action: shell
+      resource: "dig -f *"
+      effect: deny
+    - action: shell
+      resource: "dig -k *"
+      effect: deny
+    - action: shell
+      resource: "dig * -f *"
+      effect: deny
+    - action: shell
+      resource: "dig * -k *"
       effect: deny
     - action: shell
       resource: "*tee *tools/*"

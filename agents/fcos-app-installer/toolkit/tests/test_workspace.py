@@ -443,6 +443,22 @@ class PreviousTests(TempHome):
         self.assertIn("workspace", err.getvalue())
 
 
+class BroadWorkspaceTests(unittest.TestCase):
+    """render.py and others treat the workspace as a safe place to read values from, so it may not be
+    a folder that holds everything: the root, the home folder, or a folder around the toolkit."""
+
+    def test_the_root_the_home_and_a_folder_around_the_toolkit_are_refused(self):
+        for bad in ("/", str(Path.home()), str(ROOT.parent), str(ROOT.parent.parent), "~"):
+            with self.subTest(workspace=bad), self.assertRaises(WorkspaceError) as caught:
+                resolve_workspace(bad)
+            self.assertIn("workspace", str(caught.exception))
+
+    def test_a_folder_of_its_own_is_fine(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = Path(tmp).resolve() / "fcos-home"
+            self.assertEqual(resolve_workspace(str(ws)), ws)
+
+
 class SiteExampleTests(unittest.TestCase):
     def test_site_example_has_no_entries(self):
         site = yaml.safe_load((ROOT / "site.example.yaml").read_text())

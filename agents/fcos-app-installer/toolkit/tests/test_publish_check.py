@@ -70,6 +70,37 @@ class GenericRuleTests(unittest.TestCase):
         self.assertEqual(check_text(j("see https://my", "home.duckdns.org/\n"), set()), [])
         self.assertTrue(check_text(j("see https://my", "home.duckdns.org/\n"), {j("my", "home.duckdns.org")}))
 
+    def test_the_domain_rule_sees_quoted_keys_other_key_names_and_list_values(self):
+        for line in (j('"domain": "myhome.', 'duckdns.org"'), j("base_domain: real.", "net"), j("domain: [real.", "net]"),
+                     j("domain: 'real.", "net'"), j("{domain: real.", "net}"), j("site_domain = \"real.", "net\"")):
+            with self.subTest(line=line):
+                self.assertEqual([h.split(": ", 1)[1] for h in check_text(line + "\n", set())],
+                                 ["domain name that is not an example"], line)
+        for line in ("domains: real.net", "subdomain-count: 3", "domain: [example.org]", '"domain": "example.net"'):
+            with self.subTest(line=line):
+                self.assertEqual(check_text(line + "\n", set()), [], line)
+
+    def test_test_local_and_invalid_count_only_as_the_last_label(self):
+        for line in (j("domain: ", "prod.test.acme.com"), j("domain: ", "local.mycompany.com"),
+                     j("domain: ", "invalid.mycompany.org"), j("domain: ", "localhost.mycompany.net")):
+            with self.subTest(line=line):
+                self.assertTrue(check_text(line + "\n", set()), line)
+        for line in ("domain: home.test", "domain: a.b.local", "domain: x.invalid", "domain: app.localhost",
+                     "domain: example.acme.org", "domain: example.test"):
+            with self.subTest(line=line):
+                self.assertEqual(check_text(line + "\n", set()), [], line)
+
+    def test_a_very_long_line_is_scanned_in_pieces_so_it_is_fast_and_nothing_hides_in_it(self):
+        import time
+        slow = "domain: " + "a-" * 20000 + "\n"
+        started = time.monotonic()
+        check_text(slow, set())
+        self.assertLess(time.monotonic() - started, 5)
+        for at in (0, 1990, 29990, 39990):
+            line = "x" * at + j(" ip: 10.0", ".30.1 ") + "x" * (40000 - at)
+            with self.subTest(at=at):
+                self.assertEqual([h.split(": ", 1)[1] for h in check_text(line + "\n", set())], ["private IPv4 address"])
+
     def test_flags_config_values(self):
         self.assertTrue(check_text("pool is TankPool here\n", {"TankPool"}))
         self.assertEqual(check_text("nothing personal\n", {"TankPool"}), [])
@@ -329,6 +360,24 @@ class WorkspaceSourceTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
                 self.assertIn("publish-rules.yaml", result.stderr)
                 self.assertNotIn("Traceback", result.stderr)
+
+    def test_a_rules_file_that_is_a_link_or_not_a_file_is_an_error_not_a_pass(self):
+        ws = self.make_workspace()
+        target = self.tmp / "elsewhere.yaml"
+        target.write_text("- {name: x, pattern: 'zzz'}\n")
+        rules = ws / "publish-rules.yaml"
+        for make in (lambda: rules.symlink_to(target), lambda: rules.symlink_to(self.tmp / "missing.yaml"),
+                     lambda: rules.mkdir()):
+            with self.subTest():
+                make()
+                result = self.run_check(workspace=ws)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn("publish-rules.yaml", result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+                if rules.is_dir() and not rules.is_symlink():
+                    rules.rmdir()
+                else:
+                    rules.unlink()
 
     def test_no_rules_file_means_only_the_generic_rules(self):
         result = self.run_check(workspace=self.make_workspace())

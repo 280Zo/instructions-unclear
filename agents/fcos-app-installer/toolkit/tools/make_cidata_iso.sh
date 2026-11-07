@@ -35,8 +35,11 @@ runtime="$(command -v podman || command -v docker || true)"
 
 stage="$(mktemp -d)"
 log="$(mktemp)"
-tmp_out="$(mktemp "$(dirname "$out")/.cidata-XXXXXX")"
-trap 'rm -rf "$stage"; rm -f "$tmp_out" "$log"' EXIT
+# A private folder (mode 0700) beside the output: nobody else can swap the file between the check and its
+# placement, and the final link is on the same filesystem.
+work="$(mktemp -d "$(dirname "$out")/.cidata-XXXXXX")"
+tmp_out="$work/out.iso"
+trap 'rm -rf "$stage" "$work"; rm -f "$log"' EXIT
 
 cp -- "$ign" "$stage/user-data"
 : >"$stage/meta-data"
@@ -57,5 +60,6 @@ fi
 python3 "$(dirname "$0")/check_cidata_iso.py" "$tmp_out" "$ign" >/dev/null || die "the ISO does not match the input; not using it" 1
 
 chmod 0600 "$tmp_out"
-mv -n -- "$tmp_out" "$out"
+# A hard link, not a move: it fails if $out has appeared in the meantime instead of skipping silently.
+ln -- "$tmp_out" "$out" 2>/dev/null || die "$out appeared while the ISO was being built; not overwriting" 1
 echo "make_cidata_iso: wrote $out (label cidata, user-data $size bytes)"

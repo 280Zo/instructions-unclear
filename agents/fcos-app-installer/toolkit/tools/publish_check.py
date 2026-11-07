@@ -25,7 +25,10 @@ Two kinds of rules:
     keys or hashes containing EXAMPLE.
   Rules of the workspace's own go in <workspace>/publish-rules.yaml, a list of
   {name, pattern} (a regular expression each), kept with the install and never
-  in the toolkit. A file that can't be used is an error (exit 2).
+  in the toolkit. A file that can't be used, or is a link, is an error (exit 2).
+  Lines are scanned in pieces of 2000 characters, so a long line is no slower
+  than its pieces; a pattern of your own that backtracks badly (nested
+  repetition such as `(a+)+$`) can still make the scan slow, so keep them plain.
 
 Hits print as file:line: rule, never the matched value. Exit 1 on any hit.
 """
@@ -44,10 +47,13 @@ from workspace import WorkspaceError, WorkspaceNotSet, git_env, private_values, 
 RULES = [
     ("private IPv4 address",
      re.compile(r"\b(?:10\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])|192\.168)\.\d{1,3}\.\d{1,3}\b")),
-    # The site's own domain, whoever hosts its DNS: a name with no `example` (or test, local, invalid) label. A
-    # name that appears elsewhere is caught by the workspace's own values, or by its publish-rules.yaml.
+    # The site's own domain, whoever hosts its DNS: a key ending in `domain` (quoted or not) holding a name with
+    # no `example` label anywhere and not ending in test, local, invalid or localhost. A name that appears
+    # elsewhere is caught by the workspace's own values, or by its publish-rules.yaml.
     ("domain name that is not an example",
-     re.compile(r"(?i)\bdomain\s*[:=]\s*[\"']?(?!(?:[a-z0-9-]+\.)*(?:example|test|local|invalid|localhost)(?![a-z0-9-]))"
+     re.compile(r"(?i)(?<![a-z0-9])domain[\"']?\s*[:=][\s\[\"']*"
+                r"(?!(?:[a-z0-9-]+\.)*example(?![a-z0-9-]))"
+                r"(?!(?:[a-z0-9-]+\.)*(?:test|local|invalid|localhost)(?![a-z0-9-])(?!\.[a-z0-9]))"
                 r"(?![<*])[a-z0-9-]+(?:\.[a-z0-9-]+)+(?![a-z0-9._-]*\()")),  # not a call such as re.compile(...)
     ("email address outside example.com/.org/.net",
      re.compile(r"(?i)\b[a-z0-9._%+-]+@(?!(?:[a-z0-9-]+\.)*example\.(?:com|org|net)\b)(?=[a-z0-9.-]*[a-z])[a-z0-9-]+(?:\.[a-z0-9-]+)+\b")),
@@ -64,8 +70,14 @@ def load_workspace_rules(ws: Path) -> list[tuple[str, "re.Pattern"]]:
     expression for something that must never be published (a name, a number plan, a product the generic rules
     know nothing of). No file means none. A file that cannot be used is an error, never a silent pass."""
     path = ws / "publish-rules.yaml"
-    if not path.is_file():
+    try:
+        mode = path.lstat().st_mode
+    except FileNotFoundError:
         return []
+    except OSError:
+        raise WorkspaceError(f"{path} can't be read") from None
+    if not stat.S_ISREG(mode):  # a link or a folder: rules that silently don't load would be a silent pass
+        raise WorkspaceError(f"{path} must be a plain file, not a link or a folder")
     import yaml
     try:
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
@@ -87,6 +99,19 @@ def load_workspace_rules(ws: Path) -> list[tuple[str, "re.Pattern"]]:
     return rules
 
 
+LINE_PIECE, LINE_STEP = 2000, 1500
+
+
+def _pieces(line: str):
+    """A line, or for a very long one overlapping pieces of it, so that the patterns' work stays bounded by
+    the piece size however long the line is (a minified file is one line) and nothing slips between pieces."""
+    if len(line) <= LINE_PIECE:
+        yield line
+        return
+    for start in range(0, len(line), LINE_STEP):
+        yield line[start:start + LINE_PIECE]
+
+
 def check_text(text: str, private: set[str], extra: list | tuple = ()) -> list[str]:
     hits = []
     lowered = text.lower()
@@ -97,7 +122,7 @@ def check_text(text: str, private: set[str], extra: list | tuple = ()) -> list[s
                     hits.append(f"{number}: value from workspace")
     for number, line in enumerate(text.splitlines(), start=1):
         for name, pattern in [*RULES, *extra]:
-            if pattern.search(line):
+            if any(pattern.search(piece) for piece in _pieces(line)):
                 hits.append(f"{number}: {name}")
     for hit in secret_lines(text):
         hits.append(f"{hit.split(':', 1)[0]}: secret-looking assignment")

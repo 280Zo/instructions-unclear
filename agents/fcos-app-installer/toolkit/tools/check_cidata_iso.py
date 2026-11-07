@@ -5,17 +5,30 @@ Usage: check_cidata_iso.py <iso> <ign>
 
 tools/make_cidata_iso.sh builds the ISO in a container that installs its tool at run time, and the ISO becomes the
 VM's first-boot configuration. This reads the finished file back on the desktop, with nothing but the standard
-library, and fails unless: the volume label is "cidata"; the Joliet tree holds exactly "user-data" and "meta-data",
-no folders; user-data is byte for byte the input; meta-data is empty; and the primary tree lists the same files
-with the same sizes (so nothing is hidden in one tree and not the other). Exit 0 if so, 1 with the reason if not,
-2 for a wrong command line.
+library, and fails unless all of this holds:
+
+- the first 16 sectors (where boot code would sit) are empty, and the volume descriptors are exactly one primary,
+  one Joliet and the end marker, each once;
+- the volume label is "cidata";
+- the Joliet tree holds exactly "user-data" and "meta-data", no folders; user-data is byte for byte the input and
+  meta-data is empty;
+- the primary tree, which a machine may read instead (with Rock Ridge names, if it has them), leads to the same
+  bytes under the same names: same start and size for every file, and the same Rock Ridge names as Joliet shows;
+- no file is hidden, split over several pieces, interleaved or given an extended attribute area (each of those
+  changes which bytes a machine reads), and no Rock Ridge entry points elsewhere (CE, SL, CL, PL, RE).
+
+Sectors that no file or folder points at are not looked at: nothing reads them. Exit 0 if the ISO passes, 1 with
+the reason if not, 2 for a wrong command line.
 """
 import sys
 from pathlib import Path
 
 SECTOR = 2048
 MAX_BYTES = 16 * 1024 * 1024
+MAX_DESCRIPTORS = 8
 JOLIET_ESCAPES = (b"%/@", b"%/C", b"%/E")
+ROCK_RIDGE_KEPT = {"SP", "RR", "ER", "ST", "PX", "TF", "NM", "PD"}
+ROCK_RIDGE_LEAVING = {"CE", "SL", "CL", "PL", "RE"}
 
 
 class IsoError(Exception):
@@ -33,29 +46,85 @@ def _both(buf: bytes, offset: int, size: int) -> int:
 def _descriptors(iso: bytes) -> tuple[bytes, bytes]:
     if len(iso) < 19 * SECTOR:
         raise IsoError("the ISO is too short to be an ISO 9660 image")
-    primary = joliet = None
-    for number in range(16, 40):
+    if any(iso[:16 * SECTOR]):
+        raise IsoError("the system area of the ISO (its first 16 sectors) is not empty; it could hold boot code")
+    primary, joliet, ended = [], [], False
+    for number in range(16, 16 + MAX_DESCRIPTORS):
         block = iso[number * SECTOR:(number + 1) * SECTOR]
         if len(block) < SECTOR or block[1:6] != b"CD001" or block[6] != 1:
             raise IsoError("not an ISO 9660 image (no valid volume descriptor)")
-        if block[0] == 255:
+        kind = block[0]
+        if kind == 255:
+            ended = True
             break
-        if block[0] == 1:
-            primary = block
-        elif block[0] == 2 and block[88:91] in JOLIET_ESCAPES:
-            joliet = block
-    else:
+        if kind == 1:
+            primary.append(block)
+        elif kind == 2 and block[88:91] in JOLIET_ESCAPES:
+            joliet.append(block)
+        else:
+            raise IsoError(f"the ISO has a volume descriptor of type {kind} that is neither primary nor Joliet")
+    if not ended:
         raise IsoError("the ISO has no end-of-descriptors marker")
-    if primary is None:
-        raise IsoError("the ISO has no primary volume descriptor")
-    if joliet is None:
-        raise IsoError("the ISO has no Joliet tree, so the file names cannot be checked")
-    return primary, joliet
+    if len(primary) != 1:
+        raise IsoError("the ISO must have exactly one primary volume descriptor")
+    if len(joliet) != 1:
+        raise IsoError("the ISO must have exactly one Joliet tree, so the file names can be checked")
+    return primary[0], joliet[0]
 
 
-def _entries(iso: bytes, descriptor: bytes, joliet: bool) -> list[tuple[str, int, int, bool]]:
-    """(name, size, first byte, is a folder) of every entry in the root folder, without . and .."""
+def _system_use(area: bytes, iso: bytes | None = None) -> list[tuple[str, bytes]]:
+    """The Rock Ridge (SUSP) entries of a record as (signature, data). With iso given, one CE entry is
+    followed into its continuation area, which xorriso uses for the root folder's long ER entry; the entries
+    there are held to the same rules and may not continue again."""
+    entries, position = [], 0
+    while position < len(area):
+        if area[position] == 0 and not any(area[position:]):
+            break  # padding
+        if position + 4 > len(area):
+            raise IsoError("a Rock Ridge entry in the ISO is damaged")
+        signature = area[position:position + 2].decode("ascii", "replace")
+        size = area[position + 2]
+        if size < 4 or position + size > len(area):
+            raise IsoError("a Rock Ridge entry in the ISO is damaged")
+        if signature == "CE" and iso is not None:
+            data = area[position + 4:position + size]
+            if len(data) != 24:
+                raise IsoError("a Rock Ridge CE entry in the ISO is damaged")
+            start, offset, length = _both(data, 0, 4) * SECTOR, _both(data, 8, 4), _both(data, 16, 4)
+            if offset + length > SECTOR or start + offset + length > len(iso):
+                raise IsoError("a Rock Ridge continuation area lies outside the image")
+            entries += _system_use(iso[start + offset:start + offset + length])
+            position += size
+            continue
+        if signature in ROCK_RIDGE_LEAVING:
+            raise IsoError(f"a Rock Ridge {signature} entry sends a reader elsewhere; not allowed")
+        if signature not in ROCK_RIDGE_KEPT:
+            raise IsoError(f"a Rock Ridge entry {signature!r} is not one this check knows")
+        entries.append((signature, area[position + 4:position + size]))
+        position += size
+    return entries
+
+
+def _rock_ridge_name(entries: list[tuple[str, bytes]]) -> str | None:
+    name, found = b"", False
+    for signature, data in entries:
+        if signature != "NM":
+            continue
+        if not data or data[0] & 0b1110:  # current/parent/network-node names are not file names
+            raise IsoError("a Rock Ridge name in the ISO is damaged")
+        found = True
+        name += data[1:]
+    return name.decode("utf-8", "replace") if found else None
+
+
+def _entries(iso: bytes, descriptor: bytes, joliet: bool) -> list[tuple[str, int, int]]:
+    """(name, size, first sector) of every entry in the root folder, without . and ..  A folder, a hidden or
+    split file, a file unit, an interleave or an extended attribute area is an error."""
     root = descriptor[156:190]
+    if len(root) < 34 or root[1] != 0 or root[25] != 2:
+        raise IsoError("the root folder record of the ISO is damaged")
+    if _both(descriptor, 128, 2) != SECTOR:
+        raise IsoError("the ISO does not use 2048-byte blocks")
     start, length = _both(root, 2, 4) * SECTOR, _both(root, 10, 4)
     if start + length > len(iso) or length > SECTOR * 64:
         raise IsoError("the root folder of the ISO lies outside the file")
@@ -69,18 +138,34 @@ def _entries(iso: bytes, descriptor: bytes, joliet: bool) -> list[tuple[str, int
         if size < 34 or len(record) != size or 33 + record[32] > size:
             raise IsoError("a folder record in the ISO is damaged")
         position += size
-        extent, file_length = _both(record, 2, 4) * SECTOR, _both(record, 10, 4)
-        if extent + file_length > len(iso):
-            raise IsoError("a file in the ISO lies outside the image")
         name = record[33:33 + record[32]]
+        padding = 1 if record[32] % 2 == 0 else 0
+        first = position == size and name == b"\0"  # the root folder's own "." record (position is already past it)
+        rock = (_system_use(record[33 + record[32] + padding:], iso if first else None) if not joliet else [])
+        extent, file_length = _both(record, 2, 4), _both(record, 10, 4)
+        if file_length and (extent * SECTOR + file_length > len(iso)):
+            raise IsoError("a file or folder in the ISO lies outside the image")
         if name in (b"\0", b"\1"):
             continue
+        if record[1] != 0:
+            raise IsoError("a file in the ISO has an extended attribute area, which shifts where its data starts")
+        if record[25] != 0:
+            raise IsoError("a file in the ISO is a folder, hidden or in several pieces")
+        if record[26] or record[27]:
+            raise IsoError("a file in the ISO is interleaved")
         try:
             text = name.decode("utf-16-be" if joliet else "ascii")
         except UnicodeDecodeError:
             raise IsoError("a file name in the ISO cannot be read") from None
-        found.append((text.split(";")[0], file_length, extent, bool(record[25] & 2)))
-    return found
+        shown = _rock_ridge_name(rock) if not joliet else None
+        found.append((shown if shown is not None else text.split(";")[0], file_length, extent, shown is not None))
+    if joliet:
+        return [(name, size, extent) for name, size, extent, _ in found]
+    have = {flag for *_rest, flag in found}
+    if len(have) > 1:
+        raise IsoError("some files in the primary tree of the ISO have Rock Ridge names and some do not")
+    # With Rock Ridge names the names are the reader's; without, only starts and sizes can be compared.
+    return [(name if have == {True} else "", size, extent) for name, size, extent, _ in found]
 
 
 def verify(iso: bytes, ign: bytes) -> None:
@@ -88,20 +173,23 @@ def verify(iso: bytes, ign: bytes) -> None:
     label = primary[40:72].decode("ascii", "replace").strip()
     if label != "cidata":
         raise IsoError(f"the volume label is {label!r}, not 'cidata'")
-    if _both(primary, 80, 4) * SECTOR > len(iso):
-        raise IsoError("the ISO is shorter than it says")
+    for descriptor in (primary, joliet):
+        if _both(descriptor, 80, 4) * SECTOR > len(iso):
+            raise IsoError("the ISO is shorter than it says")
     tree = _entries(iso, joliet, True)
     flat = _entries(iso, primary, False)
-    if any(is_folder for *_rest, is_folder in tree + flat):
-        raise IsoError("the ISO holds a folder; it may hold only user-data and meta-data")
     if sorted(name for name, *_ in tree) != ["meta-data", "user-data"]:
         raise IsoError("the ISO must hold exactly user-data and meta-data, found: "
                        + ", ".join(sorted(name for name, *_ in tree)))
-    if sorted(size for _name, size, *_ in tree) != sorted(size for _name, size, *_ in flat):
-        raise IsoError("the two file trees of the ISO disagree about what it holds")
-    by_name = {name: (size, extent) for name, size, extent, _folder in tree}
+    if any(name == "" for name, *_ in flat):
+        # No Rock Ridge names: the primary tree can only be compared by where its files start and how long they are.
+        if sorted((size, extent) for _n, size, extent in flat) != sorted((size, extent) for _n, size, extent in tree):
+            raise IsoError("the two file trees of the ISO disagree about where the files are")
+    elif sorted(flat) != sorted(tree):
+        raise IsoError("the two file trees of the ISO disagree about names, sizes or where the files are")
+    by_name = {name: (size, extent) for name, size, extent in tree}
     size, extent = by_name["user-data"]
-    if iso[extent:extent + size] != ign or size != len(ign):
+    if size != len(ign) or iso[extent * SECTOR:extent * SECTOR + size] != ign:
         raise IsoError("user-data in the ISO is not the input Ignition file, byte for byte")
     if by_name["meta-data"][0] != 0:
         raise IsoError("meta-data in the ISO must be empty")
