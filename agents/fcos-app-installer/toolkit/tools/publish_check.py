@@ -18,11 +18,14 @@ Two kinds of rules:
     in a published file. Skipped, with generic rules only, if no workspace is
     set (FCOS_WORKSPACE or the remembered path). A workspace that is set but
     has no site.yaml is an error (exit 2), not a pass;
-  - generic rules: private IPv4 addresses, DuckDNS names other than
-    example.duckdns.org, email addresses outside example.com/.org/.net, SSH
+  - generic rules: private IPv4 addresses, a `domain` key holding a name with no
+    example label, email addresses outside example.com/.org/.net, SSH
     keys, password hashes, private keys, and secret-looking assignments.
     Placeholders are allowed: 192.0.2.x, 198.51.100.x, 203.0.113.x, and
     keys or hashes containing EXAMPLE.
+  Rules of the workspace's own go in <workspace>/publish-rules.yaml, a list of
+  {name, pattern} (a regular expression each), kept with the install and never
+  in the toolkit. A file that can't be used is an error (exit 2).
 
 Hits print as file:line: rule, never the matched value. Exit 1 on any hit.
 """
@@ -41,8 +44,11 @@ from workspace import WorkspaceError, WorkspaceNotSet, git_env, private_values, 
 RULES = [
     ("private IPv4 address",
      re.compile(r"\b(?:10\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])|192\.168)\.\d{1,3}\.\d{1,3}\b")),
-    ("DuckDNS name other than example.duckdns.org",
-     re.compile(r"(?i)\b(?!(?:[a-z0-9-]+\.)*example\.duckdns\.org\b)[a-z0-9-]+(?:\.[a-z0-9-]+)*\.duckdns\.org\b")),
+    # The site's own domain, whoever hosts its DNS: a name with no `example` (or test, local, invalid) label. A
+    # name that appears elsewhere is caught by the workspace's own values, or by its publish-rules.yaml.
+    ("domain name that is not an example",
+     re.compile(r"(?i)\bdomain\s*[:=]\s*[\"']?(?!(?:[a-z0-9-]+\.)*(?:example|test|local|invalid|localhost)(?![a-z0-9-]))"
+                r"(?![<*])[a-z0-9-]+(?:\.[a-z0-9-]+)+(?![a-z0-9._-]*\()")),  # not a call such as re.compile(...)
     ("email address outside example.com/.org/.net",
      re.compile(r"(?i)\b[a-z0-9._%+-]+@(?!(?:[a-z0-9-]+\.)*example\.(?:com|org|net)\b)(?=[a-z0-9.-]*[a-z])[a-z0-9-]+(?:\.[a-z0-9-]+)+\b")),
     ("SSH public key", re.compile(r"ssh-(?:ed25519|rsa|ecdsa-[a-z0-9-]+) AAAA(?![A-Za-z0-9+/=]*EXAMPLE)[A-Za-z0-9+/=]{20,}")),
@@ -50,7 +56,38 @@ RULES = [
     ("private key", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")),
 ]
 
-def check_text(text: str, private: set[str]) -> list[str]:
+MAX_PATTERN = 300
+
+
+def load_workspace_rules(ws: Path) -> list[tuple[str, "re.Pattern"]]:
+    """The extra rules a workspace keeps in publish-rules.yaml: a list of {name, pattern}, each a regular
+    expression for something that must never be published (a name, a number plan, a product the generic rules
+    know nothing of). No file means none. A file that cannot be used is an error, never a silent pass."""
+    path = ws / "publish-rules.yaml"
+    if not path.is_file():
+        return []
+    import yaml
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, yaml.YAMLError):
+        raise WorkspaceError(f"{path} can't be read as YAML") from None
+    problem = f"{path}: it must be a list of {{name, pattern}} entries, each pattern a regular expression of at most {MAX_PATTERN} characters"
+    if not isinstance(data, list):
+        raise WorkspaceError(problem)
+    rules = []
+    for entry in data:
+        if not (isinstance(entry, dict) and set(entry) == {"name", "pattern"} and isinstance(entry["name"], str)
+                and entry["name"].isprintable() and 0 < len(entry["name"]) <= 80
+                and isinstance(entry["pattern"], str) and 0 < len(entry["pattern"]) <= MAX_PATTERN):
+            raise WorkspaceError(problem)
+        try:
+            rules.append((entry["name"], re.compile(entry["pattern"])))
+        except re.error:
+            raise WorkspaceError(f"{path}: the pattern for {entry['name']!r} is not a valid regular expression") from None
+    return rules
+
+
+def check_text(text: str, private: set[str], extra: list | tuple = ()) -> list[str]:
     hits = []
     lowered = text.lower()
     for value in private:
@@ -59,7 +96,7 @@ def check_text(text: str, private: set[str]) -> list[str]:
                 if value.lower() in line.lower():
                     hits.append(f"{number}: value from workspace")
     for number, line in enumerate(text.splitlines(), start=1):
-        for name, pattern in RULES:
+        for name, pattern in [*RULES, *extra]:
             if pattern.search(line):
                 hits.append(f"{number}: {name}")
     for hit in secret_lines(text):
@@ -166,9 +203,10 @@ def main(argv: list[str]) -> int:
                   file=sys.stderr)
             return 2
         private = private_values(ws)
-        source = "the workspace"
+        extra = load_workspace_rules(ws)
+        source = "the workspace" + (f" and {len(extra)} workspace rule{'' if len(extra) == 1 else 's'}" if extra else "")
     except WorkspaceNotSet:
-        private = set()
+        private, extra = set(), []
         source = "no workspace set (generic rules only)"
     except WorkspaceError as exc:
         print(f"publish_check: {exc}", file=sys.stderr)
@@ -188,7 +226,7 @@ def main(argv: list[str]) -> int:
         except OSError:  # a file that can't be read can't be cleared
             hits.append(f"{shown}: unreadable (not checked)")
             continue
-        hits += [f"{shown}:{hit}" for hit in check_text(text, private)]
+        hits += [f"{shown}:{hit}" for hit in check_text(text, private, extra)]
     for hit in hits:
         print(hit)
     count = f"{len(files)} file" + ("" if len(files) == 1 else "s")

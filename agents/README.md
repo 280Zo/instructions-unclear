@@ -12,7 +12,7 @@ One folder per agent or agent set, each with the skills, rules and commands that
 | [`reverse-engineering`](reverse-engineering/) | The `reverse-engineering` agent plus reverse-engineer, firmware and malware agents and 4 skills. Profile; also installed by default |
 | [`second-opinion`](second-opinion/) | `second-opinion`, `evaluator` and `metacognitive`: a second check on the main agent's work. Installed by default |
 | [`local-model`](local-model/) | Small working increments, scoped delegation and fast safe pause/resume handoffs. Installed by default; use as primary or delegated worker |
-| [`fcos-app-installer`](fcos-app-installer/) | Builds Fedora CoreOS VMs on Proxmox and adds services to them, with the toolkit it runs. A profile: installs into a folder you choose (the `fcos_app_installer` group), not part of `default` |
+| [`fcos-app-installer`](fcos-app-installer/) | Builds Fedora CoreOS VMs on the hypervisor you choose and adds services to them, with the toolkit it runs. A profile: installs into a folder you choose (the `fcos_app_installer` group), not part of `default` |
 | [`build`](build/), [`plan`](plan/), [`general`](general/), [`explore`](explore/) | Restrictions for OpenCode's own agents of these names, so they don't see the specialist skills. Installed by default, for OpenCode only |
 
 A profile installs into one folder you choose, not your home folder. To install several profiles into the same folder, run each one's command with the same `--output-roots`. The exception is `fcos-app-installer`, which needs a folder of its own: its group replaces that folder's `AGENTS.md`, and its permission list guards the one folder it runs in.
@@ -34,7 +34,7 @@ Every agent but `fcos-app-installer` gets the Superpowers skills, `package-manag
 | `3d-modeling` | Report, documents, visuals, browser | FreeCAD | `general`, `explore` |
 | `second-opinion` | Shared skills only | | `evaluator`, `metacognitive`, `general`, `explore` |
 | `local-model` | Humanizer, report | | any agent |
-| `fcos-app-installer` | Its six adapter and research skills, `systematic-debugging`, `verification-before-completion`, the Docker patterns and guardrails, `opencode`, `package-management`, `search`, `exa-agent` | Exa only | `adapter-drafter` only |
+| `fcos-app-installer` | Its adapter, module and research skills, `systematic-debugging`, `verification-before-completion`, the Docker patterns and guardrails, `opencode`, `package-management`, `search`, `exa-agent` | Exa only | `adapter-drafter` only |
 
 `build`, `plan`, `general` and `explore` are OpenCode's own agents. Their files only add deny rules, so OpenCode keeps each built-in agent's prompt and policy. OpenCode's `explore` already denies skills and MCP tools; its file repeats those denials in case a later release loosens the built-in policy. They install only for OpenCode, the one tool that has these agents and can filter skills.
 

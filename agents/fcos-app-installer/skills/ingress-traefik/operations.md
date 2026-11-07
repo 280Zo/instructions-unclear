@@ -92,9 +92,8 @@ python3 tools/vmssh.py run <login-vm> -- "sudo -u traefik XDG_RUNTIME_DIR=/run/u
 
 For an app that forces its own `https://` address, and when only the auth gateway is down while Traefik
 still runs, the way in is the app's route without the login, edited by hand and put back. The app's own
-login still protects it. Tested end to end on a real install (Authentik as the gateway): the address
-answered with the app's own page instead of a redirect, signing in worked, and after the restore the
-redirect to the login page was back. In the generated route file (`dynamic/<svc>.yml` on the login
+login still protects it. The address then answers with the app's own page instead of a redirect, signing
+in works, and after the restore the redirect to the login page is back. In the generated route file (`dynamic/<svc>.yml` on the login
 front end VM), the login is the single line `middlewares: [authentik]` on the app's router (the
 middleware's name comes from the gateway's glue file, `templates/gateways/authgw-authentik/`). Take a
 copy outside the watched folder, remove the line, and Traefik reloads the file by itself (each block

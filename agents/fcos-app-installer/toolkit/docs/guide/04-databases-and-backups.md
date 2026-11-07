@@ -161,7 +161,7 @@ file-server folder.
 
 Each fact comes from the official source linked under it, not from memory. Re-check one when its source changes.
 
-### MariaDB restore and its test (MariaDB 11 image, on a real install)
+### MariaDB restore and its test (MariaDB 11 image)
 
 The image needs one of `MARIADB_RANDOM_ROOT_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MARIADB_ROOT_PASSWORD_HASH` or `MARIADB_ALLOW_EMPTY_ROOT_PASSWORD` (the empty one is fine for a throwaway with no network). The entrypoint starts a temporary server for initialization and logs `MariaDB init process done. Ready for start up.` when it stops it. `mariadb-dump` enables `--opt` by default; the real dump had a `DROP TABLE IF EXISTS` per table (95) and no `CREATE DATABASE`. Loading that dump into a throwaway server restored the same counts as the live database. Loading into a live database was not tested
 

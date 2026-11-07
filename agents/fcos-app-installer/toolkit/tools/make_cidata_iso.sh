@@ -7,7 +7,9 @@
 # pinned in tools/images.env (podman if installed, else docker); the package is
 # installed with dnf inside the container, so nothing is installed on this
 # machine. The input is mounted read-only and is the only mount. No image is
-# pulled: if the image is missing, the script stops and says so.
+# pulled: if the image is missing, the script stops and says so. The finished
+# ISO is read back by tools/check_cidata_iso.py and used only if it holds
+# exactly the input.
 set -euo pipefail
 
 IMAGE="$({ grep -m1 '^PODMAN_IMAGE=' "$(dirname "$0")/images.env" || true; } | cut -d= -f2-)"
@@ -50,6 +52,9 @@ if ! "$runtime" run --rm --pull=never --user root --security-opt no-new-privileg
     die "building the ISO failed (is the network reachable for dnf?)" 1
 fi
 [[ -s "$tmp_out" ]] || die "the ISO came out empty" 1
+# The container installed its tool at run time and its output becomes the VM's first-boot configuration, so
+# read the finished file back here, with the standard library only: it must hold exactly the input.
+python3 "$(dirname "$0")/check_cidata_iso.py" "$tmp_out" "$ign" >/dev/null || die "the ISO does not match the input; not using it" 1
 
 chmod 0600 "$tmp_out"
 mv -n -- "$tmp_out" "$out"

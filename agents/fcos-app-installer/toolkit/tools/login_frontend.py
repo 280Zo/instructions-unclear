@@ -30,8 +30,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import modules  # noqa: E402
-from gen_service import (DOMAIN, SpecError, _plain, _vm_entry, _write_all, generate, has_route,  # noqa: E402
-                         route_texts, validate_spec)
+from gen_service import (DOMAIN, SpecError, _plain, _vm_entry, _write_all, forget_other_services,  # noqa: E402
+                         generate, has_route, route_texts, validate_spec)
 from adapters import AdapterError, acme_data  # noqa: E402
 from placement import filled, site_value  # noqa: E402
 
@@ -126,6 +126,7 @@ def generate_login_frontend(site: dict, services: list, out, icon_dirs: dict | N
         raise SpecError("\n".join(problems))
     routed = _routed(site, services, edge_vm, login_label)
     out = Path(out)
+    forget_other_services(out, {ingress_spec["name"], gateway_spec["name"], "login-frontend"})
     # Build both parts like any service; keep both secret lists.
     written, secrets = [], []
     for spec in (ingress_spec, gateway_spec):
@@ -169,8 +170,12 @@ def main(argv: list[str]) -> int:
             print(f"login_frontend: note: {note}", file=sys.stderr)
         for path in generate_login_frontend(site, services, argv[2], icon_dirs):
             print(path)
-    except (OSError, yaml.YAMLError, SpecError) as error:
+    except (OSError, yaml.YAMLError, SpecError, AdapterError) as error:
         print(f"login_frontend: {error}", file=sys.stderr)
+        return 1
+    except (TypeError, AttributeError, KeyError, ValueError, IndexError) as error:
+        print(f"login_frontend: the site file or a spec has a value of the wrong type or shape "
+              f"({type(error).__name__}); nothing was written before the checks passed", file=sys.stderr)
         return 1
     return 0
 

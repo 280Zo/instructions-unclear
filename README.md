@@ -233,7 +233,7 @@ A profile installs into one folder instead of your home folder, keeping speciali
 | [`mcp-servers/zap`](mcp-servers/zap/)                       | Official ZAP MCP connection for web-security workflows; disabled until configured               |
 | [`mcp-servers/reva`](mcp-servers/reva/)                     | Shared Ghidra projects and 6 companion skills; MCP connection disabled                          |
 | [`mcp-servers/radare2`](mcp-servers/radare2/)               | Optional radare2-native MCP connection; disabled, read-only tools                               |
-| [`agents/fcos-app-installer`](agents/fcos-app-installer/)   | Builds Fedora CoreOS VMs on Proxmox and adds services behind one login page, with the toolkit it runs; `install.py` places the toolkit first |
+| [`agents/fcos-app-installer`](agents/fcos-app-installer/)   | Builds Fedora CoreOS VMs on the hypervisor you choose and adds services behind one login page, with the toolkit it runs; `install.py` places the toolkit first |
 | [`agents/reverse-engineering`](agents/reverse-engineering/) | The `reverse-engineering` agent plus reverse-engineer, firmware and malware analyst agents, 4 skills |
 
 Each README has its install command.

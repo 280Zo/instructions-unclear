@@ -63,6 +63,7 @@ class MissingPinTests(unittest.TestCase):
         (stub / "docker").chmod(0o755)
         vm = tmp / "vm"
         vm.mkdir()
+        (vm / "x.bu").write_text("variant: fcos\nversion: 1.7.0\n")  # a folder with nothing to build is refused earlier
         env = {"PATH": f"{stub}:/usr/bin:/bin", "HOME": str(tmp)}
         build = subprocess.run(["bash", str(tools / "build-vm.sh"), str(vm)], capture_output=True, text=True,
                                env=env, timeout=60)

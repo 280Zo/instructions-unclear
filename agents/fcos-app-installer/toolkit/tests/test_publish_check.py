@@ -54,6 +54,22 @@ class GenericRuleTests(unittest.TestCase):
             with self.subTest(line=line):
                 self.assertEqual(check_text(line + "\n", set()), [], line)
 
+    def test_the_domain_rule_names_no_dns_product_and_flags_any_real_looking_name(self):
+        for line in (j("domain: myhome.", "duckdns.org"), j('domain: "home.', 'dyndns.example-net.com"'),
+                     j("DOMAIN=my", "lab.example-hosting.net"), j("  domain = family.", "freemyip.com")):
+            with self.subTest(line=line):
+                self.assertEqual([h.split(": ", 1)[1] for h in check_text(line + "\n", set())],
+                                 ["domain name that is not an example"], line)
+        for line in ("domain: example.org", "domain: example.duckdns.org", "DOMAIN=my.example.net",
+                     "domain: <domain>", "domain: ASK", "domain: home.test", "domain: nas.local", "domain:",
+                     "the domain: the part after the first dot", "domain: *.<domain>",
+                     'DOMAIN = re.compile(r"[a-z0-9-]+")', "domain = site.get('domain')", "domain: os.path.join(a)"):
+            with self.subTest(line=line):
+                self.assertEqual(check_text(line + "\n", set()), [], line)
+        # A bare name outside a domain key is no longer a generic hit: the workspace's own values catch it.
+        self.assertEqual(check_text(j("see https://my", "home.duckdns.org/\n"), set()), [])
+        self.assertTrue(check_text(j("see https://my", "home.duckdns.org/\n"), {j("my", "home.duckdns.org")}))
+
     def test_flags_config_values(self):
         self.assertTrue(check_text("pool is TankPool here\n", {"TankPool"}))
         self.assertEqual(check_text("nothing personal\n", {"TankPool"}), [])
@@ -288,6 +304,35 @@ class WorkspaceSourceTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("notes.md:1: value from workspace", result.stdout)
         self.assertNotIn(self.secret, result.stdout + result.stderr)
+
+    def write_rules(self, ws: Path, text: str) -> None:
+        (ws / "publish-rules.yaml").write_text(text)
+
+    def test_the_workspace_can_carry_its_own_rules(self):
+        ws = self.make_workspace()
+        (self.repo / "notes.md").write_text(j("backup of ", "tank-7 done\n"))
+        self.write_rules(ws, j("- name: my pool name\n  pattern: 'tank-[0-9]'\n"))
+        result = self.run_check(workspace=ws)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("notes.md:1: my pool name", result.stdout)
+        self.assertNotIn(j("tank", "-7"), result.stdout + result.stderr)
+        self.assertIn("1 workspace rule", result.stderr)
+
+    def test_a_rules_file_that_cannot_be_used_is_an_error_not_a_pass(self):
+        ws = self.make_workspace()
+        for text in ("- name: x\n  pattern: '('\n", "- name: x\n", "not: a list\n", "- {name: 5, pattern: a}\n",
+                     "- {name: x, pattern: ''}\n", "[unclosed\n", "- {name: x, pattern: a, extra: 1}\n",
+                     "- {name: x, pattern: " + "a" * 400 + "}\n"):
+            with self.subTest(text=text[:30]):
+                self.write_rules(ws, text)
+                result = self.run_check(workspace=ws)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn("publish-rules.yaml", result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+
+    def test_no_rules_file_means_only_the_generic_rules(self):
+        result = self.run_check(workspace=self.make_workspace())
+        self.assertNotIn("workspace rule", result.stderr)
 
     def test_generic_rules_only_without_workspace(self):
         result = self.run_check()

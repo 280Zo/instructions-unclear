@@ -27,10 +27,25 @@ class MergeOrderTests(unittest.TestCase):
         # "need podman or docker", never pulling images inside a unit test.
         bin_dir = vm.parent / "bin"
         bin_dir.mkdir()
-        for tool in ("bash", "grep", "sed", "realpath", "basename"):
+        for tool in ("bash", "grep", "sed", "realpath", "basename", "find"):
             (bin_dir / tool).symlink_to(shutil.which(tool))
         return subprocess.run([str(bin_dir / "bash"), str(ROOT / "tools" / "build-vm.sh"), str(vm)],
                               capture_output=True, text=True, timeout=60, env={"PATH": str(bin_dir)})
+
+    def test_a_folder_with_no_butane_fragments_is_refused_and_nothing_is_deleted(self):
+        vm = Path(tempfile.mkdtemp()) / "apps"
+        (vm / "igns").mkdir(parents=True)
+        (vm / "igns" / "keep.ign").write_text("{}")
+        self.addCleanup(shutil.rmtree, vm.parent, True)
+        bin_dir = vm.parent / "bin"
+        bin_dir.mkdir()
+        for tool in ("bash", "grep", "sed", "realpath", "basename", "find"):
+            (bin_dir / tool).symlink_to(shutil.which(tool))
+        result = subprocess.run([str(bin_dir / "bash"), str(ROOT / "tools" / "build-vm.sh"), str(vm)],
+                                capture_output=True, text=True, timeout=60, env={"PATH": str(bin_dir)})
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("no Butane fragments", result.stdout)
+        self.assertTrue((vm / "igns" / "keep.ign").exists())
 
     def test_config_without_entries_says_why(self):
         result = self.run_build([])

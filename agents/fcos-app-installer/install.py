@@ -3,7 +3,7 @@
 
 rulesync writes the agent, its helper, the command, the skills and the rules there (see
 groups/fcos_app_installer.jsonc and this folder's README). It cannot place the rest: tools/,
-templates/, docs/, schemas/, specs/, tests/, site.example.yaml and host-scripts.sha256. This
+templates/, docs/, schemas/, tests/, site.example.yaml and host-scripts.sha256. This
 script copies those from this folder's toolkit/ directory, from the repository, so that
 installing never depends on where the toolkit was developed.
 

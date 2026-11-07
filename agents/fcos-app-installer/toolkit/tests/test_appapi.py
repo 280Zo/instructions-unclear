@@ -166,10 +166,22 @@ class AppApiTests(unittest.TestCase):
         self.assertEqual(Handler.seen, [])
 
     def test_https_only_outside_tests(self):
+        # Without the test-only address, the tool speaks https to the stored address and nothing else. The
+        # request is recorded and stopped before it leaves the machine: no DNS lookup, no connection.
+        from unittest import mock
+        import urllib.error
+        import urllib.request
         self.store()
-        code, out, err = self.run_tool("call", "crm", "GET", "/api/me", test_http=False)
-        # The real address is https://crm.example.duckdns.org (not reachable here): no plain http fallback.
+        seen = []
+
+        def stop(opener, request, *args, **kwargs):
+            seen.append(request.full_url)
+            raise urllib.error.URLError("stopped in the test")
+
+        with mock.patch.object(urllib.request.OpenerDirector, "open", stop):
+            code, out, err = self.run_tool("call", "crm", "GET", "/api/me", test_http=False)
         self.assertNotEqual(code, 0)
+        self.assertEqual(seen, ["https://crm.example.duckdns.org/api/me"])
         self.assertEqual(Handler.seen, [])
 
     def test_redirects_are_not_followed(self):

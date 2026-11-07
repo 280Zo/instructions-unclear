@@ -305,11 +305,11 @@ opencode:
     - action: shell
       resource: "python3 tools/login_frontend.py *tools*"
       effect: deny
-    # The skills hold host scripts the user runs as root (review of ff605b1). No
+    # The skills hold host scripts the user runs as root. No
     # shell command may contain ".opencode" (the agents, commands and skills): an
     # allowed first word (git status, dig, sha256sum) could otherwise chain a write
-    # behind it, with any separator right after the name (reviews of the skills
-    # commits). The agent reads those files with its read tool; edits to the skills
+    # behind it, with any separator right after the name. The agent reads those
+    # files with its read tool; edits to the skills
     # always ask (below). The dot keeps this apart from /tmp/opencode/, the scratch
     # folder. A guard rail, not a wall: the shell expands wildcards, quotes and
     # variables after these rules have matched (README).
@@ -806,7 +806,7 @@ published file.
 
 ## Templates, tools, adapters and the guide
 
-Don't change `templates/`, `tools/`, `.opencode/skills/`, `specs/`, `tests/` or
+Don't change `templates/`, `tools/`, `.opencode/skills/`, `tests/` or
 `docs/guide/` during an install. If one is wrong or missing something, stop and
 describe the change. If the user agrees, make it with a failing test first,
 then run `python3 -m unittest discover tests` and both fixture validations

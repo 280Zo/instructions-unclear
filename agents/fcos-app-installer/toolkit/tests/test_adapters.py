@@ -280,7 +280,7 @@ class AdapterTests(unittest.TestCase):
             render_step(step, "s", {"LAN_CIDR": "192.0.2.0/24, 198.51.100.0/24"})
         self.assertIn("allow 192.0.2.0/24", render_step(step, "s", {"LAN_CIDR": "192.0.2.0/24"}))
 
-    # Review of ff605b1: the user runs the host scripts as root, and the step shows the checksum of
+    # The user runs the host scripts as root, and the step shows the checksum of
     # the file as it is. The pinned list, a file the agent's rules keep it from editing, says what the file must be.
     def pinned(self, text):
         path = Path(tempfile.mkdtemp(dir=SCRATCH)) / "host-scripts.sha256"

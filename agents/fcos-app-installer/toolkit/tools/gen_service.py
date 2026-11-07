@@ -805,6 +805,17 @@ def _write_all(out: Path, svc: str, files: dict[str, str]) -> list[Path]:
     return written + [manifest]
 
 
+def forget_other_services(out, keep: set[str]) -> None:
+    """In a folder that belongs to one generator run (the login front end's), remove what the services not
+    in `keep` wrote there and their manifests: the site chose other modules since. Call it before writing, so
+    a file the new run writes again (secrets.md) is never removed after it was written."""
+    for manifest in sorted(Path(out).glob(".gen-service-*.json")):
+        svc = manifest.name[len(".gen-service-"):-len(".json")]
+        if svc not in keep:
+            _write_all(Path(out), svc, {})  # deletes the files the old manifest lists, inside the folder only
+            manifest.unlink(missing_ok=True)
+
+
 def generate(spec: dict, site: dict, out) -> list[Path]:
     errors = validate_spec(spec, site)
     if errors:
@@ -956,6 +967,11 @@ def main(argv: list[str]) -> int:
             print(path)
     except (OSError, yaml.YAMLError, SpecError) as error:
         print(f"gen_service: {error}", file=sys.stderr)
+        return 1
+    except (TypeError, AttributeError, KeyError, ValueError, IndexError) as error:
+        # A value of a type the checks didn't expect. Validation runs before any file is written.
+        print(f"gen_service: the spec or the site file has a value of the wrong type or shape "
+              f"({type(error).__name__}); check it against schemas/service.schema.md", file=sys.stderr)
         return 1
     return 0
 

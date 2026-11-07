@@ -4,6 +4,7 @@ Replaces the v1 edge template tests (EdgeTests, the Traefik ReviewFixTests):
 the same promises, checked against generated output.
 """
 import copy
+import json
 import os
 import shutil
 import sys
@@ -60,6 +61,60 @@ class FrontendCase(unittest.TestCase):
 
     def all_containers(self, out: Path) -> dict:
         return {p.name: p.read_text() for p in (out / "rendered" / "files").glob("*.container")}
+
+
+class SwitchingModulesTests(FrontendCase):
+    """The output folder belongs to the login front end alone: files an earlier module wrote there go when the
+    site chooses another one."""
+
+    def test_the_files_of_a_module_no_longer_chosen_are_removed_and_the_current_ones_kept(self):
+        out = self.gen()
+        old_files = ["rendered/oldproxy.bu", "rendered/files/oldproxy.conf", "secrets.md"]
+        for rel in old_files[:2]:
+            (out / rel).write_text("x")
+        (out / ".gen-service-oldproxy.json").write_text(json.dumps(old_files))
+        (out / "keep-me.txt").write_text("not listed anywhere")
+        generate_login_frontend(copy.deepcopy(SITE), [spec_fixture(s) for s in ("crm", "single")], out)
+        for rel in old_files[:2]:
+            self.assertFalse((out / rel).exists(), rel)
+        self.assertFalse((out / ".gen-service-oldproxy.json").exists())
+        self.assertTrue((out / "keep-me.txt").exists())
+        self.assertTrue((out / "secrets.md").exists())  # listed by the old manifest, but written by this run
+        self.assertTrue((out / "rendered" / "login-frontend.bu").exists())
+        for name in ("traefik", "authentik", "login-frontend"):
+            self.assertTrue((out / f".gen-service-{name}.json").exists(), name)
+
+    def test_a_manifest_cannot_reach_outside_the_output_folder(self):
+        out = self.gen()
+        outside = out.parent / "outside-the-folder.txt"
+        outside.write_text("x")
+        self.addCleanup(outside.unlink, True)
+        (out / ".gen-service-oldproxy.json").write_text(json.dumps(["../outside-the-folder.txt"]))
+        generate_login_frontend(copy.deepcopy(SITE), [spec_fixture("crm")], out)
+        self.assertTrue(outside.exists())
+        self.assertFalse((out / ".gen-service-oldproxy.json").exists())
+
+
+class WrongShapeTests(FrontendCase):
+    def test_a_wrong_typed_value_is_one_error_line_not_a_traceback(self):
+        import contextlib
+        import io
+        import login_frontend
+        tmp = Path(tempfile.mkdtemp(prefix="login-frontend-", dir=SCRATCH))
+        self.addCleanup(shutil.rmtree, tmp, True)
+        (tmp / "site.yaml").write_text(yaml.safe_dump(SITE))
+        for label, mutate in {"container name a list": lambda s: s["containers"][0].update(name=["x"]),
+                              "containers a string": lambda s: s.update(containers="x"),
+                              "uid a list": lambda s: s.update(uid=[1])}.items():
+            spec = spec_fixture("crm")
+            mutate(spec)
+            (tmp / "svc.yaml").write_text(yaml.safe_dump(spec))
+            err = io.StringIO()
+            with self.subTest(case=label), contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+                code = login_frontend.main(["login_frontend.py", str(tmp / "site.yaml"), str(tmp / "out"),
+                                            str(tmp / "svc.yaml")])
+            self.assertEqual(code, 1, err.getvalue())
+            self.assertNotIn("Traceback", err.getvalue())
 
 
 class SpecTests(FrontendCase):
@@ -709,7 +764,7 @@ class NoProfilePictureTests(FrontendCase):
         for value in (True, False):
             site = copy.deepcopy(SITE)
             site["user_pictures"] = value
-            with self.subTest(value=value), self.assertRaisesRegex(SpecError, "user_pictures.*removed"):
+            with self.subTest(value=value), self.assertRaisesRegex(SpecError, "user_pictures.*not supported"):
                 self.gen(site)
 
     def test_no_picture_flow(self):

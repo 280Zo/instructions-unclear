@@ -256,7 +256,7 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(effect(self.text, "shell", "some-unknown-tool --flag"), "ask")
 
     def test_no_shell_writes_into_the_skills(self):
-        # Review of ff605b1: the user runs the skills' host scripts as root.
+        # The user runs the skills' host scripts as root.
         for command in (f"python3 tools/render.py t v > {SKILLS_DIR}/hypervisor-proxmox/scripts/lib.sh",
                         f"python3 tools/render.py t v >{SKILLS_DIR}/x/SKILL.md",
                         f"python3 tools/x.py | tee {SKILLS_DIR}/x/adapter.yaml",

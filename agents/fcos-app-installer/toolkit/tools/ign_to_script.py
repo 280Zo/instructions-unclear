@@ -185,7 +185,7 @@ def _path(path: str) -> str:
 
 
 def _name(value: str, pattern: re.Pattern, what: str) -> str:
-    if not isinstance(value, str) or not pattern.match(value):
+    if not isinstance(value, str) or not pattern.fullmatch(value):  # fullmatch: "$" would let a final newline pass
         raise UnsupportedIgnition(f"invalid {what}: {value!r}")
     return value
 
@@ -322,6 +322,19 @@ def to_script(config: dict, root: str = "") -> str:
     return "\n".join(lines) + "\n"
 
 
+import zlib  # noqa: E402
+
+# What a fragment of the wrong shape or with broken contents can raise; each is one error line, and no
+# script is printed.
+FRAGMENT_ERRORS = (UnsupportedIgnition, ValueError, KeyError, TypeError, AttributeError, OSError, EOFError,
+                   zlib.error)
+
+
+def _why(error: Exception) -> str:
+    return str(error) if isinstance(error, UnsupportedIgnition) else \
+        f"the fragment is not shaped as expected or its contents are broken ({type(error).__name__})"
+
+
 def main(argv: list[str]) -> int:
     args = argv[1:]
     root = ""
@@ -379,12 +392,12 @@ def main(argv: list[str]) -> int:
                     if isinstance(rest.get("storage"), dict):
                         rest["storage"].pop("directories", None)
                 script = to_script(rest, root=root)
-            except (UnsupportedIgnition, ValueError, KeyError, TypeError) as error:
-                print(f"ign_to_script: {path}: {error}", file=sys.stderr)
+            except FRAGMENT_ERRORS as error:
+                print(f"ign_to_script: {path}: {_why(error)}", file=sys.stderr)
                 return 1
             bodies.append(f"# --- {path} ---\n" + script[len(HEADER):])
-    except (UnsupportedIgnition, ValueError, KeyError, TypeError) as error:
-        print(f"ign_to_script: declared folders: {error}", file=sys.stderr)
+    except FRAGMENT_ERRORS as error:
+        print(f"ign_to_script: declared folders: {_why(error)}", file=sys.stderr)
         return 1
     sys.stdout.write(HEADER + "\n".join(bodies))
     return 0

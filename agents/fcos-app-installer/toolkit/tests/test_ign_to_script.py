@@ -405,6 +405,32 @@ class IgnToScriptTests(unittest.TestCase):
         self.assertNotEqual(failed.returncode, 0)
         self.assertEqual(failed.stdout, "")
 
+    def test_a_name_with_a_trailing_newline_is_refused_not_split_into_two_commands(self):
+        for bad in ({"passwd": {"groups": [{"name": "foo\n", "gid": 3101}]}},
+                    {"passwd": {"users": [{"name": "foo\n", "uid": 3101}]}},
+                    {"systemd": {"units": [{"name": "x.service\n", "enabled": True}]}}):
+            with self.subTest(bad=bad), self.assertRaises(UnsupportedIgnition):
+                to_script(bad)
+
+    def test_wrong_typed_or_broken_fragments_are_an_error_line_not_a_traceback(self):
+        import base64
+        bad_gzip = "data:;base64," + base64.b64encode(b"not gzip").decode()
+        cases = {"source a number": {"storage": {"files": [{"path": "/etc/x", "contents": {"source": 5}}]}},
+                 "config a list": [],
+                 "unit contents a number": {"systemd": {"units": [{"name": "x.service", "contents": 5}]}},
+                 "bad gzip": {"storage": {"files": [{"path": "/etc/x", "contents": {
+                     "source": bad_gzip, "compression": "gzip"}}]}}}
+        tool = str(ROOT / "tools/ign_to_script.py")
+        for label, config in cases.items():
+            with self.subTest(case=label), tempfile.NamedTemporaryFile("w", suffix=".ign") as handle:
+                json.dump(config, handle)
+                handle.flush()
+                result = subprocess.run([sys.executable, tool, handle.name], capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(result.stdout, "")
+            self.assertNotIn("Traceback", result.stderr)
+            self.assertIn("ign_to_script:", result.stderr)
+
     def test_cli_reads_ign(self):
         with tempfile.NamedTemporaryFile("w", suffix=".ign", delete=False) as handle:
             json.dump(SAMPLE, handle)

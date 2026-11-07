@@ -220,6 +220,21 @@ class GuideTests(unittest.TestCase):
                 with self.subTest(file=str(path.relative_to(ROOT))):
                     self.assertNotRegex(path.read_text(), r"user's\s+user\b|\ban\s+user\b|\buser\s+user\b")
 
+    def test_shipped_files_carry_no_dates_commit_ids_or_trial_stories(self):
+        # What ships describes the current state and its reason. No dated notes, no "review of <commit>", no
+        # "tested on a real ...": a fact either has a source link or says it has none.
+        from layout import SKILLS
+        agents = ROOT / ".opencode" / "agents"
+        files = [p for folder in ("docs", "tools", "templates", "schemas") for p in sorted((ROOT / folder).rglob("*"))
+                 if p.is_file() and p.suffix in {".md", ".py", ".sh", ".tmpl", ".yaml", ".env"}]
+        files += [ROOT / "README.md", ROOT / "site.example.yaml", *sorted(agents.glob("*.md")),
+                  *[p for p in sorted(SKILLS.rglob("*")) if p.is_file() and p.suffix in {".md", ".yaml", ".sh"}]]
+        pattern = re.compile(r"\b20\d\d-\d\d-\d\d\b|\b[0-9a-f]{7} ?commit|review of (?:the )?\S* ?commit|"
+                             r"(?i:tested on a real)|[Rr]eview of [0-9a-f]{7}\b")
+        for path in files:
+            with self.subTest(file=str(path.relative_to(ROOT))):
+                self.assertIsNone(pattern.search(path.read_text()), path.name)
+
     def test_procedure_pages_name_no_example_app(self):
         # Examples use <svc>; the symptoms a reader needs are described without naming the app.
         for page in guide_pages():

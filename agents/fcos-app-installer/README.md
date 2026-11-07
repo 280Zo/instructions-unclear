@@ -193,7 +193,9 @@ because the guide's remote commands use it. The tools that run without asking
 limit what they read and write: `render.py` reads only templates from the
 toolkit and values files from the workspace, the fixtures or `/tmp/opencode`,
 and the generators refuse an output folder that is, is inside or holds the
-toolkit. On a VM, `vmssh.py run` refuses a list of commands, but it is a list,
+toolkit. `http_check.py` sends a GET to any address it is given without asking
+and prints only the status, so it can reach any host your desktop can, and
+whatever is in the URL leaves the machine. On a VM, `vmssh.py run` refuses a list of commands, but it is a list,
 not a sandbox: the setup key gives the agent `sudo` there, so keep the key for
 the length of the run only and revoke it when it ends.
 
@@ -323,7 +325,13 @@ python3 -m unittest discover tests
 ```
 
 `publish_check.py` fails on any value from your workspace, any private
-address, real domain or email, SSH key, password hash or secret-looking value.
+address, a site `domain` that isn't an example, an email outside the example
+domains, an SSH key, password hash or secret-looking value. Names that only
+you know (a pool, a family name, a provider's hostname pattern) go in
+`publish-rules.yaml` in your workspace, a list of `name` and `pattern`
+(a regular expression each). It lives with your install files and is read
+only from there, so the toolkit holds none of it; a file it can't use is an
+error.
 It checks every file in the folder, with no exemptions. It scans the toolkit's
 own folder only, or the one folder you pass as an argument (pass a checkout's
 top level to scan all of it). Run it in the folder you installed the toolkit
@@ -356,7 +364,7 @@ rulesync sources and the toolkit's own files:
 | Folder or file | Holds |
 |---|---|
 | `subagents/`, `commands/`, `skills/`, `rules/` | the sources rulesync turns into `.opencode/agents/`, `.opencode/commands/`, `.opencode/skills/` and `AGENTS.md` |
-| `toolkit/` | the toolkit's own files: `tools/`, `templates/`, `docs/`, `schemas/`, `specs/`, `tests/`, `site.example.yaml`, `host-scripts.sha256` |
+| `toolkit/` | the toolkit's own files: `tools/`, `templates/`, `docs/`, `schemas/`, `tests/`, `site.example.yaml`, `host-scripts.sha256` |
 | `install.py` | places `toolkit/` and this README into the folder you run the toolkit in |
 | `profile.jsonc` | the profile for rulesync; `groups/fcos_app_installer.jsonc` is the install group |
 

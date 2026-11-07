@@ -368,7 +368,7 @@ def _pin_state(path: Path, digest: str) -> str:
     """Returns "pinned" when the script's sha256 is the one the list holds for it, "differs" when the
     list holds another, "unlisted" when the list does not hold it. The user runs these scripts as root,
     and a step shows the checksum of the file as it is, so a script the agent (or anything else)
-    changed would pass the user's sha256sum check (review of ff605b1). The list is a file the
+    changed would pass the user's sha256sum check. The list is a file the
     agent's rules keep it from editing (a guard rail; README), outside every skill folder, and it
     needs no git."""
     try:

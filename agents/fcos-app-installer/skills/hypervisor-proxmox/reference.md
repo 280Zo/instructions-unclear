@@ -30,7 +30,7 @@ Source: https://pve.proxmox.com/pve-docs/api-viewer/ (data file `apidoc.js`, pat
 
 **Works.** A `cidata` ISO (`user-data` = Ignition JSON, empty `meta-data`) on `ide2` as a CD-ROM is read on first boot (`ignition.platform.id=proxmoxve`; Afterburn mounts it): the user, SSH key and files were created. `POST /nodes/{node}/qemu` with `scsi0: <storage>:0,import-from=<iso-storage>:import/<image>.qcow2` succeeded with only the token's rights (role on the pool, `PVEDatastoreUser` on the disk storage, `Datastore.AllocateTemplate Datastore.Audit` on the ISO/import storage, `SDN.Use` on the bridge). On 9.2, `GET /cluster/resources` omits a guest's `pool` field for a caller without **`Pool.Audit`** on that pool, so `tools/virtualization/proxmox.py` reads membership from `GET /pools?poolid=<pool>` (needs `Pool.Audit`, read-only). The Proxmox adapter's default Ignition delivery is therefore the uploaded ISO
 
-Source: Tested on a real Proxmox node · https://pve.proxmox.com/pve-docs/api-viewer/ (`/nodes/{node}/qemu`, `/pools`) · https://pve.proxmox.com/pve-docs/pveum.1.html (privileges)
+Source: https://pve.proxmox.com/pve-docs/api-viewer/ (`/nodes/{node}/qemu`, `/pools`) · https://pve.proxmox.com/pve-docs/pveum.1.html (privileges)
 
 ## Console on the `proxmoxve` image
 
@@ -38,17 +38,17 @@ Image defaults: kernel `console=tty0 console=ttyS0,115200n8` (ttyS0 is the inter
 
 Source: https://github.com/coreos/fedora-coreos-config/blob/testing-devel/platforms.yaml · https://github.com/coreos/fedora-coreos-docs/blob/main/modules/ROOT/pages/provisioning-proxmoxve.adoc · https://github.com/coreos/fedora-coreos-docs/blob/main/modules/ROOT/pages/emergency-shell.adoc
 
-## Hostname with the ISO delivery
+## Hostname with the ISO delivery (design note)
 
 With an empty `meta-data`, nothing sets a name: the VM came up as `localhost`. With `/etc/hostname` written by Ignition (as the base template does), the VM booted normally (`systemctl is-system-running` = `running`, no emergency shell) and used that name. A forum report says a Butane-written `/etc/hostname` drops FCOS into the emergency shell when Proxmox's own cloud-init drive supplies the VM name; that path (snippet + cloud-init drive) was **not tested** and is not the default
 
-Source: Tested on a real Proxmox node
+Source: none; observed behavior, not from a document
 
-## An address reservation before first start
+## An address reservation before first start (design note)
 
 A VLAN whose DHCP serves only reserved MACs needs the reservation before first start; the MAC is known only after the VM is created, so the order is create (stopped), reserve, start.
 
-Source: Tested on a real Proxmox node
+Source: none; a design note, not from a document
 
 ## Teardown: pools
 

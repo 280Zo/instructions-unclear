@@ -82,6 +82,42 @@ class GenCase(unittest.TestCase):
         return validate_spec(spec, copy.deepcopy(SITE if site is None else site))
 
 
+class WrongShapeTests(GenCase):
+    """A spec or site with a value of the wrong type is an error line, never a traceback, and writes nothing."""
+
+    def run_main(self, spec, site):
+        import contextlib
+        import io
+        import gen_service
+        tmp = self.tmpdir()
+        (tmp / "spec.yaml").write_text(yaml.safe_dump(spec))
+        (tmp / "site.yaml").write_text(yaml.safe_dump(site))
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            code = gen_service.main(["gen_service.py", str(tmp / "spec.yaml"), str(tmp / "site.yaml"), str(tmp / "out")])
+        return code, err.getvalue(), tmp
+
+    def test_wrong_typed_values_give_one_error_line_and_write_nothing(self):
+        cases = {
+            "container name a list": lambda s, site: s["containers"][0].update(name=["x"]),
+            "containers a string": lambda s, site: s.update(containers="x"),
+            "vm a list": lambda s, site: s.update(vm=["a"]),
+            "volumes a number": lambda s, site: s["containers"][0].update(volumes=5),
+            "uid a list": lambda s, site: s.update(uid=[1]),
+            "vms in the site a string": lambda s, site: site.update(vms="x"),
+            "secrets a number": lambda s, site: s["containers"][0].update(secrets=3),
+        }
+        for label, mutate in cases.items():
+            spec, site = spec_fixture("single"), copy.deepcopy(SITE)
+            mutate(spec, site)
+            with self.subTest(case=label):
+                code, err, tmp = self.run_main(spec, site)
+                self.assertEqual(code, 1, err)
+                self.assertNotIn("Traceback", err)
+                self.assertTrue(err.startswith("gen_service:"), err)
+                self.assertFalse((tmp / "out").exists())
+
+
 class OutputFolderTests(GenCase):
     """The generators run without asking and delete files an earlier run wrote, so their output folder may not
     be the toolkit, a folder in it, or one that holds it (a planted manifest there could name toolkit files)."""

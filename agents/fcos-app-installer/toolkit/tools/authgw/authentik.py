@@ -402,7 +402,7 @@ def place(site: dict, spec: dict, config: dict, routed: list, bindings: dict, ic
     if "user_pictures" in site:
         # Not a built-in Authentik feature, and a picture stored as a user
         # attribute ends up in the outpost's sign-out link (the ID token in id_token_hint).
-        raise SpecError("site.yaml: user_pictures was removed (uploaded pictures would end up in the "
+        raise SpecError("site.yaml: user_pictures is not supported (uploaded pictures would end up in the "
                         "sign-out link); delete the line. Pictures follow Authentik's Avatars setting.")
     if signup:
         files["rendered/files/signup.blueprint.yaml"] = _signup_blueprint(signup, sources)

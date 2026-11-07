@@ -1,8 +1,8 @@
 """The agent's guard rules for .opencode/ (its own agents, commands and skills).
 
-The skills hold host scripts the user runs as root. Review of the skills-setting commit: a shell
+The skills hold host scripts the user runs as root. A shell
 command that starts with an allowed word (git status, dig, sha256sum) and then chains a write
-into .opencode/ was allowed. The rules deny any shell command that names .opencode/ at all, and
+into .opencode/ must not run. The rules deny any shell command that names .opencode/ at all, and
 every edit path that reaches .opencode/ in its usual spellings. Guard rails, not a wall: the shell
 expands wildcards, quotes and variables after the rules have matched, and the agent runs as the
 same Linux user as the person (README).
@@ -36,7 +36,7 @@ class ShellGuardTests(unittest.TestCase):
                 f"python3 tools/render.py t v > {SKILLS_DIR}/hypervisor-proxmox/scripts/lib.sh",
                 f"python3 tools/gen_service.py s site {SKILLS_DIR}/x",
                 f"bash tools/build-vm.sh {SKILLS_DIR}/x",
-                # Separators written right after the folder name (review of the first fixes commit).
+                # Separators written right after the folder name (the shell stops a name at a separator).
                 "git status --short;cd .opencode;cp x skills/y",
                 "git status --short&&cd .opencode&&cp x skills/y",
                 "git status --short\ncd .opencode\ncp x skills/y",

@@ -18,6 +18,12 @@ fi
 dir="$(realpath "$1")"
 vm="$(basename "$dir")"
 
+# A folder with nothing to build is a wrong path, not a pass; and nothing in it is deleted below.
+if [[ -z "$(find "$dir" -type f -name '*.bu' -print -quit)" ]]; then
+    echo "FAIL  no Butane fragments (*.bu) in $dir; is this the VM's folder?"
+    exit 1
+fi
+
 # Ignition creates users in merge order, and useradd gives an account without
 # a fixed UID the next one above every existing user. base-config (the admin
 # account) must merge first, so the admin gets 1000/1001, the numbers

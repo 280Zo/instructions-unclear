@@ -153,7 +153,7 @@ services: []
 #     redirects: [{path: /.well-known/carddav, to: /dav/}]   # answered by the ingress with https
 #     section: Relationships      # the gateway dashboard's heading for the app
 #     icon: logo.svg            # logo file in services/<svc>/, from the app's official sources
-#     accepted_risks: []          # e.g. "db on NFS, 12 GB, accepted 2026-11-02"
+#     accepted_risks: []          # e.g. "db on NFS, 12 GB, accepted: <the user's reason>"
 
 # --- Derived placeholders (the agent builds these; nothing to fill in) ---
 # The login page's own accounts and sign-in sources (signup, people, signin_sources) belong to the
