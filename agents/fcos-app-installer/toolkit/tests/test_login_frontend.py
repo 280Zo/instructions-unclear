@@ -268,6 +268,24 @@ class RouteTests(FrontendCase):
         self.assertIn("PathPrefix(`/outpost.goauthentik.io/`)", route["routers"]["crm-outpost"]["rule"])
         self.assertEqual(route["services"]["crm"]["loadBalancer"]["servers"], [{"url": "http://192.0.2.30:8110"}])
 
+    def test_every_dashboard_entry_opens_in_a_new_tab(self):
+        # authentik's Application.open_in_new_tab (BooleanField, default False): without it the dashboard
+        # opens an app in the same tab as the dashboard. Both kinds of entry set it.
+        open_app = spec_fixture("single")
+        open_app.update(name="dav", uid=3151, hostname="dav", login="app-only", login_reason="Phones sync directly")
+        path = Path(tempfile.mkdtemp(prefix="login-frontend-", dir=SCRATCH))
+        self.addCleanup(shutil.rmtree, path, True)
+        generate_login_frontend(copy.deepcopy(SITE), [spec_fixture("crm"), open_app], path)
+        for name, kind in (("crm", "gateway"), ("dav", "app-only")):
+            with self.subTest(app=name, login=kind):
+                data = yaml.load(self.read(path, f"files/app-{name}.blueprint.yaml"), Loader=TagLoader)
+                apps = [e for e in data["entries"] if e["model"] == "authentik_core.application"]
+                self.assertEqual(len(apps), 1)
+                self.assertIs(apps[0]["attrs"]["open_in_new_tab"], True)
+        reference = (SKILLS / "authgw-authentik" / "reference.md").read_text()
+        self.assertIn("open_in_new_tab", reference)
+        self.assertIn("authentik/core/models.py", reference)
+
     def test_files_land_in_the_mounted_folders_and_survive_rebuilds(self):
         out = self.gen()
         files = self.files(out, "login-frontend.bu")
@@ -575,6 +593,25 @@ class PeopleAndIconTests(FrontendCase):
         generate_login_frontend(self.people_site([]), [spec], out)
         names = [e["identifiers"]["name"] for e in self.blueprint(out)["entries"] if e["model"] == "authentik_core.group"]
         self.assertEqual(names, ["yes"])
+
+    def test_an_app_on_its_own_login_can_limit_who_sees_its_dashboard_link(self):
+        out = Path(tempfile.mkdtemp(prefix="login-frontend-", dir=SCRATCH))
+        self.addCleanup(shutil.rmtree, out, True)
+        open_app = spec_fixture("single")
+        open_app.update(name="dav", uid=3151, hostname="dav", login="app-only", login_reason="Phones sync directly",
+                        groups=["family"])
+        generate_login_frontend(self.people_site([]), [spec_fixture("crm"), open_app], out)
+        entries = self.blueprint(out)["entries"]
+        self.assertEqual([e["identifiers"]["name"] for e in entries if e["model"] == "authentik_core.group"], ["family"])
+        meta = [e["attrs"]["identifiers"]["name"] for e in entries if e["model"] == "authentik_blueprints.metaapplyblueprint"]
+        self.assertEqual(meta, ["app-dav"])  # the link exists before it is bound
+        binds = [e for e in entries if e["model"] == "authentik_policies.policybinding"]
+        self.assertEqual(len(binds), 1)
+        self.assertEqual(binds[0]["identifiers"]["target"], ("!Find", ["authentik_core.application", ["slug", "dav"]]))
+        # It still is not on the outpost: its route has no login in front of it.
+        outpost = yaml.load(self.read(out, "files/outpost-providers.blueprint.yaml"), Loader=TagLoader)
+        names = [p[1][1][1] for p in outpost["entries"][-1]["attrs"]["providers"]]
+        self.assertEqual(names, ["crm"])
 
     def test_scripted_svg_icons_refused(self):
         for svg in ("<svg><script>x</script></svg>", '<svg onload="x"/>', '<svg><a href="javascript:x"/></svg>',

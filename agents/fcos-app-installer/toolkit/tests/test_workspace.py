@@ -264,6 +264,20 @@ class PrivateValueTests(TempHome):
                                    "docker.io/library/traefik:v3"}, set())
         self.assertIn("my-private-login", values)
 
+    def test_the_names_of_the_modules_a_site_chooses_are_public(self):
+        # login_frontend names the shipped ingress and auth gateway modules; they are folder names of the
+        # toolkit, so a site that uses them must not make every file that names them a leak.
+        from layout import SKILLS
+        modules = sorted(p.parent.name for p in SKILLS.glob("*/module.yaml"))
+        self.assertGreaterEqual(len(modules), 2)
+        ws = self.make()
+        (ws / "site.yaml").write_text(
+            "login_frontend:\n  ingress: ingress-traefik\n  auth_gateway: authgw-authentik\n"
+            "edge_note: my-private-note\n")
+        values = private_values(ws)
+        self.assertEqual(values & set(modules), set())
+        self.assertIn("my-private-note", values)
+
     def test_private_values_skip_example_defaults(self):
         ws = self.make()
         gateway, domain = j("10", ".9.8.1"), j("myhome.", "duckdns.org")

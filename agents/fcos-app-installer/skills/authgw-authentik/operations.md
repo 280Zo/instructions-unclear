@@ -94,8 +94,9 @@ login, and after login the page shows `X-authentik-username` in the request head
 
 ## Who may open an app
 
-Authentik lets every user open an app that has no bindings, so ask which groups get it (for example
-`family`, `guests`) and put them in `groups:`. The login front end's rules file `access.yaml` creates
+Authentik lets every user open an app that has no bindings, and lists it on every account's dashboard
+(guests included), so ask for every app: everyone, or which groups (for example `family`, `guests`);
+put the groups in `groups:`, and leave it out for everyone. The login front end's rules file `access.yaml` creates
 each group if it's missing (the one place that does) and binds it to the app. Tell the user to add
 themselves (and anyone else) to the group in Authentik's admin interface (**Directory → Groups**), or
 they lose access too. Group names are lowercase; if the user already has a group with capital
@@ -103,9 +104,10 @@ letters, a new lowercase one is made beside it. Removing a group from `groups:` 
 its old binding; the user deletes it under the application's **Policy / Group / User Bindings**. Such
 an app also refuses everyone until its group bindings exist (a `deny-until-bound` policy); that relies
 on the application's policy engine mode staying **any** (Authentik's default): switching it to **all**
-in the admin interface would lock everyone out. An app on its own login can't take `groups:`: its
-route skips the login page, so a binding would only hide its dashboard link. Also ask whether anyone
-new needs an account for it: they go into the site file's `people:` (People and access, below).
+in the admin interface would lock everyone out. For an app on its own login (with a web name) `groups:`
+decide who sees its dashboard link, not who may open the app: its route skips the login page and its own
+login decides that. The same `deny-until-bound` policy keeps the link hidden until the groups are
+bound. Also ask whether anyone new needs an account for it: they go into the site file's `people:` (People and access, below).
 
 ## The dashboard section and the logo
 

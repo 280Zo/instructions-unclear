@@ -16,6 +16,10 @@ Source: https://raw.githubusercontent.com/goauthentik/authentik/version/2026.8.5
 
 ## Authentik dashboard links for apps on their own login
 
+`open_in_new_tab` is a boolean field of the application, default `False`, with the help text "Open launch URL in a new browser tab or window." and is among the application serializer's fields, so a blueprint can set it. Without it the dashboard opens an application in the dashboard's own tab. Every generated application entry (behind the login page, or a link only) sets it to `true`.
+
+Source: https://github.com/goauthentik/authentik/blob/main/authentik/core/models.py (`Application.open_in_new_tab`) · https://github.com/goauthentik/authentik/blob/9a974f14/authentik/core/api/applications.py (`ApplicationSerializer.Meta.fields`)
+
 An application appears on a user's Application Dashboard when the user has access (no bindings: everyone) and it has a launch URL starting with `http://` or `https://`. Application fields include `meta_launch_url`, `open_in_new_tab`, `meta_description`, `provider`. An application without a provider works as a plain link (confirmed by authentik's lead developer in issue 8018; the docs say applications "typically" pair with a provider: secondary source, from the project). Single sign-on for such apps needs the app to support OIDC (authentik's OAuth 2.0/OIDC provider) or trusted proxy headers (`X-authentik-username` and others, sent by the proxy outpost)
 
 Source: https://docs.goauthentik.io/add-secure-apps/applications/ · https://docs.goauthentik.io/add-secure-apps/applications/manage_apps/ · https://github.com/goauthentik/authentik/blob/main/authentik/core/api/applications.py · https://github.com/goauthentik/authentik/issues/8018 · https://docs.goauthentik.io/add-secure-apps/providers/oauth2/ · https://docs.goauthentik.io/add-secure-apps/providers/proxy/

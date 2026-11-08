@@ -1,7 +1,8 @@
 # Authentik dashboard link for {{ROUTE_NAME}}, a service on its own login
 # (login: app-only). Only an application with a launch URL and no provider:
 # it shows on users' Application Dashboard and opens https://{{ROUTE_HOST}};
-# the app's own login protects it. provider is set to null explicitly, so a
+# the app's own login protects it. With groups listed, only their members see
+# the link (access.yaml binds them); with none, every account sees it. provider is set to null explicitly, so a
 # service switched from the login page loses its old provider link. Same file
 # name as a login-page app's rules (app-<service>.yaml), so a switch replaces it.
 # Fields: authentik Application model (meta_launch_url, provider); an
@@ -23,5 +24,7 @@ entries:
 {{SECTION_LINE}}
       provider: null
       meta_launch_url: "https://{{ROUTE_HOST}}"
+      # The dashboard opens the app in a new tab, not in the dashboard's own.
+      open_in_new_tab: true
       meta_description: "Uses its own login"
 {{ACCESS_ENTRIES}}

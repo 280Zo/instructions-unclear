@@ -132,7 +132,8 @@ class AdapterTests(unittest.TestCase):
         import hashlib
         adapter = load_adapter("virtualization", "proxmox")
         for step, scripts in (("discover_host", ("lib.sh", "discover-host.sh")),
-                              ("create_api_access", ("lib.sh", "setup-agent-access.sh", "teardown-agent-access.sh"))):
+                              ("create_api_access", ("lib.sh", "setup-agent-access.sh", "teardown-agent-access.sh")),
+                              ("rotate_api_token", ("lib.sh", "setup-agent-access.sh", "teardown-agent-access.sh"))):
             with self.subTest(step=step):
                 text = render_step(adapter, step, every_value(adapter, step))
                 self.assertIn(f"{PROXMOX}/scripts/", text)
@@ -183,11 +184,20 @@ class AdapterTests(unittest.TestCase):
         values = every_value(adapter, "create_api_access")
         text = render_step(adapter, "create_api_access", values)
         runs = [line for line in text.splitlines() if "bash setup-agent-access.sh" in line]
-        self.assertEqual(len(runs), 4, runs)  # check, apply, check a replacement, replace
+        self.assertEqual(len(runs), 2, runs)  # check, apply
         for line in runs:
             self.assertIn(f"--host-key {values['HOST']}", line)
-        self.assertEqual(sum("--rotate" in line for line in runs), 2)
-        self.assertTrue(any("--rotate" in l and "--check" in l for l in runs))
+        # Replacing a token is its own step, so that running the blocks one after the other from top to bottom
+        # can never replace a token by accident.
+        self.assertNotIn("--rotate", text)
+        rotate = render_step(adapter, "rotate_api_token", every_value(adapter, "rotate_api_token"))
+        rotations = [line for line in rotate.splitlines() if "bash setup-agent-access.sh" in line]
+        self.assertEqual(len(rotations), 2, rotations)  # check a replacement, replace
+        for line in rotations:
+            self.assertIn(f"--host-key {values['HOST']}", line)
+            self.assertIn("--rotate", line)
+        self.assertEqual(sum("--check" in line for line in rotations), 1)
+        self.assertIn("sha256sum -c", rotate)  # the scripts are checked again before the replacement is run
         teardown = render_step(adapter, "teardown_api_access", every_value(adapter, "teardown_api_access"))
         lines = [line for line in teardown.splitlines() if line.startswith("bash teardown-agent-access.sh")]
         self.assertEqual(len(lines), 2)
@@ -270,6 +280,33 @@ class AdapterTests(unittest.TestCase):
                 self.assertIn("443", text)  # web networks to the login front end
                 with self.assertRaises(AdapterError):
                     render_step(router, "allow_flows", dict(values, LAN_CIDR="0.0.0.0/0"))
+
+    def test_admin_ssh_flow_has_its_own_condition_and_names_the_new_vm_in_existing_rules(self):
+        # Seen on a real install: the VM shared a VLAN with the file server and the login front end, so the
+        # step said "only if on a different network", but the admin network was another VLAN and the router's
+        # pass rule named the existing hosts only, so SSH to the new VM timed out.
+        for provider in ("opnsense", None):
+            with self.subTest(provider=provider):
+                router = load_adapter("router_firewall", provider)
+                values = dict(every_value(router, "allow_flows"), ADMIN_LAN_CIDR="192.0.2.0/24",
+                              LAN_CIDR="192.0.2.0/24", VM_IP="192.0.2.40")
+                lines = render_step(router, "allow_flows", values).splitlines()
+                ssh = [line for line in lines if "SSH" in line and "22" in line]
+                self.assertEqual(len(ssh), 1, ssh)
+                self.assertNotIn("Only if", ssh[0])  # its own condition, not the file server's
+                self.assertIn("whenever", ssh[0].lower())
+                self.assertIn("even if the VM shares a network", ssh[0])
+                self.assertIn("add 192.0.2.40 to it", ssh[0])  # a rule or alias that lists hosts
+                nfs = [line for line in lines if "2049" in line]
+                self.assertEqual(len(nfs), 1, nfs)
+                self.assertIn("Only if", nfs[0])
+
+    def test_guide_points_at_the_router_step_when_the_desktop_needs_a_route(self):
+        guide = " ".join((ROOT / "docs" / "guide" / "02-build-a-vm.md").read_text().split())
+        section = guide.split("## 2.6", 1)[1].split("## 2.7", 1)[0]
+        self.assertIn("router_firewall: `allow_flows`", section)
+        self.assertRegex(section, r"admin network .{0,80}through the router")
+        self.assertIn("desktop's route", section)
 
     def test_network_list_never_lands_in_a_command(self):
         # Unquoted, "a, b" would split into separate arguments of the user's command.
@@ -538,6 +575,37 @@ class AdapterTests(unittest.TestCase):
             self.assertIn("--move-to backrooms --create-pool", line)
         self.assertNotIn("KEEP_POOL", adapter["manual_steps"]["teardown_api_access"]["uses"])
 
+    def test_file_server_steps_create_the_group_with_its_number_before_the_user(self):
+        # The user form of the file server creates its own primary group without letting you pick its GID, which
+        # showed only after the VM existed: the group number is asked first, and the group made first.
+        for provider in ("truenas", None):
+            with self.subTest(provider=provider):
+                adapter = load_adapter("file_server", provider)
+                values = every_value(adapter, "service_user")
+                lines = render_step(adapter, "service_user", values).splitlines()
+                gid, svc = str(values["SVC_GID"]), values["SVC_NAME"]
+                group = next(i for i, l in enumerate(lines) if "none exists" in l.lower())
+                user = next(i for i, l in enumerate(lines) if "UID" in l and "primary group" in l)
+                self.assertLess(group, user)
+                self.assertIn(gid, lines[group])
+                self.assertIn(svc, lines[group])
+        truenas = " ".join(render_step(load_adapter("file_server", "truenas"), "service_user", every_value(
+            load_adapter("file_server", "truenas"), "service_user")).split())
+        self.assertIn("Credentials", truenas)
+        self.assertIn("use it", truenas)  # an existing group for the service is used, not duplicated
+
+    def test_group_number_is_its_own_question_asked_before_generating(self):
+        guide = Path(ROOT / "docs" / "guide")
+        questions = " ".join((guide / "questions.md").read_text().split())
+        section = questions.split("## 11.", 1)[1].split("## 12.", 1)[0]
+        self.assertIn("Which group number", section)
+        self.assertIn("the file server's existing group", section)
+        self.assertIn("separately", section)
+        page = " ".join((guide / "03-add-a-service.md").read_text().split())
+        part = page.split("## 3.4", 1)[1].split("## 3.5", 1)[0]
+        self.assertIn("before anything is generated", part)
+        self.assertIn("group number", part)
+
     def test_truenas_backup_folder_does_not_make_the_vm_folder_group_writable(self):
         # The VM's folder must not be group-writable ("mode 2775" for "the group of the services that
         # back up there"). Each service has its own group, so that group means nothing, and group
@@ -624,7 +692,7 @@ class AdapterTests(unittest.TestCase):
 
     def test_teardown_check_and_run_are_separate_blocks(self):
         adapter = load_adapter("virtualization", "proxmox")
-        for step_id in ("create_api_access", "teardown_api_access"):
+        for step_id in ("create_api_access", "rotate_api_token", "teardown_api_access"):
             for block in adapter["manual_steps"][step_id]["blocks"]:
                 runs = [line for line in block["code"].splitlines()
                         if line.startswith("bash ") and "-agent-access.sh" in line]

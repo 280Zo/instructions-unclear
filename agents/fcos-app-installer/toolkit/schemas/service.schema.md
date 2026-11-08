@@ -16,7 +16,7 @@ error that names it.
 | `name` | yes | Lowercase letters, digits, hyphens; starts with a letter; at most 31. Also the Linux user and the folder under the data disk. |
 | `vm` | yes | A VM listed in `site.yaml` (`vms`). |
 | `uid` | yes | 1000-24608 (the IDs whose pinned container ID ranges fit below the IDs systemd reserves). Must match the file server user if the service uses NFS. Unique across the workspace (`tools/check_workspace.py`). |
-| `gid` | no | Defaults to `uid`. Same range and uniqueness as `uid`. |
+| `gid` | no | Defaults to `uid`. Same range and uniqueness as `uid`. Ask for it separately (question 11), since the file server's existing group for the app has its own number. |
 | `extra_groups` | no | Shared groups the user joins (names only). |
 | `title`, `description` | no | Plain text. `title` defaults to `name`. |
 | `login` | yes | `gateway` (route and rules behind the login page) or `app-only` (needs `login_reason`, one sentence; with a `hostname` it gets an HTTPS route without the login page and a dashboard link on the auth gateway, without one no route). |

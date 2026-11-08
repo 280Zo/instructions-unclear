@@ -218,7 +218,7 @@ def _access_blueprint(people: list[dict], routed: list[dict], signup: dict | Non
     """The one rules file that creates groups (from people and every app's groups), the
     people, and each app's group bindings. Each app's own rules are applied first
     (metaapplyblueprint, required), so its application exists before it is bound."""
-    bound = [s for s in routed if s.get("groups") and s["login"] == "gateway"]
+    bound = [s for s in routed if s.get("groups")]  # behind the login page: who may open it; own login: who sees its link
     groups = sorted({g for p in people for g in p["groups"]} | {g for s in bound for g in s["groups"]}
                     | ({signup["group"]} if signup else set()))
     out = ["# Groups, local people and app access in Authentik (site.yaml people, each app's groups).",
@@ -298,9 +298,10 @@ def check_spec(spec: dict, errors: list) -> None:
                 or not all(isinstance(g, str) and GROUP.fullmatch(g) for g in groups)
                 or len(set(groups)) != len(groups)):
             errors.append(f"groups must be a list of 1 to {MAX_GROUPS} different lowercase names (letters, digits, -)")
-        if spec.get("login") != "gateway":
-            # Its route skips the login page: a binding would only hide the dashboard link.
-            errors.append("groups only work for apps behind the login page (login: gateway)")
+        if spec.get("login") == "app-only" and not spec.get("hostname"):
+            # Its route skips the login page, so its own login decides who gets in; the groups only decide who
+            # sees its dashboard link, and without a web name there is no link.
+            errors.append("groups for an app on its own login need a hostname (they decide who sees its dashboard link)")
     if "icon" in spec and not (isinstance(spec["icon"], str) and ICON.fullmatch(spec["icon"])):
         errors.append("icon must be a file name in the service's folder (letters, digits, -; .svg .png .webp .jpg)")
     if "icon" in spec and not spec.get("hostname"):
@@ -314,7 +315,8 @@ def _access_entries(svc: str, groups: list) -> str:
     (one creator per group: two rules files creating the same unique name race)."""
     if groups:
         # Until access.yaml has bound the groups, nobody gets in (policy engine "any": a member's
-        # group binding still passes); never an app open to every account in between.
+        # group binding still passes); never an app open to every account in between. For a dashboard
+        # link of an app on its own login the same rule hides the link until then.
         return (f"  # groups {', '.join(groups)}: bound in access.yaml (tools/login_frontend.py)\n"
                 f"  - model: authentik_policies_expression.expressionpolicy\n    id: deny-{svc}\n"
                 f"    identifiers:\n      name: \"deny-until-bound-{svc}\"\n    attrs:\n      expression: return False\n"

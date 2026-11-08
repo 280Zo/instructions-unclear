@@ -154,6 +154,13 @@ class VmSshTests(unittest.TestCase):
         block = out.split("```bash\n", 1)[1]
         self.assertEqual(block.splitlines()[0], "# vm edge (bash, admin): run this ONLY on edge")
 
+    def test_manual_step_names_the_sites_admin_user(self):
+        (self.ws / "site.yaml").write_text(SITE.replace("admin_user: admin", "admin_user: ops"))
+        code, out, err = self.run_tool("keygen", "edge")
+        self.assertEqual(code, 0, err)
+        self.assertIn("# vm edge (bash, ops): run this ONLY on edge", out)
+        self.assertNotIn("(bash, admin)", out)
+
     def test_keygen_never_overwrites(self):
         self.run_tool("keygen", "edge")
         code, out, err = self.run_tool("keygen", "edge")

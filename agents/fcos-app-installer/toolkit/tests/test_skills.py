@@ -113,6 +113,23 @@ class AppResearchSkillTests(unittest.TestCase):
         for toolkit_word in ("service.yaml", "gen_service", "vmssh", "Authentik", "Butane"):
             self.assertNotIn(toolkit_word, body)
 
+    def test_two_step_login_is_researched_asked_and_walked_through_for_apps_on_their_own_login(self):
+        # An app behind the login page is covered by the gateway's own sign-in; an app on its own login has
+        # only what the app offers, so when its docs describe MFA the person is asked, and walked through it.
+        def flat(path):
+            return " ".join(path.read_text().split())
+        research = flat(SKILLS / "researching-apps-for-self-hosting" / "SKILL.md").lower()
+        self.assertIn("two-step login", research)
+        guide = flat(ROOT / "docs" / "guide" / "03-add-a-service.md")
+        self.assertIn("**Two-step login** (apps on their own login)", guide)
+        prompt = flat(ROOT / ".opencode" / "agents" / "fcos-app-installer.md")
+        self.assertIn("ask whether to turn on two-step login", prompt)
+        self.assertIn("walk the user through", prompt)
+        questions = flat(ROOT / "docs" / "guide" / "questions.md")
+        section = questions.split("## 9b.", 1)[1].split("## 10.", 1)[0]
+        for needle in ("own login", "docs describe", "Skipped when"):
+            self.assertIn(needle, section)
+
     def test_guide_and_prompt_use_it(self):
         guide = (ROOT / "docs" / "guide" / "03-add-a-service.md").read_text()
         section = guide.split("## 3.2", 1)[1].split("## 3.3", 1)[0]

@@ -228,6 +228,15 @@ class AgentTests(unittest.TestCase):
                        "official docs recommend", "lowest amount"):
             self.assertIn(needle, questions)
 
+    def test_final_report_says_how_to_ssh_in_and_admin_commands_start_in_the_root_folder(self):
+        text = " ".join(body(self.text).split())
+        report = text.split("## Final report", 1)[1].split(" ## ", 1)[0]
+        self.assertIn("how to get a shell on the VM", report)
+        self.assertIn("Getting a shell on the VM", report)  # the section of the app's ids.md it points at
+        self.assertIn("ssh <admin>@<VM address>", report)
+        # A note that shows a command run as the app's account starts with `cd /`, or sudo fails in the admin's home.
+        self.assertIn("starts with `cd /`", text)
+
     def test_workspace_folders_named_fcos_are_open_but_secrets_never(self):
         # Any folder whose name contains "fcos-".
         for ws in ("/home/owner/fcos-workspace", "/home/owner/AI/fcos-trial"):

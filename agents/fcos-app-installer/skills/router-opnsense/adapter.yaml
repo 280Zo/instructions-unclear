@@ -39,10 +39,10 @@ manual_steps:
   allow_flows:
     title: Allow only the traffic VM {{VM_NAME}} needs
     steps:
-      - Only if VM {{VM_NAME}} ({{VM_IP}}) is on a different network or VLAN from the file server or the login front end. In Firewall, Rules, on the interface the traffic enters, add pass rules for exactly these flows.
-      - VM {{VM_IP}} to file server {{NAS_IP}}, TCP 2049 (NFS).
-      - Login front end {{EDGE_IP}} to VM {{VM_IP}}, on the service ports the agent lists.
-      - Admin networks {{ADMIN_LAN_CIDR}} to VM {{VM_IP}}, TCP 22 (SSH); one rule per network, or one alias holding them.
+      - In Firewall, Rules, on the interface the traffic enters, add pass rules for exactly the flows below that apply. Each has its own condition.
+      - Only if VM {{VM_NAME}} ({{VM_IP}}) is on a different network or VLAN from the file server, allow VM {{VM_IP}} to file server {{NAS_IP}}, TCP 2049 (NFS).
+      - Only if VM {{VM_NAME}} is on a different network or VLAN from the login front end, allow login front end {{EDGE_IP}} to VM {{VM_IP}}, on the service ports the agent lists.
+      - Whenever the router carries your SSH traffic to VM {{VM_IP}}, even if the VM shares a network with the file server and the login front end (your admin network may be another VLAN), allow admin networks {{ADMIN_LAN_CIDR}} to VM {{VM_IP}}, TCP 22 (SSH), with one rule per network or one alias holding them. A rule or alias that lists hosts by address does not cover a new VM, so add {{VM_IP}} to it.
       - Only if VM {{VM_NAME}} is the login front end and a network below is on another VLAN; networks {{LAN_CIDR}} to VM {{VM_IP}}, TCP 80 and 443 (the login page and apps); one rule per network, or one alias.
     uses: [VM_NAME, VM_IP, NAS_IP, EDGE_IP, ADMIN_LAN_CIDR, LAN_CIDR]
     report_back:

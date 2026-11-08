@@ -8,6 +8,7 @@ notes: >-
 docs:
   - https://www.truenas.com/docs/scale/shares/nfs/addingnfsshares/
   - https://www.truenas.com/docs/scale/26/credentials/users/manageusers/
+  - https://www.truenas.com/docs/scale/25.04/scaletutorials/credentials/managelocalgroups/
 discovery:
   ask: the NFS export path of each share, and the NAS address.
 capabilities: {}
@@ -25,7 +26,9 @@ manual_steps:
   service_user:
     title: Create the NAS user for {{SVC_NAME}}
     steps:
-      - Create the user {{SVC_NAME}} with UID {{SVC_UID}}. Disable the password, uncheck SMB user, uncheck create new primary group, and set the primary group to GID {{SVC_GID}} (the service's group or its shared group).
+      - In Credentials, Groups (Local Groups in older versions), look for a group with GID {{SVC_GID}}. It may be the file server's existing group for this service, or a shared group. If one exists, use it and don't make another.
+      - If none exists, add one before the user. Click Add, set GID to {{SVC_GID}} and Name to {{SVC_NAME}}, leave SMB Group off, and save. The user form creates its own primary group and does not let you choose that group's GID.
+      - Create the user {{SVC_NAME}} with UID {{SVC_UID}}. Disable the password, uncheck SMB user, uncheck create new primary group, and set the primary group to the group with GID {{SVC_GID}}.
       - Create its folders on the share and give them to that user and group, as listed in the service's file-server.md table (folder, user, group, mode). For a shared group, use group ownership with the setgid bit (mode 2775), so new files keep the group.
       - If you are moving existing data, make sure it is owned by UID {{SVC_UID}} and GID {{SVC_GID}}.
     uses: [SVC_NAME, SVC_UID, SVC_GID]

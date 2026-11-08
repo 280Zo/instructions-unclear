@@ -127,9 +127,13 @@ again).
 
 Adapter step **router_firewall: `reserve_ip`**, after the VM is created and
 before its first start. On a network that only serves reserved MAC addresses
-the VM gets no address at all without it. If the VM sits on a different
-network from the file server or the login front end, also
-**router_firewall: `allow_flows`**.
+the VM gets no address at all without it. Also **router_firewall:
+`allow_flows`**: each flow in it has its own condition. The NFS and login
+front end flows apply when the VM sits on a different network from the file
+server or the login front end. The SSH flow applies whenever an admin network
+reaches the VM through the router, even if the VM shares a network with both
+(the admin network can be another VLAN), and a rule or alias that lists hosts
+needs the new VM's address added. The desktop's route (below) needs it too.
 
 Report back: done, and the reserved address if it differs.
 
@@ -186,7 +190,7 @@ ssh-agent).
    ```fish
    # desktop (fish)
    python3 tools/vmssh.py trust <vm> --fingerprint <SHA256:...> --workspace <workspace>
-   python3 tools/vmssh.py run <vm> --workspace <workspace> -- 'hostnamectl hostname; getenforce; findmnt -n /var/lib/appdata; ls -l /dev/disk/by-id/ | grep drive-scsi1; systemctl is-enabled nftables podman-auto-update.timer zincati; sudo nft list set inet host_filter edge_tcp; systemctl --failed --no-legend'
+   python3 tools/vmssh.py run <vm> --workspace <workspace> -- 'hostnamectl hostname; getenforce; findmnt -n /var/lib/appdata; test -e /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi1 && echo present; systemctl is-enabled nftables podman-auto-update.timer zincati; sudo nft list set inet host_filter edge_tcp; systemctl --failed --no-legend'
    python3 tools/vmssh.py run <vm> --workspace <workspace> -- 'for m in /var/mnt/*; do /usr/local/bin/require-mounts $m && echo "$m mounted"; done'
    ```
 
@@ -197,7 +201,7 @@ remembered.
 Expected:
 - hostname is `<vm>` and SELinux is `Enforcing`
 - `/var/lib/appdata` is mounted (xfs, label `appdata`)
-- a `scsi-0QEMU_QEMU_HARDDISK_drive-scsi1` link exists
+- `present`: the data disk's `scsi-0QEMU_QEMU_HARDDISK_drive-scsi1` link exists
 - all three units are `enabled`, and no unit has failed
 - `edge_tcp` exists (empty until services are added)
 - every NFS share prints `mounted`

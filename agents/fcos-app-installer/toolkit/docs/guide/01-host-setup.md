@@ -51,6 +51,11 @@ token can only see and manage VMs in its own pool, use one disk storage, one
 network bridge, and upload config discs to one storage. It cannot delete VMs
 or disks.
 
+If the check says the token already exists and the workspace has no copy of its
+secret, the agent does not apply. It shows **virtualization: `rotate_api_token`**
+as a step of its own, never in the same message: it replaces the token, so the
+old one, and any other workspace's copy of it, stops working.
+
 When the token is new, the script prints its secret once, and nothing to run.
 The agent then shows the next step on its own, **virtualization:
 `store_api_token`**: a desktop command that stores the secret in

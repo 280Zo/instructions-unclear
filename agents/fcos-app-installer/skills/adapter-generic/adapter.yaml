@@ -63,10 +63,10 @@ roles:
       allow_flows:
         title: Allow the traffic VM {{VM_NAME}} needs
         steps:
-          - If VM {{VM_NAME}} ({{VM_IP}}) is on a different network or VLAN from the file server or the login front end, allow these flows and nothing more.
-          - VM to file server {{NAS_IP}} for NFS (TCP 2049).
-          - Login front end {{EDGE_IP}} to the VM on its service ports.
-          - Admin networks {{ADMIN_LAN_CIDR}} to the VM for SSH (TCP 22).
+          - Allow exactly the flows below that apply, and nothing more. Each has its own condition.
+          - Only if VM {{VM_NAME}} ({{VM_IP}}) is on a different network or VLAN from the file server, allow the VM to file server {{NAS_IP}} for NFS (TCP 2049).
+          - Only if the VM is on a different network or VLAN from the login front end, allow login front end {{EDGE_IP}} to the VM on its service ports.
+          - Whenever your router carries SSH traffic to the VM, even if the VM shares a network with the file server and the login front end (your admin network may be another VLAN), allow admin networks {{ADMIN_LAN_CIDR}} to the VM for SSH (TCP 22). A rule or alias that lists hosts by address does not cover a new VM, so add {{VM_IP}} to it.
           - Only if the VM is the login front end and a network below is on another VLAN; networks {{LAN_CIDR}} to the VM on TCP 80 and 443.
         uses: [VM_NAME, VM_IP, NAS_IP, EDGE_IP, ADMIN_LAN_CIDR, LAN_CIDR]
         report_back:
@@ -84,6 +84,7 @@ roles:
       service_user:
         title: Create the file server user for {{SVC_NAME}}
         steps:
+          - Look for a group with GID {{SVC_GID}} on the file server. It may be its existing group for this service, or a shared group. If one exists, use it. If none exists, create it first with GID {{SVC_GID}} and the name {{SVC_NAME}}; many file servers can't set a GID on the group that their user form creates.
           - Create user {{SVC_NAME}} with UID {{SVC_UID}} and primary group GID {{SVC_GID}}, no password and no login.
           - Give it the folders the service uses on the share; for a shared group, use group ownership with the setgid bit so new files keep the group.
           - If you are moving existing data, make sure it is owned by UID {{SVC_UID}} and GID {{SVC_GID}}.

@@ -409,12 +409,28 @@ class AccessGroupTests(GenCase):
         plain = _blueprint(self.read(self.gen("crm"), "files/rules-crm"))
         self.assertFalse([e for e in plain["entries"] if e["model"] == "authentik_policies.policybinding"])
 
-    def test_groups_refused_for_an_app_on_its_own_login(self):
-        # Its route skips the login page; a binding would only hide the dashboard link.
+    def test_groups_on_an_app_on_its_own_login_decide_who_sees_its_dashboard_link(self):
+        # Its route skips the login page, so its own login decides who gets in; the binding hides the link
+        # on the dashboard from everyone else (authentik lists an application only for users who may open it).
+        def mutate(spec):
+            spec.update(login="app-only", login_reason="own login", groups=["family", "guests"])
+        self.assertEqual(self.errors(mutate, base="crm"), [])
+        spec = spec_fixture("crm")
+        mutate(spec)
+        data = _blueprint(self.read(self.gen(spec), "files/rules-crm"))
+        app = next(e for e in data["entries"] if e["model"] == "authentik_core.application")
+        self.assertIsNone(app["attrs"]["provider"])  # still only a link
+        deny = [e for e in data["entries"] if e["model"] == "authentik_policies_expression.expressionpolicy"]
+        self.assertEqual(len(deny), 1)  # hidden from everyone until access.yaml has bound the groups
+        self.assertEqual(len([e for e in data["entries"] if e["model"] == "authentik_policies.policybinding"]), 1)
+
+    def test_groups_need_a_web_name_for_an_app_on_its_own_login(self):
+        # Without a hostname the app has no dashboard link, so there is nothing to show or hide.
         def mutate(spec):
             spec.update(login="app-only", login_reason="own login", groups=["family"])
+            spec.pop("hostname", None)
         errors = self.errors(mutate, base="crm")
-        self.assertTrue(any("groups" in e and "login page" in e for e in errors), errors)
+        self.assertTrue(any("groups" in e and "hostname" in e for e in errors), errors)
 
     def test_guide_and_prompt_ask_for_groups(self):
         root = Path(__file__).resolve().parents[1]
@@ -427,6 +443,25 @@ class AccessGroupTests(GenCase):
         self.assertIn("capital letters", operations)
         prompt = " ".join((root / ".opencode" / "agents" / "fcos-app-installer.md").read_text().split())
         self.assertIn("ask which groups of the auth gateway may open it", prompt)
+
+    def test_every_app_gets_the_question_who_sees_it_including_apps_on_their_own_login(self):
+        # Without a binding the dashboard shows an app's link to every account, guests included; the agent
+        # asks for every app, and offers "everyone" as a choice instead of a silent default.
+        root = Path(__file__).resolve().parents[1]
+        guide = " ".join((root / "docs" / "guide" / "03-add-a-service.md").read_text().split())
+        self.assertIn("or who sees its link", guide)
+        self.assertNotIn("can't take `groups:`", guide)
+        prompt = " ".join((root / ".opencode" / "agents" / "fcos-app-installer.md").read_text().split())
+        self.assertIn("ask which groups see its dashboard link", prompt)
+        self.assertIn("guests included", prompt)
+        from layout import SKILLS
+        operations = " ".join((SKILLS / "authgw-authentik" / "operations.md").read_text().split())
+        self.assertIn("who sees its dashboard link", operations)
+        self.assertNotIn("can't take `groups:`", operations)
+        questions = " ".join((root / "docs" / "guide" / "questions.md").read_text().split())
+        section = questions.split("## 9a.", 1)[1].split("## 10.", 1)[0]
+        for needle in ("everyone", "guests", "one or more"):
+            self.assertIn(needle, section)
 
     def test_bad_groups_refused(self):
         for bad in ("family", ["Family"], ["a b"], ["x", "x"], [f"g{i}" for i in range(11)], ["-x"], [""]):
@@ -1242,6 +1277,33 @@ class BackupsReportTests(GenCase):
         self.assertIn("nothing to back up", text.lower())
 
 
+class ShellInstructionsTests(GenCase):
+    """ids.md is kept with the user's notes; it says how to get a shell on the VM that runs the app and how
+    to run the app's own admin commands there, so the final report can point at it."""
+
+    def test_ids_report_says_how_to_ssh_in_and_act_as_the_apps_account(self):
+        site = copy.deepcopy(SITE)
+        site["admin_user"] = "ops"
+        text = (self.gen("crm", site=site) / "ids.md").read_text()
+        section = text.split("## Getting a shell on the VM", 1)[1].split("\n## ", 1)[0]
+        self.assertIn("# desktop (fish)", section)
+        self.assertIn("ssh ops@192.0.2.30", section)  # the VM's address from the site file
+        self.assertIn("admin network", section)
+        self.assertIn("# vm apps (bash, ops)", section)
+        lines = section.splitlines()
+        shell = lines[lines.index("# vm apps (bash, ops)") + 1:]
+        self.assertEqual(shell[0], "cd /")  # sudo -u starts in the admin's home, which the app's account can't enter
+        self.assertIn("sudo -u crm XDG_RUNTIME_DIR=/run/user/3110 podman ps", section)
+        self.assertRegex(section, r"sudo -u crm XDG_RUNTIME_DIR=/run/user/3110 podman exec crm-\w+ <")
+        self.assertNotRegex(section.lower(), r"password\s*[:=]")  # it holds no secret
+
+    def test_without_an_admin_user_the_section_says_so_instead_of_inventing_one(self):
+        site = copy.deepcopy(SITE)
+        del site["admin_user"]
+        text = (self.gen("crm", site=site) / "ids.md").read_text()
+        self.assertIn("ssh <admin user>@192.0.2.30", text)
+
+
 class SecretsReportTests(GenCase):
     def test_secrets_report_marks_durable(self):
         text = (self.gen("crm") / "secrets.md").read_text()
@@ -1253,6 +1315,16 @@ class SecretsReportTests(GenCase):
             self.assertIn(f"podman secret create {name} -", section)
         self.assertIn("XDG_RUNTIME_DIR=/run/user/3110", text)
         self.assertIn("# vm apps (bash, admin)", text)
+
+    def test_headers_name_the_sites_admin_user_not_a_fixed_one(self):
+        site = copy.deepcopy(SITE)
+        site["admin_user"] = "ops"
+        out = self.gen("crm", site=site)
+        for report in ("secrets.md", "ids.md"):
+            with self.subTest(report=report):
+                text = (out / report).read_text()
+                self.assertIn("# vm apps (bash, ops)", text)
+                self.assertNotIn("(bash, admin)", text)
 
     def test_non_durable_secret_is_not_marked(self):
         text = (self.gen("single") / "secrets.md").read_text()

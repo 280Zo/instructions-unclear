@@ -604,7 +604,16 @@ def _secret_value_text(secret: dict) -> tuple[str, str]:
     return what, keep
 
 
-def _secrets_report(spec, svc, vm, uid, containers) -> str:
+ADMIN_NAME = re.compile(r"[a-z_][a-z0-9_-]{0,31}")
+
+
+def _admin_user(site: dict) -> str:
+    """The VM admin account's name from the site file, for the headers and commands of the reports."""
+    name = site.get("admin_user")
+    return name if isinstance(name, str) and ADMIN_NAME.fullmatch(name) and name != "root" else "<admin user>"
+
+
+def _secrets_report(spec, svc, vm, uid, containers, admin="admin") -> str:
     run = f"sudo -u {svc} XDG_RUNTIME_DIR=/run/user/{uid} podman secret create"
     users = {}
     for ctr in containers:
@@ -633,7 +642,7 @@ def _secrets_report(spec, svc, vm, uid, containers) -> str:
             out += ["- Value: you enter it at the hidden prompt (for example a key from the provider)."]
         else:
             out += ["- Value: generated on the VM, never shown; nothing to keep (a rebuild creates a new one)."]
-        out += ["", "```bash", f"# vm {vm} (bash, admin)", "cd /"]
+        out += ["", "```bash", f"# vm {vm} (bash, {admin})", "cd /"]
         if source == "prompt":
             out += [f'read -rs -p "value for {name}: " v; echo', f'printf %s "$v" | {run} {name} -', "unset v"]
         elif source == "file":
@@ -736,7 +745,7 @@ def _backups_report(spec, site, svc, vm, calendar, keep) -> str:
         "- **Prove it restores** without touching anything live: guide 4, Test a restore.", ""])
 
 
-def _ids_report(spec, svc, vm, uid, gid) -> str:
+def _ids_report(spec, svc, vm, uid, gid, admin="admin", ip="<VM address>") -> str:
     first_u, last_u = subid_range(uid)
     first_g, last_g = subid_range(gid)
     out = [f"# IDs for {svc}", "",
@@ -760,10 +769,22 @@ def _ids_report(spec, svc, vm, uid, gid) -> str:
            "before changing owners by hand.", "",
            "| Container | user_mode |", "|---|---|"]
     out += [f"| {svc}-{c['name']} | {c['user_mode']} |" for c in spec["containers"]]
+    run = f"sudo -u {svc} XDG_RUNTIME_DIR=/run/user/{uid}"
+    first = f"{svc}-{spec['containers'][0]['name']}"
     out += ["", "To see the real mapping of a running container (the source of truth):", "",
-            "```bash", f"# vm {vm} (bash, admin)", "cd /",
-            f"sudo -u {svc} XDG_RUNTIME_DIR=/run/user/{uid} podman exec {svc}-{spec['containers'][0]['name']} "
-            "cat /proc/self/uid_map /proc/self/gid_map", "```", ""]
+            "```bash", f"# vm {vm} (bash, {admin})", "cd /",
+            f"{run} podman exec {first} cat /proc/self/uid_map /proc/self/gid_map", "```", "",
+            "## Getting a shell on the VM", "",
+            "Some of this app's admin work, such as creating its first account, is a command you run on the VM that "
+            "runs it. From your desktop, on one of your admin networks, use your own SSH key (the VM takes keys "
+            "only, no password):", "",
+            "```fish", "# desktop (fish)", f"ssh {admin}@{ip}", "```", "",
+            f"On the VM, `{admin}` is a normal account with sudo. The app's own account `{svc}` has no login, so "
+            "you act as it with sudo. Start with `cd /`: sudo keeps your current folder, which the app's account "
+            "can't enter.", "",
+            "```bash", f"# vm {vm} (bash, {admin})", "cd /",
+            f"{run} podman ps",
+            f"{run} podman exec {first} <the app's admin command, from its docs>", "```", ""]
     return "\n".join(out)
 
 
@@ -899,8 +920,9 @@ def generate(spec: dict, site: dict, out) -> list[Path]:
                                                           dict(base, BACKUP_KEEP=keep, BACKUP_ONCALENDAR=calendar))
     if has_route(spec):
         files.update(_route_files(spec, site))
-    files["secrets.md"] = _secrets_report(spec, svc, vm_name, uid, spec["containers"])
-    files["ids.md"] = _ids_report(spec, svc, vm_name, uid, gid)
+    admin = _admin_user(site)
+    files["secrets.md"] = _secrets_report(spec, svc, vm_name, uid, spec["containers"], admin)
+    files["ids.md"] = _ids_report(spec, svc, vm_name, uid, gid, admin, vm["ip"])
     files["file-server.md"] = _file_server_report(spec, site, svc, vm_name, uid, gid)
     files["backups.md"] = _backups_report(spec, site, svc, vm_name, calendar, keep)
     return _write_all(out, svc, files)

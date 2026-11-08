@@ -100,6 +100,30 @@ class GuideTests(unittest.TestCase):
     def test_verification_checklist_stays_at_3_10(self):
         self.assertIn("## 3.10 ", (GUIDE / "03-add-a-service.md").read_text())
 
+    def test_first_boot_check_tests_the_data_disk_link_instead_of_listing_the_folder(self):
+        # The output of a listing of /dev/disk/by-id goes through the redactor, which hides the lines as
+        # [hidden]; a test that prints one word shows the result.
+        text = (GUIDE / "02-build-a-vm.md").read_text()
+        self.assertNotIn("ls -l /dev/disk/by-id/", text)
+        self.assertIn("test -e /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi1 && echo present", text)
+        expected = text.split("Expected:", 1)[1].split("FCOS updates itself", 1)[0]
+        self.assertIn("`present`", expected)
+
+    def test_a_rule_that_blocks_sudo_has_one_documented_manual_route(self):
+        # A global rule that denies any command containing sudo blocks every step that runs sudo on a VM. The
+        # agent must not reword the command around the rule; it offers the user the same step to run by hand.
+        readme = " ".join((GUIDE / "README.md").read_text().split())
+        section = readme.split("## When a rule blocks `sudo`", 1)[1].split(" ## ", 1)[0]
+        for needle in ("never rewords", "sha256sum", "scp", "your own key", "apply-", "report back", "never a secret"):
+            self.assertIn(needle, section)
+        questions = " ".join((GUIDE / "questions.md").read_text().split())
+        part = questions.split("## 16.", 1)[1]
+        self.assertIn("sudo", part)
+        self.assertIn("run it yourself", part)
+        prompt = " ".join((GUIDE.parents[1] / ".opencode" / "agents" / "fcos-app-installer.md").read_text().split())
+        self.assertIn("a rule blocks `sudo`", prompt)
+        self.assertIn("never reword the command", prompt)
+
     def test_commands_on_service_folders_use_sudo(self):
         # /var/lib/appdata/<svc> folders are 0750 and owned by the service user;
         # backup folders on NFS are too, and root is squashed there, so those

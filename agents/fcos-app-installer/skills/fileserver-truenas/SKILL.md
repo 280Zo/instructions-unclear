@@ -42,5 +42,6 @@ or node name.
 
 - https://www.truenas.com/docs/scale/shares/nfs/addingnfsshares/
 - https://www.truenas.com/docs/scale/26/credentials/users/manageusers/
+- https://www.truenas.com/docs/scale/25.04/scaletutorials/credentials/managelocalgroups/
 
 Menu names change between versions; when one doesn't match, follow the linked documentation.

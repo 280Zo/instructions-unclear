@@ -153,6 +153,37 @@ page's app dashboard.
 **Skipped when:** never. If no login page exists yet, the agent also asks:
 "Set the login page up first?"
 
+## 9a. Who sees the app
+
+**Asked:** for an app behind the login page: "Who may open this app?" For an
+app on its own login: "Who should see this app's link on the login page's
+dashboard? The app's own login still decides who can get in." Asked for every
+app, never skipped, and never answered for you.
+
+**Options:** everyone (every account sees it, guests included); one or more of
+the groups that exist (for example family, guests), or new ones you name.
+
+**Fills:** the groups that may open the app, or that see its link. Everyone
+means none are set. You add yourself (and anyone else) to a group in the login
+page's own interface.
+
+**Skipped when:** never.
+
+## 9b. Two-step login
+
+**Asked:** "This app has its own login, and its docs describe two-step login
+(authenticator codes, passkeys or security keys). Turn it on?"
+
+**Options:** yes, and I walk you through it from the app's docs; no.
+
+**Fills:** nothing in the files. On yes the agent gives the documented steps one at a
+time, with the docs page for each, and you confirm each result. Never paste a
+code or a recovery key into the chat. The choice is recorded in the final
+report either way.
+
+**Skipped when:** the app is behind the login page, or its docs describe no
+two-step login (the agent says so).
+
 ## 10. Paths that skip the login page
 
 **Asked:** "Desktop and phone apps can't use a web login. The app's official
@@ -168,16 +199,24 @@ such paths.
 
 ## 11. User and group numbers
 
-**Asked:** "Which user and group number should the app's account have? If it
-uses your file server, it must match the account there."
+**Asked:** two questions, separately and before anything is generated. "Which
+user number should the app's account have? If it uses your file server, it
+must match the account there." Then: "Which group number should the app's
+group have? If your file server already has a group for this app, give that
+one."
 
-**Options:** the next free number the agent found (`tools/check_workspace.py`
-names one when a number is taken); the number of an existing file server
-account. Numbers run from 1000 to 24608; 1000 and 1001 are kept for the VM's
-admin account. A file server account at 1000, 1001 or above 24608 can't be
-matched: say so and offer a new account on the file server instead.
+**Options:** for the user number, the next free number the agent found
+(`tools/check_workspace.py` names one when a number is taken) or the number of
+an existing file server account. For the group number, the same number as the
+user (when the file server has no group for this app); the file server's
+existing group for this app (pick "Other" and type its number); or another free
+number. Numbers run from 1000 to 24608; 1000 and 1001 are kept for the VM's
+admin account. A file server account or group at 1000, 1001 or above 24608
+can't be matched: say so and offer a new one on the file server instead.
 
-**Fills:** the app's account on the machine (and on the file server).
+**Fills:** the app's account and group on the machine (and on the file server).
+The group is created on the file server first when it doesn't exist, so a
+mismatch never shows up after the machine exists.
 
 **Skipped when:** an earlier install already set it.
 
@@ -230,3 +269,17 @@ each one at the hidden prompt. OK?"
 from a hidden prompt; the agent only lists their names.
 
 **Skipped when:** the app has no secret that data depends on.
+
+## 16. A rule of yours blocks a step
+
+**Asked:** "A rule of yours blocks commands that contain `sudo`, so I can't
+run this step on the machine myself. Want to run it yourself? I give you the
+exact commands and check what they print."
+
+**Options:** yes, I'll run it (the agent gives the blocks from the guide's
+"When a rule blocks `sudo`"); no, stop here.
+
+**Fills:** nothing in the files. The agent never rewords the command to get
+past the rule.
+
+**Skipped when:** no rule blocks the step.

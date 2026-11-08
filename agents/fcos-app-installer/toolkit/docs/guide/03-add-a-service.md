@@ -52,14 +52,24 @@ in its docs which log file holds the mail. A link in such a mail can be a
 credential (an invitation lets someone join): the user reads it from the log
 on the VM, and the agent does not.
 
-**Ask who may open it** (apps behind the login page). An auth gateway may let every user open an app
-that has no group, so ask which groups get it (for example `family`, `guests`) and put them in
-`groups:`. The login front end's rules create each group if it's missing and bind it to the app. Tell
-the user to add themselves (and anyone else) to the group in the gateway's own interface, or they lose
-access too. An app on its own login can't take `groups:`: its route skips the login page. Also ask
-whether anyone new needs an account for it: they go into the site file's `people:` (guide 6.10). The
-gateway's details (how the groups and bindings behave, what to do when a group is removed) are in its
-`operations.md`, "Who may open an app".
+**Ask who may open it** (apps behind the login page) **or who sees its link** (apps on their own login
+with a web name). Ask for every app. An auth gateway lets every user open an app that has no group, and
+its dashboard shows the link of an app that has none to every account, guests included. So ask:
+everyone, or which groups (for example `family`, `guests`), and put the groups in `groups:`;
+"everyone" means no `groups:`. Behind the login page the groups decide who may open the app. For an
+app on its own login, its own login decides who gets in, and the groups only decide who sees its
+dashboard link. The login front end's rules create each group if it's missing and bind it to the app.
+Tell the user to add themselves (and anyone else) to the group in the gateway's own interface, or they
+lose access too (or the link). Also ask whether anyone new needs an account for it: they go into the
+site file's `people:` (guide 6.10). The gateway's details (how the groups and bindings behave, what to
+do when a group is removed) are in its `operations.md`, "Who may open an app".
+
+**Two-step login** (apps on their own login). An app behind the login page is covered by the gateway's
+sign-in; an app on its own login has only what the app offers. If its official docs describe two-step
+login (MFA: authenticator codes, passkeys, security keys), ask whether to turn it on (question 9b). On
+yes, walk the user through the documented steps one at a time, with the docs page for each, and have
+them confirm the result (never a code or a recovery key in the chat). Record the choice in `research.md`
+and the final report; on no, record that too.
 
 **The app's dashboard section and logo.** The gateway's dashboard may list apps under section headings.
 Propose a section from what the app is for (a relationship manager: `Relationships`), reuse an
@@ -91,8 +101,12 @@ NFS volumes, and can't share a folder with a `map-user` container.
 ## 3.4 Ask the user: identity and naming
 
 [Questions](questions.md) 10, 11 and 15: paths that skip the login page,
-the UID/GID (matching the file server account when it uses NFS), and the
-secrets the user keeps. Hostname defaults to the service name.
+the user number and the group number (asked separately, matching the file
+server's account and group when the app uses NFS), and the secrets the user
+keeps. Ask the group number before anything is generated: the spec's `gid`
+defaults to the `uid`, and a file server group that already exists for the
+app has its own number. The file server step creates the group first when it
+doesn't exist. Hostname defaults to the service name.
 
 ## 3.5 [Manual] File server: account and folders
 

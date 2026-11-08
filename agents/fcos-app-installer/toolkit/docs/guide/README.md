@@ -151,6 +151,26 @@ lists as open, protected by the app's own password.
 | File server: accounts, groups, exports, folders | Pushes changes to running VMs over SSH as `<admin>` and starts services |
 | Secret values: entered at hidden prompts, kept in the password manager | Lists secret names only; never sees a value |
 
+## When a rule blocks `sudo`
+
+A global rule of the user's can deny any command that contains `sudo`. Then
+`tools/vmssh.py run` can't run the steps that need admin rights on a VM (the
+first-boot check in 2.7, the push in 3.8, the start in 3.9, even a note that
+only mentions `sudo`). The agent never rewords the command or splits it up to get
+past the rule. It says which step is blocked and offers the same step by hand
+(question 16); on yes:
+
+1. **A script (the push).** The agent has written `/tmp/opencode/apply-<name>.sh`.
+   It shows the file's SHA-256 (`sha256sum`) and a block for the desktop that
+   copies the file to the VM with your own key (`scp`). On the VM, a second block
+   checks that `sha256sum` prints the same value, and only then runs it with
+   `sudo bash`.
+2. **A single command.** The agent shows it as a block labelled for the VM
+   (`# vm <vm> (bash, <admin>)`, starting with `cd /` when it runs as an app's
+   account) for you to paste after you SSH in with your own key.
+3. Then report back what the command printed, never a secret. The agent checks
+   the result as it would have after running it itself, and goes on.
+
 ## Tools in this repo
 
 | Tool | Does |

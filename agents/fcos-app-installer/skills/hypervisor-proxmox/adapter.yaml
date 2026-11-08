@@ -62,7 +62,7 @@ manual_steps:
       - Copy the three host scripts from your desktop to the node, check they arrived unchanged (each line must end in OK), and run the check; it changes nothing.
       - If anything isn't OK, or the check shows an error, "would reset role" or "would create" you didn't expect, stop and report it.
       - Otherwise apply (third block). When the token is new, the script prints its secret once. Copy its value row, and never paste it into the chat; the next step stores it.
-      - If the check says the token already exists and this workspace has no copy of its secret, replace it instead (fourth block, a check; then the fifth). The old token stops working, and any other workspace's copy with it.
+      - If the check says the token already exists, do not apply. Report that instead; replacing a token is a separate step, which I give you only if this workspace has no copy of its secret.
     blocks:
       - machine: "desktop (fish)"
         code: |
@@ -76,10 +76,26 @@ manual_steps:
         code: |
           cd /root/fcos-agent
           bash setup-agent-access.sh --storage {{STORAGE}} --bridge {{BRIDGE}} --iso-storage {{ISO_STORAGE}} --host-key {{HOST}}
+    uses: [HOST, HOST_ADDRESS, SKILL_DIR, LIB_SHA256, SETUP_SHA256, TEARDOWN_SHA256, STORAGE, BRIDGE, ISO_STORAGE]
+    report_back:
+      - the three OK lines and the check's output
+      - then the apply's output, without the secret
+  rotate_api_token:
+    title: Replace the agent's Proxmox token on {{HOST}}
+    steps:
+      - Only when the token already exists on the server and this workspace has no copy of its secret. The old token stops working, and so does any other workspace's copy of it.
+      - Copy the three host scripts from your desktop to the server, check they arrived unchanged (each line must end in OK), and run the check (second block). The check changes nothing.
+      - If anything isn't OK, or the check shows something you didn't expect, stop and tell me.
+      - Otherwise run the replacement (third block). It prints the new secret once. Copy its value row, and never paste it into the chat; the next step stores it.
+    blocks:
+      - machine: "desktop (fish)"
+        code: |
+          ssh root@{{HOST_ADDRESS}} 'mkdir -p /root/fcos-agent'
+          scp {{SKILL_DIR}}/scripts/lib.sh {{SKILL_DIR}}/scripts/setup-agent-access.sh {{SKILL_DIR}}/scripts/teardown-agent-access.sh root@{{HOST_ADDRESS}}:/root/fcos-agent/
       - machine: "proxmox {{HOST}} (bash, root)"
         code: |
           cd /root/fcos-agent
-          bash setup-agent-access.sh --storage {{STORAGE}} --bridge {{BRIDGE}} --iso-storage {{ISO_STORAGE}} --host-key {{HOST}} --rotate --check
+          printf '%s  %s\n' {{LIB_SHA256}} lib.sh {{SETUP_SHA256}} setup-agent-access.sh {{TEARDOWN_SHA256}} teardown-agent-access.sh | sha256sum -c - && bash setup-agent-access.sh --storage {{STORAGE}} --bridge {{BRIDGE}} --iso-storage {{ISO_STORAGE}} --host-key {{HOST}} --rotate --check
       - machine: "proxmox {{HOST}} (bash, root)"
         code: |
           cd /root/fcos-agent
@@ -87,16 +103,16 @@ manual_steps:
     uses: [HOST, HOST_ADDRESS, SKILL_DIR, LIB_SHA256, SETUP_SHA256, TEARDOWN_SHA256, STORAGE, BRIDGE, ISO_STORAGE]
     report_back:
       - the three OK lines and the check's output
-      - then the apply's (or the replacement's) output, without the secret
+      - then the replacement's output, without the secret
   store_api_token:
     title: Store the agent's Proxmox token for {{HOST}} on your desktop
     steps:
-      - Run this on your desktop right after the token was created. It creates the file readable only by you, then asks for the secret at a hidden prompt (paste the value row the setup script printed) and writes it to the workspace's token file, readable only by you, followed by the address of the server. The token is only ever sent to that address, so check that it is your server's address before you run the command. Only the adapter's tool (tools/virtualization/proxmox.py) reads that file; the agent never does.
+      - Run this on your desktop right after the token was created. It creates the file readable only by you, then asks for the secret at a hidden prompt (paste the value row the setup script printed, then press Enter; a newline or spaces that came with the copy are removed) and writes it to the workspace's token file, readable only by you, followed by the address of the server. The token is only ever sent to that address, so check that it is your server's address before you run the command. Only the adapter's tool (tools/virtualization/proxmox.py) reads that file; the agent never does.
       - If your server's certificate comes from your own certificate authority, also run the second command, which pins the authority's certificate file (the root CA the discovery step saved) the same way. Skip it when the server uses a certificate your desktop already trusts.
     blocks:
       - machine: "desktop (fish)"
         code: |
-          read -s -P "Proxmox token secret: " t; and test -n "$t"; and install -m 600 /dev/null {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token; and printf '%s\naddress=%s\n' 'fcos-agent@pve!fcos-bootstrap='$t '{{HOST_ADDRESS}}' > {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token; and chmod 600 {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token; set -e t
+          read -s -P "Proxmox token secret (paste it, then press Enter): " t; and set t (string trim -- "$t"; true); and test -n "$t"; and install -m 600 /dev/null {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token; and printf '%s\naddress=%s\n' 'fcos-agent@pve!fcos-bootstrap='$t '{{HOST_ADDRESS}}' > {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token; and chmod 600 {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token; and echo "Stored the token in {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token"; or echo "STOP: nothing was stored (the secret was empty, or the file could not be written)"; set -e t
       - machine: "desktop (fish)"
         code: |
           printf 'ca_file=%s\n' {{WORKSPACE}}/hosts/{{HOST}}/pve-root-ca.pem >> {{WORKSPACE}}/secrets/proxmox-{{HOST}}.token

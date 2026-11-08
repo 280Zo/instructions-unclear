@@ -224,6 +224,8 @@ def private_values(ws: Path) -> set[str]:
     # included) are public.
     shipped = {p.parent.name.split("-", 1)[1] for prefix in (*ADAPTER_PREFIX.values(), "adapter")
                for p in SKILLS.glob(f"{prefix}-*/adapter.yaml")}
+    # So are the names of the modules a site chooses under login_frontend (ingress-traefik, authgw-authentik).
+    shipped |= {p.parent.name for p in SKILLS.glob("*/module.yaml")}
     files = [ws / "site.yaml", *sorted((ws / "services").glob("*/service.yaml")),
              *sorted((ws / "vms").glob("*/vm.yaml"))]
     values = set()

@@ -132,11 +132,11 @@ def cmd_keygen(ws: Path, site: dict, args) -> int:
     subprocess.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-C", f"fcos-agent-setup-{args.vm}",
                     "-f", str(key)], check=True, env=_clean_env(), stdin=subprocess.DEVNULL)
     key.chmod(0o600)
-    _print_manual_step(key, args.vm)
+    _print_manual_step(key, args.vm, _target(site, args.vm)[0])
     return 0
 
 
-def _print_manual_step(key: Path, vm: str) -> None:
+def _print_manual_step(key: Path, vm: str, admin: str) -> None:
     pub = key.with_name("id_ed25519.pub").read_text(encoding="utf-8").strip()
     if not PUBKEY.match(pub) or not pub.endswith(f"fcos-agent-setup-{vm}"):
         raise VmSshError("the agent's public key has an unexpected form; nothing to add")
@@ -147,7 +147,7 @@ def _print_manual_step(key: Path, vm: str) -> None:
     # The block stops by itself on any other machine: pasted on the wrong one, it would
     # overwrite that machine's agent key or put the key on a hypervisor.
     print("```bash")
-    print(f"# vm {args.vm} (bash, admin): run this ONLY on {args.vm}")
+    print(f"# vm {args.vm} (bash, {admin}): run this ONLY on {args.vm}")
     print(f'if [ "$(hostnamectl hostname)" = "{args.vm}" ]; then')
     print("  install -d -m 0700 ~/.ssh/authorized_keys.d")
     print(f"  printf '%s\\n' '{pub}' > {VM_KEY_FILE}")
@@ -162,12 +162,12 @@ def _print_manual_step(key: Path, vm: str) -> None:
 
 def cmd_reinstall(ws: Path, site: dict, args) -> int:
     """After a rebuild: the VM lost the key file and has a new host key; the key here stays."""
-    _target(site, args.vm)
+    admin, _ = _target(site, args.vm)
     key = _key_dir(ws, args.vm) / "id_ed25519"
     if not key.is_file():
         raise VmSshError(f"no agent key for {args.vm}; run: python3 tools/vmssh.py keygen {args.vm}")
     _known_hosts(ws, args.vm).unlink(missing_ok=True)
-    _print_manual_step(key, args.vm)
+    _print_manual_step(key, args.vm, admin)
     print(f"Then pin the new host key: python3 tools/vmssh.py trust {args.vm} --fingerprint <SHA256:...>")
     return 0
 

@@ -33,6 +33,7 @@ Label every row whose source isn't official.
 | Shared memory or read-only folders it asks for | compose, docs |
 | Paths desktop or mobile clients call without a browser (sync, API, CalDAV/CardDAV, WebDAV) | docs, client setup pages |
 | Single sign-on: OpenID Connect, trusted login headers, or none; how sharing works without it | docs, issues (label them) |
+| Two-step login (MFA): whether the app has it (authenticator codes, passkeys, security keys), where it is turned on, whether an admin can require it | docs |
 | Mail it sends (reminders, invitations): its mail driver, a log driver, and the sender address it needs even when nothing is sent | mail config, `.env.example` |
 | Credentials it prints at start (a generated admin password, a key, an OAuth client secret) | entrypoint, first-start code, docs |
 | Its logo: an SVG or PNG the project publishes | repository, website |
@@ -48,6 +49,9 @@ Label every row whose source isn't official.
 - **Single sign-on:** check the app's own docs, then its issue tracker for
   the current state (label it). "None" is a valid answer; record how people
   share the app instead (invitations, shared accounts).
+- **Two-step login:** only what the app's own docs describe counts; give the
+  page. "None" is a valid answer. When the app has it, the person decides
+  whether to turn it on, and the steps come from those docs, not from memory.
 - **Root at start** is a decision for the person, with the reason from the
   entrypoint, not a fact to work around.
 - Show the person the logo before using it; they may prefer their own.

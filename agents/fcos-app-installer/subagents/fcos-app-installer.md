@@ -733,7 +733,12 @@ exact wording, options and what each answer fills are in
    Without one, show the setup steps (virtualization: `create_api_access`):
    the user checks each script's checksum, runs the check mode, then for real.
    When the token is new, show `store_api_token` next, as its own step: the
-   setup script prints only the secret, never the command that stores it.
+   setup script prints only the secret, never the command that stores it. If
+   the check says the token already exists and the workspace has no copy of
+   its secret, don't apply: show the replacement as its own step
+   (virtualization: `rotate_api_token`), never in the same message as the
+   setup, so that running the blocks top to bottom can't replace a token; then
+   `store_api_token`.
 5. **Where the service goes.** Always ask **which server** and which VM, even
    if you think you know. List the VMs the token can see
    (`python3 tools/hypervisor.py list`) and ask: "Add it to an existing machine, or
@@ -755,7 +760,12 @@ exact wording, options and what each answer fills are in
 8. **User decisions,** asked together: the 5 GB rule (grow the data disk, or
    NFS with the risk recorded; for a database say plainly that it can
    corrupt), an image that starts as root, and any fact the official docs
-   don't state.
+   don't state. For an app on its own login whose official docs describe
+   two-step login (MFA), ask whether to turn on two-step login (questions.md
+   9b); on yes, walk the user through the documented steps one at a time with
+   the docs page for each, have them confirm the result, and never take a
+   code or recovery key in the chat. Record the choice in `research.md` and
+   the final report.
 9. **Manual steps** for systems you don't touch, rendered from the adapter with
    every value filled in: write the values to a JSON file in `/tmp/opencode/`
    and run `python3 tools/adapters.py render --role <role> --provider <name>
@@ -770,7 +780,8 @@ exact wording, options and what each answer fills are in
     3.10 checklist, rebuild `<workspace>/AGENTS.md` with
     `python3 tools/install_notes.py <workspace>` (add anything a spec can't
     hold, such as how people share an app without single sign-on, with
-    `--note "<one line>"`), and write the final report. Point the user to the
+    `--note "<one line>"`; a note that shows a command run as the app's
+     account starts with `cd /`, as the generated reports do), and write the final report. Point the user to the
     generated `ids.md` to keep with their notes.
 11. **Adapter draft.** If any role used the general steps, ask: "Want me to
     draft an adapter for <product> from what you did?" On yes, start the
@@ -853,13 +864,19 @@ folder trees), and say plainly what was only read, not tested.
 These permissions are guard rails, not a wall: your shell runs as the same
 Linux user as the person, and SSH as `<admin>` can run `sudo` on a VM. Never write or run a
 script, redirect, quoting trick or copy of a tool that gets around a rule;
-if a rule is in your way, stop and ask. Never SSH into a
+if a rule is in your way, stop and ask. When a rule blocks `sudo` on a VM step
+(the user's own global rule), never reword the command or split it up: say which
+step is blocked and ask question 16, then give the manual route from the guide's
+"When a rule blocks `sudo`". Never SSH into a
 virtualization server, the router or the file server, even as a non-root
 user.
 
 For every app behind the login page, ask which groups of the auth gateway may open it
 (guide 3.2, spec `groups:`): with none, the gateway may let every user in (its `operations.md`
-says). Ask too whether anyone new needs an account (site `people:`, guide 6.10). People
+says). For every app on its own login that has a web name, ask which groups see its dashboard link
+(the same `groups:`; its own login still decides who gets in): with none, every account sees the
+link, guests included. Offer everyone, or one or more of the existing groups; never skip the
+question or answer it for the user. Ask too whether anyone new needs an account (site `people:`, guide 6.10). People
 are local accounts without email; you never set a password: the user sets it
 in the gateway's own interface. For each app, propose a dashboard section from what it is for (reuse an
 existing one when it fits) and ask (spec `section:`). Find its logo in its official sources, show it to
@@ -937,6 +954,13 @@ End every run with:
   file server is off), and the restore steps it points to (guide 4);
 - the break-glass way into each new service if the login front end is down
   (guide section 8);
+- how to get a shell on the VM that runs each new service, whenever it needs a
+  command run there (an admin account to create, a setting only its CLI
+  changes): `ssh <admin>@<VM address>` from one of the user's admin networks
+  with their own key, then the command as the app's account, from the section
+  "Getting a shell on the VM" in the service's `ids.md`, with the app's
+  documented command filled in and its docs page cited; say so when no such
+  command is needed;
 - facts you couldn't verify, and known gaps that applied.
 
 ## Overrides of global rules

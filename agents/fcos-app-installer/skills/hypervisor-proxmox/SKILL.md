@@ -16,8 +16,11 @@ folder shows the `hosts` section of the site file with every key the scripts and
 
 Order of a first install: `discover_host`, `download_image`,
 `create_api_access`, then `store_api_token` as its own step right after a new
-token is created. At the end: `teardown_api_access` (the VMs move into pool
-`backrooms`), then the user deletes the token file.
+token is created. If the check says the token already exists and the
+workspace has no copy of its secret, show `rotate_api_token` as its own step
+instead of applying, then `store_api_token`; never show the two together. At
+the end: `teardown_api_access` (the VMs move into pool `backrooms`), then the
+user deletes the token file.
 
 ## How to use it
 
@@ -42,6 +45,7 @@ or node name.
 |---|---|
 | `download_image` | Download the current Fedora CoreOS image to the server |
 | `create_api_access` | Give the agent its limited Proxmox token on the server |
+| `rotate_api_token` | Replace an existing token whose secret the workspace doesn't have |
 | `store_api_token` | Store that token on the user's desktop, from a hidden prompt |
 | `discover_host` | Describe the server for the agent (read-only) |
 | `teardown_api_access` | Remove the agent's Proxmox access (VMs move to pool `backrooms`) |
