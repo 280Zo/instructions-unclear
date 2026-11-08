@@ -276,6 +276,37 @@ setup belongs in their workspace, never in a module. Facts a module relies on go
 patterns if the prefix is new, run `python3 agents/generate.py`, and update the skill counts in
 `groups/README.md` and the READMEs that state them.
 
+### Changing the FCOS app installer
+
+Use this order for any change under `agents/fcos-app-installer/`: the toolkit, its skills and modules, the agent prompt and the guide. The rules above (layout, credits, secrets) still apply; this is the order of work.
+
+1. Read the code, the guide page and the tests the change touches before anything else. Ask the user only when the answer changes what gets built and the code does not settle it, and use the question tool. Never choose for the user; a choice you make goes in your summary as yours.
+2. Write a failing test first. Run it and see it fail for the reason you expect, then make the smallest change that passes it. The toolkit's tests are in `agents/fcos-app-installer/toolkit/tests/`. They pin generated files, adapter steps and the wording of the prompt and the guide. A command block the user pastes into their shell is tested in that shell: `test_fish_blocks.py` pastes a block into a real fish through a pseudo-terminal and is skipped when fish is missing.
+3. Run the toolkit's tests in an installed copy, because they expect the installed layout and not the repository's. Use a new folder name each time: `install.py` never deletes, so a reused folder keeps stale files.
+
+   ```bash
+   python3 agents/fcos-app-installer/install.py /tmp/opencode/<new-name> --apply
+   node <rulesync 41.0.0 cli> generate --config groups/fcos_app_installer.jsonc --output-roots /tmp/opencode/<new-name>
+   cd /tmp/opencode/<new-name> && python3 -B -m unittest tests.<module>
+   ```
+
+4. Before you propose a commit, run the whole gate from the repository root:
+
+   ```bash
+   python3 -B -m unittest discover -s tests
+   python3 -B agents/generate.py --check
+   python3 -B tests/check_fcos_app_installer.py <rulesync 41.0.0 cli>
+   ```
+
+   The last command installs a fresh folder, runs the whole toolkit suite there and prints the folder. In that folder, run `bash tools/validate.sh tests/fixtures/edge.values`, `bash tools/validate.sh tests/fixtures/ai-vm.values` and `python3 -B tools/publish_check.py`. Run `publish_check.py` with the user's real workspace set (`FCOS_WORKSPACE` or the remembered one). It compares every file with that workspace's values, so it catches what the fixtures cannot, such as a site value that is also a shipped name. Then run the leak scan from "Verify before committing" on the paths you changed. Report a check as passed only if you ran it.
+5. For a change to permissions, file writes, paths, the ISO check or anything that runs without asking, have a read-only reviewer try to break it on a clone of the commit. Fix what it finds, tests first.
+6. Change the words and the code together. A behavior change updates the guide page, `questions.md`, the agent prompt and the skill's step table in the same commit, because tests pin those phrases. When permissions, skills or agents change, run `python3 agents/generate.py` as well.
+7. Use placeholders in tests, fixtures, the guide and the prompt: `192.0.2.x`, `example.org`, `<admin>`. Never use a real address, name, token or path from the user's workspace, and never copy anything from its `secrets/` folder.
+8. Commit only after the user approves the exact command, message and file list. Never push, merge or open a pull request unless asked.
+9. The live test comes last: the user runs the installed agent against a real workspace. What it finds comes back as numbered handoffs. Ask where there is a real choice, write the failing test, fix it and run the gate again.
+
+Plans, specs and notes for this work stay in the ignored `docs/superpowers/` and are never committed.
+
 ### MCP servers
 
 - One `mcp.jsonc` per tool folder; rulesync merges them all.
