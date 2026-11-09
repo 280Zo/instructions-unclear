@@ -265,6 +265,29 @@ class GuideTests(unittest.TestCase):
             with self.subTest(page=page.name):
                 self.assertNotRegex(page.read_text(), r"(?i)monica|tested on a real install")
 
+    def test_every_statement_about_who_reaches_an_apps_port_names_direct_networks(self):
+        # A service's port is open to the login front end, and also to the networks its spec lists under
+        # direct_networks. A statement that says "only from the login front end" must say so.
+        def flat(path):  # whitespace and the quotes of a Python string that wraps a sentence
+            return " ".join(path.read_text().replace('"', " ").split())
+        statement = r"only (?:accepts connections )?from the login front end,? and from any `direct_networks` (?:its|the) spec lists"
+        for path in (ROOT / "README.md", GUIDE / "README.md", ROOT / "tools" / "install_notes.py"):
+            with self.subTest(file=str(path.relative_to(ROOT))):
+                self.assertRegex(flat(path), statement)
+        firewall = flat(ROOT / "templates" / "base" / "firewall.bu.tmpl")
+        self.assertIn("direct_networks", firewall)  # the header lists every exception to "everything is dropped"
+
+    def test_no_example_app_is_named_in_the_shared_toolkit(self):
+        # The toolkit is generic: its guide, schema, tools, templates and site example describe an app as
+        # <svc> or by what it needs. An app's name belongs in a skill's own reference.md, with its source.
+        pattern = re.compile(r"(?i)jellyfin|monica")
+        files = [p for folder in ("docs", "schemas", "tools", "templates") for p in sorted((ROOT / folder).rglob("*"))
+                 if p.is_file() and p.suffix in {".md", ".py", ".sh", ".tmpl", ".yaml", ".env"}]
+        files.append(ROOT / "site.example.yaml")
+        for path in files:
+            with self.subTest(file=str(path.relative_to(ROOT))):
+                self.assertIsNone(pattern.search(path.read_text()), path.name)
+
     def test_apps_that_mail_need_a_sender_address_for_the_log_mailer(self):
         # Crm's invitations failed with 'An email must have a From or a Sender header'
         # until MAIL_FROM_ADDRESS was set, although the mail only goes to the log.

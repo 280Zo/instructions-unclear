@@ -48,7 +48,22 @@ the user agreed to under the 5 GB rule.
 `local` data (files on the data disk that aren't a database) gets a files
 backup: `<svc>-backup-files.bu`, a tarball of `/var/lib/appdata/<svc>/`
 without `db/`, made with `podman unshare` so files owned by sub-IDs are
-readable.
+readable. A file that changes while it is being packed doesn't fail the run:
+GNU tar then exits 1 ("some files were changed while being archived"), the
+archive is kept and the log says so; a fatal error (exit 2 or more) fails the
+run and removes the partial file
+([GNU tar exit codes](https://www.gnu.org/software/tar/manual/html_section/Synopsis.html)).
+Spec options change what it holds and when (`files_backup`,
+`backup_skip` and `backups.files`, in the field reference): a folder the app
+rebuilds by itself, such as a cache, can be left out, and so can subfolders
+the app downloads again (a `metadata` folder of images) or doesn't need
+(`log`); the archive can run on its own schedule and keep its own number of
+copies (a large settings folder weekly, the database nightly); and a SQLite
+folder that also holds the app's other data (a `/config` folder with
+`data/app.db` in it) can be packed without its database file and that file's
+`-wal`, `-shm` and `-journal` files, which get the online copy. To restore such an app, unpack the archive first, then put the database
+copy back at its path inside the folder (SQLite below, with that path as
+`<db-file>`).
 
 ## Check a backup
 

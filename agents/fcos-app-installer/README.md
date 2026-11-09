@@ -234,8 +234,8 @@ repository need the same change. Skills and subagents are allow lists.
 
 One login front end (an ingress and an auth gateway) sits in front of every
 app: you log in once, and the gateway's dashboard lists your apps. Each app's port only
-accepts connections from the login front end (apps bound to loopback open no
-port at all). If the login front end is down, the apps keep running, and you
+accepts connections from the login front end, and from any `direct_networks` its spec lists
+(apps bound to loopback open no port at all). If the login front end is down, the apps keep running, and you
 reach any of them through an SSH tunnel:
 
 ```fish

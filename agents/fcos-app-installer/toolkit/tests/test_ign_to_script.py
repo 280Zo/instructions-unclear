@@ -1,4 +1,5 @@
 import base64
+import copy
 import gzip
 import json
 import subprocess
@@ -70,6 +71,24 @@ class IgnToScriptTests(unittest.TestCase):
     def test_groups_and_users_idempotent(self):
         self.assertIn("getent group opencode >/dev/null || priv groupadd -g 3101 opencode", self.script)
         self.assertIn("id -u opencode >/dev/null 2>&1 || priv useradd -u 3101 -g opencode -G ai-projects -s /sbin/nologin -m opencode", self.script)
+
+    def test_existing_account_gets_missing_extra_groups(self):
+        # An account created by an earlier push lacked a group added to its spec later (an app and
+        # its library's group): useradd is skipped for an existing account, so the group must be added.
+        line = '[[ " $(id -nG opencode) " == *" ai-projects "* ]] || priv usermod -aG ai-projects opencode'
+        self.assertIn(line, self.script)
+        self.assertLess(self.script.index("priv groupadd -g 3101 opencode"), self.script.index(line))
+        self.assertLess(self.script.index("priv useradd -u 3101"), self.script.index(line))
+        for groups, ran in (("opencode ai-projects", ""), ("opencode", "usermod -aG ai-projects opencode"),
+                            ("opencode ai-projects-old", "usermod -aG ai-projects opencode")):
+            with self.subTest(groups=groups):
+                fake = f'id() {{ echo "{groups}"; }}; priv() {{ echo "$*"; }}; set -euo pipefail; {line}'
+                result = subprocess.run(["bash", "-c", fake], capture_output=True, text=True)
+                self.assertEqual(result.stdout.strip(), ran, result.stderr)
+        no_extra = copy.deepcopy(SAMPLE)
+        for user in no_extra["passwd"]["users"]:
+            user.pop("groups", None)
+        self.assertNotIn("usermod", to_script(no_extra))
 
     def test_directories(self):
         self.assertIn("newdir 0750 3101:3101 /var/lib/appdata/opencode", self.script)

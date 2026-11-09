@@ -281,6 +281,10 @@ def to_script(config: dict, root: str = "") -> str:
             args.append(f"-s {_q(user['shell'])}")
         args.append("-m")
         lines.append(f"id -u {name} >/dev/null 2>&1 || priv useradd {' '.join(args)} {name}")
+        # An account an earlier push created keeps its groups (useradd is skipped), so a group added to
+        # its spec since is added here; a rebuild gets it from useradd. Groups are never removed.
+        for group_name in extra:
+            lines.append(f'[[ " $(id -nG {name}) " == *" {group_name} "* ]] || priv usermod -aG {group_name} {name}')
 
     # Shallowest first, as Ignition does, so a declared parent is made (with its
     # owner) before a deeper folder would create it as root.

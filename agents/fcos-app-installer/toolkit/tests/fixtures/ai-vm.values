@@ -59,6 +59,8 @@ BACKUP_ONCALENDAR=*-*-* 02:15:00
 BACKUP_UNIT=opencode-backup-app
 BACKUP_SECURITY=UserNS=keep-id
 DUMP_COMMAND=mydump --all
+BACKUP_EXCLUDES=--exclude=./db
+SVC_DIRECT_RULE=
 PG_CONTAINER=opencode-postgres
 PG_USER=opencode
 PG_DB=opencode

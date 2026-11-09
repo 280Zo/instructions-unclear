@@ -5,6 +5,8 @@ version: 1.7.0
 #   - SSH from the admin LAN
 #   - ports in @edge_tcp, from the edge VM only (backend services)
 #   - ports in @lan_tcp, from the LAN (only the edge VM uses this: 80/443)
+#   - a service's port from the networks its spec lists under direct_networks
+#     (added by that service's own fragment)
 # Service fragments add their ports with files in /etc/nftables.d/.
 # Uses its own table, so Podman's netavark rules are left alone.
 

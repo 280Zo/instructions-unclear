@@ -129,7 +129,8 @@ def render(ws: Path, notes: list[str]) -> str:
             "- **Where:** ask which server and VM; the table above shows what each VM already runs.",
             "- **Login:** ask whether the app goes behind the login page (`login: gateway`, with a route and the "
             "gateway's rules) or keeps its own login (`login: app-only`). An app on another VM binds to its VM "
-            "address, and that VM's firewall accepts its port only from the login front end.",
+            "address, and that VM's firewall accepts its port only from the login front end, and from any "
+            "`direct_networks` the spec lists.",
             "- **Who sees it:** reuse an existing group when it fits, or ask to create one; no groups means every user.",
             "- **Dashboard:** reuse an existing section when the app fits one, or propose a new one and ask.",
             "- **Numbers:** pick a free UID and port (not in the lists above); `tools/check_workspace.py` checks.",

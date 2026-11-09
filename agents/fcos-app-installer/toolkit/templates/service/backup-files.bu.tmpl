@@ -22,7 +22,7 @@ storage:
           Type=oneshot
           ExecCondition=/usr/local/bin/require-mounts /var/mnt/backups /var/lib/appdata
           ExecStartPre=/usr/bin/mkdir -p /var/mnt/backups/{{VM_NAME}}/{{SVC_NAME}}
-          ExecStart=/bin/sh -c 'f=/var/mnt/backups/{{VM_NAME}}/{{SVC_NAME}}/files-$$(date -u +%%Y%%m%%dT%%H%%M%%SZ).tar.gz; /usr/bin/podman unshare tar -C /var/lib/appdata/{{SVC_NAME}} --exclude=./db -czf - . > "$$f.tmp" && mv "$$f.tmp" "$$f"'
+          ExecStart=/bin/sh -c 'f=/var/mnt/backups/{{VM_NAME}}/{{SVC_NAME}}/files-$$(date -u +%%Y%%m%%dT%%H%%M%%SZ).tar.gz; rc=0; /usr/bin/podman unshare tar -C /var/lib/appdata/{{SVC_NAME}} {{BACKUP_EXCLUDES}} -czf - . > "$$f.tmp" || rc=$$?; if [ "$$rc" -le 1 ]; then mv "$$f.tmp" "$$f" || exit 1; [ "$$rc" -eq 0 ] || echo "files backup: some files changed while being archived (GNU tar exit 1); archive kept"; else rm -f "$$f.tmp"; exit "$$rc"; fi'
           ExecStartPost=/bin/sh -c 'ls -1t /var/mnt/backups/{{VM_NAME}}/{{SVC_NAME}}/files-*.tar.gz | tail -n +$$(({{BACKUP_KEEP}} + 1)) | xargs -r rm -f'
     - path: /etc/systemd/user/{{SVC_NAME}}-backup-files.timer
       mode: 0644

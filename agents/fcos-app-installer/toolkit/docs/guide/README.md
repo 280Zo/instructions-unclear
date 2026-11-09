@@ -139,7 +139,8 @@ every service (section 6 explains why one, and how to get in when it's down).
 Every name under the domain points at it. The ingress serves HTTPS with one
 wildcard certificate and asks the auth gateway to log the user in, then
 forwards to the service's VM. Each service VM's firewall accepts the service port only from
-the login front end. Clients that can't do a web login use the paths the spec
+the login front end, and from any `direct_networks` the spec lists (plain HTTP, no login page on that
+path). Clients that can't do a web login use the paths the spec
 lists as open, protected by the app's own password.
 
 ## Who does what

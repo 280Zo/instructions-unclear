@@ -24,9 +24,10 @@ error that names it.
 | `api_paths` | no | Regular expressions for paths clients call directly (skip the login). Must compile. |
 | `port` | with a publisher | Host port, 1024-65535. |
 | `bind` | no | `vm_ip` (default; the VM's address from `site.yaml`) or `loopback` (`127.0.0.1`, no firewall port). |
+| `direct_networks` | no | Private IPv4 networks (`192.0.2.0/24`; /8 or smaller, network address) whose devices reach the app directly at `http://<vm ip>:<port>`, besides the login front end; for apps whose own clients, such as a TV or phone app, connect that way. Plain HTTP and no login page on that path: the app's own login protects it. The router must also pass those networks to the VM's port. Needs `bind: vm_ip`. |
 | `containers` | yes | One or more containers, below. |
 | `secrets` | if any container uses one | `{name, durable, source}` per secret. |
-| `backups` | no | `{schedule, keep}`. `schedule`: `daily`, `weekly` (Sunday) or an `OnCalendar` time; the time of day comes from `site.yaml` `backups.oncalendar`. `keep` falls back to `site.yaml` `backups.keep`. |
+| `backups` | no | `{schedule, keep, files}`; `files` is optional, `{schedule, keep}` for the files archive alone (for example the database `daily`, kept 30, and a large settings folder `weekly`, kept 4); what it leaves out falls back to the service's own values. `schedule`: `daily`, `weekly` (Sunday) or an `OnCalendar` time; the time of day comes from `site.yaml` `backups.oncalendar`. `keep` falls back to `site.yaml` `backups.keep`. |
 | `accepted_risks` | no | Sentences that waive a check. A sentence must **start** with the phrase, a colon and a reason (case doesn't matter): `over the 5 GB rule: ...` waives the size rule; `no backups: ...` waives the missing backup share. Free text, so accented letters are allowed (like `description` and `login_reason`); every other field is ASCII only. |
 
 ## Container
@@ -41,6 +42,7 @@ error that names it.
 | `command` | List of arguments (`Exec=`). |
 | `shm_size_mib` | Optional: size of `/dev/shm` in MiB (`ShmSize=`), 1-65536, when the app's official docs ask for it. |
 | `depends_on` | Container names; becomes `Requires=` and `After=`. No cycles. |
+| `keep_groups` | Optional `true`: `GroupAdd=keep-groups`, so the service account's `extra_groups` reach the container (files only a group may open, such as a shared library whose group is a file server group). `map-user` only, needs `extra_groups`; works with the crun runtime only, and only groups the account had when its user services started. A shared group's GID is not limited to the UID range. |
 | `env` | `{NAME: value}`. Names `[A-Z_][A-Z0-9_]*`; one-line values. Secret-looking values are refused. |
 | `secrets` | `{ENV: secret_name}` or a list of `{env, name}`. |
 | `network` | `private` (default: the service's `.network`; containers reach each other as `<service>-<container>`) or `host`. Host is only for the login front end's proxy; it cannot publish. |
@@ -59,7 +61,9 @@ Every container also gets `NoNewPrivileges=true`, `DropCapability=ALL`,
 | `expected_gib` | Required for `local` and `local-db`. Shared folders count once; the total above 5 GB is refused. |
 | `name` | `local` only: folder name; defaults to the path with `/` replaced by `-`. A folder shared by two containers uses the same name or path. |
 | `host` | `nfs` only: `/var/mnt/<share>/...`; the share must be listed for the VM in `site.yaml`. No label option is added. |
-| `engine` | `local-db` only: `sqlite` (needs `file`), `postgres` (`pg_dump -Fc`, user and database from `POSTGRES_USER` and `POSTGRES_DB`), `mariadb` or `mysql` (`mariadb-dump --single-transaction` inside the container with its own `MARIADB_USER`, `MARIADB_PASSWORD`, `MARIADB_DATABASE`; the official `mysql` image has neither the tool nor those variables, so use `custom` for it), `custom` (needs `command`: one line that prints the dump). One `local-db` volume per container. |
+| `files_backup` | Optional `true`/`false`: whether the folder goes into the nightly files archive (`<service>-backup-files`). `local` defaults to `true`; set `false` for a folder the app rebuilds by itself, such as a cache. `local-db` defaults to `false` (the database has its own backup); `true` only with `sqlite`, for an app that keeps its database inside its data folder (a `/config` folder that holds `data/app.db`): the archive then holds the folder without the database file and its `-wal`, `-shm` and `-journal` files, which get the online copy. Not for `nfs`. |
+| `backup_skip` | Optional list of folders inside the volume to leave out of the files archive, such as `metadata` or `log` (relative paths, up to four parts, no `..`). For `local` folders that are backed up, and `local-db` with `files_backup: true`. For data the app can fetch or rebuild again (downloaded images, a thumbnail cache). |
+| `engine` | `local-db` only: `sqlite` (needs `file`: the database file inside the volume, a name or up to three folders and a name such as `data/app.db`), `postgres` (`pg_dump -Fc`, user and database from `POSTGRES_USER` and `POSTGRES_DB`), `mariadb` or `mysql` (`mariadb-dump --single-transaction` inside the container with its own `MARIADB_USER`, `MARIADB_PASSWORD`, `MARIADB_DATABASE`; the official `mysql` image has neither the tool nor those variables, so use `custom` for it), `custom` (needs `command`: one line that prints the dump). One `local-db` volume per container. |
 
 These storage and database choices are fixed parts of the design: shared data goes over NFS, and
 `engine` is `sqlite`, `postgres`, `mariadb` (or `mysql`) or `custom` with its own dump command. They are

@@ -182,6 +182,8 @@ derived:
   # maps to: BACKUP_SECURITY        UserNS=keep-id or AddCapability=DAC_OVERRIDE for the SQLite backup container
   # maps to: SVC_DB_DIR             data-disk folder holding the database
   # maps to: DUMP_COMMAND           dump command of a custom database engine
+  # maps to: BACKUP_EXCLUDES        tar --exclude options of the files backup (--exclude=./db unless the spec sets files_backup)
+  # maps to: SVC_DIRECT_RULE        nftables rule opening the app's port to the spec's direct_networks (empty when none)
   # maps to: ROUTE_BACKEND          http://<vm ip>:<port> (http://127.0.0.1:<port> for a loopback service on the edge VM)
   # maps to: PG_USER, PG_DB       the Postgres user and database of a service with a Postgres local-db (its POSTGRES_USER and POSTGRES_DB, else postgres)
   # maps to: PG_CONTAINER           <owner>-postgres for services with a Postgres local-db

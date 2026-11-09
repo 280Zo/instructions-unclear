@@ -1,8 +1,9 @@
 variant: fcos
 version: 1.7.0
 
-# Opens {{SVC_NAME}}'s port to the edge VM only. Skip this fragment for
-# services on the edge VM itself (they listen on 127.0.0.1).
+# Opens {{SVC_NAME}}'s port to the edge VM, and to the networks in the spec's
+# direct_networks when it lists any. Skip this fragment for services on the
+# edge VM itself (they listen on 127.0.0.1).
 
 storage:
   files:
@@ -11,4 +12,4 @@ storage:
       overwrite: true
       contents:
         inline: |
-          add element inet host_filter edge_tcp { {{SVC_PORT}} }
+          add element inet host_filter edge_tcp { {{SVC_PORT}} }{{SVC_DIRECT_RULE}}

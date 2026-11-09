@@ -1473,5 +1473,248 @@ class BuildTests(GenCase):
                 self.assertIn(f"/etc/systemd/system/subids-{svc}.service", script)
 
 
+class FilesBackupTests(GenCase):
+    """An app that keeps its SQLite database inside its data folder (/config/data/app.db), and a cache folder
+    that is not worth backing up (files_backup)."""
+
+    def files_exec(self, out: Path) -> str:
+        svc_files = self.fragment(out, "opencode-backup-files.bu")
+        unit = inline(svc_files, "/etc/systemd/user/opencode-backup-files.service")
+        return next(line for line in unit.splitlines() if line.startswith("ExecStart="))
+
+    def data_folder_app(self, spec):
+        spec["containers"][0]["volumes"] = [
+            {"path": "/config", "class": "local-db", "engine": "sqlite", "file": "data/app.db",
+             "files_backup": True, "expected_gib": 2},
+            {"path": "/cache", "class": "local", "files_backup": False, "expected_gib": 1},
+        ]
+
+    def test_default_archive_is_unchanged(self):
+        self.assertIn(" --exclude=./db -czf - . ", self.files_exec(self.gen("single")))
+
+    def test_sqlite_file_may_sit_in_a_subfolder(self):
+        spec = spec_fixture("single")
+        spec["containers"][0]["volumes"][0]["file"] = "data/opencode.db"
+        self.assertEqual(validate_spec(spec, copy.deepcopy(SITE)), [])
+        backup = self.read(self.gen(spec), "opencode-backup-app.bu")
+        self.assertIn("/src/data/opencode.db /dest", backup)
+
+    def test_bad_database_paths_refused(self):
+        for bad in ("../x.db", "/x.db", "data//x.db", "data/../x.db", "data/", "./x.db", "a/b/c/d/e/x.db", "da ta/x.db"):
+            with self.subTest(bad=bad):
+                errors = self.errors(lambda s, bad=bad: s["containers"][0]["volumes"][0].update(file=bad))
+                self.assertTrue(any("file" in e for e in errors), errors)
+
+    def test_rest_of_database_folder_and_skipped_cache(self):
+        spec = spec_fixture("single")
+        self.data_folder_app(spec)
+        self.assertEqual(validate_spec(spec, copy.deepcopy(SITE)), [])
+        line = self.files_exec(self.gen(spec))
+        excludes = re.findall(r"--exclude=(\S+)", line)
+        self.assertEqual(excludes, ["./cache", "./db/app/data/app.db", "./db/app/data/app.db-wal",
+                                    "./db/app/data/app.db-shm", "./db/app/data/app.db-journal"])
+
+    def test_excludes_on_a_real_folder_tree(self):
+        """GNU tar with the generated options, on the layout the VM has under /var/lib/appdata/<svc>."""
+        spec = spec_fixture("single")
+        self.data_folder_app(spec)
+        spec["containers"].append({"name": "side", "image": "ghcr.io/example/side:1", "user_mode": "map-user",
+                                   "volumes": [{"path": "/db", "class": "local-db", "engine": "sqlite",
+                                                "file": "side.db", "expected_gib": 1}]})
+        excludes = re.findall(r"--exclude=\S+", self.files_exec(self.gen(spec)))
+        tree = self.tmpdir() / "opencode"
+        for rel in ("db/app/data/app.db", "db/app/data/app.db-wal", "db/app/data/app.db-shm",
+                    "db/app/data/app.db-journal", "db/app/data/metadata/poster.jpg", "db/app/config/system.xml",
+                    "db/app/data/app.db.bak", "db/side/side.db", "cache/transcodes/x.ts"):
+            (tree / rel).parent.mkdir(parents=True, exist_ok=True)
+            (tree / rel).write_text("x")
+        packed = subprocess.run(["tar", "-C", str(tree), *excludes, "-czf", "-", "."], capture_output=True, check=True)
+        listed = subprocess.run(["tar", "-tzf", "-"], input=packed.stdout, capture_output=True, check=True)
+        names = {n.rstrip("/") for n in listed.stdout.decode().split()}
+        self.assertLessEqual({"./db/app/data/metadata/poster.jpg", "./db/app/config/system.xml",
+                              "./db/app/data/app.db.bak"}, names)
+        for gone in ("./db/app/data/app.db", "./db/app/data/app.db-wal", "./db/app/data/app.db-shm",
+                     "./db/app/data/app.db-journal", "./db/side", "./db/side/side.db", "./cache",
+                     "./cache/transcodes/x.ts"):
+            self.assertNotIn(gone, names)
+
+    def test_subfolders_skipped(self):
+        spec = spec_fixture("single")
+        self.data_folder_app(spec)
+        spec["containers"][0]["volumes"][0]["backup_skip"] = ["metadata", "log"]
+        spec["containers"][0]["volumes"].append({"path": "/data/config", "class": "local", "expected_gib": 1,
+                                                 "backup_skip": ["tmp/sessions"]})
+        self.assertEqual(validate_spec(spec, copy.deepcopy(SITE)), [])
+        out = self.gen(spec)
+        excludes = re.findall(r"--exclude=(\S+)", self.files_exec(out))
+        for expected in ("./db/app/metadata", "./db/app/log", "./data-config/tmp/sessions", "./cache"):
+            self.assertIn(expected, excludes)
+        tree = self.tmpdir() / "opencode"
+        for rel in ("db/app/metadata/library/poster.jpg", "db/app/log/log_1.log", "db/app/config/system.xml",
+                    "db/app/plugins/p.dll", "data-config/tmp/sessions/s1", "data-config/settings.json"):
+            (tree / rel).parent.mkdir(parents=True, exist_ok=True)
+            (tree / rel).write_text("x")
+        packed = subprocess.run(["tar", "-C", str(tree), *[f"--exclude={e}" for e in excludes], "-czf", "-", "."],
+                                capture_output=True, check=True)
+        names = {n.rstrip("/") for n in subprocess.run(["tar", "-tzf", "-"], input=packed.stdout, capture_output=True,
+                                                       check=True).stdout.decode().split()}
+        self.assertLessEqual({"./db/app/config/system.xml", "./db/app/plugins/p.dll", "./data-config/settings.json"}, names)
+        for gone in ("./db/app/metadata", "./db/app/log", "./data-config/tmp/sessions"):
+            self.assertNotIn(gone, names)
+        self.assertIn("not backed up: metadata, log", (out / "backups.md").read_text())
+
+    def test_bad_backup_skip_refused(self):
+        def put(index, value):
+            return lambda s: s["containers"][0]["volumes"][index].update(backup_skip=value)
+        cases = {
+            "parent": put(1, ["../x"]), "absolute": put(1, ["/x"]), "not a list": put(1, "log"),
+            "empty part": put(1, ["a//b"]), "nfs": put(2, ["x"]),
+            "database without files_backup": put(0, ["x"]),
+        }
+        for label, mutate in cases.items():
+            with self.subTest(label):
+                errors = self.errors(mutate)
+                self.assertTrue(any("backup_skip" in e for e in errors), errors)
+
+        def skipped_folder(spec):
+            spec["containers"][0]["volumes"][1].update(files_backup=False, backup_skip=["x"])
+        self.assertTrue(any("backup_skip" in e for e in self.errors(skipped_folder)))
+
+    def test_files_archive_has_its_own_schedule(self):
+        spec = spec_fixture("single")
+        self.data_folder_app(spec)
+        spec["backups"] = {"schedule": "daily", "keep": 30, "files": {"schedule": "weekly", "keep": 4}}
+        self.assertEqual(validate_spec(spec, copy.deepcopy(SITE)), [])
+        out = self.gen(spec)
+        files = self.fragment(out, "opencode-backup-files.bu")
+        self.assertIn("OnCalendar=Sun *-*-* 02:15:00", inline(files, "/etc/systemd/user/opencode-backup-files.timer"))
+        self.assertIn("$((4 + 1))", inline(files, "/etc/systemd/user/opencode-backup-files.service"))
+        db = self.read(out, "opencode-backup-app.bu")
+        self.assertIn("OnCalendar=*-*-* 02:15:00", db)
+        self.assertIn("/dest 30 app-", db)
+        report = (out / "backups.md").read_text()
+        self.assertIn("newest 30 database copies and the newest 4 files archives", report)
+
+    def test_bad_files_schedule_refused(self):
+        for bad in ({"keep": 0}, {"schedule": "Mon;rm -rf /"}, {"when": "daily"}, "weekly"):
+            with self.subTest(bad=bad):
+                errors = self.errors(lambda s, bad=bad: s.update(backups={"schedule": "daily", "files": bad}))
+                self.assertTrue(any("backups.files" in e for e in errors), errors)
+
+    def test_read_only_share_is_never_a_folder_to_create(self):
+        """An existing share mounted read-only (a shared library) must never be re-owned or locked down."""
+        spec = spec_fixture("single")
+        spec["containers"][0]["volumes"][2]["read_only"] = True
+        report = (self.gen(spec) / "file-server.md").read_text()
+        table = [line for line in report.splitlines() if line.startswith("| `")]
+        self.assertFalse(any("/mnt/pool/projects" in line for line in table), report)
+        self.assertIn("/mnt/pool/projects/ai", report)  # still named, as existing and untouched
+        self.assertIn("read-only", report)
+        # A writable NFS folder is still a folder to create.
+        writable = (self.gen("single") / "file-server.md").read_text()
+        self.assertTrue(any("/mnt/pool/projects/ai" in line for line in writable.splitlines() if line.startswith("| `")))
+
+    def test_keep_groups_passes_the_extra_groups_in(self):
+        site = copy.deepcopy(SITE)
+        site["shared_groups"] = [{"name": "ai-projects", "gid": 900000}]  # a file server group above MAX_ID
+        spec = spec_fixture("single")
+        spec["containers"][0]["keep_groups"] = True
+        self.assertEqual(validate_spec(spec, site), [])
+        text = self.read(self.gen(spec, site), "files/opencode-app.container")
+        self.assertEqual(directives(text, "GroupAdd"), ["keep-groups"])
+        self.assertEqual(directives(self.read(self.gen("single"), "files/opencode-app.container"), "GroupAdd"), [])
+
+    def test_keep_groups_refused_where_it_cannot_work(self):
+        def no_groups(spec):
+            spec.pop("extra_groups")
+            spec["containers"][0]["keep_groups"] = True
+        def not_bool(spec):
+            spec["containers"][0]["keep_groups"] = "yes"
+        for mutate in (no_groups, not_bool):
+            with self.subTest(mutate.__name__):
+                errors = self.errors(mutate)
+                self.assertTrue(any("keep_groups" in e for e in errors), errors)
+        crm = spec_fixture("crm")
+        crm["extra_groups"] = ["ai-projects"]
+        root = next(c for c in crm["containers"] if c.get("user_mode") == "root-start")
+        root["keep_groups"] = True  # an image that switches users itself resets its groups
+        errors = validate_spec(crm, copy.deepcopy(SITE))
+        self.assertTrue(any("keep_groups" in e and "map-user" in e for e in errors), errors)
+
+    def test_archive_kept_when_files_change_and_partial_file_removed_on_failure(self):
+        """GNU tar exits 1 when a file changed while it was archived (a live data folder): the archive is
+        complete and kept. 2 or more is fatal: the run fails and leaves no partial file behind."""
+        line = self.files_exec(self.gen("single"))
+        script = line[len("ExecStart=/bin/sh -c '"):-1].replace("$$", "$").replace("%%", "%")
+        self.assertIn("/usr/bin/podman unshare tar", script)
+        for code, kept, status in ((0, True, 0), (1, True, 0), (2, False, 2)):
+            with self.subTest(code=code):
+                dest = self.tmpdir()
+                body = script.replace("/usr/bin/podman unshare tar", "faketar").replace(
+                    "/var/mnt/backups/ai/opencode/", f"{dest}/")
+                fake = f"faketar() {{ echo archive-bytes; return {code}; }}; {body}"
+                result = subprocess.run(["sh", "-c", fake], capture_output=True, text=True)
+                self.assertEqual(result.returncode, status, result.stdout + result.stderr)
+                names = sorted(p.name for p in dest.iterdir())
+                self.assertFalse(any(n.endswith(".tmp") for n in names), names)
+                self.assertEqual(len([n for n in names if n.startswith("files-") and n.endswith(".tar.gz")]),
+                                 1 if kept else 0, names)
+                if code == 1:
+                    self.assertIn("changed while being archived", result.stdout + result.stderr)
+
+    def test_direct_networks_open_the_port_to_those_networks(self):
+        # Clients on some networks use http://<vm ip>:<port> directly, as the app documents; the login
+        # front end's route stays.
+        spec = spec_fixture("single")
+        spec["direct_networks"] = ["192.0.2.0/24", "198.51.100.0/24"]  # documentation networks
+        self.assertEqual(validate_spec(spec, copy.deepcopy(SITE)), [])
+        port = inline(self.fragment(self.gen(spec), "opencode-port.bu"), "/etc/nftables.d/50-opencode.nft")
+        lines = [line.strip() for line in port.splitlines() if line.strip()]
+        self.assertEqual(lines, ["add element inet host_filter edge_tcp { 4096 }",
+                                 "add rule inet host_filter input tcp dport 4096 ip saddr "
+                                 "{ 192.0.2.0/24, 198.51.100.0/24 } accept"])
+        plain = inline(self.fragment(self.gen("single"), "opencode-port.bu"), "/etc/nftables.d/50-opencode.nft")
+        self.assertNotIn("add rule", plain)
+
+    def test_bad_direct_networks_refused(self):
+        for bad in (["0.0.0.0/0"], ["8.8.8.0/24"], ["192.0.2.1/24"], "192.0.2.0/24", [], ["192.0.2.0/24", "192.0.2.0/24"],
+                    ["192.0.2.0/24 }"], ["fd00::/8"]):
+            with self.subTest(bad=bad):
+                errors = self.errors(lambda s, bad=bad: s.update(direct_networks=bad))
+                self.assertTrue(any("direct_networks" in e for e in errors), errors)
+        def loopback(spec):
+            spec.update(bind="loopback", direct_networks=["192.0.2.0/24"])
+        self.assertTrue(any("direct_networks" in e for e in self.errors(loopback)))
+
+    def test_only_unbacked_folders_means_no_archive(self):
+        spec = spec_fixture("single")
+        spec["containers"][0]["volumes"][1]["files_backup"] = False
+        out = self.gen(spec)
+        self.assertFalse((out / "rendered" / "opencode-backup-files.bu").exists())
+        self.assertIn("not backed up", (out / "backups.md").read_text())
+
+    def test_backups_report_names_skipped_folders(self):
+        spec = spec_fixture("single")
+        self.data_folder_app(spec)
+        report = (self.gen(spec) / "backups.md").read_text()
+        self.assertIn("not backed up: cache", report)
+        self.assertIn("rest of the database folder", report)
+
+    def test_files_backup_refused_where_it_cannot_work(self):
+        def nfs(spec):
+            spec["containers"][0]["volumes"][2]["files_backup"] = True
+        def not_bool(spec):
+            spec["containers"][0]["volumes"][1]["files_backup"] = "no"
+        for mutate in (nfs, not_bool):
+            with self.subTest(mutate=mutate.__name__):
+                errors = self.errors(mutate)
+                self.assertTrue(any("files_backup" in e for e in errors), errors)
+        crm = spec_fixture("crm")
+        db = next(v for c in crm["containers"] for v in c.get("volumes") or [] if v["class"] == "local-db")
+        db["files_backup"] = True  # a MariaDB folder copied while it runs is not a backup
+        errors = validate_spec(crm, copy.deepcopy(SITE))
+        self.assertTrue(any("files_backup" in e and "sqlite" in e for e in errors), errors)
+
+
 if __name__ == "__main__":
     unittest.main()

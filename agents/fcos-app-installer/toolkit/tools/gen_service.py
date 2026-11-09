@@ -46,16 +46,20 @@ ENGINES = ("sqlite", "postgres", "mariadb", "mysql", "custom")
 CLASSES = ("nfs", "local", "local-db")
 TOP_KEYS = {"name", "vm", "uid", "gid", "extra_groups", "title", "description", "login", "login_reason",
             "hostname", "api_paths", "port", "bind", "containers", "secrets", "backups", "accepted_risks",
-            "groups", "redirects", "icon", "section"}
+            "groups", "redirects", "icon", "section", "direct_networks"}
 CTR_KEYS = {"name", "image", "user_mode", "add_capabilities", "publish", "command", "depends_on", "env",
-            "secrets", "volumes", "network", "shm_size_mib"}
-VOL_KEYS = {"path", "class", "host", "name", "expected_gib", "engine", "file", "command", "read_only"}
+            "secrets", "volumes", "network", "shm_size_mib", "keep_groups"}
+VOL_KEYS = {"path", "class", "host", "name", "expected_gib", "engine", "file", "command", "read_only", "files_backup",
+            "backup_skip"}
 
 NAME = re.compile(r"[a-z][a-z0-9-]{0,30}")
 ENV_KEY = re.compile(r"[A-Z_][A-Z0-9_]*")
 PODMAN_NAME = re.compile(r"[a-z][a-z0-9_]{0,62}")
 VOL_NAME = re.compile(r"[a-z0-9][a-z0-9-]{0,40}")
 FILE_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,100}")
+# A SQLite file inside its volume, at most three folders down (for example data/app.db). Every part
+# starts with a letter or digit, so no part is "." or "..", and no part is empty.
+DB_FILE = re.compile(r"(?:[A-Za-z0-9][A-Za-z0-9._-]{0,100}/){0,3}[A-Za-z0-9][A-Za-z0-9._-]{0,100}")
 IDENT = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,62}")
 HOST_LABEL = re.compile(r"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?")
 DOMAIN = re.compile(r"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+")
@@ -153,35 +157,59 @@ def _accepted(spec: dict, opening: str) -> bool:
         for r in risks)
 
 
+def _calendar(schedule, base, where: str, errors: list):
+    """OnCalendar for daily, weekly (Sunday) or a literal time; the time of day comes from the site config."""
+    if schedule in (None, "daily", "weekly"):
+        if not _text(base, SCHEDULE):
+            errors.append(f"{where}: no time of day; set backups.oncalendar in site.yaml or a literal schedule in the spec")
+        elif schedule == "weekly":
+            if base.startswith("*-*-* "):
+                return "Sun " + base
+            errors.append(f"{where}: weekly needs backups.oncalendar in site.yaml to look like '*-*-* 02:15:00'")
+        else:
+            return base
+    elif _text(schedule, SCHEDULE):
+        return schedule
+    else:
+        errors.append(f"{where}.schedule must be daily, weekly or an OnCalendar time such as 'Mon *-*-* 03:00:00'")
+    return None
+
+
 def _backup_settings(spec: dict, site: dict):
     """Return (OnCalendar, keep, errors); spec wins, the site config fills gaps."""
     errors = []
     backups = spec.get("backups") or {}
     if not isinstance(backups, dict):
         return None, None, ["backups must be a mapping"]
-    _unknown(backups, {"schedule", "keep"}, "backups", errors)
+    _unknown(backups, {"schedule", "keep", "files"}, "backups", errors)
     site_b = site.get("backups") if isinstance(site.get("backups"), dict) else {}
     keep = backups.get("keep", site_b.get("keep"))
     if keep is None:
         errors.append("backups: no retention; set backups.keep in the service spec or backups.keep in site.yaml")
     elif not _int(keep, 1, 365):
         errors.append("backups.keep must be a whole number from 1 to 365")
-    schedule, base = backups.get("schedule"), site_b.get("oncalendar")
-    calendar = None
-    if schedule in (None, "daily", "weekly"):
-        if not _text(base, SCHEDULE):
-            errors.append("backups: no time of day; set backups.oncalendar in site.yaml or a literal schedule in the spec")
-        elif schedule == "weekly":
-            if base.startswith("*-*-* "):
-                calendar = "Sun " + base
-            else:
-                errors.append("backups: weekly needs backups.oncalendar in site.yaml to look like '*-*-* 02:15:00'")
-        else:
-            calendar = base
-    elif _text(schedule, SCHEDULE):
-        calendar = schedule
-    else:
-        errors.append("backups.schedule must be daily, weekly or an OnCalendar time such as 'Mon *-*-* 03:00:00'")
+    calendar = _calendar(backups.get("schedule"), site_b.get("oncalendar"), "backups", errors)
+    return calendar, keep, errors
+
+
+def _files_backup_settings(spec: dict, site: dict):
+    """(OnCalendar, keep, errors) of the files archive: backups.files when set, else the service's own."""
+    calendar, keep, errors = _backup_settings(spec, site)
+    backups = spec.get("backups") if isinstance(spec.get("backups"), dict) else {}
+    files = backups.get("files")
+    if files is None:
+        return calendar, keep, []
+    if not isinstance(files, dict):
+        return None, None, ["backups.files must be a mapping with schedule and keep"]
+    errors = []
+    _unknown(files, {"schedule", "keep"}, "backups.files", errors)
+    if "keep" in files:
+        keep = files["keep"]
+        if not _int(keep, 1, 365):
+            errors.append("backups.files.keep must be a whole number from 1 to 365")
+    if "schedule" in files:
+        site_b = site.get("backups") if isinstance(site.get("backups"), dict) else {}
+        calendar = _calendar(files["schedule"], site_b.get("oncalendar"), "backups.files", errors)
     return calendar, keep, errors
 
 
@@ -234,6 +262,29 @@ def _check_volumes(site, vm, ctr, where, mode, env, secret_envs, errors):
                 errors.append(f"{label}: read_only must be true or false")
             elif vol["read_only"] and cls == "local-db":
                 errors.append(f"{label}: read_only can't be used on a local-db volume (the database must write)")
+        if "files_backup" in vol:
+            if not isinstance(vol["files_backup"], bool):
+                errors.append(f"{label}: files_backup must be true or false")
+            elif cls == "nfs":
+                errors.append(f"{label}: files_backup is only for local and local-db volumes (NFS data is not "
+                              "backed up by the VM)")
+            elif cls == "local-db" and vol["files_backup"] and vol.get("engine") != "sqlite":
+                # A database server's folder copied while it runs is not a usable backup; only SQLite's
+                # file is left out of the archive and copied online instead.
+                errors.append(f"{label}: files_backup true on a local-db volume needs engine sqlite")
+        if "backup_skip" in vol:
+            subs = vol["backup_skip"]
+            if not isinstance(subs, list) or not subs or not all(_text(s, DB_FILE, 400) for s in subs):
+                errors.append(f"{label}: backup_skip must be a list of folders inside the volume (such as metadata "
+                              "or cache/images; no .., no leading /)")
+            elif cls == "nfs":
+                errors.append(f"{label}: backup_skip is only for local and local-db volumes")
+            elif cls == "local-db" and vol.get("files_backup") is not True:
+                errors.append(f"{label}: backup_skip on a local-db volume needs files_backup true (otherwise the "
+                              "folder isn't in the files archive at all)")
+            elif cls == "local" and vol.get("files_backup") is False:
+                errors.append(f"{label}: backup_skip has no effect when files_backup is false (the whole folder "
+                              "is left out)")
         if cls == "nfs":
             host = vol.get("host")
             if not _is_path(host) or not host.startswith("/var/mnt/") or host.count("/") < 3:
@@ -268,8 +319,9 @@ def _check_engine(vol, label, env, secret_envs, site, errors):
         errors.append(f"{label}: engine must be one of {', '.join(ENGINES)}")
         return
     if engine == "sqlite":
-        if not _text(vol.get("file"), FILE_NAME):
-            errors.append(f"{label}: sqlite needs file, the database file name inside the volume")
+        if not _text(vol.get("file"), DB_FILE, 400):
+            errors.append(f"{label}: sqlite needs file, the database file inside the volume (a name, or up to "
+                          "three folders and a name, such as data/app.db; no .., no leading /)")
         image = (site.get("backups") or {}).get("sqlite_image") if isinstance(site.get("backups"), dict) else None
         problem = "is missing" if image is None else _image_error(image)
         if problem:
@@ -331,6 +383,17 @@ def _check_container(spec, site, vm, ctr, index, errors):
         errors.append(f"{where}: a host-network container can't publish a port")
     if "shm_size_mib" in ctr and not _int(ctr["shm_size_mib"], 1, 65536):
         errors.append(f"{where}: shm_size_mib must be a whole number of MiB from 1 to 65536")
+    if "keep_groups" in ctr:
+        # GroupAdd=keep-groups (podman-systemd.unit): the account's extra groups reach the container, for
+        # files only a group may open (a shared library). crun only; an image that switches users itself
+        # resets its groups, so map-user only.
+        if not isinstance(ctr["keep_groups"], bool):
+            errors.append(f"{where}: keep_groups must be true or false")
+        elif ctr["keep_groups"] and not spec.get("extra_groups"):
+            errors.append(f"{where}: keep_groups needs extra_groups on the service (there is no group to keep)")
+        elif ctr["keep_groups"] and mode != "map-user":
+            errors.append(f"{where}: keep_groups needs user_mode map-user (an image that starts as root and "
+                          "switches users resets its groups)")
     command = ctr.get("command")
     if command is not None and not (isinstance(command, list) and command and all(_plain(c, 500) for c in command)):
         errors.append(f"{where}: command must be a list of plain strings")
@@ -535,6 +598,7 @@ def validate_spec(spec, site) -> list[str]:
                       "or record 'over the 5 GB rule: ...' in accepted_risks")
     if targets or "backups" in spec:
         errors += _backup_settings(spec, site)[2]
+        errors += _files_backup_settings(spec, site)[2]
     if targets and vm is not None and "backups" not in {s.get("name") for s in vm.get("nfs_shares") or [] if isinstance(s, dict)} \
             and not _accepted(spec, "no backups"):
         errors.append("this VM has no 'backups' NFS share in site.yaml, so backups could never run; add it or record "
@@ -549,9 +613,27 @@ def _check_publish(spec, vm, publishers, errors):
     if not publishers:
         if "port" in spec:
             errors.append("port is set but no container publishes; add publish to one container or remove port")
+        if "direct_networks" in spec:
+            errors.append("direct_networks needs a container that publishes a port")
         return
     if not _int(spec.get("port"), 1024, 65535):
         errors.append("port is required when a container publishes (the host port, 1024-65535)")
+    if "direct_networks" in spec:
+        # Networks that reach the app's port directly (http://<vm ip>:<port>), besides the login front end.
+        nets = spec["direct_networks"]
+        ok = isinstance(nets, list) and bool(nets) and len(set(map(str, nets))) == len(nets)
+        for net in nets if isinstance(nets, list) else []:
+            try:
+                parsed = ipaddress.IPv4Network(net, strict=True) if _plain(net, 18) else None
+            except ValueError:
+                parsed = None
+            if parsed is None or not parsed.is_private or parsed.prefixlen < 8 or str(parsed) != net:
+                ok = False
+        if not ok:
+            errors.append("direct_networks must be a list of different private IPv4 networks such as 192.0.2.0/24 "
+                          "(network address, /8 or smaller)")
+        if bind == "loopback":
+            errors.append("direct_networks needs bind vm_ip (a loopback port can't be reached from a network)")
     if bind == "vm_ip" and vm is not None:
         try:
             if not isinstance(vm.get("ip"), str):
@@ -689,13 +771,22 @@ def _file_server_report(spec, site, svc, vm, uid, gid) -> str:
     shared = (spec.get("extra_groups") or [None])[0]
     group, mode = (f"`{shared}` (GID {gids.get(shared, 'from shared_groups')})", "2775") if shared \
         else (f"`{svc}` (GID {gid})", "0750")
+    existing = []  # read-only shares: existing data (a shared library) that must never be re-owned or locked down
     for ctr in spec["containers"]:
         for vol in ctr.get("volumes") or []:
             if vol["class"] == "nfs":
                 share, rest = vol["host"].split("/")[3], "/".join(vol["host"].split("/")[4:])
                 path = f"{shares.get(share, '<' + share + ' export>').rstrip('/')}/{rest}".rstrip("/")
-                rows.append(f"| `{path}` | {user} | {group} | {mode} | {vol['path']} in container {ctr['name']} |")
+                if vol.get("read_only") is True:
+                    existing.append(f"- `{path}` ({vol['path']} in container {ctr['name']})")
+                else:
+                    rows.append(f"| `{path}` | {user} | {group} | {mode} | {vol['path']} in container {ctr['name']} |")
+    note = ["", "Existing folders the app only reads (mounted read-only). Nothing to create, and don't change "
+            f"their owner or mode: {svc} reads them as UID {uid} and GID {gid}, so they must stay readable by that "
+            "user, that group or everyone.", "", *existing, ""] if existing else []
     if not rows:
+        if existing:
+            return "\n".join([f"# File server folders for {svc}", "", f"None to create for {svc}.", *note])
         return f"# File server folders for {svc}\n\nNone: {svc} keeps nothing on the file server.\n"
     return "\n".join([
         f"# File server folders for {svc}", "",
@@ -704,14 +795,54 @@ def _file_server_report(spec, site, svc, vm, uid, gid) -> str:
         "or group only when none has that number yet, otherwise use the existing one. A mode with 2 in front "
         "(setgid) keeps new files in the shared group.", "",
         "| Folder on the file server | User | Group | Mode | What it holds |", "|---|---|---|---|---|",
-        *rows, ""])
+        *rows, *(note or [""])])
 
 
 BACKUP_FILE = {"mariadb": "sql.gz", "mysql": "sql.gz", "postgres": "dump", "sqlite": "sqlite", "custom": "dump.gz"}
 
 
-def _backups_report(spec, site, svc, vm, calendar, keep) -> str:
+def _files_archive(spec) -> tuple[bool, list[str], list[str], bool]:
+    """What the files backup packs, for a validated spec: (any folder to pack, tar excludes relative to
+    /var/lib/appdata/<svc>, local folders left out, a SQLite folder whose other files are packed).
+
+    Without files_backup the excludes are exactly ["./db"], as before the option existed. A SQLite
+    volume with files_backup true is packed except its database file and the files SQLite keeps beside
+    it (-wal, -shm, -journal): those get the online copy. Every other database folder stays out whole.
+    """
+    folder_excludes, skipped, packed, rest = [], [], False, False
+    db_excludes, whole_db = [], True
+    for ctr in spec["containers"]:
+        for vol in ctr.get("volumes") or []:
+            subs = vol.get("backup_skip") or []
+            if vol["class"] == "local":
+                name = vol.get("name") or vol["path"].strip("/").replace("/", "-")
+                if vol.get("files_backup") is False:
+                    if name not in skipped:
+                        skipped.append(name)
+                        folder_excludes.append(f"./{name}")
+                else:
+                    packed = True
+                    for sub in subs:
+                        if f"./{name}/{sub}" not in folder_excludes:
+                            skipped.append(sub)
+                            folder_excludes.append(f"./{name}/{sub}")
+            elif vol["class"] == "local-db":
+                if vol.get("files_backup") is True:
+                    packed, rest, whole_db = True, True, False
+                    db = f"./db/{ctr['name']}/{vol['file']}"
+                    db_excludes += [db, f"{db}-wal", f"{db}-shm", f"{db}-journal"]
+                    for sub in subs:
+                        skipped.append(sub)
+                        db_excludes.append(f"./db/{ctr['name']}/{sub}")
+                else:
+                    db_excludes.append(f"./db/{ctr['name']}")
+    return packed, folder_excludes + (["./db"] if whole_db else db_excludes), skipped, rest
+
+
+def _backups_report(spec, site, svc, vm, calendar, keep, files_calendar=None, files_keep=None) -> str:
     """For the final report: what is backed up, when, where, and how to restore it."""
+    files_calendar = calendar if files_calendar is None else files_calendar
+    files_keep = keep if files_keep is None else files_keep
     rows = []
     for ctr in spec["containers"]:
         for vol in ctr.get("volumes") or []:
@@ -719,11 +850,25 @@ def _backups_report(spec, site, svc, vm, calendar, keep) -> str:
                 time = "<time>" if vol["engine"] == "sqlite" else "<UTC time>"
                 rows.append(f"| database of {ctr['name']} ({vol['engine']}) | `{svc}-backup-{ctr['name']}.timer` | "
                             f"`{ctr['name']}-{time}.{BACKUP_FILE[vol['engine']]}` | {calendar} |")
-    if any(v["class"] == "local" for c in spec["containers"] for v in c.get("volumes") or []):
-        rows.append(f"| files of {svc} (data disk, without the database) | `{svc}-backup-files.timer` | "
-                    f"`files-<UTC time>.tar.gz` | {calendar} |")
+    packed, _, skipped, rest = _files_archive(spec)
+    if packed:
+        parts = ["without the database file, with the rest of the database folder" if rest else "without the database"]
+        if skipped:
+            parts.append("not backed up: " + ", ".join(skipped))
+        rows.append(f"| files of {svc} (data disk, {'; '.join(parts)}) | `{svc}-backup-files.timer` | "
+                    f"`files-<UTC time>.tar.gz` | {files_calendar} |")
+    skip_note = [f"- **Skipped:** {', '.join(f'`{n}`' for n in skipped)} on the data disk is not backed up "
+                 "(the spec marks it as rebuildable).", ""] if skipped and not packed else []
     if not rows:
+        if skip_note:
+            return "\n".join([f"# Backups of {svc}", "",
+                              f"Nothing to back up: {svc} keeps no data on the VM's data disk that the spec marks "
+                              "for backup.", "", *skip_note])
         return f"# Backups of {svc}\n\nNothing to back up: {svc} keeps no data on the VM's data disk.\n"
+    rest_note = ["- **Database inside a data folder:** the files archive holds that folder without its database "
+                 "file; restore the archive first, then the database copy into the same place (guide 4, Restore, "
+                 "SQLite, with the file's path inside the folder).", ""] if rest else []
+    rows += ["", *skip_note[:-1], *rest_note[:-1]] if skip_note or rest_note else []
     export = next((s.get("export") for s in (_vm_entry(site, vm) or {}).get("nfs_shares") or []
                    if isinstance(s, dict) and s.get("name") == "backups"), None)
     if not export:
@@ -731,11 +876,15 @@ def _backups_report(spec, site, svc, vm, calendar, keep) -> str:
                           f"VM {vm} has no backups share, so these backups can't run (recorded in the "
                           "service's accepted risks). Add the share to the VM in the site file to start them.", ""])
     where = f"`{export.rstrip('/')}/{vm}/{svc}/`"
+    has_db = any(v["class"] == "local-db" for c in spec["containers"] for v in c.get("volumes") or [])
+    kept = (f"the newest {keep} database copies and the newest {files_keep} files archives"
+            if packed and has_db and files_keep != keep else f"the newest {keep if has_db or not packed else files_keep} "
+            "of each kind")
     return "\n".join([
         f"# Backups of {svc}", "",
         "| What | Unit | File | When |", "|---|---|---|---|", *rows, "",
         f"- **Where:** {where} on the file server (`/var/mnt/backups/{vm}/{svc}/` on VM {vm}).",
-        f"- **Kept:** the newest {keep} of each kind; older ones are deleted after each run.",
+        f"- **Kept:** {kept}; older ones are deleted after each run.",
         "- **When:** each timer runs at the time above (systemd OnCalendar, the VM's clock). The timers are "
         "Persistent, so a run missed while the VM was off happens right after it starts again.",
         "- **File server off:** the run skips quietly and tries again next time; nothing on the VM changes.",
@@ -862,7 +1011,6 @@ def generate(spec: dict, site: dict, out) -> list[Path]:
     files: dict[str, str] = {}
     dirs: dict[str, str] = {}
     quadlets = []
-    local_volumes = False
     publisher = None
 
     files[f"rendered/files/{svc}.network"] = _fill("service/network.tmpl", base)
@@ -883,9 +1031,10 @@ def generate(spec: dict, site: dict, out) -> list[Path]:
                 dirs[host] = "0700"
             else:
                 dirs[host] = "0750"
-                local_volumes = True
         mode, caps = ctr["user_mode"], ctr.get("add_capabilities") or []
         security = ["UserNS=keep-id"] if mode == "map-user" else [f"AddCapability={c}" for c in caps]
+        if ctr.get("keep_groups") is True:
+            security.append("GroupAdd=keep-groups")
         deps = [line for d in ctr.get("depends_on") or [] for line in (f"Requires={svc}-{d}.service", f"After={svc}-{d}.service")]
         publish = ""
         if ctr.get("publish") is not None:
@@ -914,17 +1063,24 @@ def generate(spec: dict, site: dict, out) -> list[Path]:
         base, SVC_APPDATA_DIRS="\n".join(_dir_entry(p, m, uid, gid) for p, m in sorted(dirs.items())),
         SVC_QUADLET_FILES=quad_text, SVC_SUBUIDS=_span(uid), SVC_SUBGIDS=_span(gid)))
     if publisher and not loopback:
-        files[f"rendered/{svc}-port.bu"] = _fill("service/service-port.bu.tmpl", dict(base, SVC_PORT=spec["port"]))
-    if local_volumes:
-        files[f"rendered/{svc}-backup-files.bu"] = _fill("service/backup-files.bu.tmpl",
-                                                          dict(base, BACKUP_KEEP=keep, BACKUP_ONCALENDAR=calendar))
+        direct = spec.get("direct_networks") or []
+        rule = (f"\n          add rule inet host_filter input tcp dport {spec['port']} ip saddr "
+                f"{{ {', '.join(direct)} }} accept") if direct else ""
+        files[f"rendered/{svc}-port.bu"] = _fill("service/service-port.bu.tmpl",
+                                                  dict(base, SVC_PORT=spec["port"], SVC_DIRECT_RULE=rule))
+    packed, excludes, _, _ = _files_archive(spec)
+    files_calendar, files_keep, _ = _files_backup_settings(spec, site)
+    if packed:
+        files[f"rendered/{svc}-backup-files.bu"] = _fill("service/backup-files.bu.tmpl", dict(
+            base, BACKUP_KEEP=files_keep, BACKUP_ONCALENDAR=files_calendar,
+            BACKUP_EXCLUDES=" ".join(f"--exclude={e}" for e in excludes)))
     if has_route(spec):
         files.update(_route_files(spec, site))
     admin = _admin_user(site)
     files["secrets.md"] = _secrets_report(spec, svc, vm_name, uid, spec["containers"], admin)
     files["ids.md"] = _ids_report(spec, svc, vm_name, uid, gid, admin, vm["ip"])
     files["file-server.md"] = _file_server_report(spec, site, svc, vm_name, uid, gid)
-    files["backups.md"] = _backups_report(spec, site, svc, vm_name, calendar, keep)
+    files["backups.md"] = _backups_report(spec, site, svc, vm_name, calendar, keep, files_calendar, files_keep)
     return _write_all(out, svc, files)
 
 
