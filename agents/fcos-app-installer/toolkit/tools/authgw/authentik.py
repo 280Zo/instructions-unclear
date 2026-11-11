@@ -28,6 +28,132 @@ PERSON = re.compile(r"[a-z][a-z0-9._-]{0,62}")
 GROUP_NAME = re.compile(r"[a-z][a-z0-9-]{0,62}")
 RESERVED_USERS = {"akadmin"}
 
+# Dashboard links to devices the toolkit doesn't run (site.yaml dashboard_links).
+LINK_NAME = re.compile(r"[a-z][a-z0-9-]{0,49}")
+# http(s), a host name or IPv4 address, an optional port and a plain path: nothing that could end a
+# quoted YAML string or carry script.
+LINK_URL = re.compile(r"https?://[A-Za-z0-9.-]+(:[0-9]{1,5})?(/[A-Za-z0-9._~%/-]*)?")
+LINK_KEYS = {"name", "title", "url", "section", "groups", "icon", "description", "sso", "route"}
+# Application slugs that clash with OAuth2 provider endpoints (authentik core/models.py reserved_slugs).
+RESERVED_SLUGS = {"authorize", "token", "device", "userinfo", "introspect", "revoke"}
+# The scopes a device signing on gets: who the person is, nothing more (system blueprint
+# providers-oauth2.yaml, managed names).
+LINK_SCOPES = ("openid", "email", "profile")
+
+
+def _text(value, limit: int) -> bool:
+    return isinstance(value, str) and 0 < len(value) <= limit and value.isprintable()
+
+
+def _links(site: dict) -> list[dict]:
+    """site.yaml dashboard_links: [{name, title, url, section?, groups?, icon?, description?,
+    sso?: {redirect_uris}}]. Never a secret value; Authentik makes the client ID and its secret itself."""
+    links = site.get("dashboard_links")
+    if links is None:
+        return []
+    if not isinstance(links, list):
+        raise SpecError("site.yaml: dashboard_links must be a list of {name, title, url, ...}")
+    links = list(links)  # a link with a route gets its address filled in; the site file stays as written
+    errors, seen = [], set()
+    for n, link in enumerate(links):
+        where = f"site.yaml dashboard_links[{n}]"
+        if (not isinstance(link, dict) or not {"name", "title"} <= set(link) or not set(link) <= LINK_KEYS
+                or ("url" in link) == ("route" in link)):
+            errors.append(f"{where}: needs name, title and either url (the device's own address) or route (a web "
+                          "name on the login front end, which is then the address); may have section, groups, icon, "
+                          "description, sso (nothing else, never a secret)")
+            continue
+        if "route" in link:
+            # The address is the route's web name (checked in full by tools/login_frontend.py).
+            route = link["route"]
+            label = route.get("hostname") if isinstance(route, dict) else None
+            if not (isinstance(label, str) and HOST_LABEL.fullmatch(label)):
+                errors.append(f"{where}: route needs hostname: one name under the domain (lowercase, digits, -)")
+                continue
+            link = links[n] = dict(link, url=f"https://{label}.{site_value(site, 'domain')}/")
+        name = link["name"]
+        if not (isinstance(name, str) and LINK_NAME.fullmatch(name)) or name in RESERVED_SLUGS:
+            errors.append(f"{where}: name must be lowercase letters, digits, - (at most 50; not "
+                          f"{', '.join(sorted(RESERVED_SLUGS))})")
+        elif name in seen:
+            errors.append(f"{where}: name {name!r} is listed twice")
+        seen.add(name)
+        if not _text(link["title"], 100):
+            errors.append(f"{where}: title must be one line of at most 100 characters")
+        if not (isinstance(link["url"], str) and LINK_URL.fullmatch(link["url"])):
+            errors.append(f"{where}: url must be http:// or https://, a host or address, an optional port and a "
+                          "plain path")
+        if "description" in link and not _text(link["description"], 200):
+            errors.append(f"{where}: description must be one line of at most 200 characters")
+        if "section" in link and not (isinstance(link["section"], str) and SECTION.fullmatch(link["section"])):
+            errors.append(f"{where}: section must be a short heading (letters, digits, spaces, & ' . , -; at most 50)")
+        groups = link.get("groups", [])
+        if (not isinstance(groups, list) or len(groups) > MAX_GROUPS or len(set(groups)) != len(groups)
+                or not all(isinstance(g, str) and GROUP.fullmatch(g) for g in groups)):
+            errors.append(f"{where}: groups must be a list of up to {MAX_GROUPS} different lowercase names")
+        if "icon" in link and not (isinstance(link["icon"], str) and ICON.fullmatch(link["icon"])):
+            errors.append(f"{where}: icon must be a file name in the workspace's links folder "
+                          "(letters, digits, -; .svg .png .webp .jpg)")
+        if "sso" in link:
+            sso = link["sso"]
+            uris = sso.get("redirect_uris") if isinstance(sso, dict) else None
+            if (not isinstance(sso, dict) or set(sso) != {"redirect_uris"} or not isinstance(uris, list)
+                    or not uris or len(uris) > 10 or len(set(uris)) != len(uris)
+                    or not all(isinstance(u, str) and LINK_URL.fullmatch(u) for u in uris)):
+                errors.append(f"{where}: sso must be {{redirect_uris: [<the device's own address>, ...]}} "
+                              "(1 to 10 http(s) addresses; never a client ID or secret)")
+    if errors:
+        raise SpecError("\n".join(errors))
+    return links
+
+
+def link_names(config: dict) -> list[str]:
+    """The Authentik application slugs the dashboard links take (checked against every service name)."""
+    return [link["name"] for link in config.get("links", [])]
+
+
+def _link_provider(name: str, uris: list[str]) -> str:
+    """An OpenID Connect provider for a device that signs people on through Authentik. No client ID
+    or secret: the model generates both, and a later apply is a partial update that keeps them."""
+    redirects = "\n".join(f"        - matching_mode: strict\n          url: \"{u}\"\n"
+                          "          redirect_uri_type: authorization" for u in uris)
+    scopes = "\n".join(f"        - !Find [authentik_providers_oauth2.scopemapping, "
+                       f"[managed, goauthentik.io/providers/oauth2/scope-{s}]]" for s in LINK_SCOPES)
+    return (f"  - model: authentik_providers_oauth2.oauth2provider\n    id: provider-{name}\n"
+            f"    identifiers:\n      name: \"{name}\"\n    attrs:\n"
+            "      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]\n"
+            "      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]\n"
+            "      client_type: confidential\n"
+            "      # The authorize view refuses a grant type the provider doesn't list (the model default is none).\n"
+            "      grant_types: [authorization_code]\n"
+            f"      redirect_uris:\n{redirects}\n"
+            "      signing_key: !Find [authentik_crypto.certificatekeypair, [name, \"authentik Self-signed Certificate\"]]\n"
+            f"      property_mappings:\n{scopes}")
+
+
+def link_text(link: dict) -> str:
+    """The rules file for one dashboard link."""
+    name, sso = link["name"], link.get("sso")
+    icon = Path(link["icon"]).suffix if link.get("icon") else ""
+    return _fill("link.blueprint.yaml.tmpl", {
+        "LINK_NAME": name,
+        "LINK_KIND_NOTE": ("Sign-on: an OpenID Connect provider; Authentik makes its client ID and secret, which the "
+                           "user copies into the device. The device keeps its own login as the way in."
+                           if sso else "A plain link: the device's own login protects it."),
+        "PROVIDER_ENTRIES": _link_provider(name, sso["redirect_uris"]) if sso else "",
+        "PROVIDER_REF": f"!KeyOf provider-{name}" if sso else "null",
+        "LINK_TITLE": json.dumps(link["title"], ensure_ascii=False),
+        "LINK_URL": link["url"],
+        "LINK_DESCRIPTION": json.dumps(link.get("description") or (
+            "Signs on through this page; its own login works when this page is down" if sso
+            else "Uses its own login"), ensure_ascii=False),
+        "ICON_LINE": (f'      icon: "app-icons/link-{name}{icon}"' if icon
+                      else "      # icon: none (Authentik shows the initials)"),
+        "SECTION_LINE": (f'      group: "{link["section"]}"' if link.get("section")
+                         else "      # section: none (listed under Ungrouped)"),
+        "ACCESS_ENTRIES": _access_entries(name, link.get("groups") or []),
+    })
+
 
 def _people(site: dict) -> list[dict]:
     """site.yaml people: local Authentik users (no email, no self sign-up).
@@ -214,11 +340,14 @@ def _signup_blueprint(signup: dict, sources: dict) -> str:
 
 
 def _access_blueprint(people: list[dict], routed: list[dict], signup: dict | None = None,
-                      sources: dict | None = None) -> str:
-    """The one rules file that creates groups (from people and every app's groups), the
-    people, and each app's group bindings. Each app's own rules are applied first
+                      sources: dict | None = None, links: list[dict] | None = None) -> str:
+    """The one rules file that creates groups (from people, every app's and every link's groups), the
+    people, and each app's and link's group bindings. Each app's (or link's) own rules are applied first
     (metaapplyblueprint, required), so its application exists before it is bound."""
-    bound = [s for s in routed if s.get("groups")]  # behind the login page: who may open it; own login: who sees its link
+    # Behind the login page: who may open the app. On its own login (with a hostname): who sees its link.
+    bound = [dict(s, rules=f"app-{s['name']}") for s in routed if s.get("groups")]
+    # A dashboard link: who sees it (and, with sign-on, who may sign on through it).
+    bound += [dict(link, rules=f"link-{link['name']}") for link in links or [] if link.get("groups")]
     groups = sorted({g for p in people for g in p["groups"]} | {g for s in bound for g in s["groups"]}
                     | ({signup["group"]} if signup else set()))
     out = ["# Groups, local people and app access in Authentik (site.yaml people, each app's groups).",
@@ -228,7 +357,7 @@ def _access_blueprint(people: list[dict], routed: list[dict], signup: dict | Non
            "  labels:", '    blueprints.goauthentik.io/instantiate: "true"', "entries:"]
     for spec in bound:
         out += ["  - model: authentik_blueprints.metaapplyblueprint", "    attrs:", "      identifiers:",
-                f'        name: "app-{spec["name"]}"', "      required: true"]
+                f'        name: "{spec["rules"]}"', "      required: true"]
     for group in groups:
         out += ["  - model: authentik_core.group", f"    id: group-{group}", "    identifiers:",
                 f'      name: "{group}"']
@@ -347,7 +476,7 @@ def settings(site: dict) -> dict:
     """The gateway's own site settings, checked: people, sign-up page and sign-in sources."""
     people = _people(site)
     signup = _signup(site)
-    return {"people": people, "signup": signup, "sources": _sources(site, signup)}
+    return {"people": people, "signup": signup, "sources": _sources(site, signup), "links": _links(site)}
 
 
 def prepare_spec(spec: dict, config: dict) -> None:
@@ -368,23 +497,27 @@ def place(site: dict, spec: dict, config: dict, routed: list, bindings: dict, ic
     blueprints = folder(spec, "/blueprints/custom")
     media = folder(spec, "/data") + "/media"
     people, signup, sources = config["people"], config["signup"], config["sources"]
+    links = config.get("links", [])
     files, entries, directories = {}, [], []
     applies, providers = [], []
+
+    def add_icon(source: Path, stem: str, who: str) -> None:
+        if not source.is_file():
+            raise SpecError(f"{who}: icon file {source} is missing")
+        data = source.read_bytes()
+        if source.suffix == ".svg" and SVG_SCRIPT.search(data.decode("utf-8", "replace")):
+            raise SpecError(f"{who}: icon {source.name} contains script; use a PNG or a clean SVG")
+        ref = f"app-icons/{stem}{source.suffix}"
+        files[f"rendered/files/icon-{stem}{source.suffix}"] = data
+        entries.append(file_entry(f"{media}/public/{ref}", f"files/icon-{stem}{source.suffix}", uid, gid))
+        if not directories:
+            # Authentik writes here too: declared with its owner, never created as root.
+            directories.extend(dir_entry(d, uid, gid) for d in (media, f"{media}/public", f"{media}/public/app-icons"))
+
     for item in routed:
         svc = item["name"]
         if item.get("icon"):
-            source = Path((icon_dirs or {}).get(svc, ".")) / item["icon"]
-            if not source.is_file():
-                raise SpecError(f"service {svc!r}: icon file {source} is missing")
-            ref = icon_ref(item)
-            data = source.read_bytes()
-            if ref.endswith(".svg") and SVG_SCRIPT.search(data.decode("utf-8", "replace")):
-                raise SpecError(f"service {svc!r}: icon {source.name} contains script; use a PNG or a clean SVG")
-            files[f"rendered/files/icon-{svc}{Path(ref).suffix}"] = data
-            entries.append(file_entry(f"{media}/public/{ref}", f"files/icon-{svc}{Path(ref).suffix}", uid, gid))
-            if not directories:
-                # Authentik writes here too: declared with its owner, never created as root.
-                directories = [dir_entry(d, uid, gid) for d in (media, f"{media}/public", f"{media}/public/app-icons")]
+            add_icon(Path((icon_dirs or {}).get(svc, ".")) / item["icon"], svc, f"service {svc!r}")
         files[f"rendered/files/app-{svc}.blueprint.yaml"] = bindings[svc]
         entries.append(file_entry(f"{blueprints}/app-{svc}.yaml", f"files/app-{svc}.blueprint.yaml", uid, gid))
         if item["login"] != "gateway":  # own login: dashboard link only, never on the outpost
@@ -393,13 +526,20 @@ def place(site: dict, spec: dict, config: dict, routed: list, bindings: dict, ic
         applies.append(f"  - model: authentik_blueprints.metaapplyblueprint\n    attrs:\n"
                        f"      identifiers:\n        name: \"app-{svc}\"\n      required: true")
         providers.append(f"        - !Find [authentik_providers_proxy.proxyprovider, [name, \"{svc}\"]]")
+    for link in links:  # never on the outpost and never a route: the device is opened directly
+        name = link["name"]
+        if link.get("icon"):
+            add_icon(Path(config.get("links_dir") or ".") / link["icon"], f"link-{name}",
+                     f"site.yaml dashboard_links {name!r}")
+        files[f"rendered/files/link-{name}.blueprint.yaml"] = link_text(link)
+        entries.append(file_entry(f"{blueprints}/link-{name}.yaml", f"files/link-{name}.blueprint.yaml", uid, gid))
     files["rendered/files/outpost-providers.blueprint.yaml"] = _fill("outpost-providers.blueprint.yaml.tmpl", {
         "OUTPOST_APPLY_ENTRIES": "\n".join(applies),
         "OUTPOST_PROVIDER_LIST": "\n".join(providers) if providers else "        []"})
     entries.append(file_entry(f"{blueprints}/outpost-providers.yaml", "files/outpost-providers.blueprint.yaml",
                               uid, gid))
-    if people or signup or any(s.get("groups") for s in routed):
-        files["rendered/files/access.blueprint.yaml"] = _access_blueprint(people, routed, signup, sources)
+    if people or signup or any(s.get("groups") for s in routed) or any(link.get("groups") for link in links):
+        files["rendered/files/access.blueprint.yaml"] = _access_blueprint(people, routed, signup, sources, links)
         entries.append(file_entry(f"{blueprints}/access.yaml", "files/access.blueprint.yaml", uid, gid))
     if "user_pictures" in site:
         # Not a built-in Authentik feature, and a picture stored as a user

@@ -18,3 +18,14 @@ people:
 signin_sources:
   google: {client_id: "<client ID>"}
   apple: {client_id: "<services ID>;<team ID>;<key ID>"}
+
+# Devices the toolkit doesn't run, as dashboard links (optional). See operations.md, "Devices on the
+# dashboard". Logos in <workspace>/links/.
+dashboard_links:
+  - {name: router-a, title: "Router A", url: "https://192.0.2.1/", section: Admin, groups: [admin]}
+  - name: hv-a
+    title: "Hypervisor A"
+    url: "https://192.0.2.10:8006/"
+    section: Admin
+    groups: [admin]
+    sso: {redirect_uris: ["https://192.0.2.10:8006"]}

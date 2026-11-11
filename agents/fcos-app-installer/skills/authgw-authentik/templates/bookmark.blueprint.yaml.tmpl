@@ -13,8 +13,10 @@ metadata:
   labels:
     blueprints.goauthentik.io/instantiate: "true"
 entries:
+  # The tile's look (name, logo, section, description): written once (state created), then left to
+  # Authentik's admin page.
   - model: authentik_core.application
-    id: app-{{ROUTE_NAME}}
+    state: created
     identifiers:
       slug: "{{ROUTE_NAME}}"
     attrs:
@@ -27,4 +29,12 @@ entries:
       # The dashboard opens the app in a new tab, not in the dashboard's own.
       open_in_new_tab: true
       meta_description: "Uses its own login"
+  # What makes it work, re-applied every time (a partial update: the look above is kept).
+  - model: authentik_core.application
+    id: app-{{ROUTE_NAME}}
+    identifiers:
+      slug: "{{ROUTE_NAME}}"
+    attrs:
+      provider: null
+      meta_launch_url: "https://{{ROUTE_HOST}}"
 {{ACCESS_ENTRIES}}

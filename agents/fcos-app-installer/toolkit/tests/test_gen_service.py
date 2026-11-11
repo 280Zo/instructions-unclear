@@ -343,8 +343,11 @@ class CrmTests(GenCase):
         # A dashboard link only: an application with a launch URL and no provider.
         bookmark = yaml.safe_load(self.read(out, "files/rules-crm"))
         self.assertEqual(bookmark["metadata"]["name"], "app-crm")
-        (entry,) = bookmark["entries"]
+        # The look is written once (state created); the address is re-applied by a second entry.
+        entry, managed = bookmark["entries"]
         self.assertEqual(entry["model"], "authentik_core.application")
+        self.assertEqual(entry["state"], "created")
+        self.assertEqual(managed["attrs"], {"provider": None, "meta_launch_url": "https://crm.example.duckdns.org"})
         self.assertEqual(entry["identifiers"], {"slug": "crm"})
         self.assertEqual(entry["attrs"]["meta_launch_url"], "https://crm.example.duckdns.org")
         self.assertIsNone(entry["attrs"]["provider"])
@@ -731,7 +734,8 @@ class RuleTests(GenCase):
                 spec.update(name=name, title=title, hostname="crm")
                 out = self.gen(spec)
                 blueprint = yaml.load(self.read(out, f"files/rules-{name}"), Loader=Loader)
-                provider, app = blueprint["entries"]
+                provider, app, managed = blueprint["entries"]
+                self.assertEqual(managed["identifiers"]["slug"], name)
                 self.assertEqual(provider["identifiers"]["name"], name)
                 self.assertEqual(app["identifiers"]["slug"], name)
                 self.assertEqual(app["attrs"]["name"], title)
@@ -1027,7 +1031,8 @@ class InjectionTests(GenCase):
         for tag in ("!Find", "!KeyOf"):
             Loader.add_constructor(tag, lambda loader, node: "tag")
         models = [entry["model"] for entry in yaml.load(text, Loader=Loader)["entries"]]
-        self.assertEqual(models, ["authentik_providers_proxy.proxyprovider", "authentik_core.application"])
+        self.assertEqual(models, ["authentik_providers_proxy.proxyprovider", "authentik_core.application",
+                                  "authentik_core.application"])
 
     def test_hostile_custom_command_cannot_add_butane_files(self):
         def mutate(spec, command):

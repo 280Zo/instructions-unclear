@@ -54,6 +54,21 @@ class InstallNotesTests(unittest.TestCase):
                        "crm_db_password", "ai-projects (GID 3100)"):
             self.assertIn(needle, text)
 
+    def test_lists_dashboard_links_with_their_groups_and_sections(self):
+        site = yaml.safe_load((self.ws / "site.yaml").read_text())
+        site["dashboard_links"] = [
+            {"name": "router-a", "title": "Router A", "url": "https://192.0.2.1/", "section": "Admin",
+             "groups": ["admin"]},
+            {"name": "hv-a", "title": "Hypervisor A", "url": "https://192.0.2.10:8006/",
+             "sso": {"redirect_uris": ["https://192.0.2.10:8006"]}}]
+        (self.ws / "site.yaml").write_text(yaml.safe_dump(site))
+        text = self.text()
+        self.assertIn("## Dashboard links", text)
+        self.assertIn("| router-a | https://192.0.2.1/ | own login | admin | Admin |", text)
+        self.assertIn("| hv-a | https://192.0.2.10:8006/ | sign-on, own login kept | every user | none |", text)
+        self.assertRegex(text, r"Groups in use: [^\n]*admin")
+        self.assertRegex(text, r"Dashboard sections in use: [^\n]*Admin")
+
     def test_says_how_a_new_service_hooks_in(self):
         text = self.text()
         self.assertIn("## How a new service hooks in", text)

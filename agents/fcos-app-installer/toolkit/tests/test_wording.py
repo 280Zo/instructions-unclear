@@ -277,6 +277,25 @@ class GuideTests(unittest.TestCase):
         firewall = flat(ROOT / "templates" / "base" / "firewall.bu.tmpl")
         self.assertIn("direct_networks", firewall)  # the header lists every exception to "everything is dropped"
 
+    def test_the_readme_says_what_the_dashboard_can_list_and_what_the_publish_check_skips(self):
+        readme = " ".join((ROOT / "README.md").read_text().split())
+        # Devices the toolkit doesn't run can be listed on the dashboard, with the guide section that explains it.
+        self.assertIn("`dashboard_links:`", readme)
+        self.assertIn("section 6.11", readme)
+        self.assertIn("docs/guide/06-edge-vm.md", readme)
+        # The publish check skips the agent's knowledge store as well as git's folder and Python caches.
+        self.assertIn("the agent's `.pmb` knowledge folder", readme)
+
+    def test_the_sign_on_notes_name_the_two_proxmox_pitfalls_with_sources(self):
+        from layout import SKILLS
+        notes = " ".join((SKILLS / "authgw-authentik" / "reference.md").read_text().split())
+        # The redirect URI is the bare address: the hypervisor sends its own origin, so a trailing slash never matches.
+        self.assertIn("no trailing slash", notes)
+        self.assertIn("https://pve.proxmox.com/pve-docs/chapter-pveum.html", notes)
+        # The Proxmox user is looked up by exact name: a different letter case is a different user.
+        self.assertIn("case-sensitive", notes)
+        self.assertIn("name@realm", notes)
+
     def test_no_example_app_is_named_in_the_shared_toolkit(self):
         # The toolkit is generic: its guide, schema, tools, templates and site example describe an app as
         # <svc> or by what it needs. An app's name belongs in a skill's own reference.md, with its source.

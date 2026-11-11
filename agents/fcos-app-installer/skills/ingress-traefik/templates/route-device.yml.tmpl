@@ -1,0 +1,26 @@
+# Route for the dashboard link {{LINK_NAME}}: https://{{ROUTE_HOST}} -> {{DEVICE_BACKEND}}
+# A device the toolkit doesn't run (site.yaml dashboard_links, route:). No login page in front: the
+# device's own login (or its sign-on through the auth gateway) protects it. Only the listed networks
+# get through (ipAllowList on the connecting address); everyone else gets 403. When this VM is down,
+# the device is still reachable at its own address.
+# Names are quoted so a link called e.g. "null" or "on" stays a string.
+http:
+  routers:
+    "link-{{LINK_NAME}}":
+      rule: "Host(`{{ROUTE_HOST}}`)"
+      entryPoints: [websecure]
+      middlewares: ["link-{{LINK_NAME}}-allow"]
+      service: "link-{{LINK_NAME}}"
+      priority: 10
+  middlewares:
+    "link-{{LINK_NAME}}-allow":
+      ipAllowList:
+        sourceRange:
+{{ALLOW_LIST}}
+  services:
+    "link-{{LINK_NAME}}":
+      loadBalancer:
+{{TRANSPORT_LINE}}
+        servers:
+          - url: "{{DEVICE_BACKEND}}"
+{{TRANSPORT_BLOCK}}

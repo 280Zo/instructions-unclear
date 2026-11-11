@@ -128,7 +128,8 @@ def check_text(text: str, private: set[str], extra: list | tuple = ()) -> list[s
     return sorted(set(hits), key=lambda h: int(h.split(":", 1)[0]))
 
 
-SKIP_DIRS = {".git", "__pycache__"}
+# .pmb: the agent's local knowledge store (binary databases), never part of a published toolkit.
+SKIP_DIRS = {".git", "__pycache__", ".pmb"}
 
 
 def _in_checkout(root: Path) -> bool:

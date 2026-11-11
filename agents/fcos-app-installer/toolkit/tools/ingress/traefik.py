@@ -112,6 +112,28 @@ def route_text(kind: str, gateway: str, values: dict) -> str:
     raise SpecError(f"login {kind!r} has no route kind")  # fail closed on a new value
 
 
+def device_route_text(name: str, host: str, backend: str, allow_from: list[str], ca_pem: str | None,
+                      server_name: str | None = None) -> str:
+    """The route file for a device's web name (a dashboard link with route:): no auth gateway, an
+    ipAllowList on the connecting address (doc.traefik.io, middlewares/ipallowlist), and for an https
+    device a serversTransport whose rootCAs holds the device's CA itself (FileOrContent: a path or
+    the PEM), so the device's certificate is checked, never skipped. Values are checked by the caller."""
+    if ca_pem:
+        pem = "\n".join(f"            {line}" for line in ca_pem.strip().splitlines())
+        transport_line = f'        serversTransport: "link-{name}"'
+        # serverName: the name the device's certificate is checked against (and sent as SNI), for a
+        # device whose certificate names a host instead of its address.
+        name_line = f'      serverName: "{server_name}"\n' if server_name else ""
+        transport_block = (f'  serversTransports:\n    "link-{name}":\n{name_line}      rootCAs:\n        - |\n{pem}')
+    else:
+        transport_line = "        # serversTransport: none (plain http device)"
+        transport_block = "  # serversTransports: none"
+    return _fill("route-device.yml.tmpl", {
+        "LINK_NAME": name, "ROUTE_HOST": host, "DEVICE_BACKEND": backend,
+        "ALLOW_LIST": "\n".join(f'          - "{net}"' for net in allow_from),
+        "TRANSPORT_LINE": transport_line, "TRANSPORT_BLOCK": transport_block})
+
+
 def place(site: dict, spec: dict, gateway: str, gateway_values: dict, routes: dict,
           acme: dict) -> tuple[dict, list]:
     """(files, Butane entries) for the ingress on the login VM: static settings (with the DNS

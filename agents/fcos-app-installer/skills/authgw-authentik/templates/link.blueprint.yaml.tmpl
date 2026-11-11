@@ -1,0 +1,38 @@
+# Authentik dashboard link {{LINK_NAME}}: a device the toolkit doesn't run
+# (site.yaml dashboard_links). The link opens the device's own address, never
+# through the ingress or the gateway, so the device stays reachable with its own
+# login when the login front end is down.
+# {{LINK_KIND_NOTE}}
+# Fields: authentik Application model (meta_launch_url, open_in_new_tab,
+# provider) and, for sign-on, the OAuth2Provider model (reference.md).
+version: 1
+metadata:
+  name: link-{{LINK_NAME}}
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+entries:
+{{PROVIDER_ENTRIES}}
+  # The tile's look (name, logo, section, description, new tab): written once (state created), then
+  # left to Authentik's admin page.
+  - model: authentik_core.application
+    state: created
+    identifiers:
+      slug: "{{LINK_NAME}}"
+    attrs:
+      # Quoted (JSON strings are valid YAML): a title like "yes" stays text.
+      name: {{LINK_TITLE}}
+{{ICON_LINE}}
+{{SECTION_LINE}}
+      provider: {{PROVIDER_REF}}
+      meta_launch_url: "{{LINK_URL}}"
+      meta_description: {{LINK_DESCRIPTION}}
+      open_in_new_tab: true
+  # What makes it work, re-applied every time (a partial update: the look above is kept).
+  - model: authentik_core.application
+    id: app-{{LINK_NAME}}
+    identifiers:
+      slug: "{{LINK_NAME}}"
+    attrs:
+      provider: {{PROVIDER_REF}}
+      meta_launch_url: "{{LINK_URL}}"
+{{ACCESS_ENTRIES}}

@@ -83,9 +83,11 @@ def render(ws: Path, notes: list[str]) -> str:
         out.append(f"| {vm.get('name')} | {vm.get('host', '?')} | {vm.get('ip', '?')} | {vm.get('vlan_tag', 'none')} "
                    f"| {shares} | {', '.join(names) or 'none'} |")
 
-    groups = sorted({g for s in specs for g in s.get("groups") or []} | (
+    # Dashboard links to devices the toolkit doesn't run (site dashboard_links).
+    links = [link for link in site.get("dashboard_links") or [] if isinstance(link, dict)]
+    groups = sorted({g for s in specs + links for g in s.get("groups") or []} | (
         {site["signup"]["group"]} if isinstance(site.get("signup"), dict) and site["signup"].get("group") else set()))
-    sections = sorted({s["section"] for s in specs if s.get("section")})
+    sections = sorted({s["section"] for s in specs + links if s.get("section")})
     sources = sorted((site.get("signin_sources") or {}).keys())
     shared = ", ".join(f"{g.get('name')} (GID {g.get('gid')})" for g in site.get("shared_groups") or []
                        if isinstance(g, dict))
@@ -108,6 +110,19 @@ def render(ws: Path, notes: list[str]) -> str:
                    f"| {', '.join(spec.get('groups') or []) or 'every user'} | {spec.get('section', 'none')} "
                    f"| {spec.get('port', 'none')} | {uid}/{spec.get('gid', uid)} | {', '.join(classes) or 'none'} "
                    f"| {backups} |")
+
+    if links:
+        out += ["", "## Dashboard links", "",
+                "Devices the toolkit doesn't run: each link opens the device's own address, so it keeps working "
+                "with its own login when the login front end is down.", "",
+                "| Link | Address | Login | Groups | Section |", "|---|---|---|---|---|"]
+        for link in links:
+            login = "sign-on, own login kept" if link.get("sso") else "own login"
+            route = link.get("route") if isinstance(link.get("route"), dict) else {}
+            address = (f"https://{route.get('hostname')}.{domain}/ (via the login front end; own address "
+                       f"{route.get('backend')})" if route else link.get("url"))
+            out.append(f"| {link.get('name')} | {address} | {login} "
+                       f"| {', '.join(link.get('groups') or []) or 'every user'} | {link.get('section', 'none')} |")
 
     uids = sorted(({s.get("uid") for s in specs} | {(edge.get(k) or {}).get("uid") for k in chosen.values()}) - {None})
     ports: dict[str, list] = {}

@@ -278,6 +278,17 @@ class WorkspaceSourceTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("(1 file, walked)", result.stderr)
 
+    def test_the_walk_skips_the_agents_knowledge_store(self):
+        # .pmb holds the agent's local knowledge store (binary databases): it is never published.
+        plain = self.plain_folder()
+        (plain / "ok.md").write_text("nothing private\n")
+        (plain / ".pmb" / "workspaces").mkdir(parents=True)
+        (plain / ".pmb" / "workspaces" / "events.sqlite").write_bytes(b"SQLite format 3\x00\x01\x02")
+        (plain / ".pmb" / "notes.md").write_text(j("gateway: 192", ".168.1.1\n"))
+        result = self.run_check(str(plain))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("(1 file, walked)", result.stderr)
+
     def test_a_checkout_is_scanned_from_gits_list_and_says_so(self):
         result = self.run_check()
         self.assertIn("git list)", result.stderr)

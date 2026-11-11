@@ -164,3 +164,31 @@ with an existing account from another provider (`signin_sources:`, non-secret id
 each of these does, the manual steps in the gateway's own interface, and how to turn sign-up off again are
 in its `operations.md`, "People and access". After a change to the site file, regenerate and push the
 login front end (guide 3.9).
+
+## 6.11 Devices on the dashboard
+
+Devices the toolkit doesn't run (a router, a switch, a virtualization server, a file server, a board's
+remote management) can be listed on the auth gateway's dashboard too, in the site file's
+`dashboard_links:`. Each link opens the device's own address directly, never through the ingress or
+the auth gateway, so when the login front end is down the device still answers with its own login. The
+dashboard itself is down then, so the user also keeps those addresses as browser bookmarks or in the
+password manager.
+
+A device may also get a web name under the domain, served by the login front end with its one wildcard
+certificate (`route:`), so devices that can't get a trusted certificate of their own don't need one, and
+the router needs no entry per device. That route skips the login page, is limited to the networks the
+user lists (never the guest networks), and checks the device's own certificate against its CA. When the
+login front end is down the name stops working, and the device's own address is the way in.
+
+Ask, for each device: its name on the dashboard, its own address, who sees it (groups), its section,
+and its logo (from the product's official sources, saved in `<workspace>/links/`, shown to the user).
+Then read the device's official documentation for single sign-on. Only real OpenID Connect sign-in
+counts: a device that only checks passwords against a directory or RADIUS server still asks for a
+password on its own page, and stays a plain link unless the user asks for more. For a device with
+OpenID Connect, the link also gets a sign-on part (`sso:`, the device's own addresses that the gateway
+may send people back to). The gateway makes the client ID and secret; **[Manual]** the user copies them
+into the device and keeps the device's local accounts, so its own login still works when the gateway is
+down. A device's settings are always manual steps: the agent never signs in to one.
+
+Then regenerate and push the login front end (guide 3.9). The fields, the gateway's manual steps and
+how to remove a link are in its `operations.md`, "Devices on the dashboard".

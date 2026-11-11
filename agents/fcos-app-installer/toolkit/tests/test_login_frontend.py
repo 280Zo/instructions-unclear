@@ -251,8 +251,9 @@ class RouteTests(FrontendCase):
         route = yaml.safe_load(self.read(out, "files/route-dav.yml"))["http"]["routers"]["dav"]
         self.assertNotIn("middlewares", route)
         link = yaml.safe_load(self.read(out, "files/app-dav.blueprint.yaml"))
-        self.assertEqual([e["model"] for e in link["entries"]], ["authentik_core.application"])
+        self.assertEqual([e["model"] for e in link["entries"]], ["authentik_core.application"] * 2)
         self.assertIsNone(link["entries"][0]["attrs"]["provider"])
+        self.assertIsNone(link["entries"][1]["attrs"]["provider"])
         # no outpost entry and no apply-first entry for it
         metas = [e["attrs"]["identifiers"]["name"] for e in yaml.load(
             self.read(out, "files/outpost-providers.blueprint.yaml"), Loader=TagLoader)["entries"]
@@ -280,8 +281,11 @@ class RouteTests(FrontendCase):
             with self.subTest(app=name, login=kind):
                 data = yaml.load(self.read(path, f"files/app-{name}.blueprint.yaml"), Loader=TagLoader)
                 apps = [e for e in data["entries"] if e["model"] == "authentik_core.application"]
-                self.assertEqual(len(apps), 1)
-                self.assertIs(apps[0]["attrs"]["open_in_new_tab"], True)
+                # The tile's look is written once (state created), so the admin page can change it; the
+                # new tab is part of that look.
+                created = [e for e in apps if e.get("state") == "created"]
+                self.assertEqual(len(created), 1)
+                self.assertIs(created[0]["attrs"]["open_in_new_tab"], True)
         reference = (SKILLS / "authgw-authentik" / "reference.md").read_text()
         self.assertIn("open_in_new_tab", reference)
         self.assertIn("authentik/core/models.py", reference)
@@ -397,7 +401,8 @@ class RouteTests(FrontendCase):
     def test_app_blueprint_is_a_forward_auth_provider(self):
         blueprint = yaml.load(self.read(self.gen(), "files/app-crm.blueprint.yaml"), Loader=TagLoader)
         self.assertEqual(blueprint["metadata"]["name"], "app-crm")
-        provider, app = blueprint["entries"]
+        provider, app, managed = blueprint["entries"]
+        self.assertEqual(managed["attrs"], {"provider": ("!KeyOf", "provider-crm")})
         self.assertEqual(provider["model"], "authentik_providers_proxy.proxyprovider")
         self.assertEqual(provider["attrs"]["mode"], "forward_single")
         self.assertEqual(provider["attrs"]["external_host"], "https://crm.example.duckdns.org")
@@ -814,3 +819,279 @@ class NoProfilePictureTests(FrontendCase):
         middleware = self.read(self.gen(copy.deepcopy(SITE)), "files/00-authgw-authentik.yml")
         self.assertNotIn("X-authentik-jwt", middleware)
         self.assertIn("X-authentik-username", middleware)
+
+
+class DashboardLinkTests(FrontendCase):
+    """Dashboard links to devices the toolkit doesn't run (a router, a hypervisor, a BMC). The link
+    opens the device's own address, never through the ingress or the gateway, so the device stays
+    reachable with its own login when the login front end is down. A link may also carry an OpenID
+    Connect provider for a device that supports it (authentik 2026.8.5: providers/oauth2/models.py,
+    views/authorize.py check_grant, blueprints/v1/importer.py partial updates,
+    blueprints/system/providers-oauth2.yaml, crypto/apps.py; integrations.goauthentik.io Proxmox VE)."""
+
+    PLAIN = {"name": "router-a", "title": "Router A", "url": "https://192.0.2.1/", "section": "Admin",
+             "groups": ["admin"]}
+    SSO = {"name": "hv-a", "title": "Hypervisor A", "url": "https://192.0.2.10:8006/",
+           "sso": {"redirect_uris": ["https://192.0.2.10:8006"]}}
+
+    def gen_links(self, links, services=("crm",), links_dir=None):
+        site = copy.deepcopy(SITE)
+        site["dashboard_links"] = links
+        out = Path(tempfile.mkdtemp(prefix="login-frontend-", dir=SCRATCH))
+        self.addCleanup(shutil.rmtree, out, True)
+        generate_login_frontend(site, [spec_fixture(s) for s in services], out, links_dir=links_dir)
+        return out
+
+    def link(self, out, name):
+        return yaml.load(self.read(out, f"files/link-{name}.blueprint.yaml"), Loader=TagLoader)
+
+    def entry(self, data, model):
+        return next(e for e in data["entries"] if e["model"] == model)
+
+    def test_a_link_opens_the_device_itself_in_a_new_tab(self):
+        out = self.gen_links([self.PLAIN])
+        data = self.link(out, "router-a")
+        self.assertEqual(data["metadata"]["name"], "link-router-a")
+        app = self.entry(data, "authentik_core.application")
+        self.assertEqual(app["identifiers"], {"slug": "router-a"})
+        self.assertEqual(app["attrs"]["name"], "Router A")
+        self.assertEqual(app["attrs"]["meta_launch_url"], "https://192.0.2.1/")
+        self.assertIs(app["attrs"]["open_in_new_tab"], True)
+        self.assertIsNone(app["attrs"]["provider"])
+        self.assertEqual(app["attrs"]["group"], "Admin")
+        self.assertFalse(any(e["model"].startswith("authentik_providers") for e in data["entries"]))
+        placed = self.files(out, "login-frontend.bu")
+        self.assertIn("/var/lib/appdata/authentik/blueprints/link-router-a.yaml", placed)
+        # Never on the outpost, never a route: the ingress knows nothing of it.
+        self.assertNotIn("router-a", self.read(out, "files/outpost-providers.blueprint.yaml"))
+        self.assertFalse(list((out / "rendered" / "files").glob("route-router-a*")))
+
+    def test_a_link_hides_until_its_groups_are_bound(self):
+        out = self.gen_links([self.PLAIN])
+        deny = [e for e in self.link(out, "router-a")["entries"]
+                if e["model"] == "authentik_policies_expression.expressionpolicy"]
+        self.assertEqual(len(deny), 1)
+        access = yaml.load(self.read(out, "files/access.blueprint.yaml"), Loader=TagLoader)["entries"]
+        meta = [e["attrs"]["identifiers"]["name"] for e in access
+                if e["model"] == "authentik_blueprints.metaapplyblueprint"]
+        self.assertIn("link-router-a", meta)
+        binds = [e for e in access if e["model"] == "authentik_policies.policybinding"
+                 and e["identifiers"]["target"] == ("!Find", ["authentik_core.application", ["slug", "router-a"]])]
+        self.assertEqual(len(binds), 1)
+        self.assertEqual(binds[0]["identifiers"]["group"], ("!KeyOf", "group-admin"))
+        groups = [e["identifiers"]["name"] for e in access if e["model"] == "authentik_core.group"]
+        self.assertIn("admin", groups)
+
+    def test_a_link_with_sign_on_gets_an_openid_provider_whose_secret_authentik_makes(self):
+        out = self.gen_links([self.SSO])
+        data = self.link(out, "hv-a")
+        provider = self.entry(data, "authentik_providers_oauth2.oauth2provider")
+        attrs = provider["attrs"]
+        self.assertEqual(provider["identifiers"], {"name": "hv-a"})
+        self.assertEqual(attrs["client_type"], "confidential")
+        # authorize.py refuses a grant type the provider doesn't list; the model default is empty.
+        self.assertEqual(attrs["grant_types"], ["authorization_code"])
+        self.assertEqual(attrs["redirect_uris"], [{"matching_mode": "strict", "url": "https://192.0.2.10:8006",
+                                                   "redirect_uri_type": "authorization"}])
+        self.assertEqual(attrs["authorization_flow"],
+                         ("!Find", ["authentik_flows.flow", ["slug", "default-provider-authorization-implicit-consent"]]))
+        self.assertEqual(attrs["invalidation_flow"],
+                         ("!Find", ["authentik_flows.flow", ["slug", "default-provider-invalidation-flow"]]))
+        self.assertEqual(attrs["signing_key"],
+                         ("!Find", ["authentik_crypto.certificatekeypair", ["name", "authentik Self-signed Certificate"]]))
+        scopes = [m[1][1][1] for m in attrs["property_mappings"]]
+        self.assertEqual(scopes, [f"goauthentik.io/providers/oauth2/scope-{s}" for s in ("openid", "email", "profile")])
+        # Never a client id or secret in a file: authentik generates both once, and a later apply
+        # (a partial update) keeps them.
+        self.assertNotIn("client_id", attrs)
+        self.assertNotIn("client_secret", attrs)
+        app = self.entry(data, "authentik_core.application")
+        self.assertEqual(app["attrs"]["provider"], ("!KeyOf", "provider-hv-a"))
+        self.assertEqual(app["attrs"]["meta_launch_url"], "https://192.0.2.10:8006/")
+        # Without groups every user may sign on through it: said in the file.
+        self.assertIn("every Authentik user", self.read(out, "files/link-hv-a.blueprint.yaml"))
+
+    def test_a_link_icon_comes_from_the_links_folder(self):
+        src = Path(tempfile.mkdtemp(dir=SCRATCH))
+        self.addCleanup(shutil.rmtree, src, True)
+        (src / "router.svg").write_text("<svg/>")
+        out = self.gen_links([dict(self.PLAIN, icon="router.svg")], links_dir=src)
+        app = self.entry(self.link(out, "router-a"), "authentik_core.application")
+        self.assertEqual(app["attrs"]["icon"], "app-icons/link-router-a.svg")
+        self.assertEqual((out / "rendered" / "files" / "icon-link-router-a.svg").read_text(), "<svg/>")
+        placed = self.files(out, "login-frontend.bu")
+        self.assertTrue(any(p.endswith("/media/public/app-icons/link-router-a.svg") for p in placed))
+        (src / "router.svg").write_text("<svg onload='x'/>")
+        with self.assertRaisesRegex(SpecError, "icon"):
+            self.gen_links([dict(self.PLAIN, icon="router.svg")], links_dir=src)
+        with self.assertRaisesRegex(SpecError, "icon"):
+            self.gen_links([dict(self.PLAIN, icon="missing.svg")], links_dir=src)
+
+    def test_bad_links_refused(self):
+        bad_ones = [
+            "not a list",
+            [dict(self.PLAIN, name="Router")],
+            [dict(self.PLAIN, name="token")],  # an OAuth2 endpoint name (core/models.py reserved_slugs)
+            [dict(self.PLAIN, url="javascript:alert(1)")],
+            [dict(self.PLAIN, url="ftp://192.0.2.1/")],
+            [dict(self.PLAIN, url='https://192.0.2.1/"x')],
+            [dict(self.PLAIN, url="https://192.0.2.1/ x")],
+            [dict(self.PLAIN, title="a\nb")],
+            [dict(self.PLAIN, groups=["Admin"])],
+            [dict(self.PLAIN, section="<b>")],
+            [dict(self.PLAIN, icon="../x.svg")],
+            [dict(self.PLAIN, password="x")],
+            [dict(self.PLAIN, sso={"redirect_uris": []})],
+            [dict(self.PLAIN, sso={"redirect_uris": ["javascript:x"]})],
+            [dict(self.PLAIN, sso={"redirect_uris": ["https://192.0.2.1"], "client_secret": "x"})],
+            [self.PLAIN, dict(self.PLAIN, title="Again")],
+            [dict(self.PLAIN, name="crm")],  # an app's own dashboard entry already uses this name
+            [dict(self.PLAIN, name="authentik")],  # the login front end's own names
+        ]
+        for bad in bad_ones:
+            with self.subTest(bad=bad), self.assertRaisesRegex(SpecError, "dashboard_links"):
+                self.gen_links(bad)
+
+    def test_the_look_of_a_tile_is_set_once_and_then_left_to_the_admin_page(self):
+        # authentik 2026.8.5 blueprints/v1/importer.py: state created skips an existing object; a
+        # present entry is a partial update of only the attrs it lists. So name, section, logo,
+        # description and new-tab are written at creation only; the address and provider every time.
+        cases = [("files/link-router-a.blueprint.yaml", self.gen_links([self.PLAIN]), "router-a"),
+                 ("files/link-hv-a.blueprint.yaml", self.gen_links([self.SSO]), "hv-a")]
+        site = copy.deepcopy(SITE)
+        out = Path(tempfile.mkdtemp(prefix="login-frontend-", dir=SCRATCH))
+        self.addCleanup(shutil.rmtree, out, True)
+        own = spec_fixture("crm")
+        own.update(login="app-only", login_reason="own login", hostname="crm")
+        generate_login_frontend(site, [own], out)
+        cases.append(("files/app-crm.blueprint.yaml", out, "crm"))
+        out2 = self.gen(services=("crm",))
+        cases.append(("files/app-crm.blueprint.yaml", out2, "crm"))
+        look = {"name", "icon", "group", "meta_description", "open_in_new_tab"}
+        for rel, out, slug in cases:
+            with self.subTest(rel=rel, out=str(out)):
+                data = yaml.load(self.read(out, rel), Loader=TagLoader)
+                apps = [e for e in data["entries"] if e["model"] == "authentik_core.application"]
+                self.assertEqual(len(apps), 2)
+                first, second = apps
+                self.assertEqual(first["state"], "created")
+                self.assertEqual(first["identifiers"], {"slug": slug})
+                self.assertIn("name", first["attrs"])
+                self.assertNotIn("state", second)
+                self.assertEqual(second["identifiers"], {"slug": slug})
+                self.assertEqual(set(second["attrs"]), {"provider", "meta_launch_url"} & set(first["attrs"]))
+                self.assertEqual({k: second["attrs"][k] for k in second["attrs"]},
+                                 {k: first["attrs"][k] for k in second["attrs"]})
+                self.assertFalse(look & set(second["attrs"]))
+                self.assertEqual(second["id"], f"app-{slug}")  # bindings point at the managed entry
+                self.assertNotIn("id", first)
+                self.assertLess(data["entries"].index(first), data["entries"].index(second))
+
+    def test_without_links_nothing_changes(self):
+        out = self.gen()
+        self.assertFalse(list((out / "rendered" / "files").glob("link-*")))
+
+
+class DeviceRouteTests(FrontendCase):
+    """A dashboard link may get a web name on the login front end (route:): the ingress serves it with the
+    wildcard certificate, without the login page, only to the listed networks (Traefik ipAllowList, default
+    strategy: the remote address), and checks the device's own certificate against its CA (serversTransports
+    rootCAs, FileOrContent: a path or the PEM itself; pkg/types/file_or_content.go)."""
+
+    CA = "-----BEGIN CERTIFICATE-----\nMIIBszCCAVmgAwIBAgIUTEST\n-----END CERTIFICATE-----\n"
+
+    def setUp(self):
+        self.src = Path(tempfile.mkdtemp(dir=SCRATCH))
+        self.addCleanup(shutil.rmtree, self.src, True)
+        (self.src / "ca.pem").write_text(self.CA)
+
+    def link(self, **route):
+        base = {"hostname": "hv-a", "backend": "https://192.0.2.10:8006", "allow_from": ["192.0.2.0/24"],
+                "ca_file": str(self.src / "ca.pem")}
+        base.update(route)
+        return {"name": "hv-a", "title": "Hypervisor A", "section": "Admin", "groups": ["admin"],
+                "route": {k: v for k, v in base.items() if v is not None},
+                "sso": {"redirect_uris": ["https://hv-a." + SITE["domain"]]}}
+
+    def gen_links(self, links, services=("crm",)):
+        site = copy.deepcopy(SITE)
+        site["dashboard_links"] = links
+        out = Path(tempfile.mkdtemp(prefix="login-frontend-", dir=SCRATCH))
+        self.addCleanup(shutil.rmtree, out, True)
+        generate_login_frontend(site, [spec_fixture(s) for s in services], out)
+        return out
+
+    def test_a_device_route_is_limited_to_its_networks_and_checks_the_device_certificate(self):
+        out = self.gen_links([self.link()])
+        host = "hv-a." + SITE["domain"]
+        route = yaml.safe_load(self.read(out, "files/route-link-hv-a.yml"))["http"]
+        router = route["routers"]["link-hv-a"]
+        self.assertEqual(router["rule"], f"Host(`{host}`)")
+        self.assertEqual(router["entryPoints"], ["websecure"])
+        self.assertEqual(router["middlewares"], ["link-hv-a-allow"])  # never the login page's forward auth
+        self.assertEqual(route["middlewares"]["link-hv-a-allow"], {"ipAllowList": {"sourceRange": ["192.0.2.0/24"]}})
+        service = route["services"]["link-hv-a"]["loadBalancer"]
+        self.assertEqual(service["servers"], [{"url": "https://192.0.2.10:8006"}])
+        self.assertEqual(service["serversTransport"], "link-hv-a")
+        transport = route["serversTransports"]["link-hv-a"]
+        self.assertEqual(transport["rootCAs"], [self.CA])
+        self.assertNotIn("insecureSkipVerify", transport)
+        placed = self.files(out, "login-frontend.bu")
+        self.assertIn("/var/lib/appdata/traefik/dynamic/link-hv-a.yml", placed)
+        app = next(e for e in yaml.load(self.read(out, "files/link-hv-a.blueprint.yaml"), Loader=TagLoader)["entries"]
+                   if e["model"] == "authentik_core.application")
+        self.assertEqual(app["attrs"]["meta_launch_url"], f"https://{host}/")
+
+    def test_a_device_whose_certificate_names_a_host_is_checked_against_that_name(self):
+        # serversTransports serverName: the SNI and the name the device's certificate is checked against
+        # (doc.traefik.io serverstransport), for devices whose certificate names a host, not their IP.
+        out = self.gen_links([self.link(server_name="ap.example.org")])
+        transport = yaml.safe_load(self.read(out, "files/route-link-hv-a.yml"))["http"]["serversTransports"]["link-hv-a"]
+        self.assertEqual(transport["serverName"], "ap.example.org")
+        self.assertEqual(transport["rootCAs"], [self.CA])
+        out = self.gen_links([self.link()])
+        transport = yaml.safe_load(self.read(out, "files/route-link-hv-a.yml"))["http"]["serversTransports"]["link-hv-a"]
+        self.assertNotIn("serverName", transport)
+        for bad in ("bad name", "a" * 254, "x\"y", ""):
+            with self.subTest(bad=bad), self.assertRaisesRegex(SpecError, "dashboard_links"):
+                self.gen_links([self.link(server_name=bad)])
+        with self.assertRaisesRegex(SpecError, "dashboard_links"):
+            self.gen_links([self.link(backend="http://192.0.2.20", ca_file=None, server_name="ap.example.org")])
+
+    def test_a_plain_http_device_needs_no_ca(self):
+        out = self.gen_links([self.link(backend="http://192.0.2.20", ca_file=None)])
+        route = yaml.safe_load(self.read(out, "files/route-link-hv-a.yml"))["http"]
+        self.assertNotIn("serversTransports", route)
+        self.assertNotIn("serversTransport", route["services"]["link-hv-a"]["loadBalancer"])
+
+    def test_bad_device_routes_refused(self):
+        # Built in pieces so this file never contains a key header (the publish check refuses one).
+        key_kind = "PRIVATE" + " KEY"
+        (self.src / "key.pem").write_text(self.CA + f"-----BEGIN {key_kind}-----\nx\n-----END {key_kind}-----\n")
+        (self.src / "junk.pem").write_text("hello")
+        bad_ones = [
+            [self.link(allow_from=None)],                      # every route is limited to some networks
+            [self.link(allow_from=[])],
+            [self.link(allow_from=["0.0.0.0/0"])],             # not a limit
+            [self.link(allow_from=["192.0.2.1/24"])],          # not a network address
+            [self.link(allow_from=["8.8.8.0/24"])],            # not private
+            [self.link(ca_file=None)],                         # https needs the device's CA: never skip the check
+            [self.link(ca_file=str(self.src / "key.pem"))],    # a private key never goes into a route file
+            [self.link(ca_file=str(self.src / "junk.pem"))],
+            [self.link(ca_file="relative/ca.pem")],
+            [self.link(backend="ftp://192.0.2.10")],
+            [self.link(backend="https://192.0.2.10:8006/path")],
+            [self.link(hostname="Bad.Name")],
+            [self.link(hostname="crm")],                       # a service's web name
+            [self.link(hostname=SITE["edge"]["authentik"]["host"].split(".")[0])],  # the login page's name
+            [dict(self.link(), url="https://elsewhere.example.org/")],  # the route's name is the address
+            [dict(self.link(), route={"hostname": "hv-a"})],
+        ]
+        for bad in bad_ones:
+            with self.subTest(bad=bad), self.assertRaisesRegex(SpecError, "dashboard_links"):
+                self.gen_links(bad)
+
+    def test_two_links_cannot_share_a_web_name(self):
+        other = dict(self.link(), name="hv-b")
+        with self.assertRaisesRegex(SpecError, "dashboard_links"):
+            self.gen_links([self.link(), other])

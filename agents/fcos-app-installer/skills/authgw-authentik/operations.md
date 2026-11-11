@@ -106,8 +106,20 @@ an app also refuses everyone until its group bindings exist (a `deny-until-bound
 on the application's policy engine mode staying **any** (Authentik's default): switching it to **all**
 in the admin interface would lock everyone out. For an app on its own login (with a web name) `groups:`
 decide who sees its dashboard link, not who may open the app: its route skips the login page and its own
-login decides that. The same `deny-until-bound` policy keeps the link hidden until the groups are
-bound. Also ask whether anyone new needs an account for it: they go into the site file's `people:` (People and access, below).
+login decides that, so anyone who knows the address still reaches the app's own login. Say so when
+asking. The same `deny-until-bound` policy keeps the link hidden until the groups are bound. Also ask
+whether anyone new needs an account for it: they go into the site file's `people:` (People and access, below).
+
+## Who owns a tile's look
+
+Each app's or link's rules file writes its application twice. The first entry (`state: created`) sets
+the look (name, section, logo, description, open in a new tab) only when the application is created.
+The second re-applies only what makes it work: its provider and launch address. So after the first
+push the user changes the look in the admin interface (**Applications → Applications → edit**: Name,
+Group, Icon, Description), and those changes stay. Changing `section:`, `title:` or `icon:` in a spec
+or the site file afterwards has no effect on an existing tile. Who sees it (`groups:`) stays in the
+files. An agent changes the look only through the API with a time-limited token (guide 3.12).
+Source: `blueprints/v1/importer.py` (reference.md).
 
 ## The dashboard section and the logo
 
@@ -123,6 +135,71 @@ confirm. The login front end stores it on the VM and Authentik serves it itself,
 it from the internet
 ([File picker values](https://docs.goauthentik.io/customize/file-picker/)).
 
+## Devices on the dashboard
+
+Guide 6.11. Each entry under the site file's `dashboard_links:` becomes one rules file,
+`link-<name>.yaml`: an application whose launch address is the device's own address, opened in a new tab,
+never bound to the embedded outpost and never routed by the ingress. Logos go in `<workspace>/links/`.
+
+```yaml
+dashboard_links:
+  - name: router-a                  # lowercase, digits, -; becomes the application slug
+    title: "Router A"
+    url: "https://192.0.2.1/"       # the device's own address
+    section: Admin                  # optional dashboard heading
+    groups: [admin]                 # optional; who sees it (and, with sso, who may sign on)
+    icon: router-a.svg              # optional, a file in <workspace>/links/
+    description: "Its own login"    # optional
+  - name: hv-a
+    title: "Hypervisor A"
+    url: "https://192.0.2.10:8006/"
+    groups: [admin]
+    sso: {redirect_uris: ["https://192.0.2.10:8006"]}   # only for a device with OpenID Connect
+```
+
+Instead of `url`, a link may have a web name on the login front end, `route:` (most devices can't get a
+trusted certificate of their own; this uses the wildcard one). The router's wildcard already sends the
+name to the login front end; the ingress serves it without the login page, only to `allow_from`, and
+checks an https device's certificate against `ca_file` (never skipped). The link's address becomes
+`https://<hostname>.<domain>/`; keep the device's own address as a bookmark for when the login front end
+is down. **[Manual]** The router must let the login front end reach the device's port.
+
+```yaml
+  - name: hv-a
+    title: "Hypervisor A"
+    groups: [admin]
+    route:
+      hostname: hv-a                         # one name under the domain
+      backend: "https://192.0.2.10:8006"     # the device's own address, nothing after the port
+      allow_from: ["192.0.2.0/24"]           # private networks that may use the name
+      ca_file: /path/to/workspace/hosts/hv-a/ca.pem   # absolute; the device's CA (PEM, no key)
+      # server_name: ap.example.org          # optional: when the device's certificate names a host, not its IP
+    sso: {redirect_uris: ["https://hv-a.example.org", "https://192.0.2.10:8006"]}
+```
+
+A name may not be a service's name or the login front end's own (`authentik`, `traefik`), nor one of
+Authentik's OAuth2 endpoint names. With `groups:` the link stays hidden until `access.yaml` binds them,
+like an app; without groups every user sees it.
+
+**With `sso:`** the file adds an OAuth2/OpenID Connect provider named like the link: confidential client,
+the authorization-code grant only, strict redirect addresses, Authentik's implicit-consent sign-in flow,
+its self-signed signing key, and the `openid`, `email` and `profile` scopes. The file holds no client ID
+and no client secret value; Authentik generates both when it first creates the provider, and applying the file again keeps
+them. Only people in the link's groups can sign on through it (an application's bindings decide who
+may use its provider).
+
+**[Manual]** After the push and the rules check (below), the user opens the admin interface,
+**Applications → Providers**, clicks the link's provider and copies its **Client ID** and **Client
+Secret** into the device's OpenID Connect settings (the secret into the password manager too; never into
+the chat). The device's issuer address is `https://<login host>/application/o/<name>/`. The device must
+be able to reach `https://<login host>/` itself (the router's name for it and a rule from the device's
+network to the login front end's port 443). The device keeps its own local accounts: they are the way in
+when Authentik is down. The device's own steps come from its documentation, filled in by the agent.
+
+**Removing a link:** remove it from the site file, push, delete `link-<name>.yaml` from the rules folder
+(as below), then delete its application (and provider, for sign-on) in the admin interface; also remove
+the realm or sign-on settings on the device.
+
 ## Applying the login rules
 
 After the files are pushed (guide 3.9), remove the rules files the new set no longer contains: a
@@ -135,6 +212,9 @@ python3 tools/vmssh.py run <login-vm> -- 'sudo ls /var/lib/appdata/authentik/blu
 # a service removed, or on its own login without a hostname: its rules file goes
 set gone oldsvc
 python3 tools/vmssh.py run <login-vm> -- "sudo rm -f /var/lib/appdata/authentik/blueprints/app-$gone.yaml"
+# a dashboard link removed from the site file
+set gone oldlink
+python3 tools/vmssh.py run <login-vm> -- "sudo rm -f /var/lib/appdata/authentik/blueprints/link-$gone.yaml"
 ```
 
 A service switched between the login page and its own login (keeping its `hostname`) needs no

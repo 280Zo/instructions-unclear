@@ -255,6 +255,13 @@ The tunnel skips the login page and HTTPS; use it to fix things and close it
 when done. Details, and the fallback when SSH is down too:
 `docs/guide/08-break-glass.md`.
 
+The dashboard can also list devices the toolkit doesn't run, such as a router, a switch, a
+hypervisor or a file server (`dashboard_links:` in `site.yaml`; section 6.11 of
+`docs/guide/06-edge-vm.md`). A link opens the device's own address, so it keeps working when the login
+front end is down. A device can also get a web name under your domain through the login front end,
+open only to the networks you list, with the device's certificate checked against a CA you give it.
+A device that supports OpenID Connect can sign you in through the gateway.
+
 ## Updating
 
 The services on your VMs update themselves: every container has
@@ -345,7 +352,7 @@ so it can't find the adapters and reports product names such as an adapter's nam
 from your workspace as hits. Its last line says how
 it found the files: `git list` (git's list for the folder, ignored files
 excluded) or `walked` (every file in a plain copy, or when git can't answer;
-git's own folder, Python caches and links are skipped, and git-ignored files are
+git's own folder, Python caches, the agent's `.pmb` knowledge folder and links are skipped, and git-ignored files are
 read). A file it can't read is reported as a hit, and a scan that finds no file
 at all is an error, not a pass.
 

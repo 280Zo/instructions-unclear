@@ -20,8 +20,10 @@ entries:
       invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
       skip_path_regex: |
         {{API_SKIP_REGEX}}
+  # The tile's look (name, logo, section): written once (state created), then left to Authentik's
+  # admin page.
   - model: authentik_core.application
-    id: app-{{ROUTE_NAME}}
+    state: created
     identifiers:
       slug: "{{ROUTE_NAME}}"
     attrs:
@@ -32,4 +34,11 @@ entries:
       provider: !KeyOf provider-{{ROUTE_NAME}}
       # The dashboard opens the app in a new tab, not in the dashboard's own.
       open_in_new_tab: true
+  # What makes it work, re-applied every time (a partial update: the look above is kept).
+  - model: authentik_core.application
+    id: app-{{ROUTE_NAME}}
+    identifiers:
+      slug: "{{ROUTE_NAME}}"
+    attrs:
+      provider: !KeyOf provider-{{ROUTE_NAME}}
 {{ACCESS_ENTRIES}}
