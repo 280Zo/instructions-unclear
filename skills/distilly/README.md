@@ -65,7 +65,7 @@ Credentials for the message collectors never go through the conversation: you ru
 
 ### Install
 
-- The [`default` group](../../groups/README.md#default) installs it globally. For this folder alone, use step 1 under [Install](#install) above.
+- The [`default`](../../groups/README.md#default) and [`work`](../../groups/README.md#work) groups install it globally. For this folder alone, use step 1 under [Install](#install) above.
 - rulesync doesn't install the Python environment. Do steps 2 and 3 only with approval, following the `package-management` skill. Never handle collector credentials; the user runs `--setup` or `--login` in their own terminal.
 - To verify, start a new session and confirm the skills list includes `distilly`. Don't run a collector or a web-research distill as a test.
 

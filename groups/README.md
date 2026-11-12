@@ -76,6 +76,7 @@ skills/screenshot
 skills/playwright-cli
 skills/report
 skills/visual-explainer
+skills/distilly
 skills/handoff
 skills/teach
 skills/wait-what
@@ -85,8 +86,8 @@ What each tool gets:
 
 | Tool | Gets | Skipped |
 |---|---|---|
-| OpenCode | Rules, 7 agents, 38 skills, 4 commands, MCP servers | Nothing |
-| Copilot CLI | Rules, 7 agents, 38 skills, MCP servers (`~/.copilot/`) | Commands: Copilot CLI has none |
+| OpenCode | Rules, 7 agents, 39 skills, 4 commands, MCP servers | Nothing |
+| Copilot CLI | Rules, 7 agents, 39 skills, MCP servers (`~/.copilot/`) | Commands: Copilot CLI has none |
 | Copilot (VS Code) | Rules, agents and skills, written to the same `~/.copilot/` folder | MCP servers and commands: rulesync writes those for VS Code only inside a project, not globally |
 
 The seventh agent, `security`, comes with `agents/security`. In OpenCode it loads only its own skills; Copilot gets its instructions without that filter. The other specialist agents aren't in `work`.
