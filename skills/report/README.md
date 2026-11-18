@@ -32,7 +32,7 @@ To update, there is no upstream: the skill is written for this repo and changes 
 
 ## For agents: routing and updates
 
-- Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Write-up** of material already gathered: `report`". Teaching something unfamiliar is `eli5`'s job.
+- Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Write-up** of material already gathered: `report`". Meeting notes from meeting material are `meeting-minutes`'s job, and teaching something unfamiliar is `eli5`'s.
 - It gathers and checks evidence but doesn't own rendering: pages go to `visual-explainer`, diagrams to `diagram-design`, browser decks to `frontend-slides`, editable `.pptx` to `documents` or Presenton, and the shared look to `theme-factory`.
 - Why: `report` delegates rendering to those skills, so it has to follow the same owners as everything else.
 - The skill is written for this repo, so its own text can be adjusted to match routing, but `rules/routing` stays the single source: change the rule first and keep this skill consistent with it.

@@ -68,6 +68,7 @@ skills/docker-sandboxes-agent
 skills/eli5
 skills/frontend-slides
 skills/humanizer
+skills/meeting-minutes
 skills/documents
 skills/transcribe
 skills/speech
@@ -86,8 +87,8 @@ What each tool gets:
 
 | Tool | Gets | Skipped |
 |---|---|---|
-| OpenCode | Rules, 7 agents, 39 skills, 4 commands, MCP servers | Nothing |
-| Copilot CLI | Rules, 7 agents, 39 skills, MCP servers (`~/.copilot/`) | Commands: Copilot CLI has none |
+| OpenCode | Rules, 7 agents, 40 skills, 4 commands, MCP servers | Nothing |
+| Copilot CLI | Rules, 7 agents, 40 skills, MCP servers (`~/.copilot/`) | Commands: Copilot CLI has none |
 | Copilot (VS Code) | Rules, agents and skills, written to the same `~/.copilot/` folder | MCP servers and commands: rulesync writes those for VS Code only inside a project, not globally |
 
 The seventh agent, `security`, comes with `agents/security`. In OpenCode it loads only its own skills; Copilot gets its instructions without that filter. The other specialist agents aren't in `work`.
@@ -102,7 +103,7 @@ Codebase-memory, Presenton, ZAP and Podman are written switched off. OpenCode V2
 
 ## writing_reporting
 
-Rules (including `routing` and `preferences`), `second-opinion`, the Docling, Exa and PMB rules and skills, and `eli5`, `report`, `humanizer`, `visual-explainer`, `diagram-design`, `frontend-slides`, `frontend-design`, `theme-factory`, Magnus's [`documents`](../skills/documents/), and Matt Pocock's [`handoff`](../skills/handoff/), [`teach`](../skills/teach/) and [`wait-what`](../skills/wait-what/). That's 15 skills. MCP servers you already have stay as they are. The document skill adds authoring and smoke validation; it does not replace Docling's OCR/extraction role.
+Rules (including `routing` and `preferences`), `second-opinion`, the Docling, Exa and PMB rules and skills, and `eli5`, `report`, `humanizer`, [`meeting-minutes`](../skills/meeting-minutes/), `visual-explainer`, `diagram-design`, `frontend-slides`, `frontend-design`, `theme-factory`, Magnus's [`documents`](../skills/documents/), and Matt Pocock's [`handoff`](../skills/handoff/), [`teach`](../skills/teach/) and [`wait-what`](../skills/wait-what/). That's 16 skills. MCP servers you already have stay as they are. The document skill adds authoring and smoke validation; it does not replace Docling's OCR/extraction role.
 
 ```bash
 npx rulesync@41.0.0 generate --config groups/writing_reporting.jsonc --global

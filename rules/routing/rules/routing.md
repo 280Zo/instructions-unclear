@@ -15,6 +15,6 @@ Several installed skills can do the same job. Use the owner below. If the owner 
 * **Office and PDF files** to create or edit (Word, Excel, PowerPoint, PDF): `documents`.
 * **One shared look** across several visual outputs: `theme-factory`. Its theme replaces each renderer's default palette and fonts.
 * **UI and frontend design**: `frontend-design`.
-* **Write-up** of material already gathered: `report`. **Teaching** one unfamiliar thing: `eli5`.
+* **Write-up** of material already gathered: `report`. **Meeting notes** from meeting material: `meeting-minutes`. **Teaching** one unfamiliar thing: `eli5`.
 * **Prose people will read** (READMEs, docs, commit messages, pull requests): `humanizer`.
 * **Security**: threat model → `security-threat-model`; security review or secure-by-default help → `security-best-practices`; scanner setup → `sast-configuration`. Use `/security-hardening` only when asked for by name.
