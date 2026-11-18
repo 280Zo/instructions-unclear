@@ -29,7 +29,8 @@ Its instructions are in English, and it replies in the language you write in.
    source .venv/bin/activate
    ```
 
-   For another assistant, use its installed Distilly folder instead. Run its
+   For another assistant, use its installed Distilly folder instead (for GitHub
+   Copilot and Copilot CLI, `~/.copilot/skills/distilly`). Run its
    Python helpers from the activated environment. Start your coding tool from
    that shell so child processes inherit it, or invoke helpers explicitly with
    `.venv/bin/python`; shell activation may not persist between agent tool calls.
@@ -57,6 +58,16 @@ Its instructions are in English, and it replies in the language you write in.
 
 New skills are saved under `./skills/<kind>/<name>/` in the folder you're working in, through its own `tools/skill_writer.py`. Use one with `/<kind>-<name>` or by asking for that person's view.
 
+### GitHub Copilot
+
+Copilot loads Distilly itself from `~/.copilot/skills/distilly`, but it never looks in `./skills/<kind>/<name>/`, so a person skill isn't usable there until you install it. Distilly has no Copilot host, so point its installer at Copilot's skills folder:
+
+```bash
+python3 ~/.copilot/skills/distilly/tools/install_generated_skill.py --skill-dir ./skills/<kind>/<name> --host opencode --skills-dir ~/.copilot/skills --force
+```
+
+Use `--skills-dir .github/skills` to keep it in the current project instead. `--host` only labels the install record, and the installer copies only the finished `SKILL.md`, leaving the source material behind. `--force` replaces an earlier install of the same skill. Then run `/skills reload` in Copilot CLI, or restart VS Code. The skill is named `<kind>-<name>`.
+
 Credentials for the message collectors never go through the conversation: you run each collector's `--setup` or `--login` in your own terminal.
 
 "Set up my profile" interviews you so a personal agent knows who it works for. That only supports Claude Code, and it writes a short summary between markers into `~/.claude/CLAUDE.md`. Installing rules from this repo for Claude Code replaces that file, so set the profile up after installing, and again after each reinstall.
@@ -67,6 +78,7 @@ Credentials for the message collectors never go through the conversation: you ru
 
 - The [`default`](../../groups/README.md#default) and [`work`](../../groups/README.md#work) groups install it globally. For this folder alone, use step 1 under [Install](#install) above.
 - rulesync doesn't install the Python environment. Do steps 2 and 3 only with approval, following the `package-management` skill. Never handle collector credentials; the user runs `--setup` or `--login` in their own terminal.
+- For Copilot, generated person skills need the install step under [GitHub Copilot](#github-copilot); Distilly's `create` flow has no Copilot instructions of its own.
 - To verify, start a new session and confirm the skills list includes `distilly`. Don't run a collector or a web-research distill as a test.
 
 ### Remove
