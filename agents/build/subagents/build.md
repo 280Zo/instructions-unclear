@@ -175,6 +175,8 @@ opencode:
     - {action: "skill", resource: "outlines", effect: deny}
     - {action: "skill", resource: "patching-bugs", effect: deny}
     - {action: "skill", resource: "peft", effect: deny}
+    - {action: "skill", resource: "performance-log", effect: deny}
+    - {action: "skill", resource: "performance-review", effect: deny}
     - {action: "skill", resource: "phoenix", effect: deny}
     - {action: "skill", resource: "picocom", effect: deny}
     - {action: "skill", resource: "pinecone", effect: deny}

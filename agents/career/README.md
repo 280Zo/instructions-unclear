@@ -1,6 +1,6 @@
 # career
 
-Career work: career records and work history, master resume, tailored resumes and cover letters, job applications, LinkedIn, interview coaching, salary negotiation and offer comparison. Keeps career records in the working folder.
+Career work: career records and work history, a running work log and performance and promotion reviews, master resume, tailored resumes and cover letters, job applications, LinkedIn, interview coaching, salary negotiation and offer comparison. Keeps career records in the working folder.
 
 One agent file for every tool. In OpenCode it can use only its own skills (skills/resume-skills, skills/interview-coach and skills/career-workspace), the shared ones every agent gets, and the Exa, PMB, Docling servers; other tools get its instructions without those limits. See [how agents keep skills out of each other's requests](../README.md#how-agents-keep-skills-out-of-each-others-requests) and [what each assistant enforces](../README.md#what-each-assistant-enforces).
 

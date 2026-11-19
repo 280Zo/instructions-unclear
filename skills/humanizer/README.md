@@ -22,7 +22,7 @@ The routing rule tells the agent to use it for anything people will read: README
 
 ## For agents: install, remove and update
 
-To install, use the `default`, `work` or `writing_reporting` group, or the single-folder command above. It needs no other software. To verify, start a new session, check that `humanizer` is listed among the skills, and ask it to humanize one pasted sentence.
+To install, use the `default`, `work` or `writing_reporting` group, the `career` folder group (where `performance-review` needs it), or the single-folder command above. It needs no other software. To verify, start a new session, check that `humanizer` is listed among the skills, and ask it to humanize one pasted sentence.
 
 To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `humanizer` skill folder behind; delete it with approval. If the user keeps `rules/routing`, its line still names `humanizer`, so tell them.
 

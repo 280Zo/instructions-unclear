@@ -45,6 +45,14 @@ class RuleTests(unittest.TestCase):
         rule = (ROOT / "skills/career-workspace/rules/career-routing.md").read_text()
         self.assertIn("root: true", rule)
         self.assertIn("interview-coach", rule)
+        self.assertIn("`performance-log`", rule)
+        self.assertIn("`performance-review`", rule)
+        # Explicit resume wins stay with intake even though work notes go to the log.
+        self.assertIn("for my resume", rule)
+        log_skill = (
+            ROOT / "skills/career-workspace/skills/performance-log/SKILL.md"
+        ).read_text()
+        self.assertIn("for my resume", log_skill.split("---", 2)[1])
         self.assertIn("rules", read_jsonc(ROOT / "groups/career.jsonc")["features"])
         # The design folder has no overlapping skills, so it needs no
         # routing rule.

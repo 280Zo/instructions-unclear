@@ -177,6 +177,7 @@ class SecurityReContextTests(unittest.TestCase):
                 "skills/resume-skills",
                 "skills/interview-coach",
                 "skills/career-workspace",
+                "skills/humanizer",
             ],
         )
         workspace = ROOT / "skills/career-workspace/skills"
@@ -187,8 +188,19 @@ class SecurityReContextTests(unittest.TestCase):
                 "career-master-resume",
                 "career-start-application",
                 "career-work-history",
+                "performance-log",
+                "performance-review",
             },
         )
+        # The user's OpenCode edit rule *notes/* blocks such folders.
+        self.assertFalse([p for p in workspace.iterdir() if p.name.endswith("notes")])
+        self.assertTrue((workspace / "performance-log/helper-spec.md").is_file())
+        for template in ["performance-entry.md", "performance-goals.md"]:
+            self.assertTrue((workspace / "performance-log/templates" / template).is_file())
+        for name in ["performance-log", "performance-review"]:
+            text = (workspace / name / "SKILL.md").read_text()
+            self.assertRegex(text, rf"(?m)^name: {name}$")
+            self.assertRegex(text, r"(?m)^description: [\"']?Use when")
         master = (workspace / "career-master-resume/SKILL.md").read_text()
         self.assertRegex(master, r"(?m)^name: career-master-resume$")
         intake = (workspace / "career-intake/SKILL.md").read_text()

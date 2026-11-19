@@ -1,7 +1,7 @@
 ---
 name: career
 targets: ["*"]
-description: "Career work: career records and work history, master resume, tailored resumes and cover letters, job applications, LinkedIn, interview coaching, salary negotiation and offer comparison. Keeps career records in the working folder."
+description: "Career work: career records and work history, a running work log and performance and promotion reviews, master resume, tailored resumes and cover letters, job applications, LinkedIn, interview coaching, salary negotiation and offer comparison. Keeps career records in the working folder."
 opencode:
   mode: all
   permissions:
@@ -34,6 +34,8 @@ opencode:
     - {action: "skill", resource: "offer-comparison-analyzer", effect: allow}
     - {action: "skill", resource: "opencode", effect: allow}
     - {action: "skill", resource: "package-management", effect: allow}
+    - {action: "skill", resource: "performance-log", effect: allow}
+    - {action: "skill", resource: "performance-review", effect: allow}
     - {action: "skill", resource: "portfolio-case-study-writer", effect: allow}
     - {action: "skill", resource: "receiving-code-review", effect: allow}
     - {action: "skill", resource: "reference-list-builder", effect: allow}
@@ -83,7 +85,7 @@ claudecode:
     - mcp__radare2
 ---
 
-You are the career agent. Handle career records and work history, the master resume, tailored resumes and cover letters, job applications, LinkedIn, interview coaching, salary negotiation and offer comparison. Keep records in the working folder, following the career routing rule for which skill owns each step. Use only facts the user has given or recorded; never invent experience, numbers or dates. Hand work outside career back to the main agent.
+You are the career agent. Handle career records and work history, the running work log and performance and promotion reviews, the master resume, tailored resumes and cover letters, job applications, LinkedIn, interview coaching, salary negotiation and offer comparison. Keep records in the working folder, following the career routing rule for which skill owns each step. Use only facts the user has given or recorded; never invent experience, numbers or dates. Hand work outside career back to the main agent.
 
 ## How to work
 

@@ -1,10 +1,12 @@
 # career-workspace
 
-Four skills that keep a personal career record in one folder: file new career data, build a master resume, start a job application, and produce an official work history for forms.
+Six skills that keep a personal career record in one folder: file new career data, keep a work log through the year and write your performance review and promotion request from it, build a master resume, start a job application, and produce an official work history for forms.
 
 | Skill | What it does |
 |---|---|
 | `career-intake` | Files wins, numbers, skills, reviews, people, applications, offers and documents into the right workspace file, in your words |
+| `performance-log` | Turns pasted work notes in any format into one dated entry file per piece of work, linked to your goals, projects, people and topics, with every detail kept |
+| `performance-review` | Writes paste-ready performance and promotion answers from a cycle's log, with a working file of its choices and gaps, and hands major wins to `career-intake` |
 | `career-master-resume` | Builds `resumes/master-resume.md`, the bullet bank the [`resume-skills`](../resume-skills/) choose from |
 | `career-start-application` | Starts the application workflow from the existing master; asks for a job link, coordinates required passes and stops at eight review stages |
 | `career-work-history` | Lists every employer with official titles, dates, locations and managers for applications and background checks |
@@ -17,6 +19,14 @@ Four skills that keep a personal career record in one folder: file new career da
 
 1. File your records with `career-intake`.
 2. Ask it to "rebuild my master resume" (`career-master-resume`). If something in it is wrong, fix the record and rebuild rather than editing the master resume.
+
+**All year: work log and reviews**
+
+1. At the start of each review cycle, give the agent your performance goals, your promotion goals and the cycle's start and end dates. They go in `performance/<cycle>/goals.md`.
+2. Every few days, paste your notes into the chat and say "log this" (`performance-log`). It saves the paste as written, splits it into entry files, tags each number as verified, reported or estimated, matches goals only where the note supports them, and asks whether anything should be highlighted.
+3. Mid-year or at year end, say "write my performance review" or "how am I tracking against my goals" (`performance-review`). You get one answer per goal for each goal set, a working file with the scores, swaps, gaps and suggestions, and a handoff of your major wins that `career-intake` files when you say yes.
+
+The first run builds a small counting script, `performance/tools/perf_count.py`, from the spec in `performance-log` and checks it against a built-in sample. Later runs reuse it. Nothing in this repo ships as code. The review needs the [`humanizer`](../humanizer/) skill, which the `career` group installs; without it the review stops at a marked draft.
 
 **For each job:**
 
@@ -60,9 +70,9 @@ mkdir -p ~/AI/career
 npx rulesync@41.0.0 generate --targets opencode --features skills --input-roots skills/career-workspace --output-roots ~/AI/career
 ```
 
-Never add `--global` to this command: the skills read paths relative to the folder you start your tool in. The workflow also needs [`resume-skills`](../resume-skills/) and [`interview-coach`](../interview-coach/); the `career` group installs all three folders.
+Never add `--global` to this command: the skills read paths relative to the folder you start your tool in. The workflow also needs [`resume-skills`](../resume-skills/), [`interview-coach`](../interview-coach/) and [`humanizer`](../humanizer/); the `career` group installs all four folders.
 
-In OpenCode, the `default` group installs all three folders and the career routing rule globally for the [`career` agent](../../agents/career/), the only agent that loads these skills. Start OpenCode in your career folder so records land there.
+In OpenCode, the `default` group installs all four folders and the career routing rule globally for the [`career` agent](../../agents/career/), the only agent that loads these skills. Start OpenCode in your career folder so records land there.
 
 ## Workspace layout
 
@@ -77,6 +87,7 @@ references/       letters, plus index.md
 applications/     YYYY-MM-DD_<company>_<role>/ (posting.md, interviews.md, record with links)
 offers/           YYYY-MM-DD_<company>.md
 projects/         <slug>.md
+performance/      <cycle>/ (goals.md, raw/, entries/, index.md, reviews/), unfiled/, tools/
 study/            <topic>.md
 resumes/          master-resume.md
 inbox/            drop documents here for intake
@@ -92,7 +103,9 @@ The seven record templates ship in [`skills/career-intake/templates/`](skills/ca
 
 ## Example requests
 
-- "Log this: cut deploy time from 40 to 12 minutes at Acme" or "ingest the inbox" → `career-intake`
+- "Ingest the inbox" or "add this to my resume records" → `career-intake`
+- A paste of work notes with "log this" or "add this to my work log" → `performance-log`
+- "Write my performance review", "draft my promotion request" or "how am I tracking against my goals" → `performance-review`
 - "Rebuild my master resume" → `career-master-resume`
 - "Use career-start-application" → asks for the job link and starts the reviewed application workflow
 - "Give me my full work history for this background check" → `career-work-history`
@@ -103,8 +116,8 @@ Intake reads documents with Docling when it's available. If an interview or offe
 
 ### Install
 
-- For tools other than OpenCode, this folder installs into a career folder, never the home folder. The [`career` group](../../groups/README.md#career) installs it with `resume-skills` and `interview-coach`, run with `--output-roots` into a folder the user picks (suggest `~/AI/career`). Never add `--global` to that command. OpenCode's `default` group installs it globally behind the `career` agent's permissions; the user still starts OpenCode in the career folder.
-- The single-folder command under [Install](#install) uses `--features skills`, so it skips `rules/career-routing.md`. The workflow still needs `resume-skills` and `interview-coach`, so prefer the group.
+- For tools other than OpenCode, this folder installs into a career folder, never the home folder. The [`career` group](../../groups/README.md#career) installs it with `resume-skills`, `interview-coach` and `humanizer`, run with `--output-roots` into a folder the user picks (suggest `~/AI/career`). Never add `--global` to that command. OpenCode's `default` group installs it globally behind the `career` agent's permissions; the user still starts OpenCode in the career folder.
+- The single-folder command under [Install](#install) uses `--features skills`, so it skips `rules/career-routing.md`. The workflow still needs `resume-skills`, `interview-coach` and `humanizer`, so prefer the group.
 - Docling is optional; intake uses it for documents when it's available. Document export in stage 4 relies on document skills and their own runtimes, which rulesync doesn't install.
 - To verify, start the tool in the career folder and confirm the skills list includes `career-intake` and `career-start-application`, and that the folder's `AGENTS.md` contains the career routing rule. Don't run intake as a test unless the user wants the workspace folders created.
 
@@ -112,9 +125,9 @@ Intake reads documents with Docling when it's available. If an interview or offe
 
 Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component), working inside the career folder (`.opencode/skills/` and so on), not the home folder.
 
-- `delete: false` leaves `career-intake`, `career-master-resume`, `career-start-application` and `career-work-history` behind; delete them only with approval. Leave the `resume-skills` and `interview-coach` skills alone unless the user is removing those too.
+- `delete: false` leaves `career-intake`, `career-master-resume`, `career-start-application`, `career-work-history`, `performance-log` and `performance-review` behind; delete them only with approval. Leave the `resume-skills` and `interview-coach` skills alone unless the user is removing those too.
 - The career routing rule goes away when the folder's `AGENTS.md` is regenerated without this folder. This is the only folder in the `career` group with rules, so regeneration may leave the old file in place. Check it, and if it holds only the career routing rule, delete it with approval.
-- Never delete the career folder itself or anything the skills created: `profile/`, `accomplishments/`, `reviews/`, `people/`, `references/`, `applications/`, `offers/`, `projects/`, `study/`, `resumes/`, `inbox/`, `archive/`, `templates/` and the files `resume-version-manager` keeps. They are the user's career records and stay unless the user explicitly asks.
+- Never delete the career folder itself or anything the skills created: `profile/`, `accomplishments/`, `reviews/`, `people/`, `references/`, `applications/`, `offers/`, `projects/`, `performance/` (including the generated `performance/tools/`), `study/`, `resumes/`, `inbox/`, `archive/`, `templates/` and the files `resume-version-manager` keeps. They are the user's career records and stay unless the user explicitly asks.
 
 ### Update
 
@@ -124,7 +137,9 @@ This folder is written for this repo, so there is no upstream to check. When cha
 
 `career-start-application` owns starting an application, not building the master.
 `career-master-resume` owns the bullet bank; `career-work-history` owns official
-employment fields. That routing lives in this folder's
+employment fields. Pasted work notes go to `performance-log` even when the user
+says "log this" or names `career-intake`, because intake's description claims
+those phrases; `performance-review` reaches intake only through its handoff. That routing lives in this folder's
 [`rules/career-routing.md`](rules/career-routing.md), which the career group
 installs into the career folder's own `AGENTS.md`. It lives here rather than in
 the global `rules/routing`, so it installs only where these skills do.
