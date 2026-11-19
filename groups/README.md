@@ -68,7 +68,7 @@ skills/docker-sandboxes-agent
 skills/eli5
 skills/frontend-slides
 skills/humanizer
-skills/meeting-minutes
+skills/md-note-organizer
 skills/documents
 skills/transcribe
 skills/speech
@@ -103,7 +103,7 @@ Codebase-memory, Presenton, ZAP and Podman are written switched off. OpenCode V2
 
 ## writing_reporting
 
-Rules (including `routing` and `preferences`), `second-opinion`, the Docling, Exa and PMB rules and skills, and `eli5`, `report`, `humanizer`, [`meeting-minutes`](../skills/meeting-minutes/), `visual-explainer`, `diagram-design`, `frontend-slides`, `frontend-design`, `theme-factory`, Magnus's [`documents`](../skills/documents/), and Matt Pocock's [`handoff`](../skills/handoff/), [`teach`](../skills/teach/) and [`wait-what`](../skills/wait-what/). That's 16 skills. MCP servers you already have stay as they are. The document skill adds authoring and smoke validation; it does not replace Docling's OCR/extraction role.
+Rules (including `routing` and `preferences`), `second-opinion`, the Docling, Exa and PMB rules and skills, and `eli5`, `report`, `humanizer`, [`md-note-organizer`](../skills/md-note-organizer/), `visual-explainer`, `diagram-design`, `frontend-slides`, `frontend-design`, `theme-factory`, Magnus's [`documents`](../skills/documents/), and Matt Pocock's [`handoff`](../skills/handoff/), [`teach`](../skills/teach/) and [`wait-what`](../skills/wait-what/). That's 16 skills. MCP servers you already have stay as they are. The document skill adds authoring and smoke validation; it does not replace Docling's OCR/extraction role.
 
 ```bash
 npx rulesync@41.0.0 generate --config groups/writing_reporting.jsonc --global

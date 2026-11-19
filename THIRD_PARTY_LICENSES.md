@@ -1119,7 +1119,7 @@ SOFTWARE.
 
 ## phillips-jon/note-taking-skills
 
-Applies to `skills/meeting-minutes/`, whose handling of decisions, action items and reopened points draws on `plugins/everyday-notes/skills/meeting-notes/SKILL.md`. No upstream text is copied. Source: https://github.com/phillips-jon/note-taking-skills (formerly scratchpad-sh/skills), commit d8eb3202a1e896f1b3ccaccfea38475e9a7468e7.
+Applies to `skills/md-note-organizer/`, whose handling of decisions, action items and reopened points draws on `plugins/everyday-notes/skills/meeting-notes/SKILL.md`. No upstream text is copied. Source: https://github.com/phillips-jon/note-taking-skills (formerly scratchpad-sh/skills), commit d8eb3202a1e896f1b3ccaccfea38475e9a7468e7.
 
 ```text
 MIT License
