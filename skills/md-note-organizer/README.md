@@ -61,7 +61,7 @@ The skill is written for this repo, so there is no upstream commit to check. `re
 
 ## For agents: routing and updates
 
-- Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Notes** from raw material (meeting notes, how-tos, research, inbox, session recaps, projects, journal): `md-note-organizer`". Audience write-ups stay with `report`, and AI-to-AI handoffs with `handoff`.
+- Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Notes** from raw material (meeting notes, how-tos, research, inbox, session recaps, projects, journal): `md-note-organizer`". Audience write-ups stay with `report`, AI-to-AI handoffs with `handoff`, and epics, features and user stories made from notes with `work-item-writer`.
 - It doesn't own prose editing: the final pass follows `humanizer`'s rules.
 - Don't add a per-skill routing rule to this folder. If its job changes, update `rules/routing`, this section and `report`'s routing section in the same change, and tell the user.
 
