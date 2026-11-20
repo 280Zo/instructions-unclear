@@ -1,10 +1,11 @@
 # career-workspace
 
-Six skills that keep a personal career record in one folder: file new career data, keep a work log through the year and write your performance review and promotion request from it, build a master resume, start a job application, and produce an official work history for forms.
+Seven skills that keep a personal career record in one folder: file new career data, set each cycle's performance and promotion goals, keep a work log through the year and write your performance review and promotion request from it, build a master resume, start a job application, and produce an official work history for forms.
 
 | Skill | What it does |
 |---|---|
 | `career-intake` | Files wins, numbers, skills, reviews, people, applications, offers and documents into the right workspace file, in your words |
+| `performance-goal-setting` | Drafts one goal set (performance or promotion) per run as SMART goals from your role, expectations and inputs; writes paste-ready goals for your HR system and records them through `performance-log` |
 | `performance-log` | Turns pasted work notes in any format into one dated entry file per piece of work, linked to your goals, projects, people and topics, with every detail kept |
 | `performance-review` | Writes paste-ready performance and promotion answers from a cycle's log, with a working file of its choices and gaps, and hands major wins to `career-intake` |
 | `career-master-resume` | Builds `resumes/master-resume.md`, the bullet bank the [`resume-skills`](../resume-skills/) choose from |
@@ -22,7 +23,7 @@ Six skills that keep a personal career record in one folder: file new career dat
 
 **All year: work log and reviews**
 
-1. At the start of each review cycle, give the agent your performance goals, your promotion goals and the cycle's start and end dates. They go in `performance/<cycle>/goals.md`.
+1. At the start of each review cycle, give the agent your performance goals, your promotion goals and the cycle's start and end dates, or say "help me set my performance goals" (`performance-goal-setting`), then do the same for promotion goals in a separate run. It asks about your role, the cycle and what leadership expects, takes in your guidance and data, agrees goal topics with you, fits in what you want and need to do (such as CPE), and drafts SMART goals with proposed targets for you to approve. You get paste-ready goals in `performance/<cycle>/goal-setting/` for your HR system. Either way, the goals go in `performance/<cycle>/goals.md`. If you start logging or ask for a review before a cycle has goals, both skills ask for them first.
 2. Every few days, paste your notes into the chat and say "log this" (`performance-log`). It saves the paste as written, splits it into entry files, tags each number as verified, reported or estimated, matches goals only where the note supports them, and asks whether anything should be highlighted.
 3. Mid-year or at year end, say "write my performance review" or "how am I tracking against my goals" (`performance-review`). You get one answer per goal for each goal set, a working file with the scores, swaps, gaps and suggestions, and a handoff of your major wins that `career-intake` files when you say yes.
 
@@ -87,7 +88,7 @@ references/       letters, plus index.md
 applications/     YYYY-MM-DD_<company>_<role>/ (posting.md, interviews.md, record with links)
 offers/           YYYY-MM-DD_<company>.md
 projects/         <slug>.md
-performance/      <cycle>/ (goals.md, raw/, entries/, index.md, reviews/), unfiled/, tools/
+performance/      <cycle>/ (goals.md, goal-setting/, raw/, entries/, index.md, reviews/), unfiled/, tools/
 study/            <topic>.md
 resumes/          master-resume.md
 inbox/            drop documents here for intake
@@ -104,6 +105,7 @@ The seven record templates ship in [`skills/career-intake/templates/`](skills/ca
 ## Example requests
 
 - "Ingest the inbox" or "add this to my resume records" → `career-intake`
+- "Help me set my FY2027 performance goals" or "draft my promotion goals" → `performance-goal-setting`
 - A paste of work notes with "log this" or "add this to my work log" → `performance-log`
 - "Write my performance review", "draft my promotion request" or "how am I tracking against my goals" → `performance-review`
 - "Rebuild my master resume" → `career-master-resume`
@@ -125,7 +127,7 @@ Intake reads documents with Docling when it's available. If an interview or offe
 
 Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component), working inside the career folder (`.opencode/skills/` and so on), not the home folder.
 
-- `delete: false` leaves `career-intake`, `career-master-resume`, `career-start-application`, `career-work-history`, `performance-log` and `performance-review` behind; delete them only with approval. Leave the `resume-skills` and `interview-coach` skills alone unless the user is removing those too.
+- `delete: false` leaves `career-intake`, `career-master-resume`, `career-start-application`, `career-work-history`, `performance-goal-setting`, `performance-log` and `performance-review` behind; delete them only with approval. Leave the `resume-skills` and `interview-coach` skills alone unless the user is removing those too.
 - The career routing rule goes away when the folder's `AGENTS.md` is regenerated without this folder. This is the only folder in the `career` group with rules, so regeneration may leave the old file in place. Check it, and if it holds only the career routing rule, delete it with approval.
 - Never delete the career folder itself or anything the skills created: `profile/`, `accomplishments/`, `reviews/`, `people/`, `references/`, `applications/`, `offers/`, `projects/`, `performance/` (including the generated `performance/tools/`), `study/`, `resumes/`, `inbox/`, `archive/`, `templates/` and the files `resume-version-manager` keeps. They are the user's career records and stay unless the user explicitly asks.
 
@@ -139,7 +141,7 @@ This folder is written for this repo, so there is no upstream to check. When cha
 `career-master-resume` owns the bullet bank; `career-work-history` owns official
 employment fields. Pasted work notes go to `performance-log` even when the user
 says "log this" or names `career-intake`, because intake's description claims
-those phrases; `performance-review` reaches intake only through its handoff. That routing lives in this folder's
+those phrases; `performance-review` reaches intake only through its handoff. Drafting goals goes to `performance-goal-setting`, and goals the user already has go to `performance-log`, whose description still claims "gives the goals and dates of a review cycle"; goal setting records goals only through the log's step 0, so `goals.md` keeps one writer. That routing lives in this folder's
 [`rules/career-routing.md`](rules/career-routing.md), which the career group
 installs into the career folder's own `AGENTS.md`. It lives here rather than in
 the global `rules/routing`, so it installs only where these skills do.

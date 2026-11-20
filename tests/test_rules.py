@@ -47,6 +47,13 @@ class RuleTests(unittest.TestCase):
         self.assertIn("interview-coach", rule)
         self.assertIn("`performance-log`", rule)
         self.assertIn("`performance-review`", rule)
+        self.assertIn("`performance-goal-setting`", rule)
+        # The log and the review offer goal setting when a cycle has no goals.
+        for name in ["performance-log", "performance-review"]:
+            text = (
+                ROOT / "skills/career-workspace/skills" / name / "SKILL.md"
+            ).read_text()
+            self.assertIn("`performance-goal-setting`", text)
         # Explicit resume wins stay with intake even though work notes go to the log.
         self.assertIn("for my resume", rule)
         log_skill = (

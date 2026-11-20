@@ -15,6 +15,7 @@ Turn one review cycle's work log (written by `performance-log`) into paste-ready
 - **As-of date:** today unless the user gives one. "Year end" means the cycle's `cycle_end`. Entries dated after the as-of date are left out.
 - **Files:** `goals.md`, `entries/`, `calendar.md` if present, and the newest `reviews/review-*-working.md` written by an earlier run (same-day ones included), whose assignments and holding area carry forward.
 - **Job change:** if `profile/work-history.md` shows a different employer or role inside the cycle, ask whether the goal sets changed with it before scoring.
+- **Missing goals:** for each set this run would write that has no goals in `goals.md` (or no `goals.md` at all), ask before scoring, so the review can be built around them. Offer three ways on: paste the goals (load `performance-log` and record them with its step 0), draft them with `performance-goal-setting`, or go on without them. Then resume. Going on without them means that set gets no section in `review-<as-of>.md` and is not scored; the working file still gets its counts, inferred metrics and correlations, and a `Skipped: no goals` line for that set.
 
 ## Helper gate
 
@@ -102,4 +103,5 @@ Writes only in `performance/<cycle>/reviews/`. Never edits entries, `goals.md`, 
 | `[target title]`, `[Add when ...]` or next-cycle goal ideas in paste-ready text | Gaps and suggestions go in the working file |
 | Asking for pre-change measurements, dashboards or other proof | Use what the entries say |
 | Mentioning entries dated after the as-of date | Leave them out |
+| Scoring and writing every file, then asking about a set with no goals, or inventing categories for it | Ask before scoring; if the user goes on without goals, skip that set |
 | A year-end review run after the cycle ended picks the new, empty cycle | Most recently ended cycle, as of its `cycle_end`, confirmed with the user |

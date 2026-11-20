@@ -188,6 +188,7 @@ class SecurityReContextTests(unittest.TestCase):
                 "career-master-resume",
                 "career-start-application",
                 "career-work-history",
+                "performance-goal-setting",
                 "performance-log",
                 "performance-review",
             },
@@ -197,10 +198,13 @@ class SecurityReContextTests(unittest.TestCase):
         self.assertTrue((workspace / "performance-log/helper-spec.md").is_file())
         for template in ["performance-entry.md", "performance-goals.md"]:
             self.assertTrue((workspace / "performance-log/templates" / template).is_file())
-        for name in ["performance-log", "performance-review"]:
+        for name in ["performance-log", "performance-review", "performance-goal-setting"]:
             text = (workspace / name / "SKILL.md").read_text()
             self.assertRegex(text, rf"(?m)^name: {name}$")
             self.assertRegex(text, r"(?m)^description: [\"']?Use when")
+        goal_setting = (workspace / "performance-goal-setting/SKILL.md").read_text()
+        for phrase in ["SMART", "`performance-log`", "goal-setting/"]:
+            self.assertIn(phrase, goal_setting)
         master = (workspace / "career-master-resume/SKILL.md").read_text()
         self.assertRegex(master, r"(?m)^name: career-master-resume$")
         intake = (workspace / "career-intake/SKILL.md").read_text()
