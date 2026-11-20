@@ -2,13 +2,23 @@
 
 A skill that turns notes into epics, features and user stories a team can pick up: project notes, meeting notes, research, AI session recaps or a brain dump. It works with any tracker, and has a reference for Azure DevOps on the Agile process, including a CSV file for bulk import.
 
-Every user story gets a title, a description in "As a …, I want …, so that …" form, and acceptance criteria. The skill writes only what the notes support:
+Every user story gets a title, a description in Mike Cohn's "As a …, I want …, so that …" form, and acceptance criteria as Gherkin scenarios (Given, When, Then). The skill writes only what the notes support:
 
-- Acceptance criteria restate the behavior and limits the notes describe. Anything else, such as error states, validation or formats, becomes a "criterion to confirm" question.
+- Scenarios restate the behavior and limits the notes describe. Anything else, such as error states, validation or formats, becomes a proposed refinement or an open question.
+- Engineering, infrastructure and spike work stays a Task, never an "As a developer" story.
 - Story points, priority, area and iteration paths, tags and owners appear only when the notes give them.
 - It never aims for a number of stories, and it asks instead of writing when a note is too thin.
 - Every item links back to the note it came from.
 - Decisions become context, and admin chores, remarks about people and secrets are left out.
+
+After the items comes a story review. For each story it gives:
+
+- a readiness label: Ready for refinement, Needs clarification, Needs splitting or Ready for implementation
+- an INVEST check (Independent, Negotiable, Valuable, Estimable, Small, Testable), naming the criteria that fail or can't be judged
+- suggested smaller stories when a story holds several outcomes
+- its assumptions and proposed refinements
+
+The open questions come at the end of the review. The items hold only what the notes document, so you can paste them as they are.
 
 ## Install
 
@@ -22,14 +32,14 @@ Swap `--targets` for your tools. To keep it in your regular install, add `skills
 
 ## Use
 
-Give it a note and ask for work items: "write user stories from my project note", "turn this meeting note into ADO work items", "give me a CSV I can import into Azure DevOps". Items come back in one Markdown block with the open questions at the end, ready to paste. A CSV comes back as its own block.
+Give it a note and ask for work items: "write user stories from my project note", "turn this meeting note into ADO work items", "give me a CSV I can import into Azure DevOps". Items come back in one Markdown block, ready to paste, followed by a second block with the story review and open questions. A CSV comes back as its own block, followed by the review.
 
 | Ask | You get |
 |---|---|
-| User stories, epics or features | Items in tool-neutral Markdown |
-| ADO work items | Items using Azure DevOps field names (Epic, Feature, User Story; Acceptance Criteria in its own field) |
-| A CSV for ADO import | A file with indented `Title 1`, `Title 2`, `Title 3` columns for the hierarchy and no `ID` column |
-| Tasks | Only when you ask for them |
+| User stories, epics or features | Items in tool-neutral Markdown, plus the story review |
+| ADO work items | Items using Azure DevOps field names (Epic, Feature, User Story, Task; Acceptance Criteria in its own field) |
+| A CSV for ADO import | A file with indented `Title 1`, `Title 2`, `Title 3` columns for the hierarchy, no `ID` column, Gherkin scenarios as HTML, and spikes as Tasks tagged `Spike` |
+| Tasks | Technical work from the notes always; stories broken into tasks only when you ask |
 
 The ADO reference, `reference/ado-agile.md`, records the facts the skill relies on, each with its Microsoft source. Field names can differ between organizations, so export a few existing items first and compare the columns before a large import.
 
