@@ -38,7 +38,7 @@ Paste the material or attach files and ask for notes: "turn this into meeting no
 | "Review my inbox" | Suggests an action per item, then carries out what you approve |
 | "Make a shareable version" | A copy without personal details or private remarks, plus a list of what it removed |
 
-Notes come back as Markdown blocks to paste. If you name your vault folder, it can find and update notes there instead, showing each change and writing only after you say yes.
+Notes come back as Markdown blocks to paste. If you name your vault folder, it can find and update notes there instead. It shows every change and writes only after you say yes, every time, including one-line fixes and status changes. A yes covers only the changes it showed you.
 
 For a broader write-up of gathered material for an audience, use [`report`](../report/). For a document another AI session picks up, use [`handoff`](../handoff/).
 

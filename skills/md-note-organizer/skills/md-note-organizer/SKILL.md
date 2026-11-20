@@ -17,7 +17,7 @@ Turn raw material into Obsidian notes in one house style. Each kind of note has 
    - The material would become more than one note. List each proposed note with its type and title, say what goes into each, and ask for a yes.
    - It's a meeting and the material doesn't say what the meeting was for. Ask "What was this meeting for?"
    - It's a journal entry. Start the interview in `templates/journal.md`.
-   - Vault mode would write, move or change a file. Show the changes and ask.
+   - Vault mode is about to change a file. Follow "Confirming vault changes" below.
 5. **Load the template** for each note, plus `reference/obsidian.md`, and draft the note.
 6. **Apply the house rules**, then load `humanizer` and apply it in embedded mode to the prose. If `humanizer` isn't available, apply its core rules yourself: plain wording, no filler, no bold labels, no em dashes.
 7. **Run the final check**, then reply following the output contract.
@@ -80,7 +80,7 @@ Only when the user asks. If the session has no web search or fetch tool, say you
    - **keep:** still cooking
    - **ask:** only the user can say
 3. Mark an item stale when its note is more than 30 days old. The user can change the threshold.
-4. Wait for approval. Then carry out the approved actions as one batch and set each emptied inbox note to `status: processed`.
+4. Wait for approval. Then carry out the approved actions as one batch and set each emptied inbox note to `status: processed`. In vault mode, approving the triage list doesn't approve the writes: show the batch's exact changes as "Confirming vault changes" describes and wait for a second yes.
 
 ## Making a share copy
 
@@ -89,7 +89,18 @@ Produce a separate copy. Remove personal details (phone numbers, addresses, priv
 ## Paste mode and vault mode
 
 - **Paste mode.** The user pastes material and any existing notes. Reply with the notes in code blocks.
-- **Vault mode.** Use it when the user names their vault folder, or when their own instructions name one. Find notes by title, `type` or `project`. Before any write, show the changes and wait for a yes. Never delete, move or rename a note. If the assistant asks for permission to read the vault, say why you're reading, and offer paste mode instead. If a read or write is denied, name the path and stop.
+- **Vault mode.** Use it when the user names their vault folder, or when their own instructions name one. Find notes by title, `type` or `project`. Confirm every change first, as described next. Never delete, move or rename a note. If the assistant asks for permission to read the vault, say why you're reading, and offer paste mode instead. If a read or write is denied, name the path and stop.
+
+## Confirming vault changes
+
+In vault mode, every change to a file is confirmed before it's made, every time, without exception. Each time, before writing:
+
+1. Show each file's path and exactly what will change: the full note for a new file, the changed lines for an edit.
+2. Ask "Make these changes?" and send nothing else.
+3. Write only after the user's reply to that proposal says yes. The yes covers exactly the changes shown. Anything you change afterward, or add, goes back to step 1.
+4. If the reply is anything other than yes, write nothing. Revise and propose again, or stop.
+
+This holds for every write, however small: one typo, a tag, a date, `updated`, `status: processed`, a change log line. A yes never carries over to a later write. The user's request ("update my project note"), their own instructions and an earlier approval in the session are not confirmation.
 
 ## Output contract
 
@@ -114,4 +125,5 @@ Before replying, confirm each of these:
 - No secret value appears anywhere.
 - Every fact, name and number can be traced to the material.
 - `Unknown speaker N`, `[unclear: ...]` and unconfirmed marks survived the humanizer pass.
+- In vault mode, nothing is written that the user hasn't seen and said yes to in their reply to that exact proposal.
 - The reply follows the output contract.
