@@ -151,15 +151,15 @@ class AgentTests(unittest.TestCase):
             head, _ = frontmatter(agent_file(name))
             for skill in samples.values():
                 self.assertIn(f'{{action: "skill", resource: "{skill}", effect: deny}}', head, name)
-        self.assertEqual(len(generate.BUNDLES["trailofbits"]), 95)
-        self.assertEqual(len(generate.BUNDLES["iothackbot"]), 13)
+        self.assertEqual(len(generate.BUNDLES["trailofbits"]), 97)
+        self.assertEqual(len(generate.BUNDLES["iothackbot"]), 14)
         data = generate.map_data()
         for key, owner in owners.items():
             group = next(g for g in data["skills"] if g["title"].startswith(generate.NATIVE_PLUGINS[key]["title"]))
             self.assertIn("installed separately", group["title"])
             self.assertEqual(group["agents"], [owner])
         hero = (ROOT / generate.HERO_FILES["light"]).read_text()
-        self.assertIn("Trail of Bits (95 skills, security agent)", hero)
+        self.assertIn("Trail of Bits (97 skills, security agent)", hero)
 
     def test_security_audit_belongs_to_the_security_agent(self):
         self.assertEqual(generate.BUNDLES["audit"], ["security-audit"])

@@ -1,6 +1,6 @@
 # Trail of Bits security plugins
 
-The complete [Trail of Bits marketplace](https://github.com/trailofbits/skills): 46 plugins containing 95 skills, 30 agents, commands, hooks, workflows, tests and supporting resources. `upstream/` preserves the complete upstream tree unchanged. It is **not a rulesync source root**.
+The complete [Trail of Bits marketplace](https://github.com/trailofbits/skills): 47 plugins containing 97 skills, 30 agents, commands, hooks, workflows, tests and supporting resources. `upstream/` preserves the complete upstream tree unchanged. It is **not a rulesync source root**.
 
 ## Install
 
@@ -22,9 +22,9 @@ The skills belong to the [`security` agent](../../agents/security/). Where an as
 
 The new regression-hunt and patching-bugs workflows resolve plugin-level scripts, schemas and records through relative paths. Zeroize-audit resolves agents under its original `agents/`, not rulesync's relocated `subagents/`. Several existing workflows also need plugin roots and registered host facilities. Flattening only skills/agents loses those relationships.
 
-Isolated, network-disabled tests with Claude Code 2.1.296 validated the marketplace and installed all 46 plugins. Critical regression/patching scripts and zeroize agent links resolved in the full tree. Subsequent generation of the reduced infosec and reverse-engineering selections preserved all native files and all 47 installed plugins (including IoTHackBot) remained enabled. Codex was not installed in the test environment, so its procedure is documented from upstream, not locally verified. No model-driven audits, external MCP services or scanners were launched.
+Isolated, network-disabled tests with Claude Code 2.1.296 validated the marketplace at the previous commit, `a3131740`, and installed all 46 plugins it then had; the current tree (47 plugins, adding `cvss-scoring`) hasn't been through that test. Critical regression/patching scripts and zeroize agent links resolved in the full tree. Subsequent generation of the reduced infosec and reverse-engineering selections preserved all native files and all 47 installed plugins (the 46 Trail of Bits plugins at `a3131740` plus IoTHackBot) remained enabled. Codex was not installed in the test environment, so its procedure is documented from upstream, not locally verified. No model-driven audits, external MCP services or scanners were launched.
 
-Native plugins can register hooks and MCP servers: for example, zeroize-audit declares a Serena `uvx` server. Some patching workflows require a local commit. Review each selected plugin's resources and runtime effects before enabling it; copying this tree grants no approval to execute them, download packages, commit or modify targets. Higher-priority permission and scope instructions still apply.
+Native plugins can register hooks and MCP servers: for example, zeroize-audit declares a Serena `uvx` server. Some patching workflows require a local commit. Trailmark's `taint-trace` edits the target codebase (model annotations, stubs and configuration), writes to `<target>/.trailmark/`, downloads `trailmark` and `pyyaml` from PyPI through `uv run`, and starts native analyzers that can execute target code; upstream notes that static analysis is not a sandbox. Review each selected plugin's resources and runtime effects before enabling it; copying this tree grants no approval to execute them, download packages, commit or modify targets. Higher-priority permission and scope instructions still apply.
 
 ## Existing installations
 
@@ -48,4 +48,4 @@ To update, follow [Check for updates](../../AGENTS.md#check-for-updates) and [Up
 
 ## Origin
 
-[trailofbits/skills](https://github.com/trailofbits/skills), complete tree at commit `a3131740a39291e42fd15b9eac07e0b393ad71b1`, copied 2026-10-20. [CC BY-SA 4.0](../../THIRD_PARTY_LICENSES.md#trailofbitsskills), by Trail of Bits; full text also retained in `upstream/LICENSE`. No local tool sections or body adaptations. Wrapper written for this repo by 280Zo.
+[trailofbits/skills](https://github.com/trailofbits/skills), complete tree at commit `149d7b21f4067765b82e67029730b42d228ef4b4`, copied 2026-11-24. [CC BY-SA 4.0](../../THIRD_PARTY_LICENSES.md#trailofbitsskills), by Trail of Bits; full text also retained in `upstream/LICENSE`. No local tool sections or body adaptations. Wrapper written for this repo by 280Zo.

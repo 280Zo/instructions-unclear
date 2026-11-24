@@ -11,6 +11,7 @@ opencode:
     - {action: "skill", resource: "apktool", effect: allow}
     - {action: "skill", resource: "binary-analysis-patterns", effect: allow}
     - {action: "skill", resource: "binary-triage", effect: allow}
+    - {action: "skill", resource: "bn-headless", effect: allow}
     - {action: "skill", resource: "brainstorming", effect: allow}
     - {action: "skill", resource: "chipsec", effect: allow}
     - {action: "skill", resource: "ctf-crypto", effect: allow}

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# bnhl - PATH shim for the bn-headless CLI (Binary Ninja headless RE).
+# Resolves the script relative to this repo, so it works from any shell
+# without PYTHONPATH or plugin-root environment variables.
+here="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+exec python3 "$here/../skills/bn-headless/scripts/bnhl.py" "$@"

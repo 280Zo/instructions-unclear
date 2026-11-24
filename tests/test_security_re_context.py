@@ -112,6 +112,7 @@ class SecurityReContextTests(unittest.TestCase):
     def test_complete_iot_collection_and_shared_assets(self):
         expected = {
             "apktool",
+            "bn-headless",
             "chipsec",
             "ffind",
             "iotnet",

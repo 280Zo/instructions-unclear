@@ -254,8 +254,8 @@ The `plugins/` READMEs have steps for you and steps your agent can follow ("inst
 | [`plugins/superpowers`](plugins/superpowers/)                   | Superpowers: skills for planning, test-driven development, debugging, code review and finishing work, loaded automatically |
 | [`plugins/opencode-quota`](plugins/opencode-quota/)             | Plan quota and token use in OpenCode                                                                                       |
 | [`plugins/opencode-claude-auth`](plugins/opencode-claude-auth/) | Use a Claude Pro or Max subscription in OpenCode 2                                                                         |
-| [`skills/trailofbits`](skills/trailofbits/)                     | Complete upstream marketplace: 95 skills, 30 agents and supporting resources; native plugins, not rulesync                 |
-| [`skills/iothackbot`](skills/iothackbot/)                       | Complete upstream IoT toolkit and 13 skills; native Claude plugin, not a flattened rulesync profile                        |
+| [`skills/trailofbits`](skills/trailofbits/)                     | Complete upstream marketplace: 97 skills, 30 agents and supporting resources; native plugins, not rulesync                 |
+| [`skills/iothackbot`](skills/iothackbot/)                       | Complete upstream IoT toolkit and 14 skills; native Claude plugin, not a flattened rulesync profile                        |
 
 </details>
 

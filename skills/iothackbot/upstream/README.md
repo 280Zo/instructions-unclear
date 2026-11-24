@@ -33,6 +33,15 @@ IoTHackBot is a collection of specialized tools and Claude Code skills designed 
   - Extracts ext2/3/4 and F2FS filesystems
   - Designed for firmware analysis
 
+### Binary Reverse Engineering
+
+- **bn-headless** (skill) - Headless Binary Ninja decompiler/disassembler
+  - Decompile to pseudo-C / HLIL / MLIL / disassembly, no GUI
+  - Any architecture (x86, MIPS, ARM, aarch64, PPC, RISC-V)
+  - Follow xrefs and callees, dump strings and their referencing code
+  - Caches analysis for near-instant repeat queries
+  - Requires a licensed Binary Ninja (Commercial/Enterprise/Ultimate)
+
 ### Android Analysis
 
 - **apktool** (skill) - APK unpacking and resource extraction
@@ -79,6 +88,8 @@ sudo pacman -S nmap e2fsprogs f2fs-tools python python-pip inetutils
 
 # For other distributions, install equivalent packages
 ```
+
+The **bn-headless** skill additionally requires a licensed Binary Ninja (Commercial/Enterprise/Ultimate) with its headless Python API. Binary Ninja is commercial software licensed separately; point the tool at your install with `export BN_PYTHON=/path/to/binaryninja/python` if it is not in a standard location.
 
 ### Setup
 
@@ -140,6 +151,21 @@ ffind firmware.bin
 sudo ffind firmware.bin -e
 ```
 
+#### Reverse-Engineer a Binary
+```bash
+# Orient: architecture, counts, sections
+bnhl info ./httpd
+
+# Find interesting strings and the functions that reference them
+bnhl grepstr ./httpd 'password|/bin/sh|system'
+
+# Decompile a function to pseudo-C
+bnhl decompile ./httpd handle_request
+
+# Trace who calls an authorization check
+bnhl xrefs ./httpd check_auth
+```
+
 ### Claude Code Plugin
 
 IoTHackBot is available as a Claude Code plugin, providing AI-assisted security testing with specialized skills.
@@ -151,6 +177,7 @@ IoTHackBot is available as a Claude Code plugin, providing AI-assisted security 
 | **chipsec** | UEFI/BIOS firmware static analysis - malware detection, EFI inventory |
 | **apktool** | Android APK unpacking and resource extraction |
 | **jadx** | Android APK decompilation to Java source |
+| **bn-headless** | Headless Binary Ninja decompiler/disassembler (any architecture) |
 | **ffind** | Firmware file analysis with filesystem extraction |
 | **iotnet** | IoT network traffic analysis |
 | **jtagprobe** | SWD/JTAG debug interface probe via J-Link |

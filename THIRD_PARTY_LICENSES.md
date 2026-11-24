@@ -242,7 +242,7 @@ SOFTWARE.
 
 ## BrownFineSecurity/iothackbot
 
-Applies to the complete, unchanged `skills/iothackbot/upstream/` tree. Source: https://github.com/BrownFineSecurity/iothackbot, commit d443c408a9fdd83f97d8c354b9c639afa2251974. Installation guidance outside that tree is written for this repo.
+Applies to the complete, unchanged `skills/iothackbot/upstream/` tree. Source: https://github.com/BrownFineSecurity/iothackbot, commit 2a26d17c94a1846fe29e24aeb182bafde3cb229d. Installation guidance outside that tree is written for this repo.
 
 ```text
 MIT License
@@ -2157,7 +2157,7 @@ Important Recommendations
 
 ## trailofbits/skills
 
-Applies to the complete, unchanged `skills/trailofbits/upstream/` tree, commit `a3131740a39291e42fd15b9eac07e0b393ad71b1`. Source: https://github.com/trailofbits/skills
+Applies to the complete, unchanged `skills/trailofbits/upstream/` tree, commit `149d7b21f4067765b82e67029730b42d228ef4b4`. Source: https://github.com/trailofbits/skills
 
 By Trail of Bits, licensed under the [Creative Commons Attribution-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-sa/4.0/legalcode). The upstream files remain under that license. The wrapper installation guide is written for this repo.
 

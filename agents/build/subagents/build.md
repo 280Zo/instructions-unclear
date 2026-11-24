@@ -36,6 +36,7 @@ opencode:
     - {action: "skill", resource: "binary-triage", effect: deny}
     - {action: "skill", resource: "bitsandbytes", effect: deny}
     - {action: "skill", resource: "blip-2", effect: deny}
+    - {action: "skill", resource: "bn-headless", effect: deny}
     - {action: "skill", resource: "brainstorming-research-ideas", effect: deny}
     - {action: "skill", resource: "brand-identity", effect: deny}
     - {action: "skill", resource: "burpsuite-project-parser", effect: deny}
@@ -71,6 +72,7 @@ opencode:
     - {action: "skill", resource: "ctf-crypto", effect: deny}
     - {action: "skill", resource: "ctf-pwn", effect: deny}
     - {action: "skill", resource: "ctf-rev", effect: deny}
+    - {action: "skill", resource: "cvss-scoring", effect: deny}
     - {action: "skill", resource: "dark-mode", effect: deny}
     - {action: "skill", resource: "deep-analysis", effect: deny}
     - {action: "skill", resource: "deepspeed", effect: deny}
@@ -252,6 +254,7 @@ opencode:
     - {action: "skill", resource: "supply-chain-risk-auditor", effect: deny}
     - {action: "skill", resource: "swanlab", effect: deny}
     - {action: "skill", resource: "systems-paper-writing", effect: deny}
+    - {action: "skill", resource: "taint-trace", effect: deny}
     - {action: "skill", resource: "tech-resume-optimizer", effect: deny}
     - {action: "skill", resource: "telnetshell", effect: deny}
     - {action: "skill", resource: "tensorboard", effect: deny}

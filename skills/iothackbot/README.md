@@ -1,6 +1,6 @@
 # IoTHackBot
 
-[IoTHackBot](https://github.com/BrownFineSecurity/iothackbot) is an IoT security toolkit with 13 Claude Code skills and shared Python/CLI/config/wordlist resources. `upstream/` is the complete upstream tree, unchanged, including its plugin manifests and supporting files. It is **not a rulesync source root**.
+[IoTHackBot](https://github.com/BrownFineSecurity/iothackbot) is an IoT security toolkit with 14 Claude Code skills and shared Python/CLI/config/wordlist resources. `upstream/` is the complete upstream tree, unchanged, including its plugin manifests and supporting files. It is **not a rulesync source root**.
 
 ## Install
 
@@ -20,15 +20,15 @@ The skills belong to the [`reverse-engineering` agent](../../agents/reverse-engi
 
 ## Verified ownership
 
-In an isolated, network-disabled Claude Code 2.1.296 environment, native validation passed, direct loading discovered all 13 skills, and the local marketplace installed successfully. Subsequent generation of the reduced infosec and reverse-engineering groups left all native plugin files unchanged. This verifies packaging and discovery, not operation against devices or installation of dependencies.
+In an isolated, network-disabled Claude Code 2.1.296 environment, native validation passed at the previous commit, `d443c408`, direct loading discovered all 13 skills it then had, and the local marketplace installed successfully. The current tree adds `bn-headless` and hasn't been through that test. Subsequent generation of the reduced infosec and reverse-engineering groups left all native plugin files unchanged. This verifies packaging and discovery, not operation against devices or installation of dependencies.
 
 Upstream examples retain Claude-specific paths and runtime assumptions; native loading does not prove every example works on every host. Review them before execution. Nothing here authorizes probing, credential attempts, capture, device access or writes.
 
-Don't install the native plugin and extracted copies of its 13 skills in the same assistant.
+Don't install the native plugin and extracted copies of its skills in the same assistant.
 
 ## Use
 
-Ask for APK/firmware analysis, recorded packet/capture inspection, or a specifically authorized console/device workflow. Dependencies include the selected Java/native tool, packet or serial libraries, and proprietary SEGGER J-Link or Saleae components where named. Choose only what the task needs. See [upstream usage](upstream/README.md#usage).
+Ask for APK/firmware analysis, recorded packet/capture inspection, or a specifically authorized console/device workflow. Dependencies include the selected Java/native tool, packet or serial libraries, and proprietary SEGGER J-Link or Saleae components where named. `bn-headless` needs a licensed commercial Binary Ninja (Commercial, Enterprise or Ultimate): it imports Python from that installation (`$BN_PYTHON`, `$BN_INSTALL_DIR/python` or a standard install path) and caches analysis databases in `~/.cache/bnhl/`. Choose only what the task needs. See [upstream usage](upstream/README.md#usage).
 
 ## Updating
 
@@ -36,7 +36,7 @@ Compare the recorded revision with upstream, review the complete tree, then repl
 
 ## For agents: install, remove and update
 
-To install, use the native plugin procedure in [Install](#install). No group includes it, and rulesync never installs it. It is documented for Claude Code only. Get approval before editing `~/.claude/settings.json` or installing any dependency from [Use](#use). To verify, start Claude Code with the plugin loaded and check that the 13 skills are listed. Don't run them against a device, network or capture as a test.
+To install, use the native plugin procedure in [Install](#install). No group includes it, and rulesync never installs it. It is documented for Claude Code only. Get approval before editing `~/.claude/settings.json` or installing any dependency from [Use](#use). To verify, start Claude Code with the plugin loaded and check that the 14 skills are listed. Don't run them against a device, network or capture as a test.
 
 To remove, use the same mechanism that installed it. For `--plugin-dir`, stop passing the flag. For the local marketplace, with approval remove the `iothackbot` entry under `enabledPlugins` and the `iothackbot-local` entry under `extraKnownMarketplaces` that upstream's option 2 added, keep every other setting, and restart Claude Code. Never delete files in this repo's `upstream/` to uninstall it. Old extracted copies from before the native plugin (`apktool`, `chipsec`, `ffind`, `iotnet`, `jadx`, `jtagprobe`, `logicmso`, `netflows`, `nmap`, `onvifscan`, `picocom`, `telnetshell`, `wsdiscovery` and `iothackbot-tools`) are removed as [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component) describes, with approval. Python environments, native tools, drivers and vendor software stay unless the user asks.
 
@@ -44,4 +44,4 @@ To update, follow [Check for updates](../../AGENTS.md#check-for-updates) and [Up
 
 ## Origin
 
-[BrownFineSecurity/iothackbot](https://github.com/BrownFineSecurity/iothackbot), complete tree at commit `d443c408a9fdd83f97d8c354b9c639afa2251974`, copied 2026-10-20. MIT, © 2025 iothackbot contributors; [full notice](../../THIRD_PARTY_LICENSES.md#brownfinesecurityiothackbot), also preserved in `upstream/LICENSE`. Wrapper written for this repo by 280Zo.
+[BrownFineSecurity/iothackbot](https://github.com/BrownFineSecurity/iothackbot), complete tree at commit `2a26d17c94a1846fe29e24aeb182bafde3cb229d`, copied 2026-11-24. MIT, © 2025 iothackbot contributors; [full notice](../../THIRD_PARTY_LICENSES.md#brownfinesecurityiothackbot), also preserved in `upstream/LICENSE`. Wrapper written for this repo by 280Zo.

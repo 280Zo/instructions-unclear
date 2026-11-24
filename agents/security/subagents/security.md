@@ -31,6 +31,7 @@ opencode:
     - {action: "skill", resource: "cosmos-vulnerability-scanner", effect: allow}
     - {action: "skill", resource: "coverage-analysis", effect: allow}
     - {action: "skill", resource: "crypto-protocol-diagram", effect: allow}
+    - {action: "skill", resource: "cvss-scoring", effect: allow}
     - {action: "skill", resource: "devcontainer-setup", effect: allow}
     - {action: "skill", resource: "diagnosing-superpowers", effect: allow}
     - {action: "skill", resource: "diagramming-code", effect: allow}
@@ -112,6 +113,7 @@ opencode:
     - {action: "skill", resource: "substrate-vulnerability-scanner", effect: allow}
     - {action: "skill", resource: "supply-chain-risk-auditor", effect: allow}
     - {action: "skill", resource: "systematic-debugging", effect: allow}
+    - {action: "skill", resource: "taint-trace", effect: allow}
     - {action: "skill", resource: "teach", effect: allow}
     - {action: "skill", resource: "test-driven-development", effect: allow}
     - {action: "skill", resource: "testing-handbook-generator", effect: allow}
