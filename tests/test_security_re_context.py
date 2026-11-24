@@ -295,7 +295,7 @@ class SecurityReContextTests(unittest.TestCase):
     def test_publication_docs_match_payload_and_nested_licenses(self):
         diagram = ROOT / "skills/diagram-design/skills/diagram-design"
         count = len(list((diagram / "references").glob("type-*.md")))
-        self.assertEqual(count, 45)
+        self.assertEqual(count, 52)
         for doc in [ROOT / "README.md", ROOT / "skills/diagram-design/README.md"]:
             self.assertIn(f"{count} types", doc.read_text())
         diagram_readme = (ROOT / "skills/diagram-design/README.md").read_text()

@@ -1,6 +1,6 @@
 # diagram-design
 
-A skill for clean, editorial diagrams: 45 types, from architecture and flowcharts to sequence diagrams, timelines, Sankey charts and database schemas, with HTML/SVG templates in light, dark or full-editorial styles.
+A skill for clean, editorial diagrams: 52 types, from architecture and flowcharts to sequence diagrams, timelines, Sankey charts and database schemas, with HTML/SVG templates in light, dark or full-editorial styles.
 
 Static diagrams and motion variants have different runtime requirements: the bundled templates load Google Fonts from the internet, and motion variants use JavaScript for animation controls. They are not all offline or JavaScript-free. For strictly offline output, ask for system fonts and no external assets; for JavaScript-free output, choose a static diagram rather than a motion variant.
 
@@ -19,7 +19,7 @@ Swap `--targets` for your tools. To keep it in your regular install, add `skills
 - "Draw an architecture diagram of this repo"
 - "Make a sequence diagram of the login flow", "a timeline of the project milestones"
 - "Match the style of https://example.com" (it reads the site to pick colours and fonts)
-- "Redraw this Mermaid diagram properly" (it converts draw.io and Mermaid sources)
+- "Redraw this Mermaid diagram properly" (it converts draw.io, Mermaid, Excalidraw and PlantUML sources without running their tools)
 
 The routing rule sends diagram requests here, and `report` uses it for the diagrams in reports. Browse every type in [upstream's gallery](https://cathrynlavery.github.io/diagram-design/), or open `skills/diagram-design/assets/index.html` locally.
 
@@ -29,6 +29,7 @@ The routing rule sends diagram requests here, and `report` uses it for the diagr
 
 - The [`default`](../../groups/README.md#default), [`work`](../../groups/README.md#work) and [`writing_reporting`](../../groups/README.md#writing_reporting) groups install it globally. For this folder alone, use the command under [Install](#install) above; it skips `rules/routing`.
 - Nothing extra is required for HTML/SVG output. The bundled templates load Google Fonts from the internet unless the user asks for system fonts.
+- After each diagram, the skill renders it to a temporary PNG with `scripts/export_png.py` (Playwright and Chromium) and looks at it. Without Playwright it skips that step and says the diagram passed its automated checks but wasn't visually reviewed. Installing Playwright needs the user's approval and the package-management skill.
 - To verify, start a new session and confirm the skills list includes `diagram-design`, or open `assets/index.html` in the installed skill folder.
 
 ### Remove
@@ -49,4 +50,4 @@ Follow [Check for updates](../../AGENTS.md#check-for-updates). The upstream comm
 
 ## Origin
 
-[cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design), path `skills/diagram-design/`, commit `f2f4d49ea8d632f17cf196ba26599277a93f767b`, copied 2026-10-20. Unchanged, including the PNG/SVG exporters and all supporting assets. [MIT](../../THIRD_PARTY_LICENSES.md#cathrynlaverydiagram-design), © 2025 Cathryn Lavery. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).
+[cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design), path `skills/diagram-design/`, commit `0eeda75a708f419560d5e032693618bb9954f17b`, copied 2026-11-24. Unchanged, including the PNG/SVG exporters and all supporting assets. [MIT](../../THIRD_PARTY_LICENSES.md#cathrynlaverydiagram-design), © 2025 Cathryn Lavery. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).
