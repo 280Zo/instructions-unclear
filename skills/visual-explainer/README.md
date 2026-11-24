@@ -24,9 +24,11 @@ Pages are written as `<name>.src.html` and rendered through `kit/render.mjs` to 
 
 Pages load Mermaid and Chart.js from `cdn.jsdelivr.net` and fonts from Google Fonts, so diagrams and fonts need an internet connection to show.
 
+A state-machine diagram (`<ve-flow>` with a model) is built by running a model script that imports your project's own code in a separate Node.js 22.6+ process, with your permissions; upstream says plainly that it isn't a sandbox. It refuses imports from outside the repo and from files named like secrets files, and stops after 10 seconds or 2,000 states. Ask for one only for code you'd be willing to run.
+
 ## Notes
 
-The folder also holds upstream's slash commands (`/diff-review`, `/plan-review` and others), Pi extension, MCP server and PowerPoint exporter. rulesync installs the folder but doesn't register the commands, so in this setup you ask in plain words instead.
+The folder also holds upstream's slash commands (`/diff-review`, `/plan-review`, `/state-machine` and others), Pi extension, MCP server and PowerPoint exporter. rulesync installs the folder but doesn't register the commands, so in this setup you ask in plain words instead.
 
 ## For agents: install, remove and update
 
@@ -48,4 +50,4 @@ To update, follow [Check for updates](../../AGENTS.md#check-for-updates). The ve
 
 ## Origin
 
-[nicobailon/visual-explainer](https://github.com/nicobailon/visual-explainer), path `plugins/visual-explainer/`, version 0.14.0, commit `5f378868e0ea745a6284b51e710c390f0c76f72c`, copied 2026-10-20. Unchanged. [MIT](../../THIRD_PARTY_LICENSES.md#nicobailonvisual-explainer), © 2025 Nico Bailon. The new kit's kepano MIT and Lucide ISC notices are retained in `kit/vendor/PELE-LICENSE` and [consolidated here](../../THIRD_PARTY_LICENSES.md#visual-explainer-kit-vendor-notices). Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).
+[nicobailon/visual-explainer](https://github.com/nicobailon/visual-explainer), path `plugins/visual-explainer/`, version 0.15.0, commit `9d5f880b7e8e0a9a80c890b8e1bb6918b68481ad`, copied 2026-11-24. Unchanged. [MIT](../../THIRD_PARTY_LICENSES.md#nicobailonvisual-explainer), © 2025 Nico Bailon. The new kit's kepano MIT and Lucide ISC notices are retained in `kit/vendor/PELE-LICENSE` and [consolidated here](../../THIRD_PARTY_LICENSES.md#visual-explainer-kit-vendor-notices). Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).

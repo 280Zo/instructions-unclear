@@ -10,7 +10,7 @@ The renderer checks the tags below, reads cited code from disk, and adds the CSS
 node <this skill's directory>/plan/render.mjs ~/.agent/diagrams/<name>.src.html --root <repo> --open
 ```
 
-Fix every `✗` and each `⚠` you cannot defend. Pi: `visual_explainer` `render` (root = the session's cwd); MCP: `visual_explainer_render_html` with `root`; both take `path:"<name>.src.html"`. Copy the shape of `templates/plan.html`.
+Fix every `✗` and each `⚠` you cannot defend. Pi: use `prepare`'s output directory, then `render` (root = the session's cwd); MCP: `visual_explainer_render_html` with `root`; both take `path:"<name>.src.html"`. Copy the shape of `templates/plan.html`.
 
 ## The page
 
@@ -41,7 +41,7 @@ The tree sits beside the sticky hero; hovering a claim lights its parts. Draw th
 | Level | Answers | Claim | Exhibit |
 |---|---|---|---|
 | 1 | What can someone now do or see? | a behavior | `<ve-mock>` or `<ve-flow>` |
-| 2 | How does it work? | one entry point, rule, or record | `<ve-calls>` or `<ve-code>` |
+| 2 | How does it work? | one entry point, rule, or record | `<ve-calls>` or `<ve-code>`, or a `<ve-flow>` with a model (`machines.md`) |
 | 3 | Where? | `at="path:line"` | `<ve-code>` |
 
 - Split level 1 by behavior, never by file, layer, or order of work; for a refactor, by guarantee ("Nothing a caller sees changes."). Read aloud, the level-1 claims tell the whole change.
