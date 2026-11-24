@@ -43,7 +43,7 @@ The agent asks which assistants you use and which group you want (or everything)
 From the repository root, generate the files with the default group:
 
 ```sh
-npx rulesync@41.0.0 generate \
+npx rulesync@43.12.0 generate \
     --config groups/default.jsonc \
     --global
 ```
@@ -120,7 +120,7 @@ for profile in career design
     mkdir -p "$HOME/AI/$profile"
     or break
 
-    npx rulesync@41.0.0 generate \
+    npx rulesync@43.12.0 generate \
         --config "groups/$profile.jsonc" \
         --output-roots "$HOME/AI/$profile"
     or break
@@ -279,7 +279,7 @@ env HOME="$preview" \
     XDG_DATA_HOME="$preview/.local/share" \
     XDG_STATE_HOME="$preview/.local/state" \
     XDG_CACHE_HOME="$preview/.cache" \
-    npx rulesync@41.0.0 generate --config groups/default.jsonc --global
+    npx rulesync@43.12.0 generate --config groups/default.jsonc --global
 
 vim "$preview/.config/opencode/AGENTS.md"
 diff -u ~/.config/opencode/AGENTS.md "$preview/.config/opencode/AGENTS.md"
@@ -300,7 +300,7 @@ Review differences before approving a live run. Install and verify replacements 
 Then name the folders you want, the tools you use, and the kinds of content to install:
 
 ```bash
-npx rulesync@41.0.0 generate --global \
+npx rulesync@43.12.0 generate --global \
   --targets opencode,claudecode \
   --features rules,skills \
   --input-roots rules/shell-preamble rules/scope-secrets-approvals skills/diagram-design
@@ -317,7 +317,7 @@ Follow each folder's setup order. In particular, generate rulesync output **befo
 
 ### What generation changes
 
-This table was checked for OpenCode with rulesync 41.0.0, using this repo's selections (`delete: false`, no `permissions` feature). Other assistants have different config writers; do not assume identical merge or deletion behavior without a preview for that target. OpenCode's own loading and merging of configuration layers is separate from rulesync editing files on disk.
+This table was checked for OpenCode with rulesync 41.0.0; 43.12.0 writes the same output for every group, including when merging into an existing `opencode.jsonc`. Both use this repo's selections (`delete: false`, no `permissions` feature). Other assistants have different config writers; do not assume identical merge or deletion behavior without a preview for that target. OpenCode's own loading and merging of configuration layers is separate from rulesync editing files on disk.
 
 | File or setting                    | What rulesync does                                                                                                                                     | What it leaves behind                                                                                                                                                        |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -332,7 +332,7 @@ This table was checked for OpenCode with rulesync 41.0.0, using this repo's sele
 
 In a synthetic-config test, rulesync 41 preserved unrelated plugins/model/permissions and a shared V2 MCP timeout, but removed an obsolete server. Server-specific customizations still need review before a live update. See OpenCode's [migration guidance](https://opencode.ai/v2/docs/migrate-v1) and [MCP settings](https://opencode.ai/v2/docs/mcp-servers).
 
-#### OpenCode agent permissions need rulesync 41
+#### OpenCode agent permissions need rulesync 41 or later
 
 The repo keeps `name:` in agent sources, but the OpenCode target now omits it from generated agent files. On OpenCode 2.1.3, rulesync 38's extra `name:` sent native `permissions:` through legacy migration and silently lost the restrictions. Runtime checks with 41 output confirmed that Design denies `eli5`, allows `humanizer`, and Build denies `eli5`. Every group then in the repo was generated with both versions; only OpenCode agent frontmatter and MCP config changed. See [the reproducible test](tests/README.md#opencode-permission-regression). The `opencode` target now means V2; explicitly use `opencodev1` and its matching tool sections for V1 installations.
 
@@ -341,7 +341,7 @@ The repo keeps `name:` in agent sources, but the OpenCode target now omits it fr
 Use the full selection, including `mcp`, for the first install. If you then customize its MCP entries, leave `mcp` out of later OpenCode runs:
 
 ```fish
-npx rulesync@41.0.0 generate --config groups/default.jsonc --global --features rules,subagents,skills,commands
+npx rulesync@43.12.0 generate --config groups/default.jsonc --global --features rules,subagents,skills,commands
 ```
 
 With `mcp` excluded, this run leaves `opencode.jsonc` byte-for-byte unchanged and still updates instructions, skills, agents and commands. When an `mcp.jsonc` in this repo changes, apply that change to the live `mcp.servers` entry by hand (or ask an agent to, following the component README) instead of regenerating the server list. Runs that include `mcp` now keep the native V2 layout but still overwrite customized server fields.
@@ -358,7 +358,7 @@ Back up anything you want to keep. Because rules and MCP servers are replaced, l
 }
 ```
 
-Then the command is just `npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features rules,skills`.
+Then the command is just `npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features rules,skills`.
 
 Plugins install differently: through each tool, or by asking your agent to follow the plugin's README. Profiles install into a folder you choose; their READMEs have the command.
 
@@ -379,7 +379,7 @@ Saved selections, so you don't have to list folders. [`groups/README.md`](groups
 | `fcos_app_installer`  | The FCOS app installer agent, helper, command, 8 skills and 3 rules, in a folder of its own; run `install.py` first                           |
 
 ```bash
-npx rulesync@41.0.0 generate --config groups/default.jsonc --global
+npx rulesync@43.12.0 generate --config groups/default.jsonc --global
 ```
 
 None of them installs the programs the skills and MCP servers use; each folder's README covers that.

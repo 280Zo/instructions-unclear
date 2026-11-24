@@ -9,7 +9,7 @@ It's in `default`, `work` and `infosec`.
 From the repo root, through an [install group](../../groups/), or just this skill:
 
 ```bash
-npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/playwright-cli
+npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/playwright-cli
 ```
 
 rulesync installs only the skill. The skill runs `playwright-cli`, or `npx playwright cli` from a project that has `@playwright/cli` installed locally. The skill text suggests `npm install -g @playwright/cli@latest`; your `package-management` rule takes precedence, so the agent asks first and prefers a pinned, project-local install.

@@ -15,7 +15,7 @@ It only reads. It never sends, replies or changes anything in your notes or tool
 The [`work`](../../groups/README.md#work) group installs it. For this folder alone, from the repo root:
 
 ```bash
-npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/meeting-brief
+npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/meeting-brief
 ```
 
 Swap `--targets` for your tools.

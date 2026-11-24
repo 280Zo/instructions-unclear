@@ -7,7 +7,7 @@ A skill that turns explanations, plans, code reviews and data into a self-contai
 This folder holds only the skill. When to use it comes from the repo's routing rule, [`rules/routing`](../../rules/routing/rules/routing.md), which the `default`, `work` and `writing_reporting` [install groups](../../groups/) install. To add just the skill, from the repo root:
 
 ```bash
-npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/visual-explainer
+npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/visual-explainer
 ```
 
 Swap `--targets` for your tools. To keep it in your regular install, add `skills/visual-explainer` to `inputRoots` in your `rulesync.local.jsonc`. It works best alongside `diagram-design` and `theme-factory`.

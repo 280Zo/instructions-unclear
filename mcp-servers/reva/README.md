@@ -20,7 +20,7 @@
 From the repo root, use the [reverse-engineering group](../../groups/README.md#reverse_engineering), or this component alone:
 
 ```bash
-npx rulesync@41.0.0 generate --config mcp-servers/reva/profile.jsonc --output-roots ~/AI/reva
+npx rulesync@43.12.0 generate --config mcp-servers/reva/profile.jsonc --output-roots ~/AI/reva
 ```
 
 Never add `--global`. This copies context and a **disabled** connection; it does not install Ghidra or the extension. After separately approving/installing the matching extension, start the project, verify its loopback endpoint and explicitly enable `reva` in the generated project configuration. Default assistant endpoint: `http://127.0.0.1:8080/mcp/message`. Resolve any port conflict in Ghidra and the project connection together.

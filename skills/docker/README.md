@@ -16,7 +16,7 @@ The four descriptions add about 380 tokens to every request, so they're in `defa
 From the repo root, through the `default` or `work` [install group](../../groups/), or just these skills:
 
 ```bash
-npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/docker
+npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/docker
 ```
 
 The skills' `scripts/verify-*.sh` helpers run `docker` and `docker compose` to check your work; `verify-build.sh` builds and tags an image. rulesync installs neither Docker nor Compose. Most guidance also applies to Podman, but Docker wrote and tested it for Docker.

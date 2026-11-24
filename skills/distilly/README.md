@@ -15,7 +15,7 @@ Its instructions are in English, and it replies in the language you write in.
 1. Install the skill from the repo root:
 
    ```bash
-   npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/distilly
+   npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/distilly
    ```
 
     Swap `--targets` for your tools. To keep it in your regular install, add `skills/distilly` to `inputRoots` in your `rulesync.local.jsonc`.

@@ -32,7 +32,7 @@ Installing the bundle adds instructions, agents, skills and commands. It does no
 The `default`, `work` and `infosec` groups include `agents/security`, `skills/security-threat-model` and `skills/security-audit`. See [`groups/README.md`](../../groups/README.md). To install this bundle alone, from the repo root:
 
 ```bash
-npx rulesync@41.0.0 generate --global --targets opencode,claudecode,codexcli --features subagents,skills,commands --input-roots agents/security
+npx rulesync@43.12.0 generate --global --targets opencode,claudecode,codexcli --features subagents,skills,commands --input-roots agents/security
 ```
 
 > **Warning:** adding `rules` to `--features` (`--features rules,subagents,skills,commands`) replaces your whole global instructions file with this bundle's one rule. Only include `rules` if you also list every other rule root you want, in order (`rules/shell-preamble` first, `rules/shell-preamble-reminder` last). Otherwise use the command above and get the secure-coding rule from a group.

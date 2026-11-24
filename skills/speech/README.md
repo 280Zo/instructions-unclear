@@ -7,7 +7,7 @@ OpenAI text-to-speech using built-in voices. Included in `default`, `work` and `
 From the repo root:
 
 ```bash
-npx rulesync@41.0.0 generate --global --features skills --input-roots skills/speech
+npx rulesync@43.12.0 generate --global --features skills --input-roots skills/speech
 ```
 
 This includes the complete upstream script, references and interface assets. It does not install dependencies or generate audio.

@@ -18,7 +18,7 @@ From this repo, REA is a **profile**: it lives in one folder you choose. Start y
 
    ```bash
    mkdir -p ~/AI/reverse_engineering/rea
-   npx rulesync@41.0.0 generate --config mcp-servers/rea/profile.jsonc --output-roots ~/AI/reverse_engineering/rea --targets claudecode,codexcli,opencode
+   npx rulesync@43.12.0 generate --config mcp-servers/rea/profile.jsonc --output-roots ~/AI/reverse_engineering/rea --targets claudecode,codexcli,opencode
    ```
 
    Swap `--targets` for the tools you use. Never add `--global`: that would put REA in every session.

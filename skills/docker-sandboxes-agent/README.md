@@ -19,7 +19,7 @@ They only help if you use `sbx` or Docker Agent, and their descriptions add abou
 From the repo root, through the `work` [install group](../../groups/), or with the core folder (these skills point to its `docker-destructive-guardrails`):
 
 ```bash
-npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/docker skills/docker-sandboxes-agent
+npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/docker skills/docker-sandboxes-agent
 ```
 
 The skills need the standalone `sbx` CLI or the `docker agent` CLI plugin (Docker Desktop 4.63+); rulesync installs neither.

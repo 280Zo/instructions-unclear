@@ -13,7 +13,7 @@ This folder is for the `ai_research` folder group, not for your home folder. The
 
 ```bash
 mkdir -p ~/AI/ai_research
-npx rulesync@41.0.0 generate --config groups/ai_research.jsonc --output-roots ~/AI/ai_research
+npx rulesync@43.12.0 generate --config groups/ai_research.jsonc --output-roots ~/AI/ai_research
 ```
 
 Never add `--global`. The `default`, `work` and `writing_reporting` groups don't include this folder, so your global instructions file doesn't get the shell habits.

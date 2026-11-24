@@ -53,7 +53,7 @@ The six specialists are one file each for every tool. An agent file's body is th
 The OpenCode row was tested on OpenCode 2.1.3. The others follow each vendor's documentation and weren't run here. Why the gaps:
 
 - **Claude Code** has no skill filter. Its `skills` field preloads skills; it doesn't hide the rest.
-- **Codex** can disable individual skills with `skills.config`, but rulesync 41 writes that table before `developer_instructions`, so TOML reads the instructions as part of the table. Its agents can't change MCP servers.
+- **Codex** can disable individual skills with `skills.config`, but rulesync (41 through at least 43) writes that table before `developer_instructions`, so TOML reads the instructions as part of the table. Its agents can't change MCP servers.
 - **Copilot**'s `tools` field is an allowlist. Leaving out a built-in tool alias removes that tool, and this couldn't be tested without Copilot, so it isn't set.
 
 Outside OpenCode every installed skill stays visible, so install specialist skills there with their folder groups (`design`, `career`, `ai_research`, `infosec`, `reverse_engineering`) rather than globally. Installing just the agents (`--features subagents`) gives other tools their instructions without the skills.
@@ -63,7 +63,7 @@ Outside OpenCode every installed skill stays visible, so install specialist skil
 The [`default` group](../groups/README.md#default) installs every agent folder above except `fcos-app-installer`, and every skill folder the agents filter:
 
 ```bash
-npx rulesync@41.0.0 generate --config groups/default.jsonc --global
+npx rulesync@43.12.0 generate --config groups/default.jsonc --global
 ```
 
 It needs rulesync 41 or later. Older releases add a `name:` field that makes OpenCode 2.1.3 drop every agent permission without warning. ZAP, ReVa, radare2, FreeCAD, Presenton, Podman and codebase-memory are written switched off. REA isn't installed globally because it starts switched on; use it in a folder made with the [`reverse_engineering` group](../groups/README.md#reverse_engineering).

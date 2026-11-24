@@ -13,7 +13,7 @@ Use the [tagged upstream instructions](https://github.com/radareorg/radare2-mcp/
 From the repo root, use the [reverse-engineering group](../../groups/README.md#reverse_engineering), or:
 
 ```bash
-npx rulesync@41.0.0 generate --config mcp-servers/radare2/profile.jsonc --output-roots ~/AI/radare2
+npx rulesync@43.12.0 generate --config mcp-servers/radare2/profile.jsonc --output-roots ~/AI/radare2
 ```
 
 Never add `--global`. The connection is disabled until you explicitly enable it in the generated project configuration after checking `r2mcp` is the intended version. It uses stdio, `-R` (read-only exposed tools), `-n` (no plugins/radare2rc) and `-N` (no prompts), verified against `src/main.c` at the recorded commit.

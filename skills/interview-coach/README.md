@@ -8,7 +8,7 @@ Install it into your career folder with the [`career` group](../../groups/README
 
 ```bash
 mkdir -p ~/AI/career
-npx rulesync@41.0.0 generate --targets opencode --features skills --input-roots skills/interview-coach --output-roots ~/AI/career
+npx rulesync@43.12.0 generate --targets opencode --features skills --input-roots skills/interview-coach --output-roots ~/AI/career
 ```
 
 Swap `--targets` for your tools. Never add `--global` to the command above. In OpenCode, `default` installs it globally for the [`career` agent](../../agents/career/), the only agent that loads it. It keeps `coaching_state.md` in the folder you start in.

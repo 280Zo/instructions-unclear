@@ -18,7 +18,7 @@ Use this part when the user wants these context files installed on their compute
 
 ## 1. Check the starting point
 
-- Confirm you're at the repo root (`rulesync.jsonc` and `groups/` are here) and that Node.js 22 or newer is installed, since `npx` runs rulesync. If something is missing, stop and tell the user.
+- Confirm you're at the repo root (`rulesync.jsonc` and `groups/` are here) and that Node.js 22.22 or newer is installed, since `npx` runs rulesync. If something is missing, stop and tell the user.
 - Run `git status` and report any local changes before going further.
 - Ask which assistants they use and turn the answer into rulesync `--targets` names (`opencode`, `claudecode`, `codexcli`, `geminicli`, `cursor`, and others). Without `--targets`, every group installs into OpenCode only (`work` adds the two Copilots).
 
@@ -38,7 +38,7 @@ Go folder by folder through `rules/`, `agents/`, `skills/` and `mcp-servers/` an
 - `skills/trailofbits` and `skills/iothackbot`. They're native plugins, not rulesync sources, so they're offered in step 6.
 - Anything a README says not to install alongside something else.
 
-Install the selection in one global run, because every run replaces the rules file and the MCP list. Write the folder list to `rulesync.local.jsonc` (git ignores it, and rulesync uses its `inputRoots` instead of the ones in `rulesync.jsonc`). Put `rules/shell-preamble` first, `rules/shell-preamble-reminder` last, and the other rule folders in the order `rulesync.jsonc` uses. The command is then `npx rulesync@41.0.0 generate --global --features rules,subagents,skills,commands,mcp`, plus `--targets`. Tell the user the file exists: any later plain `generate` in this repo will use it.
+Install the selection in one global run, because every run replaces the rules file and the MCP list. Write the folder list to `rulesync.local.jsonc` (git ignores it, and rulesync uses its `inputRoots` instead of the ones in `rulesync.jsonc`). Put `rules/shell-preamble` first, `rules/shell-preamble-reminder` last, and the other rule folders in the order `rulesync.jsonc` uses. The command is then `npx rulesync@43.12.0 generate --global --features rules,subagents,skills,commands,mcp`, plus `--targets`. Tell the user the file exists: any later plain `generate` in this repo will use it.
 
 ## 4. Read the README of every selected folder
 
@@ -61,12 +61,12 @@ Give the user a short summary: what each folder needs that rulesync won't instal
    preview=$(mktemp -d /tmp/opencode/rulesync-preview.XXXXXX)
    env HOME="$preview" XDG_CONFIG_HOME="$preview/.config" XDG_DATA_HOME="$preview/.local/share" \
      XDG_STATE_HOME="$preview/.local/state" XDG_CACHE_HOME="$preview/.cache" \
-     npx rulesync@41.0.0 generate --config groups/<name>.jsonc --global
+     npx rulesync@43.12.0 generate --config groups/<name>.jsonc --global
    ```
 
    For a folder group, use `--output-roots "$preview/project"` without `--global`. For Everything, drop `--config` and add `--features rules,subagents,skills,commands,mcp`.
 2. Compare the preview with the live files, as "Preview before installing" in `README.md` describes. Summarize what changes: the rules file replaced, MCP servers added or removed, skills and agents added or overwritten, and settings lost (see "What generation changes" in `README.md`). Don't paste raw config diffs or private values.
-3. Ask for approval of the live run, and suggest the user back up their config first. If their OpenCode config has customized MCP entries, leave `mcp` out of `--features` (see "Keeping customized MCP entries" in `README.md`). rulesync 41 writes native V2 MCP layout but still replaces selected server definitions.
+3. Ask for approval of the live run, and suggest the user back up their config first. If their OpenCode config has customized MCP entries, leave `mcp` out of `--features` (see "Keeping customized MCP entries" in `README.md`). rulesync 41 and later write native V2 MCP layout but still replace selected server definitions.
 4. Run the live command. For a folder group, create the folder first.
 5. Do the approved post-generation steps from step 4, in the order the READMEs give.
 
@@ -286,7 +286,7 @@ Use this order for any change under `agents/fcos-app-installer/`: the toolkit, i
 
    ```bash
    python3 agents/fcos-app-installer/install.py /tmp/opencode/<new-name> --apply
-   node <rulesync 41.0.0 cli> generate --config groups/fcos_app_installer.jsonc --output-roots /tmp/opencode/<new-name>
+   node <rulesync 43.12.0 cli> generate --config groups/fcos_app_installer.jsonc --output-roots /tmp/opencode/<new-name>
    cd /tmp/opencode/<new-name> && python3 -B -m unittest tests.<module>
    ```
 
@@ -295,7 +295,7 @@ Use this order for any change under `agents/fcos-app-installer/`: the toolkit, i
    ```bash
    python3 -B -m unittest discover -s tests
    python3 -B agents/generate.py --check
-   python3 -B tests/check_fcos_app_installer.py <rulesync 41.0.0 cli>
+   python3 -B tests/check_fcos_app_installer.py <rulesync 43.12.0 cli>
    ```
 
    The last command installs a fresh folder, runs the whole toolkit suite there and prints the folder. In that folder, run `bash tools/validate.sh tests/fixtures/edge.values`, `bash tools/validate.sh tests/fixtures/ai-vm.values` and `python3 -B tools/publish_check.py`. Run `publish_check.py` with the user's real workspace set (`FCOS_WORKSPACE` or the remembered one). It compares every file with that workspace's values, so it catches what the fixtures cannot, such as a site value that is also a shipped name. Then run the leak scan from "Verify before committing" on the paths you changed. Report a check as passed only if you ran it.
@@ -311,7 +311,7 @@ Plans, specs and notes for this work stay in the ignored `docs/superpowers/` and
 
 - One `mcp.jsonc` per tool folder; rulesync merges them all.
 - Commands are installed programs run by name (e.g. `pmb-mcp`, installed with `uv tool install pmb-ai`). Never use an absolute path.
-- Supported per-server fields that carry over to OpenCode, Claude Code and Codex: `command`, `args`, `env`, `cwd`, `timeout`, `url`, `headers`, and `disabled` (native `disabled: true` for OpenCode V2 with rulesync 41, `enabled: false` for Codex, passed through as `disabled: true` for Claude Code).
+- Supported per-server fields that carry over to OpenCode, Claude Code and Codex: `command`, `args`, `env`, `cwd`, `timeout`, `url`, `headers`, and `disabled` (native `disabled: true` for OpenCode V2 with rulesync 41 or later, `enabled: false` for Codex, passed through as `disabled: true` for Claude Code).
 - If the MCP server's name changes, warn the user: their OpenCode permission rules match tools by `<server name>_*`.
 
 ## Check for updates
@@ -351,7 +351,7 @@ Generate into a throwaway home folder, never the real one:
 
 ```bash
 mkdir -p /tmp/opencode/rulesync-check
-HOME=/tmp/opencode/rulesync-check npx rulesync@41.0.0 generate --global --features rules,subagents,skills,commands,mcp
+HOME=/tmp/opencode/rulesync-check npx rulesync@43.12.0 generate --global --features rules,subagents,skills,commands,mcp
 ```
 
 Leak scan over the files git would commit:

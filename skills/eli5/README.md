@@ -7,7 +7,7 @@ A skill that teaches one unfamiliar thing in plain English: a concept, an event,
 Skills are added alongside what you already have, so this folder can be installed on its own. From the repo root:
 
 ```bash
-npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/eli5
+npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/eli5
 ```
 
 Swap `--targets` for your tools. To keep it in your regular install, add `skills/eli5` to `inputRoots` in your `rulesync.local.jsonc`.

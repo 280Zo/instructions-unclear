@@ -12,7 +12,7 @@ From the repo root:
 
 ```bash
 mkdir -p ~/research
-npx rulesync@41.0.0 generate --config skills/ai-research/profile.jsonc --output-roots ~/research --targets claudecode,codexcli,opencode
+npx rulesync@43.12.0 generate --config skills/ai-research/profile.jsonc --output-roots ~/research --targets claudecode,codexcli,opencode
 ```
 
 Swap `--targets` for your tools. Never add `--global` to this command: without the agent filter, every session would load all 98. Run the same command again to update the folder.

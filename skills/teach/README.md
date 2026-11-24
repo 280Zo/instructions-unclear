@@ -19,7 +19,7 @@ It researches before it teaches, uses retrieval practice and spacing, and points
 From the repo root:
 
 ```bash
-npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/teach
+npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/teach
 ```
 
 Swap `--targets` for your tools. The `default`, `work` and `writing_reporting` groups include it. The skill's `*-FORMAT.md` files must stay beside `SKILL.md`; rulesync copies them.

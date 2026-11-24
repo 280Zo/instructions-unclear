@@ -9,7 +9,7 @@ It only runs when you call it. It is never loaded automatically.
 From the repo root:
 
 ```bash
-npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/handoff
+npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/handoff
 ```
 
 Swap `--targets` for your tools. The `default`, `work` and `writing_reporting` groups include it.

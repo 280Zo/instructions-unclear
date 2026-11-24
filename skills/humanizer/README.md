@@ -7,7 +7,7 @@ A skill that rewrites text that sounds AI-written so it reads like a person wrot
 This folder holds only the skill. When to use it comes from the repo's routing rule, [`rules/routing`](../../rules/routing/rules/routing.md), which the `default`, `work` and `writing_reporting` [install groups](../../groups/) install. To add just the skill, from the repo root:
 
 ```bash
-npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/humanizer
+npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/humanizer
 ```
 
 Swap `--targets` for your tools. To keep it in your regular install, add `skills/humanizer` to `inputRoots` in your `rulesync.local.jsonc`.

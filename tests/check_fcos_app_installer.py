@@ -7,7 +7,7 @@ lists and bodies, and then runs the toolkit's whole test suite inside the instal
 the layout the toolkit's tests are written for. The installed folder is left in place (under
 /tmp/opencode when that exists) and its path is printed; it is never deleted.
 
-    python3 tests/check_fcos_app_installer.py /path/to/rulesync-41/node_modules/rulesync/dist/cli/index.js
+    python3 tests/check_fcos_app_installer.py /path/to/rulesync-43/node_modules/rulesync/dist/cli/index.js
 """
 import os
 import subprocess

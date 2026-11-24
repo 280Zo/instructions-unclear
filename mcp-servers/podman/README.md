@@ -9,7 +9,7 @@ It's a community server, not part of the Podman project. Neither Podman nor Dock
 It's in the `default` and `work` [install groups](../../groups/), **switched off**. To add just this server, from the repo root:
 
 ```bash
-npx rulesync@41.0.0 generate --global --features mcp --input-roots mcp-servers/podman
+npx rulesync@43.12.0 generate --global --features mcp --input-roots mcp-servers/podman
 ```
 
 That replaces your tool's whole MCP list with this one server, so normally use a group or your `rulesync.local.jsonc` list instead.

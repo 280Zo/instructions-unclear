@@ -120,7 +120,7 @@ other checkout.
 
    ```fish
    # desktop (fish), in the repository
-   npx rulesync@41.0.0 generate --config groups/fcos_app_installer.jsonc --output-roots ~/AI/fcos-app-installer
+   npx rulesync@43.12.0 generate --config groups/fcos_app_installer.jsonc --output-roots ~/AI/fcos-app-installer
    ```
 
    Only OpenCode enforces the agent's permission list. For another tool, add

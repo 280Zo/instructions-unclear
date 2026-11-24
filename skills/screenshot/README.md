@@ -7,7 +7,7 @@ Desktop/system screenshot capture with OS-specific helpers. Included in `default
 From the repo root:
 
 ```bash
-npx rulesync@41.0.0 generate --global --features skills --input-roots skills/screenshot
+npx rulesync@43.12.0 generate --global --features skills --input-roots skills/screenshot
 ```
 
 All Python, shell, Swift and PowerShell helpers, references and interface assets are retained. This does not install capture utilities or grant screen access. Use one installer per destination; legacy native Codex and rulesync 38 use different default directories (`~/.codex/skills` and `~/.agents/skills`). Review existing duplicates before separately approving cleanup.

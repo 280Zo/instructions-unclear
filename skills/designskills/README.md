@@ -12,7 +12,7 @@ From the repo root:
 
 ```bash
 mkdir -p ~/AI/design
-npx rulesync@41.0.0 generate --config groups/design.jsonc --output-roots ~/AI/design
+npx rulesync@43.12.0 generate --config groups/design.jsonc --output-roots ~/AI/design
 ```
 
 Add `--targets` for tools other than OpenCode. Never add `--global`. Run the same command again to update the folder.

@@ -9,7 +9,7 @@ A skill that works out where (and when) a photo was taken, and shows its work: e
 3. Skills are added alongside what you already have, so this folder can be installed on its own. From the repo root:
 
    ```bash
-   npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/geo-sleuth
+   npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/geo-sleuth
    ```
 
    Swap `--targets` for your tools. To keep it in your regular install, add `skills/geo-sleuth` to `inputRoots` in your `rulesync.local.jsonc`.

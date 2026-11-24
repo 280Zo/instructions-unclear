@@ -13,7 +13,7 @@ From the repo root:
 
 ```bash
 mkdir -p ~/reverse_engineering/re
-npx rulesync@41.0.0 generate --config agents/reverse-engineering/profile.jsonc --output-roots ~/reverse_engineering/re --targets opencode,claudecode,codexcli
+npx rulesync@43.12.0 generate --config agents/reverse-engineering/profile.jsonc --output-roots ~/reverse_engineering/re --targets opencode,claudecode,codexcli
 ```
 
 Swap `--targets` for your tools. Never add `--global`. Run the same command again to update.

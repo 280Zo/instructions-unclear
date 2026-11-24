@@ -8,7 +8,7 @@ Install them into your career folder with the [`career` group](../../groups/READ
 
 ```bash
 mkdir -p ~/AI/career
-npx rulesync@41.0.0 generate --targets opencode --features skills --input-roots skills/resume-skills --output-roots ~/AI/career
+npx rulesync@43.12.0 generate --targets opencode --features skills --input-roots skills/resume-skills --output-roots ~/AI/career
 ```
 
 Swap `--targets` for your tools. Never add `--global` to the command above. In OpenCode, `default` installs them globally for the [`career` agent](../../agents/career/), the only agent that loads them.

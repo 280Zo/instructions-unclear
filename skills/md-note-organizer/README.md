@@ -21,7 +21,7 @@ Every note gets frontmatter with shared properties (`type`, `title`, `created`, 
 Skills are added alongside what you already have, so this folder can be installed on its own. From the repo root:
 
 ```bash
-npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/md-note-organizer
+npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/md-note-organizer
 ```
 
 Swap `--targets` for your tools. To keep it in your regular install, add `skills/md-note-organizer` to `inputRoots` in your `rulesync.local.jsonc`.

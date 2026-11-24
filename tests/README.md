@@ -32,7 +32,7 @@ Native-owned collections require a separate isolated installation/discovery chec
 
 ## OpenCode permission regression
 
-`test_rulesync_version.py` keeps repo-owned install commands pinned to 41.0.0. Historical version references stay unchanged.
+`test_rulesync_version.py` keeps repo-owned install commands, including the one `agents/fcos-app-installer/install.py` prints, pinned to 43.12.0. Historical version references stay unchanged.
 
 `check_opencode_permissions.py` is a separate, opt-in runtime test. It uses an already-downloaded rulesync CLI, the installed `opencode`, Node, and Python's standard library. It generates agents in a fresh home under `/tmp/opencode`, starts a password-protected private OpenCode server and a localhost model stub, and requests native `skill` calls. The stub supplies calls only; OpenCode executes or denies them. No real model, credentials, live settings, package downloads or MCP backends are needed. Private servers stop afterward; generated files and `results.json` remain in the printed evidence directory.
 

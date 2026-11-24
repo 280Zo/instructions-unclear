@@ -232,7 +232,7 @@ def main(argv: list[str], source: Path | None = None) -> int:
         repo = HERE.parents[1]
         print("next, with rulesync (from the repository):\n"
               f"  cd {shlex.quote(str(repo))}\n"
-              f"  npx rulesync@41.0.0 generate --config groups/fcos_app_installer.jsonc "
+              f"  npx rulesync@43.12.0 generate --config groups/fcos_app_installer.jsonc "
               f"--output-roots {shlex.quote(str(target))}\n"
               f"then start OpenCode in {shlex.quote(str(target))} and run: python3 tools/check_requirements.py")
         return 0

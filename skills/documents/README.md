@@ -7,7 +7,7 @@
 Included in `default`, `work` and `writing_reporting`. To install this skill alone, run from the repo root:
 
 ```bash
-npx rulesync@41.0.0 generate --global --features skills --input-roots skills/documents
+npx rulesync@43.12.0 generate --global --features skills --input-roots skills/documents
 ```
 
 This copies context and helpers, not Python libraries, native renderers or other skills. It does not replace rules or MCP settings.

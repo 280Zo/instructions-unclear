@@ -8,7 +8,7 @@ The [`default`](../../groups/README.md#default) and [`work`](../../groups/README
 
 ```bash
 mkdir -p ~/AI/security-audit
-npx rulesync@41.0.0 generate --features skills --input-roots skills/security-audit --output-roots ~/AI/security-audit
+npx rulesync@43.12.0 generate --features skills --input-roots skills/security-audit --output-roots ~/AI/security-audit
 ```
 
 Never add `--global` to that folder-scoped command. The whole upstream skill folder is included: `SKILL.md`, the phase and attack-class companion files, `report-schema.json` and the two validators with their tests.

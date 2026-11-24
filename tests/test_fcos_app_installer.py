@@ -478,7 +478,7 @@ class GroupTests(unittest.TestCase):
     def test_the_groups_readme_shows_the_install_commands(self):
         section = (ROOT / "groups" / "README.md").read_text().split("## fcos_app_installer", 1)[1]
         section = section.split("\n## ", 1)[0]
-        for needle in ("install.py", "--apply", "npx rulesync@41.0.0 generate --config groups/fcos_app_installer.jsonc",
+        for needle in ("install.py", "--apply", "npx rulesync@43.12.0 generate --config groups/fcos_app_installer.jsonc",
                        "--output-roots"):
             with self.subTest(needle=needle):
                 self.assertIn(needle, section)
@@ -487,7 +487,7 @@ class GroupTests(unittest.TestCase):
         readme = (FOLDER / "README.md").read_text()
         install = readme.split("## Install", 1)[1].split("\n## ", 1)[0]
         for needle in ("agents/fcos-app-installer/install.py", "groups/fcos_app_installer.jsonc",
-                       "rulesync@41.0.0", "--apply", "--output-roots"):
+                       "rulesync@43.12.0", "--apply", "--output-roots"):
             with self.subTest(needle=needle):
                 self.assertIn(needle, install)
         self.assertTrue((FOLDER / "install.py").is_file())

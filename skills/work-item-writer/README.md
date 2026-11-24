@@ -25,7 +25,7 @@ The open questions come at the end of the review. The items hold only what the n
 Skills are added alongside what you already have, so this folder can be installed on its own. From the repo root:
 
 ```bash
-npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/work-item-writer
+npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/work-item-writer
 ```
 
 Swap `--targets` for your tools. To keep it in your regular install, add `skills/work-item-writer` to `inputRoots` in your `rulesync.local.jsonc`.

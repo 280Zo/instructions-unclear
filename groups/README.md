@@ -35,18 +35,18 @@ Everything in [`rulesync.jsonc`](../rulesync.jsonc), into OpenCode: all selected
 `documents` is included, and so are `handoff`, `teach` and `wait-what` (user-invoked only), Docker's 4 core skills ([`skills/docker`](../skills/docker/)) and the [Podman MCP](../mcp-servers/podman/), switched off. Docker's Sandboxes and Docker Agent skills are in `work` only. `security-threat-model` and Cloudflare's [`security-audit`](../skills/security-audit/) are included, and only the `security` agent can load them.
 
 ```bash
-npx rulesync@41.0.0 generate --config groups/default.jsonc --global
+npx rulesync@43.12.0 generate --config groups/default.jsonc --global
 ```
 
-`npx rulesync@41.0.0 generate --global` does the same thing. Isolated generation of every group then in the repo with 38.0.0 and 41.0.0 changed only OpenCode agent frontmatter and MCP configuration; file counts and all other output bytes were unchanged. Native skill permission enforcement was tested with the installed OpenCode 2.1.3. See [the regression check](../tests/README.md#opencode-permission-regression).
+`npx rulesync@43.12.0 generate --global` does the same thing. Isolated generation of every group then in the repo with 38.0.0 and 41.0.0 changed only OpenCode agent frontmatter and MCP configuration; file counts and all other output bytes were unchanged. Every group generates byte-identical output with 41.0.0 and 43.12.0, for OpenCode, Copilot, Claude Code, Codex, Gemini CLI and Cursor. Native skill permission enforcement was tested with the installed OpenCode 2.1.3. See [the regression check](../tests/README.md#opencode-permission-regression).
 
 ## work
 
 Use `--dry-run` first:
 
 ```bash
-npx rulesync@41.0.0 generate --config groups/work.jsonc --global --dry-run
-npx rulesync@41.0.0 generate --config groups/work.jsonc --global
+npx rulesync@43.12.0 generate --config groups/work.jsonc --global --dry-run
+npx rulesync@43.12.0 generate --config groups/work.jsonc --global
 ```
 
 The config installs these folders into OpenCode, GitHub Copilot (VS Code) and Copilot CLI, with rules, skills, agents, commands and MCP servers:
@@ -109,7 +109,7 @@ Codebase-memory, Presenton, ZAP and Podman are written switched off. OpenCode V2
 Rules (including `routing` and `preferences`), `second-opinion`, the Docling, Exa and PMB rules and skills, and `eli5`, `report`, `humanizer`, [`md-note-organizer`](../skills/md-note-organizer/), `visual-explainer`, `diagram-design`, `frontend-slides`, `frontend-design`, `theme-factory`, Magnus's [`documents`](../skills/documents/), and Matt Pocock's [`handoff`](../skills/handoff/), [`teach`](../skills/teach/) and [`wait-what`](../skills/wait-what/). That's 16 skills. MCP servers you already have stay as they are. The document skill adds authoring and smoke validation; it does not replace Docling's OCR/extraction role.
 
 ```bash
-npx rulesync@41.0.0 generate --config groups/writing_reporting.jsonc --global
+npx rulesync@43.12.0 generate --config groups/writing_reporting.jsonc --global
 ```
 
 ## infosec
@@ -120,7 +120,7 @@ The rule lands in the folder's own `AGENTS.md`, which OpenCode reads along with 
 
 ```bash
 mkdir -p ~/AI/infosec
-npx rulesync@41.0.0 generate --config groups/infosec.jsonc --output-roots ~/AI/infosec
+npx rulesync@43.12.0 generate --config groups/infosec.jsonc --output-roots ~/AI/infosec
 ```
 
 ## ai_research
@@ -131,7 +131,7 @@ The rule lands in the folder's own `AGENTS.md`, replacing any `AGENTS.md` alread
 
 ```bash
 mkdir -p ~/AI/ai_research
-npx rulesync@41.0.0 generate --config groups/ai_research.jsonc --output-roots ~/AI/ai_research
+npx rulesync@43.12.0 generate --config groups/ai_research.jsonc --output-roots ~/AI/ai_research
 ```
 
 ## career
@@ -140,7 +140,7 @@ The 22 skills from [`skills/resume-skills`](../skills/resume-skills/), from [Par
 
 ```bash
 mkdir -p ~/AI/career
-npx rulesync@41.0.0 generate --config groups/career.jsonc --output-roots ~/AI/career
+npx rulesync@43.12.0 generate --config groups/career.jsonc --output-roots ~/AI/career
 ```
 
 ## reverse_engineering
@@ -151,7 +151,7 @@ The [REA](../mcp-servers/rea/) MCP/skill, [reverse-engineering agents](../agents
 
 ```bash
 mkdir -p ~/AI/reverse_engineering
-npx rulesync@41.0.0 generate --config groups/reverse_engineering.jsonc --output-roots ~/AI/reverse_engineering
+npx rulesync@43.12.0 generate --config groups/reverse_engineering.jsonc --output-roots ~/AI/reverse_engineering
 ```
 
 ## design
@@ -160,7 +160,7 @@ The 19 skills from [`skills/designskills`](../skills/designskills/), including `
 
 ```bash
 mkdir -p ~/AI/design
-npx rulesync@41.0.0 generate --config groups/design.jsonc --output-roots ~/AI/design
+npx rulesync@43.12.0 generate --config groups/design.jsonc --output-roots ~/AI/design
 ```
 
 ## fcos_app_installer
@@ -170,7 +170,7 @@ The [FCOS app installer](../agents/fcos-app-installer/): the `fcos-app-installer
 ```bash
 python3 agents/fcos-app-installer/install.py ~/AI/fcos-app-installer
 python3 agents/fcos-app-installer/install.py ~/AI/fcos-app-installer --apply
-npx rulesync@41.0.0 generate --config groups/fcos_app_installer.jsonc --output-roots ~/AI/fcos-app-installer
+npx rulesync@43.12.0 generate --config groups/fcos_app_installer.jsonc --output-roots ~/AI/fcos-app-installer
 ```
 
 ## Other tools

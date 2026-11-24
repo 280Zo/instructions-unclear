@@ -9,7 +9,7 @@ skills, approvals and safety rules. It does not pick or install a model.
 From the repo root:
 
 ```bash
-npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features subagents --input-roots agents/local-model
+npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features subagents --input-roots agents/local-model
 ```
 
 Swap `--targets` for your tools. This folder is also in the default install.

@@ -341,7 +341,7 @@ def check(cli):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("cli", type=Path, help="Existing rulesync 41 dist/cli/index.js; no package runner")
+    parser.add_argument("cli", type=Path, help="Existing rulesync 41 or later dist/cli/index.js; no package runner")
     args = parser.parse_args()
     if not args.cli.is_file():
         parser.error("The local rulesync CLI file does not exist")

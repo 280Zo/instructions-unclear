@@ -7,7 +7,7 @@ OpenAI audio transcription with optional speaker identification. Included in `de
 From the repo root:
 
 ```bash
-npx rulesync@41.0.0 generate --global --features skills --input-roots skills/transcribe
+npx rulesync@43.12.0 generate --global --features skills --input-roots skills/transcribe
 ```
 
 The complete upstream helper, references and interface assets accompany the skill. This installs no Python packages and starts no API calls.

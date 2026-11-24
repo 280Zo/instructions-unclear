@@ -9,7 +9,7 @@ It's in the `default` and `work` groups next to `visual-explainer` and `diagram-
 From the repo root, through an [install group](../../groups/), or just this skill:
 
 ```bash
-npx rulesync@41.0.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/anatomy
+npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/anatomy
 ```
 
 rulesync copies the skill, its kit, scripts and examples (about 27 MB). It doesn't install what they run:

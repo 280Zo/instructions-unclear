@@ -8,7 +8,7 @@ The [`default`](../../groups/README.md#default) and [`work`](../../groups/README
 
 ```bash
 mkdir -p ~/AI/threat-model
-npx rulesync@41.0.0 generate --features skills --input-roots skills/security-threat-model --output-roots ~/AI/threat-model
+npx rulesync@43.12.0 generate --features skills --input-roots skills/security-threat-model --output-roots ~/AI/threat-model
 ```
 
 Never add `--global` to that folder-scoped command. The full references and interface assets are included. No scanner, dependencies or MCP services are installed.
