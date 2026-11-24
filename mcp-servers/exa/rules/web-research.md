@@ -21,9 +21,9 @@ up" means guessing a URL — your most common source of confident wrong answers.
 
 - **Discovery → `exa_web_search_exa`.** Use first for any find/research/what-is/
   which-library question, even when you think you know the answer. If Exa is
-  unavailable, use the fallback below. Follow the upstream `search` skill for
-  query patterns and supported filtering; this
-  connection does not enable `web_search_advanced_exa`.
+  unavailable, use the fallback below. The upstream `search` skill covers
+  the same search-then-fetch use; this connection does not enable
+  `web_search_advanced_exa`.
 - **Retrieval from a known URL → `exa_web_fetch_exa`.** Clean markdown, batched
   URLs, `maxCharacters`. Measured on one GitHub page, `webfetch` returned ~7k
   chars of nav chrome and base64 badges before any content.
@@ -31,9 +31,8 @@ up" means guessing a URL — your most common source of confident wrong answers.
   markup matters; a URL the user or these instructions gave you; Exa failing.
 - **Search fallback:** if Exa is rate-limited, fails authentication, is missing
   or otherwise unavailable, say so and use the host's built-in search tool
-  (such as `websearch`) when available and permitted. This repo rule overrides
-  the upstream `search` skill's instruction not to fall back on auth/rate-limit
-  errors. Keep the same source-quality checks and read sources before citing.
+  (such as `websearch`) when available and permitted. Keep the same
+  source-quality checks and read sources before citing.
   Built-in search may use Exa too; do not assume independent availability or
   keep retrying a shared limit. If no search tool works, report the limitation
   and ask for source URLs or continue only from verified sources already held.

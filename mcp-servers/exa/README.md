@@ -8,7 +8,7 @@
 |---|---|
 | `mcp.jsonc` | Repo-authored connection enabling `web_search_exa`, `web_fetch_exa` and `agent_run` |
 | `rules/web-research.md` | Repo-authored source-quality and discovery/retrieval guidance |
-| `skills/search/` | Upstream `search` skill and all its references, unchanged |
+| `skills/search/` | Upstream `search` skill (search with `web_search_exa`, read pages with `web_fetch_exa`), unchanged |
 | `skills/exa-agent/` | Upstream `Exa Agent` skill, unchanged |
 
 ## Install
@@ -78,7 +78,7 @@ After an approved config/launcher correction, restart or reconnect the affected 
 
 ## Use
 
-- Ask for research across multiple sources: the upstream `search` skill plans search/fetch work and selects its topic-specific references, including `patterns-code.md` for programming questions.
+- Ask a question that needs current facts or external sources: the upstream `search` skill searches with `web_search_exa` first and reads the pages it needs with `web_fetch_exa`. For research across many sources, ask for Exa Agent.
 - Ask for multi-step discovery, list-building or enrichment: `Exa Agent` uses `agent_run`. Optional partner-data providers require corresponding account access and may incur costs; they are not enabled or purchased by copying the skill.
 - If Exa search is rate-limited or unavailable, the repo-owned web-research rule permits the host's built-in search tool when available and allowed. Disclose the fallback. It does not replace Exa Agent's structured runs, enrichment or partner-data access.
 
@@ -86,7 +86,7 @@ The skill bodies retain upstream's assistant-specific wording and model recommen
 
 ## Updating and existing installations
 
-Refresh `skills/search/` and `skills/exa-agent/` together from the recorded upstream source, preserve the complete references, and review the hosted tool selection. If a target parser or host rejects an upstream name/instruction, show the actual failure before adapting it.
+Refresh `skills/search/` and `skills/exa-agent/` together from the recorded upstream source, mirroring each folder completely (including any references upstream adds or removes), and review the hosted tool selection. If a target parser or host rejects an upstream name/instruction, show the actual failure before adapting it.
 
 ## For agents: install, remove and update
 
@@ -115,7 +115,7 @@ Refresh `skills/search/` and `skills/exa-agent/` together from the recorded upst
 - Why: The two upstream Exa skills overlap on research requests, and `Exa Agent` can use partner-data providers that may incur costs.
 - `rules/web-research.md` stays in this folder: it covers source quality, search versus fetch, and which Exa tool to use. Because it already assigns those jobs, `rules/routing` doesn't repeat them; if another installed skill starts competing for web research, add a line there.
 - The rule's `gh` CLI line (current GitHub state) is repo-owned guidance in that rule, not a change to the upstream Exa skills. It needs no GitHub MCP server and does not authorize installing `gh` or changing its authentication.
-- The rule's search-fallback policy is a repo-owned override of the upstream `search` skill's instruction not to fall back on authentication/rate-limit errors. Keep upstream skill text unchanged. Exa remains preferred; disclose fallback use, retain source-quality checks, and do not present ordinary search as an equivalent to `agent_run`.
+- The rule's search-fallback policy is repo-owned; the upstream `search` skill says nothing about fallbacks. Keep upstream skill text unchanged. Exa remains preferred; disclose fallback use, retain source-quality checks, and do not present ordinary search as an equivalent to `agent_run`.
 - On upstream updates, don't edit the upstream skill text to change routing, and don't add a per-skill routing rule here.
 - After a refresh, re-read both new `description`s and the hosted tool list. If either skill now claims the other's job or one owned elsewhere, or drops one it owned, update `rules/routing` and this section in the same change and tell the user.
 - When an approved manual setup or migration adds comments to the live connection, put the following beside its URL. Recheck the selected tools first: an old comment saying `agent_run` is disabled is wrong for this template. Never change the connection to make a stale comment true. Rulesync does not automatically insert these README comments, and upstream skill files remain unchanged.
@@ -127,4 +127,4 @@ Refresh `skills/search/` and `skills/exa-agent/` together from the recorded upst
 
 ## Origin
 
-[exa-labs/exa-mcp-server](https://github.com/exa-labs/exa-mcp-server), paths `skills/search/` and `skills/exa-agent/`, commit `0b499f095c4ca145eee07b09137641c037d58449`, copied 2026-10-20. Skill payloads unchanged. [MIT](../../THIRD_PARTY_LICENSES.md#exa-labsexa-mcp-server), © Exa Labs. Connection and rule written for this repo.
+[exa-labs/exa-mcp-server](https://github.com/exa-labs/exa-mcp-server), paths `skills/search/` and `skills/exa-agent/`, commit `81d687e7669b3769007ad46b4fd6839f7c2b6414`, copied 2026-11-24. Skill payloads unchanged. [MIT](../../THIRD_PARTY_LICENSES.md#exa-labsexa-mcp-server), © Exa Labs. Connection and rule written for this repo.

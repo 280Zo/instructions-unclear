@@ -951,7 +951,7 @@ SOFTWARE.
 
 ## exa-labs/exa-mcp-server
 
-Applies to `mcp-servers/exa/skills/` (upstream `search` and `Exa Agent`). Source: https://github.com/exa-labs/exa-mcp-server, commit `0b499f095c4ca145eee07b09137641c037d58449`.
+Applies to `mcp-servers/exa/skills/` (upstream `search` and `Exa Agent`). Source: https://github.com/exa-labs/exa-mcp-server, commit `81d687e7669b3769007ad46b4fd6839f7c2b6414`.
 
 ```text
 MIT License
