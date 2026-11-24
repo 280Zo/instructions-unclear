@@ -226,6 +226,7 @@ opencode:
     - {action: "skill", resource: "sarif-parsing", effect: deny}
     - {action: "skill", resource: "second-opinion", effect: deny}
     - {action: "skill", resource: "secure-workflow-guide", effect: deny}
+    - {action: "skill", resource: "security-audit", effect: deny}
     - {action: "skill", resource: "security-requirement-extraction", effect: deny}
     - {action: "skill", resource: "security-threat-model", effect: deny}
     - {action: "skill", resource: "segment-anything", effect: deny}

@@ -29,6 +29,7 @@ class RuleTests(unittest.TestCase):
             "theme-factory",
             "humanizer",
             "security-threat-model",
+            "security-audit",
             "security-best-practices",
         ]:
             self.assertIn(skill, text)

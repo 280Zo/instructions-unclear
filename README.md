@@ -203,6 +203,7 @@ The secure-coding rule ships inside [`agents/security`](agents/security/).
 | [`skills/transcribe`](skills/transcribe/)                       | OpenAI audio transcription and optional speaker identification                                                                                                          |
 | [`skills/speech`](skills/speech/)                               | OpenAI text-to-speech using built-in voices                                                                                                                             |
 | [`skills/security-threat-model`](skills/security-threat-model/) | Repository-grounded threat modeling; in OpenCode's default install only the `security` agent loads it                                                                   |
+| [`skills/security-audit`](skills/security-audit/)               | Cloudflare's multi-phase codebase security audit with independently verified findings; in OpenCode's default install only the `security` agent loads it                |
 | [`skills/screenshot`](skills/screenshot/)                       | Desktop/window screenshot capture                                                                                                                                       |
 | [`skills/playwright-cli`](skills/playwright-cli/)               | Microsoft's skill for terminal browser automation with Playwright CLI                                                                                                   |
 | [`skills/docker`](skills/docker/)                               | Docker's 4 core skills: Dockerizing projects, Dockerfiles, Compose, and confirming destructive commands                                                                 |
@@ -370,7 +371,7 @@ Saved selections, so you don't have to list folders. [`groups/README.md`](groups
 | `default`             | Everything in `rulesync.jsonc`, into OpenCode, with agents that each see only their own skills                                                |
 | `work`                | OpenCode, Copilot and Copilot CLI on a work machine                                                                                           |
 | `writing_reporting`   | Writing, reports and visuals, without touching MCP settings                                                                                   |
-| `infosec`             | Security rule/agents, 11 security and utility skills and a disabled ZAP connection, in a folder you choose; native plugins install separately |
+| `infosec`             | Security rule/agents, 12 security and utility skills and a disabled ZAP connection, in a folder you choose; native plugins install separately |
 | `ai_research`         | AI research skills, plus the permission-tuning skill and its shell-habits rule, in a folder you choose                                        |
 | `career`              | Career skills in a folder you choose; the `career` agent comes with `default`                                                                 |
 | `reverse_engineering` | REA, the `reverse-engineering` agent and its helpers, and disabled ReVa/radare2 connections, in a folder you choose; IoTHackBot is native-owned                                      |

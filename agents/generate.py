@@ -105,6 +105,7 @@ BUNDLES = {
         "security-threat-model", "stride-analysis-patterns", "attack-tree-construction",
         "threat-mitigation-mapping", "security-requirement-extraction", "geo-sleuth",
     ],
+    "audit": skill_ids("skills/security-audit"),
     "design": skill_ids("skills/designskills"),
     "career": skill_ids("skills/resume-skills", "skills/interview-coach", "skills/career-workspace"),
     "ai-research": skill_ids("skills/ai-research"),
@@ -119,7 +120,8 @@ BUNDLE_TITLES = {
     "humanizer": "Prose editing", "report": "Write-ups", "documents": "Office and PDF files",
     "visual": "Explainer pages, diagrams, isometric explainers", "ui": "UI, slides and themes",
     "browser": "Browser and screenshots", "secure-coding": "Secure coding and SAST",
-    "threat": "Threat modeling and photo geolocation", "design": "Design skills",
+    "threat": "Threat modeling and photo geolocation", "audit": "Codebase security audits",
+    "design": "Design skills",
     "career": "Career skills", "ai-research": "AI research skills",
     "permission-tuning": "Permission tuning (folder group ai_research, not default)",
     "reverse-engineering": "Reverse-engineering skills",
@@ -129,7 +131,7 @@ BUNDLE_TITLES = {
 # Bundles no group but their own folder group installs: shown whole on the map.
 FOLDER_ONLY_BUNDLES = ["fcos", "permission-tuning"]
 # Only build-family agents see everything else; these stay with their specialist.
-SPECIALIST_BUNDLES = ["design", "career", "ai-research", "threat", "reverse-engineering", "fcos", *NATIVE_PLUGINS]
+SPECIALIST_BUNDLES = ["design", "career", "ai-research", "threat", "audit", "reverse-engineering", "fcos", *NATIVE_PLUGINS]
 
 # Configured MCP server name -> OpenCode permission action (<server>_<tool>).
 # "?" also matches a hyphen that OpenCode turns into "_".
@@ -164,11 +166,11 @@ SPECIALISTS = {
         "instructions": "You are the AI research agent. Handle AI and machine-learning research and engineering: training, fine-tuning, RL, quantization, inference serving, evaluation, interpretability, safety, RAG and vector stores, agent frameworks, experiment tracking, research ideation and ML paper writing. Prefer the AI research skill for the framework in use. Ask before installing packages, using paid GPUs or cloud accounts, or starting long jobs. Hand work outside AI research back to the main agent.",
     },
     "security": {
-        "description": "Defensive security work: secure-code review, SAST setup, threat modeling (STRIDE, attack trees, mitigations, security requirements), photo geolocation, and authorized web scanning with ZAP when it is switched on. Delegates audits to security-auditor and threat models to threat-modeling-expert.",
-        "bundles": ["humanizer", "report", "documents", "browser", "secure-coding", "threat", "trailofbits"],
+        "description": "Defensive security work: secure-code review, multi-phase codebase security audits, SAST setup, threat modeling (STRIDE, attack trees, mitigations, security requirements), photo geolocation, and authorized web scanning with ZAP when it is switched on. Delegates compliance and DevSecOps audits to security-auditor and threat models to threat-modeling-expert.",
+        "bundles": ["humanizer", "report", "documents", "browser", "secure-coding", "threat", "audit", "trailofbits"],
         "mcp": BASE_MCP + ["zap"],
         "subagents": ["general", "explore", "security-auditor", "threat-modeling-expert"],
-        "instructions": "You are the security agent. Handle defensive security work: secure-code review, SAST setup, threat modeling (STRIDE, attack trees, mitigations, security requirements) and photo geolocation. Scan or probe only targets the user has authorized, and use ZAP only when it is switched on. Use the Trail of Bits plugin skills when they're installed. Delegate full audits to `security-auditor` and threat models to `threat-modeling-expert`. Hand work outside security back to the main agent.",
+        "instructions": "You are the security agent. Handle defensive security work: secure-code review, codebase security audits, SAST setup, threat modeling (STRIDE, attack trees, mitigations, security requirements) and photo geolocation. Scan or probe only targets the user has authorized, and use ZAP only when it is switched on. Use the Trail of Bits plugin skills when they're installed. For a codebase security audit, vulnerability hunt or pen-test of code, follow the `security-audit` skill and run its hunters and verifiers as `general` and `explore` subagents. Delegate compliance, DevSecOps and cloud audits to `security-auditor` and threat models to `threat-modeling-expert`. Hand work outside security back to the main agent.",
     },
     "reverse-engineering": {
         "description": "Authorized reverse engineering and binary analysis: triage, CTF challenges, malware, firmware, protocols, anti-reversing and memory forensics, using ReVa (Ghidra) or radare2 when switched on, and REA inside the reverse_engineering folder. Delegates to reverse-engineer, malware-analyst and firmware-analyst.",

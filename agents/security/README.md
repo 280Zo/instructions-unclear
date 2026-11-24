@@ -6,6 +6,8 @@ The `security` agent is the one to pick for security work. In OpenCode it's the 
 
 `security-threat-model` stays its own folder, [`skills/security-threat-model`](../../skills/security-threat-model/), selected by `default`, `work` and `infosec`. The `threat-modeling-expert` agent here uses it wherever it's installed.
 
+Cloudflare's `security-audit` is also its own folder, [`skills/security-audit`](../../skills/security-audit/), selected by the same three groups. The `security` agent follows it for codebase audits, vulnerability hunts and pen-tests of code, and keeps `security-auditor` for compliance, DevSecOps and cloud audits.
+
 Installing the bundle adds instructions, agents, skills and commands. It does not install scanners, run checks or authorize changes to a project.
 
 | Item | Kind | Purpose | Origin |
@@ -67,6 +69,21 @@ Start your tool in the project you want reviewed:
 - `/security-hardening` only when you want the full multi-phase run; it writes its state to `.security-hardening/` inside the current project
 
 The commands report findings first. Fixes, dependency updates, installs, CI changes, commits, deployments and active testing all wait for your approval. Your installed rules still apply.
+
+## Which one to use
+
+Cloudflare's [`security-audit`](../../skills/security-audit/) sits next to this bundle, and its jobs look similar to several items here. None of them replaces another:
+
+| Item | What it does that `security-audit` doesn't | When to use it |
+| --- | --- | --- |
+| `security-audit` | Hunts for vulnerabilities in any language with isolated subagents, then has fresh agents try to disprove each finding before a schema-checked report. Never edits the code | A codebase security audit, a vulnerability hunt or a pen-test of code |
+| `security-best-practices` | Secure-by-default guidance while you write Python, JavaScript/TypeScript or Go, and fixes one at a time | Everyday security reviews and help writing secure code |
+| `/security-hardening` | A heavy multi-phase run that also applies fixes and covers compliance | Only when you ask for it by name |
+| `security-auditor` agent | DevSecOps, compliance and cloud-posture audits | Compliance, DevSecOps and cloud audits; the `security` agent no longer sends codebase audits here |
+| `security-threat-model`, `threat-modeling-expert` | Trust boundaries, abuse paths and mitigations, written up as a threat model | A threat model |
+| `sast-configuration`, `/security-sast` | Scanner setup, custom rules, CI and scan triage | Setting up or running SAST |
+
+The routing rule (`rules/routing`) and the `security` agent's instructions follow the same split.
 
 ## Overlaps it resolves
 
@@ -191,7 +208,7 @@ Don't:
 - copy `security-threat-model` into this bundle, which would put it back in the default install;
 - rename skills (`name` must stay unique across the repo).
 
-Keep routing consistent with the repo's routing rule (`rules/routing`): a threat model goes to `security-threat-model` (and `threat-modeling-expert` uses it), and the default security review goes to `security-best-practices`. `/security-hardening` is used only on explicit request.
+Keep routing consistent with the repo's routing rule (`rules/routing`): a threat model goes to `security-threat-model` (and `threat-modeling-expert` uses it), a codebase audit, vulnerability hunt or pen-test of code goes to `security-audit`, and the default security review goes to `security-best-practices`. `/security-hardening` is used only on explicit request.
 
 ## Origin
 

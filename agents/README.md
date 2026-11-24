@@ -29,7 +29,7 @@ Every agent but `fcos-app-installer` gets the Superpowers skills, `package-manag
 | `design` | Design skills, UI, slides, visuals, browser, documents | Presenton | `general`, `explore` |
 | `career` | Resume skills, career workspace, interview coach, report, documents | | `general`, `explore` |
 | `ai-research` | AI research skills, report, documents, visuals | | `general`, `explore` |
-| `security` | Secure coding, SAST, threat modeling, geo-sleuth, browser, report, documents, and the Trail of Bits plugin when installed | ZAP | `general`, `explore`, `security-auditor`, `threat-modeling-expert` |
+| `security` | Secure coding, SAST, threat modeling, codebase audits (`security-audit`), geo-sleuth, browser, report, documents, and the Trail of Bits plugin when installed | ZAP | `general`, `explore`, `security-auditor`, `threat-modeling-expert` |
 | `reverse-engineering` | Reverse-engineering, ReVa and REA skills, report, and the IoTHackBot plugin when installed | REA, ReVa, radare2 | `general`, `explore`, the three RE agents |
 | `3d-modeling` | Report, documents, visuals, browser | FreeCAD | `general`, `explore` |
 | `second-opinion` | Shared skills only | | `evaluator`, `metacognitive`, `general`, `explore` |

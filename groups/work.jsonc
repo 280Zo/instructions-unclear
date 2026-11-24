@@ -27,6 +27,7 @@
     "skills/transcribe",
     "skills/speech",
     "skills/security-threat-model",
+    "skills/security-audit",
     "skills/screenshot",
     "skills/playwright-cli",
     "skills/docker",

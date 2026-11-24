@@ -7,7 +7,7 @@ Saved selections, so you don't have to name every folder. Run every command from
 | [`default`](#default) | Your home folder, OpenCode | The repo's default selection, with OpenCode agents that each see only their own skills |
 | [`work`](#work) | Your home folder, OpenCode, Copilot and Copilot CLI | Rules, agents, MCP servers and writing skills for a work machine |
 | [`writing_reporting`](#writing_reporting) | Your home folder, OpenCode | Rules plus writing, report and visual skills, without touching MCP settings |
-| [`infosec`](#infosec) | A folder you choose | The security bundle (rule, 3 agents, 4 commands), 11 security and utility skills and disabled ZAP MCP; native security plugins install separately |
+| [`infosec`](#infosec) | A folder you choose | The security bundle (rule, 3 agents, 4 commands), 12 security and utility skills and disabled ZAP MCP; native security plugins install separately |
 | [`ai_research`](#ai_research) | A folder you choose | 98 AI research skills, the `permission-tuning` skill and its shell-habits rule |
 | [`career`](#career) | A folder you choose | 22 career skills, the interview coach, 7 career-workspace skills (including the application starter and the goal setting, work log and review set) and humanizer. The `career` agent comes with `default` |
 | [`reverse_engineering`](#reverse_engineering) | A folder you choose | REA, RE agents and disabled ReVa/radare2 MCPs; IoTHackBot is native-owned |
@@ -32,7 +32,7 @@ Everything in [`rulesync.jsonc`](../rulesync.jsonc), into OpenCode: all selected
 
 `default` also installs the design, career, AI research, threat-model and reverse-engineering skills, plus switched-off ZAP, ReVa and radare2 connections. Each OpenCode agent loads only its own skills and tools, so these add nothing to the other agents' requests. REA stays in the `reverse_engineering` folder group because it starts switched on. The folder groups below still work for other tools and workspaces.
 
-`documents` is included, and so are `handoff`, `teach` and `wait-what` (user-invoked only), Docker's 4 core skills ([`skills/docker`](../skills/docker/)) and the [Podman MCP](../mcp-servers/podman/), switched off. Docker's Sandboxes and Docker Agent skills are in `work` only. `security-threat-model` is included, and only the `security` agent can load it.
+`documents` is included, and so are `handoff`, `teach` and `wait-what` (user-invoked only), Docker's 4 core skills ([`skills/docker`](../skills/docker/)) and the [Podman MCP](../mcp-servers/podman/), switched off. Docker's Sandboxes and Docker Agent skills are in `work` only. `security-threat-model` and Cloudflare's [`security-audit`](../skills/security-audit/) are included, and only the `security` agent can load them.
 
 ```bash
 npx rulesync@41.0.0 generate --config groups/default.jsonc --global
@@ -75,6 +75,7 @@ skills/documents
 skills/transcribe
 skills/speech
 skills/security-threat-model
+skills/security-audit
 skills/screenshot
 skills/playwright-cli
 skills/report
@@ -89,8 +90,8 @@ What each tool gets:
 
 | Tool | Gets | Skipped |
 |---|---|---|
-| OpenCode | Rules, 7 agents, 42 skills, 4 commands, MCP servers | Nothing |
-| Copilot CLI | Rules, 7 agents, 42 skills, MCP servers (`~/.copilot/`) | Commands: Copilot CLI has none |
+| OpenCode | Rules, 7 agents, 43 skills, 4 commands, MCP servers | Nothing |
+| Copilot CLI | Rules, 7 agents, 43 skills, MCP servers (`~/.copilot/`) | Commands: Copilot CLI has none |
 | Copilot (VS Code) | Rules, agents and skills, written to the same `~/.copilot/` folder | MCP servers and commands: rulesync writes those for VS Code only inside a project, not globally |
 
 The seventh agent, `security`, comes with `agents/security`. In OpenCode it loads only its own skills; Copilot gets its instructions without that filter. The other specialist agents aren't in `work`.
@@ -113,7 +114,7 @@ npx rulesync@41.0.0 generate --config groups/writing_reporting.jsonc --global
 
 ## infosec
 
-The repo-owned [security bundle](../agents/security/) (secure-coding rule, the `security`, `security-auditor` and `threat-modeling-expert` agents, 6 skills including `security-best-practices`, and 4 commands), [`security-threat-model`](../skills/security-threat-model/), the four audio/capture/browser skills, and the [official ZAP connection](../mcp-servers/zap/). That's 11 skills, 3 agents, 4 commands and 1 disabled MCP connection. In OpenCode, pick the `security` agent: it can't load the audio skills, so use another agent for those. Installing skills authorizes none of their runtime operations. [Trail of Bits](../skills/trailofbits/) and [IoTHackBot](../skills/iothackbot/) use complete native plugins, installed separately rather than flattened by this group. No complete OpenCode equivalent is claimed. Each README lists prerequisites and ownership limits.
+The repo-owned [security bundle](../agents/security/) (secure-coding rule, the `security`, `security-auditor` and `threat-modeling-expert` agents, 6 skills including `security-best-practices`, and 4 commands), [`security-threat-model`](../skills/security-threat-model/), Cloudflare's [`security-audit`](../skills/security-audit/), the four audio/capture/browser skills, and the [official ZAP connection](../mcp-servers/zap/). That's 12 skills, 3 agents, 4 commands and 1 disabled MCP connection. In OpenCode, pick the `security` agent: it can't load the audio skills, so use another agent for those. Installing skills authorizes none of their runtime operations. [Trail of Bits](../skills/trailofbits/) and [IoTHackBot](../skills/iothackbot/) use complete native plugins, installed separately rather than flattened by this group. No complete OpenCode equivalent is claimed. Each README lists prerequisites and ownership limits.
 
 The rule lands in the folder's own `AGENTS.md`, which OpenCode reads along with your global one. If you also installed `default` or `work`, the security bundle is there globally too; the folder copies load only in that folder and are identical. Reverse engineering has its own group below.
 

@@ -22,6 +22,7 @@ GLOBAL_ROOTS = {
     *(f"agents/{n}" for n in OWN_FOLDERS), "agents/security", "agents/reverse-engineering",
     "skills/designskills", "skills/resume-skills", "skills/interview-coach",
     "skills/career-workspace", "skills/ai-research", "skills/security-threat-model",
+    "skills/security-audit",
     "mcp-servers/reva", "mcp-servers/radare2", "mcp-servers/zap",
 }
 
@@ -159,6 +160,18 @@ class AgentTests(unittest.TestCase):
             self.assertEqual(group["agents"], [owner])
         hero = (ROOT / generate.HERO_FILES["light"]).read_text()
         self.assertIn("Trail of Bits (95 skills, security agent)", hero)
+
+    def test_security_audit_belongs_to_the_security_agent(self):
+        self.assertEqual(generate.BUNDLES["audit"], ["security-audit"])
+        allow = '{action: "skill", resource: "security-audit", effect: allow}'
+        for name in SPECIALISTS:
+            head, _ = frontmatter(agent_file(name))
+            self.assertEqual(allow in head, name == "security", name)
+        for name in BUILTINS:
+            head, _ = frontmatter(agent_file(name))
+            self.assertIn('{action: "skill", resource: "security-audit", effect: deny}', head, name)
+        for group in ["default", "work", "infosec"]:
+            self.assertIn("skills/security-audit", read_jsonc(ROOT / f"groups/{group}.jsonc")["inputRoots"], group)
 
     def test_local_model_keeps_unrestricted_delegation(self):
         head, _ = frontmatter(ROOT / "agents/local-model/subagents/local-model.md")
