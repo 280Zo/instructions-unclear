@@ -60,7 +60,7 @@ rulesync writes the switch in each tool's own form: `"disabled": true` for OpenC
 
 ## Upgrading
 
-`compose.yaml` pins `v0.9.11-beta` by its digest, so the image never changes unless you change it. To upgrade, pick a release from [Presenton's releases](https://github.com/presenton/presenton/releases), replace both the tag and the `sha256:` digest in `compose.yaml` (the image's page on GitHub's package registry lists the digest), then from this folder:
+`compose.yaml` pins `v0.9.12-beta` by its digest, so the image never changes unless you change it. To upgrade, pick a release from [Presenton's releases](https://github.com/presenton/presenton/releases), replace both the tag and the `sha256:` digest in `compose.yaml` (the image's page on GitHub's package registry lists the digest), then from this folder:
 
 ```bash
 docker compose up -d

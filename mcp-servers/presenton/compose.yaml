@@ -9,9 +9,9 @@ name: presenton
 
 services:
   presenton:
-    # v0.9.11-beta, pinned by digest so the image can't change underneath you.
+    # v0.9.12-beta, pinned by digest so the image can't change underneath you.
     # To upgrade, replace both the tag and the digest (README, "Upgrading").
-    image: ghcr.io/presenton/presenton:v0.9.11-beta@sha256:ddf0d1f26397764856acdf94489dbbae5a2c0644a280723fd80bc7a80de338ba
+    image: ghcr.io/presenton/presenton:v0.9.12-beta@sha256:dd444e4384df0caeb7cb96a26bfa7543a12d2be19c83d661446b2087d09aed54
     container_name: presenton
     # Only started when you want it.
     restart: "no"

@@ -92,6 +92,13 @@ class SecurityReContextTests(unittest.TestCase):
         # The copied skill comes from the same release as the server.
         self.assertIn("tag `rea-agents-6.10.1`", (ROOT / "mcp-servers/rea/README.md").read_text())
 
+    def test_presenton_image_is_pinned_by_tag_and_digest(self):
+        tag = "v0.9.12-beta"
+        digest = "sha256:dd444e4384df0caeb7cb96a26bfa7543a12d2be19c83d661446b2087d09aed54"
+        compose = (ROOT / "mcp-servers/presenton/compose.yaml").read_text()
+        self.assertIn(f"image: ghcr.io/presenton/presenton:{tag}@{digest}", compose)
+        self.assertIn(f"pins `{tag}` by its digest", (ROOT / "mcp-servers/presenton/README.md").read_text())
+
     def test_exa_uses_current_upstream_skill_names(self):
         root = ROOT / "mcp-servers/exa/skills"
         self.assertEqual(
