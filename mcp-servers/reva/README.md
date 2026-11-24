@@ -11,8 +11,8 @@
 
 ## Tools you need
 
-- Ghidra 12+ with the **ReVa v7.3.1 extension built for your exact Ghidra version**. Use the [tagged release](https://github.com/cyberkaida/reverse-engineering-assistant/releases/tag/v7.3.1), not an arbitrary latest build. If no matching asset exists, stop and assess a supported version rather than guessing compatibility.
-- A running Ghidra project with ReVa enabled in both the Project and Code Browser plugin configuration, as the [tagged README](https://github.com/cyberkaida/reverse-engineering-assistant/blob/v7.3.1/README.md#installation) describes.
+- Ghidra 12+ with the **ReVa v7.3.2 extension built for your exact Ghidra version**. Use the [tagged release](https://github.com/cyberkaida/reverse-engineering-assistant/releases/tag/v7.3.2), not an arbitrary latest build. If no matching asset exists, stop and assess a supported version rather than guessing compatibility. v7.3.2 publishes assets for Ghidra 12.0, 12.1, 12.1.4 and 12.2, each with a sha256 digest and a Sigstore bundle. Ghidra 12.2 needs JDK 25 or newer; 12.0 and 12.1 need JDK 21 or newer. REA 6.10 needs Ghidra 12.2, so a shared installation should be 12.2.
+- A running Ghidra project with ReVa enabled in both the Project and Code Browser plugin configuration, as the [tagged README](https://github.com/cyberkaida/reverse-engineering-assistant/blob/v7.3.2/README.md#installation) describes.
 - For `run-script`, Ghidra must run under PyGhidra; ordinary `ghidraRun` does not expose that scripting runtime. Python/JDK prerequisites follow the selected Ghidra release. Other ReVa functions do not imply full scripting support.
 
 ## Install and activate
@@ -35,7 +35,7 @@ This is a folder profile, also in the [reverse-engineering group](../../groups/R
 
 Follow the [shared backend installation procedure](../../agents/reverse-engineering/README.md#for-agents-installing-and-verifying-backends). Ask whether ordinary project access or PyGhidra scripting is required; do not install the scripting stack for an ordinary read-only check.
 
-1. Inspect the existing Ghidra/JDK installation and extension versions. Select the exact Ghidra build, **ReVa v7.3.1** matching asset and, if requested, PyGhidra requirements from the tagged instructions above. If there is no matching asset, stop. Show official download/build commands, installation paths and required runtime changes for approval; verify published checksums/signatures when available.
+1. Inspect the existing Ghidra/JDK installation and extension versions. Select the exact Ghidra build, **ReVa v7.3.2** matching asset and, if requested, PyGhidra requirements from the tagged instructions above. If there is no matching asset, stop. Show official download/build commands, installation paths and required runtime changes for approval; verify published checksums/signatures when available.
 2. Back up approved plugin settings. Install the extension through Ghidra's supported mechanism, then enable the Project and Code Browser plugins as documented. Hand interactive GUI/license steps to the user when automation is unavailable. Do not remove working extensions or install duplicate companion skills.
 3. With approval, create a disposable project containing a benign fixture, start the loopback-only server and check the intended port is free. Explicitly approve enabling the assistant connection; preserve other MCP entries and permissions. Do not bind it to a public interface to work around a connection problem.
 4. Smoke test the MCP catalog and a read-only operation on the fixture using the installed server's schema. Record the Ghidra and extension versions and observed result. Scripting remains untested unless separately requested; if it is requested, test only a reviewed harmless script in the disposable PyGhidra project. Do not modify a real project or run arbitrary scripts as an installation check.
@@ -49,7 +49,7 @@ Follow the [shared backend installation procedure](../../agents/reverse-engineer
 
 ### Update
 
-Follow [Check for updates](../../AGENTS.md#check-for-updates) and [Updating](#updating). The pin is ReVa v7.3.1, recorded in this README, the `mcp.jsonc` comment and [Origin](#origin). Change it together with the six copied skills, the Ghidra requirements, and the [license section](../../THIRD_PARTY_LICENSES.md#cyberkaidareverse-engineering-assistant) if upstream's license changed.
+Follow [Check for updates](../../AGENTS.md#check-for-updates) and [Updating](#updating). The pin is ReVa v7.3.2, recorded in this README, the `mcp.jsonc` comment and [Origin](#origin). Change it together with the six copied skills, the Ghidra requirements, and the [license section](../../THIRD_PARTY_LICENSES.md#cyberkaidareverse-engineering-assistant) if upstream's license changed.
 
 ## Updating
 
@@ -57,4 +57,4 @@ Update the extension version, skill commit and matching Ghidra requirements toge
 
 ## Origin
 
-Skills copied unchanged from [cyberkaida/reverse-engineering-assistant](https://github.com/cyberkaida/reverse-engineering-assistant), `ReVa/skills/`, tag `v7.3.1`, commit `3cb3e65f354cda8d6125ecff654063436a3ab5ab`, 2026-10-15. Apache-2.0, copyright 2023 サイバーカイダ; [upstream license](https://github.com/cyberkaida/reverse-engineering-assistant/blob/v7.3.1/LICENSE), [shipped full text](../../THIRD_PARTY_LICENSES.md#cyberkaidareverse-engineering-assistant). Connection template and README written for this repo by 280Zo.
+Skills copied unchanged from [cyberkaida/reverse-engineering-assistant](https://github.com/cyberkaida/reverse-engineering-assistant), `ReVa/skills/`, tag `v7.3.2`, commit `4d2fc5b4c5f4ce00d95f0bd6bdf0c64b67e65fc2`, 2026-11-24. Apache-2.0, copyright 2023 サイバーカイダ; [upstream license](https://github.com/cyberkaida/reverse-engineering-assistant/blob/v7.3.2/LICENSE), [shipped full text](../../THIRD_PARTY_LICENSES.md#cyberkaidareverse-engineering-assistant). Connection template and README written for this repo by 280Zo.

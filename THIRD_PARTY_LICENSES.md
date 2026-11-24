@@ -298,7 +298,7 @@ SOFTWARE.
 
 ## cyberkaida/reverse-engineering-assistant
 
-Applies to `mcp-servers/reva/skills/`. Source: https://github.com/cyberkaida/reverse-engineering-assistant, `ReVa/skills/`, tag v7.3.1, commit 3cb3e65f354cda8d6125ecff654063436a3ab5ab. Full upstream LICENSE follows unchanged.
+Applies to `mcp-servers/reva/skills/`. Source: https://github.com/cyberkaida/reverse-engineering-assistant, `ReVa/skills/`, tag v7.3.2, commit 4d2fc5b4c5f4ce00d95f0bd6bdf0c64b67e65fc2. Full upstream LICENSE follows unchanged.
 
 ```text
           Apache License
