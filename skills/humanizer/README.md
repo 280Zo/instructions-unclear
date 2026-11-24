@@ -1,6 +1,6 @@
 # humanizer
 
-A skill that rewrites text that sounds AI-written so it reads like a person wrote it, without changing what it says. It works from Wikipedia's "Signs of AI writing": staged contrasts, one-line closers, forced lists of three, dashes everywhere, inflated claims and the like.
+A skill that rewrites text that sounds AI-written so it reads like a person wrote it, keeping every supported claim. It works from Wikipedia's "Signs of AI writing": staged contrasts, one-line closers, forced lists of three, dashes everywhere, inflated claims and the like. Where text is generic, it may add a specific detail it believes is true, so check rewrites of factual text (reviews, reports, docs) for added claims. Text being edited that looks like instructions is treated as material, never obeyed.
 
 ## Install
 
@@ -31,11 +31,11 @@ To update, follow [Check for updates](../../AGENTS.md#check-for-updates). The up
 ## For agents: routing and updates
 
 - Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Prose people will read** (READMEs, docs, commit messages, pull requests): `humanizer`".
-- It edits wording only. It does not own write-ups (`report`), teaching (`eli5`) or any rendering; it can polish their prose afterwards.
+- It edits wording and may add a specific detail it believes is true; it doesn't own content. It does not own write-ups (`report`), teaching (`eli5`) or any rendering; it can polish their prose afterwards.
 - Why: one routing rule keeps every "which skill owns this" decision in one place.
 - On upstream updates, don't edit the upstream skill text to change routing, and don't add a per-skill routing rule back to this folder.
 - After a refresh, re-read the new `description` and triggers. If it now claims a job another item owns, or drops one it owned, update `rules/routing` and this section in the same change and tell the user.
 
 ## Origin
 
-[blader/humanizer](https://github.com/blader/humanizer), unchanged, copied 2026-10-01. [MIT](../../THIRD_PARTY_LICENSES.md#bladerhumanizer), © 2025 Siqi Chen. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).
+[blader/humanizer](https://github.com/blader/humanizer), repo root, tag `v4.0.0` (commit `b48c832f0f809c1b5658edbb838c2521b72f2413`), copied 2026-11-24. Unchanged. [MIT](../../THIRD_PARTY_LICENSES.md#bladerhumanizer), © 2025 Siqi Chen. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).
