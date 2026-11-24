@@ -54,10 +54,10 @@ Create or copy your assistant's permission rules. rulesync can install permissio
 
 Restore any other config files you use, such as `cli.json` for terminal preferences.
 
-Some tools can recreate their config files for you. The opencode-quota guided installer, for example, configures the plugin without hand-editing JSON:
+Some tools can recreate their config files for you. OpenCode's plugin command, for example, adds opencode-quota without hand-editing JSON:
 
 ```sh
-npx @slkiser/opencode-quota@5 init
+opencode plugin add @slkiser/opencode-quota
 ```
 
 ### Configure the plugins separately
