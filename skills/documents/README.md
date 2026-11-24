@@ -1,6 +1,6 @@
 # documents
 
-[Magnus Hedemark's documents skill](https://github.com/magnus919/agent-skills/tree/92c327e525da69c9ad3812fd223a1770e977c2e3/documents): one shared authoring workflow for **PDF, Word (`.docx`), Excel (`.xlsx`) and PowerPoint (`.pptx`)**, with per-format references, planning templates, fixtures, tests and a structural smoke validator. The complete upstream folder is preserved unchanged.
+[Magnus Hedemark's documents skill](https://github.com/magnus919/agent-skills/tree/c2898707107d7c33a86430dc821402a496facc9f/documents): one shared authoring workflow for **PDF, Word (`.docx`), Excel (`.xlsx`) and PowerPoint (`.pptx`)**, with per-format references, planning templates, fixtures, tests and a structural smoke validator. The complete upstream folder is preserved unchanged.
 
 ## Install context
 
@@ -14,9 +14,9 @@ This copies context and helpers, not Python libraries, native renderers or other
 
 ### Upstream installation ownership
 
-Upstream documents a selective `skills` CLI install. Before importing here, the pinned checkout was installed with **skills CLI 1.7.4**, selecting only `documents`, using a fake home with networking disabled and declining its unrelated `find-skills` offer. The installed payload matched the 18 upstream files and their modes. No additional plugin hooks or configuration are needed for that skill-only installation.
+Upstream documents a selective `skills` CLI install. Before the first import, revision `92c327e5` was installed with **skills CLI 1.7.4**, selecting only `documents`, using a fake home with networking disabled and declining its unrelated `find-skills` offer. The installed payload matched its 18 upstream files and their modes. No additional plugin hooks or configuration are needed for that skill-only installation. The current revision adds one file, `runtime-resources.json`, which only upstream's eval runner reads, and one eval assertion; the native install wasn't repeated for it.
 
-For native installation instead of rulesync, follow the [upstream options](https://github.com/magnus919/agent-skills#installation), selecting only `documents`, your intended harness and scope. Use a reviewed checkout pinned to `92c327e525da69c9ad3812fd223a1770e977c2e3` rather than silently following `main`. The installed CLI can add that local checkout without downloading source again. Package/installer operations still need approval; do not copy upstream's full-catalog or automatic-confirmation examples blindly.
+For native installation instead of rulesync, follow the [upstream options](https://github.com/magnus919/agent-skills#installation), selecting only `documents`, your intended harness and scope. Use a reviewed checkout pinned to `c2898707107d7c33a86430dc821402a496facc9f` rather than silently following `main`. The installed CLI can add that local checkout without downloading source again. Package/installer operations still need approval; do not copy upstream's full-catalog or automatic-confirmation examples blindly.
 
 Choose **one owner per assistant/destination**. Skills CLI 1.7.4 uses `~/.agents/skills` for Codex/OpenCode, while rulesync 38's OpenCode output uses `~/.config/opencode/skills`; installing both can leave duplicate discovery roots. The isolated matched Codex destination is used to check subsequent generation. Review existing copies before separately approving any live migration or deletion. No live assistant was changed by this import.
 
@@ -79,6 +79,6 @@ Follow [Check for updates](../../AGENTS.md#check-for-updates) and [Updating and 
 
 ## Updating and origin
 
-Full `documents/` from [magnus919/agent-skills](https://github.com/magnus919/agent-skills), revision **`92c327e525da69c9ad3812fd223a1770e977c2e3`**, checked/imported 2026-10-20. Payload unchanged, including all references, templates, fixtures, eval scenarios and tests. Compare the complete folder, test the selective native installation and subsequent rulesync generation in isolation, and update groups/counts/provenance together before adopting another revision.
+Full `documents/` from [magnus919/agent-skills](https://github.com/magnus919/agent-skills), revision **`c2898707107d7c33a86430dc821402a496facc9f`**, the last commit to touch `documents/` (verified unchanged at `cb581ffec17d3bb0aee2cf605716d107c6e378ad`), imported 2026-11-24. Payload unchanged, including all references, templates, fixtures, eval scenarios and tests. Compare the complete folder, test the selective native installation and subsequent rulesync generation in isolation, and update groups/counts/provenance together before adopting another revision.
 
 **MIT, © 2026 Magnus Hedemark**, verified from upstream `LICENSE.md`; [full license text](../../THIRD_PARTY_LICENSES.md#magnus919agent-skills--documents). Wrapper and `uv` setup guidance written for this repo by 280Zo. Packaging and fixture checks are not evidence of a real-world document-generation/rendering workflow.

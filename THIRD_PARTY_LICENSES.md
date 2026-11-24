@@ -214,7 +214,7 @@ limitations under the License.
 
 ## magnus919/agent-skills — documents
 
-Applies to the complete `skills/documents/skills/documents/` payload. Source: https://github.com/magnus919/agent-skills, path `documents/`, revision `92c327e525da69c9ad3812fd223a1770e977c2e3`. Full license copied from upstream `LICENSE.md`; the wrapper installation guide is written for this repo.
+Applies to the complete `skills/documents/skills/documents/` payload. Source: https://github.com/magnus919/agent-skills, path `documents/`, revision `c2898707107d7c33a86430dc821402a496facc9f`. Full license copied from upstream `LICENSE.md`; the wrapper installation guide is written for this repo.
 
 ```text
 MIT License
