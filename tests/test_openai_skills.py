@@ -76,7 +76,7 @@ class OpenAISkillsTests(unittest.TestCase):
             self.assertIn("skills/playwright-cli", roots, config)
             self.assertNotIn("skills/playwright", roots, config)
         readme = (ROOT / "skills/playwright-cli/README.md").read_text()
-        self.assertIn("b85c7a736bb473bf55b584e54a09ffa698d6d871", readme)
+        self.assertIn("c872a33cec77fa03c28fa7c6d1ad99d15d04ce42", readme)
 
     def test_yeet_is_removed_from_repo_and_every_selection(self):
         self.assertFalse((ROOT / "skills/yeet").exists())

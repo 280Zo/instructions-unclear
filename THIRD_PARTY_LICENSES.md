@@ -506,7 +506,7 @@ Applies to `mcp-servers/reva/skills/`. Source: https://github.com/cyberkaida/rev
 
 ## microsoft/playwright-cli
 
-Applies to `skills/playwright-cli/`. Source: https://github.com/microsoft/playwright-cli, `skills/playwright-cli/`, tag v0.1.22, commit b85c7a736bb473bf55b584e54a09ffa698d6d871. Full upstream LICENSE follows unchanged.
+Applies to `skills/playwright-cli/`. Source: https://github.com/microsoft/playwright-cli, `skills/playwright-cli/`, tag v0.1.25, commit c872a33cec77fa03c28fa7c6d1ad99d15d04ce42. Full upstream LICENSE follows unchanged.
 
 ```text
                                  Apache License
