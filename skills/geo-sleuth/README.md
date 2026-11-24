@@ -5,7 +5,7 @@ A skill that works out where (and when) a photo was taken, and shows its work: e
 ## Install
 
 1. Have Python 3.10+, [uv](https://docs.astral.sh/uv/) and `curl`. Each script installs its own Python packages through `uv run` the first time.
-2. Reverse image search needs Google Chrome or Playwright Chromium. Without either: `uvx playwright install chromium` (on Linux, add `--with-deps` if browser libraries are missing).
+2. Reverse image search needs Google Chrome or Playwright Chromium. Without either: `uvx playwright install chromium` (on Linux, add `--with-deps` if browser libraries are missing). The optional skyline detector in `references/skyline-fallback.md` downloads a 185 MB model and PyTorch on first run, so ask before using it.
 3. Skills are added alongside what you already have, so this folder can be installed on its own. From the repo root:
 
    ```bash
@@ -43,8 +43,8 @@ Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing
 
 ### Update
 
-Follow [Check for updates](../../AGENTS.md#check-for-updates). The upstream commit is under [Origin](#origin). Copy the whole skill folder, including the region pack and tests, and rerun the doctor check after a refresh.
+Follow [Check for updates](../../AGENTS.md#check-for-updates). The upstream commit is under [Origin](#origin). Copy the whole skill folder, including the region packs and tests, and rerun the doctor check after a refresh.
 
 ## Origin
 
-[Oldcircle/geo-sleuth](https://github.com/Oldcircle/geo-sleuth), path `skills/geo-sleuth/`, commit `16e9429416e1151562836a613acefe74f3b8f0d5`, copied 2026-10-20. Unchanged, including the New Zealand region pack and upstream tests. [MIT](../../THIRD_PARTY_LICENSES.md#oldcirclegeo-sleuth), © 2026 Oldcircle. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).
+[Oldcircle/geo-sleuth](https://github.com/Oldcircle/geo-sleuth), path `skills/geo-sleuth/`, commit `c27d5ee24ec4393633c5c3d5a3bbe0cebbe33d93`, copied 2026-11-24. Unchanged, including all 14 region packs and the upstream tests. [MIT](../../THIRD_PARTY_LICENSES.md#oldcirclegeo-sleuth), © 2026 Oldcircle. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).

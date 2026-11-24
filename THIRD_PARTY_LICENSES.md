@@ -1607,6 +1607,8 @@ SOFTWARE.
 
 Applies to `skills/geo-sleuth/`. Source: https://github.com/Oldcircle/geo-sleuth
 
+The region data files under `regions/*/data/` keep their own source licenses, recorded in each file's `_meta.license` field (for example CC BY-SA 4.0 for Wikipedia-derived data and ODbL for OpenStreetMap-derived data); the MIT license below covers the rest of the skill.
+
 ```text
 MIT License
 
