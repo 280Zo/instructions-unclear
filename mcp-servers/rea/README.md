@@ -6,13 +6,13 @@ From this repo, REA is a **profile**: it lives in one folder you choose. Start y
 
 | File                                | What it is                                                                                           |
 | ----------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `mcp.jsonc`                         | The `rea` MCP server, run as `npx -y rea-agents@6.7.0 mcp`                                           |
+| `mcp.jsonc`                         | The `rea` MCP server, run as `npx -y rea-agents@6.10.1 mcp`                                          |
 | `skills/reverse-engineer-anything/` | REA's investigation playbook: which tool to run for which kind of target, and how to report findings |
 | `profile.jsonc`                     | Installs both into your chosen folder                                                                |
 
 ## Install
 
-1. Have Node.js 22.19+, 24.11+ or 26+. The first start downloads `rea-agents`, so it's slower than later ones.
+1. Have Node.js 22.23.4+, 24.22.1+ or 26.12.1+ (Node 23 and 25 aren't supported). The first start downloads `rea-agents`, so it's slower than later ones.
 
 2. From the repo root, install into the folder you'll work in:
 
@@ -27,10 +27,11 @@ Additional requirements depend on the selected workflow; the npm package is not 
 
 | Target                             | Needs                                                                             |
 | ---------------------------------- | --------------------------------------------------------------------------------- |
-| Native binaries                    | Ghidra 12.1.x (set `GHIDRA_INSTALL_DIR` before starting your tool), IDA or Hopper |
+| Native binaries                    | Ghidra 12.2 or a later 12.x with JDK 25+ (set `GHIDRA_INSTALL_DIR` before starting your tool), IDA or Hopper |
 | Android, firmware, packet captures | The tools in [REA's list](https://github.com/morluto/rea#what-you-can-analyze)    |
 | JavaScript and Electron, on Linux  | A procps-compatible `ps` on your `PATH` (most distributions have it)              |
 | Browser-backed website work | The selected release's browser prerequisites and approval for any browser download or page visit |
+| Agent environments (AgentEnv bundles) | For web apps, an instance you've said is disposable, since recording writes to it. For Linux desktop apps, a Linux host with Docker, agentenv and REA's packed runtime (`rea doctor --provider desktop_build` lists what's missing) |
 
 ## For agents: install, remove and update
 
@@ -42,15 +43,15 @@ Start in this repo and ask:
 
 > Follow `mcp-servers/rea/README.md` to install the backend I choose and test the folder-scoped REA connection with a harmless local fixture. Show the plan and ask before installation or configuration changes.
 
-Follow the [shared backend installation procedure](../../agents/reverse-engineering/README.md#for-agents-installing-and-verifying-backends), including its approvals, verification and rollback requirements. Use the reviewed REA **6.7.0** baseline above; setup examples from upstream main or the copied skill may describe a newer release. Inspect the installed release's documented options before using them. Do not upgrade REA, Node or a backend as an incidental repair.
+Follow the [shared backend installation procedure](../../agents/reverse-engineering/README.md#for-agents-installing-and-verifying-backends), including its approvals, verification and rollback requirements. Use the reviewed REA **6.10.1** baseline above; setup examples from upstream main or the copied skill may describe a newer release. Inspect the installed release's documented options before using them. Do not upgrade REA, Node or a backend as an incidental repair.
 
 1. Select the workflow before installing anything. Check Node/npm and, on Linux where required, procps-compatible `ps`. Separate missing MCP registration, client permission, process startup and missing native backend failures. Static JavaScript or managed-code work does not justify installing Ghidra. Website/browser work has its own browser prerequisites; do not assume native analysis setup supplies them.
 2. Read [upstream installation and readiness guidance](https://github.com/morluto/rea/blob/main/docs/installation.md), checking it against the recorded release. Check the [native provider guide](https://github.com/morluto/rea/blob/main/docs/native-investigation.md) or the target-specific guide linked from upstream's [requirements table](https://github.com/morluto/rea#what-you-can-analyze). Show the exact package/backend installation and registration changes for approval; a diagnostics command using `npx` can itself download software.
 3. Reuse the profile's pinned MCP registration and complete skill. Do not run the upstream global `setup` merely to install a missing backend: it can register another MCP server and replace workflow instructions. If setup is genuinely required, review its supported dry run, clients, paths and skill replacements first and obtain approval for that scope. Do not use global registration for this folder profile.
-4. Install only the selected backend and prerequisites using its official supported procedure. For Ghidra, use the reviewed **12.1.x** compatibility baseline and its required full JDK; do not guess the Java major version or substitute another Ghidra release. Verify installation and the release's documented headless launcher. For the test, set `GHIDRA_INSTALL_DIR` only to the approved Ghidra installation root in the assistant launch environment; `JAVA_HOME` or persistent shell/service changes need review too. For IDA/Hopper, have the user supply and activate the correct licensed edition; verify REA supports that edition/platform and do not bypass activation or install a trial automatically.
+4. Install only the selected backend and prerequisites using its official supported procedure. For Ghidra, use the reviewed **12.2** compatibility baseline (REA 6.10 rejects 12.1) and a full JDK within that build's declared range (25 or newer for 12.2); do not guess the Java major version or substitute another Ghidra release. If ReVa shares the Ghidra installation, check that ReVa supports the same release before upgrading it. Verify installation and the release's documented headless launcher. For the test, set `GHIDRA_INSTALL_DIR` only to the approved Ghidra installation root in the assistant launch environment; `JAVA_HOME` or persistent shell/service changes need review too. For IDA/Hopper, have the user supply and activate the correct licensed edition; verify REA supports that edition/platform and do not bypass activation or install a trial automatically.
 5. For Android, firmware or recorded-network work, choose only the bring-your-own tools in the release's corresponding guide (for example JADX plus its JDK, an approved firmware unpacker, or TShark). Check their OS/version requirements and use the shared workflow's isolated install and fixture tests. A native decompiler is not a substitute for those tools. REA's optional Rizin backend and the separate radare2 MCP are different integrations; do not install one to fix the other.
 6. Generate context into the agreed folder from this repo using the command above or the combined reverse-engineering group. Inspect any pre-existing project config before overwriting it. Restart/reconnect only with approval, from that folder, after prerequisites and environment are ready. Startup can acquire the pinned npm package; approval to copy skills is not approval to download it.
-7. Smoke test in stages: confirm `rea` connects and the intended skill/tools appear; then, with fixture approval, use static inspection on a tiny self-authored JavaScript tree. For a requested native backend, separately inspect a benign compiled fixture without executing it, and verify the known symbol/string through REA. Use the connected server's actual tool schema; do not assume a tool described on main exists in 6.7.0. Test outside the profile in a fresh session to confirm REA is absent unless another approved global integration supplies it.
+7. Smoke test in stages: confirm `rea` connects and the intended skill/tools appear; then, with fixture approval, use static inspection on a tiny self-authored JavaScript tree. For a requested native backend, separately inspect a benign compiled fixture without executing it, and verify the known symbol/string through REA. Use the connected server's actual tool schema; do not assume a tool described on main exists in 6.10.1. Test outside the profile in a fresh session to confirm REA is absent unless another approved global integration supplies it.
 8. Report registration, catalog discovery and each selected backend's fixture result separately. List skipped backends as not installed/not tested, not failures requiring automatic installation. Retain the commands, versions, sources, created files and rollback plan from the shared procedure. Do not proceed from the smoke test to a user target without its own scope approval.
 
 ### Remove
@@ -61,7 +62,7 @@ Follow the [shared backend installation procedure](../../agents/reverse-engineer
 
 ### Update
 
-Follow [Check for updates](../../AGENTS.md#check-for-updates) and [Updating](#updating). The pin is `rea-agents@6.7.0` in `mcp.jsonc`; change it together with the copied skill, the tag and commit in [Origin](#origin), and the [license section](../../THIRD_PARTY_LICENSES.md#morlutorea) if upstream's license changed.
+Follow [Check for updates](../../AGENTS.md#check-for-updates) and [Updating](#updating). The pin is `rea-agents@6.10.1` in `mcp.jsonc`; change it together with the copied skill, the tag and commit in [Origin](#origin), and the [license section](../../THIRD_PARTY_LICENSES.md#morlutorea) if upstream's license changed.
 
 ## Use
 
@@ -88,12 +89,19 @@ Don't run `npx rea-agents setup`: it installs REA into your global config, which
 REA releases often. Update the skill and the server version together:
 
 1. Copy `.agents/skills/reverse-engineer-anything/` from the new release's tag (`rea-agents-X.Y.Z`) over `skills/reverse-engineer-anything/` here, and record the tag and commit under "Origin".
-2. Change `rea-agents@6.7.0` in `mcp.jsonc` to the same version.
+2. Change `rea-agents@6.10.1` in `mcp.jsonc` to the same version.
 3. Run the install command again.
 
 "Check for updates" in [`AGENTS.md`](../../AGENTS.md) does the comparison for you. To remove REA, delete the folder you installed it into; the only other trace is the cached package in `~/.npm/_npx`.
 
-Release 6.7.0 includes result-contract changes introduced in 6.6/6.7. Saved Evidence and snapshots from older releases may need regeneration; Android version codes are now strings. Review the [release notes](https://github.com/morluto/rea/releases/tag/rea-agents-6.7.0) before changing a working environment. Nothing here migrates evidence or upgrades a live server.
+Release 6.10.1 has these requirements for saved data and setup:
+
+- Evidence, bundles and snapshots use `evidence_format: 2`. Recreate ones made with older releases; re-exporting them doesn't update their identities.
+- Ghidra must be 12.2 or a later 12.x, with a JDK in that build's range (25 or newer for 12.2).
+- IDA attached registrations need `"protocol": "native"`; the legacy ida-pro-mcp 1.4 proxy is gone.
+- MCP output schemas are off unless `REA_MCP_OUTPUT_SCHEMA_PROFILE=compact`, and the `full` profile is rejected.
+
+Review the [6.8.0](https://github.com/morluto/rea/releases/tag/rea-agents-6.8.0), [6.9.0](https://github.com/morluto/rea/releases/tag/rea-agents-6.9.0) and [6.10.0](https://github.com/morluto/rea/releases/tag/rea-agents-6.10.0) release notes before changing a working environment. Nothing here migrates evidence or upgrades a live server.
 
 ## Responsible use
 
@@ -101,4 +109,4 @@ Only analyze software you own or are authorized to examine, for lawful purposes 
 
 ## Origin
 
-[morluto/rea](https://github.com/morluto/rea), skill from `.agents/skills/reverse-engineer-anything/` at tag `rea-agents-6.7.0` (commit `27dc42d10249f0410904a75c0997842eb03b931c`), copied 2026-10-20. Unchanged. Other upstream skills concern development of REA itself and are not included. [MIT](../../THIRD_PARTY_LICENSES.md#morlutorea), © 2026 morluto.
+[morluto/rea](https://github.com/morluto/rea), skill from `.agents/skills/reverse-engineer-anything/` at tag `rea-agents-6.10.1` (commit `8bb01b514ac766c0c3ecc8f362bd38186eaec9c2`), copied 2026-11-24. Unchanged. Other upstream skills concern development of REA itself and are not included. [MIT](../../THIRD_PARTY_LICENSES.md#morlutorea), © 2026 morluto.

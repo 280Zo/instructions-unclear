@@ -88,7 +88,9 @@ class SecurityReContextTests(unittest.TestCase):
             self.assertEqual(server["command"], "uvx")
             self.assertEqual(server["args"], args)
         rea = read_jsonc(ROOT / "mcp-servers/rea/mcp.jsonc")["mcpServers"]["rea"]
-        self.assertIn("rea-agents@6.7.0", rea["args"])
+        self.assertIn("rea-agents@6.10.1", rea["args"])
+        # The copied skill comes from the same release as the server.
+        self.assertIn("tag `rea-agents-6.10.1`", (ROOT / "mcp-servers/rea/README.md").read_text())
 
     def test_exa_uses_current_upstream_skill_names(self):
         root = ROOT / "mcp-servers/exa/skills"
