@@ -73,7 +73,7 @@ class SecurityReContextTests(unittest.TestCase):
             "pmb": ["--from", "pmb-ai==1.2.3", "pmb-mcp"],
             "docling": [
                 "--from",
-                "docling-mcp[local]==3.3.0",
+                "docling-mcp[local]==3.5.1",
                 "docling-mcp-server",
                 "conversion",
                 "generation",

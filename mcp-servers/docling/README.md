@@ -16,12 +16,12 @@ Extraction, picture descriptions and durable knowledge are separate things. Reta
 1. Have [uv](https://docs.astral.sh/uv/) available. The MCP entry selects the reviewed release; the `[local]` extra does conversion on your machine and is a large download:
 
    ```bash
-   uvx --from 'docling-mcp[local]==3.3.0' docling-mcp-server conversion generation --transport stdio
+   uvx --from 'docling-mcp[local]==3.5.1' docling-mcp-server conversion generation --transport stdio
    ```
 
 2. This folder adds a rule and an MCP server, and rulesync installs both by replacing your tool's whole set. So add `mcp-servers/docling` to `inputRoots` in your `rulesync.local.jsonc` (see the [root README](../../README.md#install)) and run your install command with `--features rules,mcp`.
 
-That is the launch command, not an extra server to start alongside your assistant's process. Reviewed runtime baseline: `docling-mcp 3.3.0`, checked 2026-10-20. First launch may download dependencies; approve that operation before enabling it. The top-level package is pinned, not the whole transitive dependency graph. Refresh this README and `mcp.jsonc` together when reviewing a new release; do not use a blanket live-tool upgrade as a substitute.
+That is the launch command, not an extra server to start alongside your assistant's process. Reviewed runtime baseline: `docling-mcp 3.5.1`, checked 2026-11-24. First launch may download dependencies; approve that operation before enabling it. The top-level package is pinned, not the whole transitive dependency graph. Refresh this README and `mcp.jsonc` together when reviewing a new release; do not use a blanket live-tool upgrade as a substitute.
 
 ## Use
 
@@ -44,7 +44,7 @@ OpenCode names each tool `<server name>_<tool>`, e.g. `docling_convert_...`. Per
 ### Install
 
 - It's in the `default` and `work` [install groups](../../groups/README.md), and `writing_reporting` installs its rule but leaves MCP settings alone. Follow [Install](#install) above.
-- It needs [uv](https://docs.astral.sh/uv/). The first launch downloads `docling-mcp[local]==3.3.0` and its large dependencies, so get the user's approval first.
+- It needs [uv](https://docs.astral.sh/uv/). The first launch downloads `docling-mcp[local]==3.5.1` and its large dependencies, so get the user's approval first.
 - The connection is written switched on.
 - To verify, check in a new session that `docling` connects, then convert one small harmless document. Convert one file at a time, as `rules/docling.md` says.
 
@@ -57,7 +57,7 @@ OpenCode names each tool `<server name>_<tool>`, e.g. `docling_convert_...`. Per
 
 ### Update
 
-- Follow [Check for updates](../../AGENTS.md#check-for-updates). The pin is `docling-mcp[local]==3.3.0` in `mcp.jsonc`. Change it together with the version and baseline text in [Install](#install).
+- Follow [Check for updates](../../AGENTS.md#check-for-updates). The pin is `docling-mcp[local]==3.5.1` in `mcp.jsonc`. Change it together with the version and baseline text in [Install](#install).
 - Then follow the update bullets in [For agents: routing and updates](#for-agents-routing-and-updates).
 
 ## For agents: routing and updates
@@ -78,4 +78,4 @@ OpenCode names each tool `<server name>_<tool>`, e.g. `docling_convert_...`. Per
 
 ## Origin
 
-Connection template and rules written for this repo by 280Zo, based on [docling-project/docling-mcp](https://github.com/docling-project/docling-mcp), PyPI package `docling-mcp` 3.3.0. No upstream files are copied here; the server runs from PyPI at the pinned version. Upstream is [MIT](https://github.com/docling-project/docling-mcp/blob/main/LICENSE), copyright 2025 Docling Project. Checked 2026-11-05. This repo's own files are [MIT](../../LICENSE).
+Connection template and rules written for this repo by 280Zo, based on [docling-project/docling-mcp](https://github.com/docling-project/docling-mcp), PyPI package `docling-mcp` 3.5.1. No upstream files are copied here; the server runs from PyPI at the pinned version. Upstream is [MIT](https://github.com/docling-project/docling-mcp/blob/main/LICENSE), copyright 2025 Docling Project. Checked 2026-11-24. This repo's own files are [MIT](../../LICENSE).

@@ -6,7 +6,7 @@
     // Reviewed local-conversion package pin; first use may download large dependencies.
       "command": "uvx",
       "args": [
-        "--from", "docling-mcp[local]==3.3.0", "docling-mcp-server",
+        "--from", "docling-mcp[local]==3.5.1", "docling-mcp-server",
         "conversion", "generation",
         "--transport", "stdio"
       ],
