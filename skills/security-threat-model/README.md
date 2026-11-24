@@ -17,7 +17,7 @@ Never add `--global` to that folder-scoped command. The full references and inte
 
 Use when explicitly asking for repository/path threat modeling or abuse-path enumeration. It is not a generic architecture-review trigger. The skill asks for material service assumptions to be confirmed before its final report and grounds claims in source evidence. It writes a Markdown threat model; source access or installation alone does not authorize probing, target operations or remediation. Context packaging tests do not establish a completed security assessment.
 
-Use one installation owner per destination. The legacy upstream installer defaults to `~/.codex/skills`, whereas rulesync 38's global Codex output uses `~/.agents/skills`; choose an explicit matching destination where needed and review duplicate owners rather than automatically removing live files.
+Use one installation owner per destination. The legacy upstream installer defaults to `~/.codex/skills`, whereas rulesync's global Codex output (38 through 43.12.0) uses `~/.agents/skills`; choose an explicit matching destination where needed and review duplicate owners rather than automatically removing live files.
 
 ## For agents: install, remove and update
 

@@ -1,5 +1,7 @@
 """Keep executable install examples on the reviewed rulesync release."""
 
+import contextlib
+import io
 from pathlib import Path
 import re
 import sys
@@ -36,6 +38,25 @@ class RulesyncVersionTests(unittest.TestCase):
             (new / "only-new.md").write_text("n")
             self.assertEqual(compare.differing(old, new), ["only-new.md", "skills/x/SKILL.md"])
             self.assertEqual(compare.differing(old, old), [])
+
+    def test_version_comparison_refuses_a_local_selection(self):
+        sys.path.insert(0, str(ROOT / "tests"))
+        import compare_rulesync_versions as compare
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, cli = Path(tmp), Path(tmp) / "cli.js"
+            cli.write_text("")
+            (repo / "rulesync.local.jsonc").write_text("{}")
+            saved, argv = compare.REPO, sys.argv
+            compare.REPO, sys.argv = repo, ["compare", str(cli), str(cli)]
+            try:
+                with self.assertRaises(SystemExit) as raised, \
+                        contextlib.redirect_stderr(io.StringIO()) as err:
+                    compare.main()
+            finally:
+                compare.REPO, sys.argv = saved, argv
+            self.assertEqual(raised.exception.code, 2)
+            self.assertIn("rulesync.local.jsonc", err.getvalue())
 
 
 if __name__ == "__main__":
