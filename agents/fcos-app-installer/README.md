@@ -344,6 +344,13 @@ you know (a pool, a family name, a provider's hostname pattern) go in
 only from there, so the toolkit holds none of it; a file it can't use, or that
 is a link, is an error. Keep the patterns plain: one that backtracks badly,
 such as `(a+)+$`, makes the scan slow.
+A value from your workspace that is only an ordinary word (a storage name, a
+section title) is flagged wherever that word appears in a public file. The
+agent works out which hits are only that and shows you the values; the ones you
+approve go in `publish-ignore.yaml` in your workspace, a list of plain values.
+Each skips exactly that value, in any letter case, and is never a pattern, so a
+private name is skipped only if you approved it. The last line counts the
+values skipped.
 It checks every file in the folder, with no exemptions. It scans the toolkit's
 own folder only, or the one folder you pass as an argument (pass a checkout's
 top level to scan all of it). Run it in the folder you installed the toolkit

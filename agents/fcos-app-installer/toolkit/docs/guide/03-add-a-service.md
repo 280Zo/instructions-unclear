@@ -40,6 +40,10 @@ which hides secret-looking text. Then each fact goes into the spec:
 | Shared memory or read-only folders the docs ask for | `shm_size_mib`, `read_only` |
 | Paths desktop or mobile clients call without a browser | `api_paths` |
 | Mail the app sends (reminders, invitations): its mail driver, and the sender address that driver needs | `env` |
+| Clients (a TV or phone app) that connect to the VM's address and port directly, not through a web name | `direct_networks`: the networks they connect from (ask, question 10a); needs `bind: vm_ip` |
+| Files only a group may open (a shared library whose group belongs to the file server) | `extra_groups` on the service, and `keep_groups: true` on the container so the group reaches it (`map-user` only, crun runtime, only groups the account already had; the schema has the details) |
+| The database sits inside the data folder (a SQLite file under `/config`) | that volume as `class: local-db`, `engine: sqlite`, `file`, with `files_backup: true` (3.3) |
+| Folders the app rebuilds by itself (cache, thumbnails, logs, downloaded images) | `backup_skip` for folders inside a volume, `files_backup: false` for a whole folder (3.3) |
 
 If a fact isn't in the official docs, ask (question 14) instead of guessing.
 
@@ -93,6 +97,15 @@ or store it on NFS with the risk recorded as an accepted risk that starts with
 `over the 5 GB rule:` and gives the reason and date. For a database, say
 plainly that it can corrupt on NFS.
 
+**What goes into the files archive.** Decide this from the docs; it is not a question. A folder the
+app rebuilds by itself (a cache) gets `files_backup: false`. Subfolders it fetches again or doesn't need
+(`metadata`, `log`) go in `backup_skip`. An app whose database sits inside its data folder uses that
+folder as the `local-db` volume with `files_backup: true`, so the files archive holds the folder without
+the database file, and the database gets its own online copy (guide 4). Each choice is reported in the
+final report with the docs page behind it, and recorded in `research.md`. A folder the docs don't call
+rebuildable stays in the archive: ask (question 14) instead of leaving out data that can't be fetched
+again.
+
 Images that start as root inside the container (question 13) use
 `user_mode: root-start` with only the capabilities their docs need, from
 `CHOWN DAC_OVERRIDE FOWNER SETUID SETGID NET_BIND_SERVICE`. They can't use
@@ -100,8 +113,9 @@ NFS volumes, and can't share a folder with a `map-user` container.
 
 ## 3.4 Ask the user: identity and naming
 
-[Questions](questions.md) 10, 11 and 15: paths that skip the login page,
-the user number and the group number (asked separately, matching the file
+[Questions](questions.md) 10, 10a, 11 and 15: paths that skip the login page,
+the networks whose devices may connect to the app directly (only when research found such
+clients), the user number and the group number (asked separately, matching the file
 server's account and group when the app uses NFS), and the secrets the user
 keeps. Ask the group number before anything is generated: the spec's `gid`
 defaults to the `uid`, and a file server group that already exists for the

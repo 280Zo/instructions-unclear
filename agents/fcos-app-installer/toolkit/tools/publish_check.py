@@ -25,7 +25,11 @@ Two kinds of rules:
     keys or hashes containing EXAMPLE.
   Rules of the workspace's own go in <workspace>/publish-rules.yaml, a list of
   {name, pattern} (a regular expression each), kept with the install and never
-  in the toolkit. A file that can't be used, or is a link, is an error (exit 2).
+  in the toolkit. A workspace value that is only an ordinary word (it would be
+  flagged in every public file) goes in <workspace>/publish-ignore.yaml, a list
+  of plain values the user approved: each skips exactly that value, in any letter
+  case, and is never a pattern. A file that can't be used, or is a link, is an
+  error (exit 2).
   Lines are scanned in pieces of 2000 characters, so a long line is no slower
   than its pieces; a pattern of your own that backtracks badly (nested
   repetition such as `(a+)+$`) can still make the scan slow, so keep them plain.
@@ -97,6 +101,41 @@ def load_workspace_rules(ws: Path) -> list[tuple[str, "re.Pattern"]]:
         except re.error:
             raise WorkspaceError(f"{path}: the pattern for {entry['name']!r} is not a valid regular expression") from None
     return rules
+
+
+MAX_IGNORED = 200
+
+
+def load_workspace_ignores(ws: Path) -> set[str]:
+    """The workspace values the user approved as safe to publish, from publish-ignore.yaml: a list of plain
+    strings. A workspace value can be an ordinary word (a storage name, a section title) that the scan would
+    flag in every public file. An entry skips exactly that value, whatever its letter case; it is never a
+    pattern, and it skips nothing else. No file means none. A file that cannot be used is an error, never a
+    silent pass."""
+    path = ws / "publish-ignore.yaml"
+    try:
+        mode = path.lstat().st_mode
+    except FileNotFoundError:
+        return set()
+    except OSError:
+        raise WorkspaceError(f"{path} can't be read") from None
+    if not stat.S_ISREG(mode):  # a link or a folder: an ignore list that silently doesn't load would hide the problem
+        raise WorkspaceError(f"{path} must be a plain file, not a link or a folder")
+    import yaml
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, yaml.YAMLError):
+        raise WorkspaceError(f"{path} can't be read as YAML") from None
+    if not (isinstance(data, list) and all(isinstance(v, str) and v.strip() and v.isprintable()
+                                           and len(v.strip()) <= MAX_IGNORED for v in data)):
+        raise WorkspaceError(f"{path}: it must be a list of plain values, each at most {MAX_IGNORED} characters")
+    return {v.strip().lower() for v in data}
+
+
+def drop_ignored(private: set[str], ignored: set[str]) -> tuple[set[str], int]:
+    """The private values left after the ignored ones are removed, and how many were removed."""
+    kept = {v for v in private if v.lower() not in ignored}
+    return kept, len(private) - len(kept)
 
 
 LINE_PIECE, LINE_STEP = 2000, 1500
@@ -229,7 +268,9 @@ def main(argv: list[str]) -> int:
             return 2
         private = private_values(ws)
         extra = load_workspace_rules(ws)
-        source = "the workspace" + (f" and {len(extra)} workspace rule{'' if len(extra) == 1 else 's'}" if extra else "")
+        private, skipped = drop_ignored(private, load_workspace_ignores(ws))
+        source = ("the workspace" + (f" and {len(extra)} workspace rule{'' if len(extra) == 1 else 's'}" if extra else "")
+                  + (f", {skipped} ignored value{'' if skipped == 1 else 's'}" if skipped else ""))
     except WorkspaceNotSet:
         private, extra = set(), []
         source = "no workspace set (generic rules only)"

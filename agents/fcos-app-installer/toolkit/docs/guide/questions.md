@@ -184,6 +184,24 @@ report either way.
 **Skipped when:** the app is behind the login page, or its docs describe no
 two-step login (the agent says so).
 
+## 9c. Other devices on the dashboard
+
+**Asked:** once, when the login page is set up, and again only if you mention a
+device: "The login page's dashboard can also list devices that aren't apps, such
+as your router, your virtualization server or your file server. Add some?"
+
+**Options:** yes, with each device's name and its own address (pick "Other" and
+type them); no. For each device the agent then asks who sees it, its section and
+its logo, and whether the device's own docs describe OpenID Connect sign-in.
+
+**Fills:** the devices on the dashboard. A link opens the device's own address,
+so it keeps working when the login page is down. You change each device's own
+settings yourself; the agent never signs in to one.
+
+**Skipped when:** you already said no, the site already lists the devices you
+want, or the login page's auth gateway can't make dashboard links (the agent
+says so).
+
 ## 10. Paths that skip the login page
 
 **Asked:** "Desktop and phone apps can't use a web login. The app's official
@@ -196,6 +214,28 @@ password?"
 
 **Skipped when:** the app is not behind the login page, or its docs name no
 such paths.
+
+## 10a. Devices that connect to the app directly
+
+**Asked:** "This app's own clients (its docs name a TV or phone app) connect
+straight to the machine's address and port, not to the web name. Let devices on
+these networks do that? It uses plain HTTP, so anything sent, passwords
+included, can be read on the network, and it skips the login page, so only the
+app's own login protects it. Your router must also let those networks reach the
+machine's port."
+
+**Options:** no, only through the login page (recommended unless the clients
+can't use the web name); yes, for the networks you give (pick "Other" and type
+each as an address range, such as 192.0.2.0/24). Only private networks work, and
+a whole guest network is a poor choice.
+
+**Fills:** the networks whose devices may connect to the app directly. The web
+name still goes through the login page. The agent tells you in the final report
+which router rule is still yours to add.
+
+**Skipped when:** the app's docs name no client that connects this way (the
+agent says so), the clients can use the web name over HTTPS, or the app listens
+only on the machine itself.
 
 ## 11. User and group numbers
 

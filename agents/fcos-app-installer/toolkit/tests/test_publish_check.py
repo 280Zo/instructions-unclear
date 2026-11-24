@@ -397,6 +397,78 @@ class WorkspaceSourceTests(unittest.TestCase):
                 else:
                     rules.unlink()
 
+    def write_ignore(self, ws: Path, text: str) -> None:
+        (ws / "publish-ignore.yaml").write_text(text)
+
+    def workspace_with_a_plain_word(self) -> Path:
+        # One workspace value that is also an ordinary word, next to the private one.
+        ws = self.make_workspace()
+        (ws / "site.yaml").write_text(f"hosts:\n  big:\n    node: {self.secret}\n    role: greenhouse\n")
+        (self.repo / "notes.md").write_text(f"runs on {self.secret} today\nthe greenhouse folder\n")
+        return ws
+
+    def test_a_listed_value_is_no_longer_a_hit_and_the_rest_still_are(self):
+        ws = self.workspace_with_a_plain_word()
+        self.assertIn("notes.md:2: value from workspace", self.run_check(workspace=ws).stdout)
+        self.write_ignore(ws, "- greenhouse\n")
+        result = self.run_check(workspace=ws)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertNotIn("notes.md:2", result.stdout)
+        self.assertIn("notes.md:1: value from workspace", result.stdout)  # the private value is still caught
+        self.assertIn("1 ignored value", result.stderr)
+        self.assertNotIn(self.secret, result.stdout + result.stderr)
+
+    def test_an_ignore_entry_matches_exactly_and_without_regard_to_case(self):
+        ws = self.workspace_with_a_plain_word()
+        for entry in ("Greenhouse", "'GREENHOUSE '"):
+            with self.subTest(entry=entry):
+                self.write_ignore(ws, f"- {entry}\n")
+                self.assertNotIn("notes.md:2", self.run_check(workspace=ws).stdout)
+        for entry in (".*", "greenh", "greenhous"):  # never a pattern, never a part of a value
+            with self.subTest(entry=entry):
+                self.write_ignore(ws, f"- '{entry}'\n")
+                result = self.run_check(workspace=ws)
+                self.assertIn("notes.md:2: value from workspace", result.stdout)
+                self.assertNotIn("ignored value", result.stderr)
+
+    def test_an_ignore_file_that_cannot_be_used_is_an_error_not_a_pass(self):
+        ws = self.workspace_with_a_plain_word()
+        for text in ("not: a list\n", "- 5\n", "- ''\n", "- [a]\n", "- {a: b}\n", "[unclosed\n", "- " + "a" * 300 + "\n"):
+            with self.subTest(text=text[:30]):
+                self.write_ignore(ws, text)
+                result = self.run_check(workspace=ws)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn("publish-ignore.yaml", result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+
+    def test_an_ignore_file_that_is_a_link_or_not_a_file_is_an_error_not_a_pass(self):
+        ws = self.workspace_with_a_plain_word()
+        target = self.tmp / "elsewhere.yaml"
+        target.write_text("- greenhouse\n")
+        ignore = ws / "publish-ignore.yaml"
+        for make in (lambda: ignore.symlink_to(target), lambda: ignore.symlink_to(self.tmp / "missing.yaml"),
+                     lambda: ignore.mkdir()):
+            with self.subTest():
+                make()
+                result = self.run_check(workspace=ws)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn("publish-ignore.yaml", result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+                if ignore.is_dir() and not ignore.is_symlink():
+                    ignore.rmdir()
+                else:
+                    ignore.unlink()
+
+    def test_workspace_rules_still_apply_to_an_ignored_value(self):
+        ws = self.workspace_with_a_plain_word()
+        self.write_ignore(ws, "- greenhouse\n")
+        self.write_rules(ws, "- name: my room name\n  pattern: 'greenhouse'\n")
+        self.assertIn("notes.md:2: my room name", self.run_check(workspace=ws).stdout)
+
+    def test_no_ignore_file_means_nothing_is_skipped(self):
+        result = self.run_check(workspace=self.workspace_with_a_plain_word())
+        self.assertNotIn("ignored value", result.stderr)
+
     def test_no_rules_file_means_only_the_generic_rules(self):
         result = self.run_check(workspace=self.make_workspace())
         self.assertNotIn("workspace rule", result.stderr)

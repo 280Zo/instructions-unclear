@@ -816,8 +816,8 @@ class RuleTests(GenCase):
                                               "user_mode": "map-user", "network": "host", "publish": 80}))))
 
     def test_nfs_share_must_exist_on_the_vm(self):
-        errors = self.errors(lambda s: s["containers"][0]["volumes"][2].update(host="/var/mnt/media/x"))
-        self.assertTrue(any("media" in e for e in errors), errors)
+        errors = self.errors(lambda s: s["containers"][0]["volumes"][2].update(host="/var/mnt/unlisted/x"))
+        self.assertTrue(any("unlisted" in e for e in errors), errors)
         errors = self.errors(lambda s: s["containers"][0]["volumes"][2].update(host="/srv/x"))
         self.assertTrue(any("/var/mnt/" in e for e in errors), errors)
 

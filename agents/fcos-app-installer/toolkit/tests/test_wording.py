@@ -285,6 +285,10 @@ class GuideTests(unittest.TestCase):
         self.assertIn("docs/guide/06-edge-vm.md", readme)
         # The publish check skips the agent's knowledge store as well as git's folder and Python caches.
         self.assertIn("the agent's `.pmb` knowledge folder", readme)
+        # A workspace value that is only an ordinary word is skipped only when the user approved it.
+        self.assertIn("`publish-ignore.yaml`", readme)
+        self.assertIn("never a pattern", readme)
+        self.assertIn("you approve", readme)
 
     def test_the_sign_on_notes_name_the_two_proxmox_pitfalls_with_sources(self):
         from layout import SKILLS
@@ -343,6 +347,84 @@ class GuideTests(unittest.TestCase):
                          "OUTPOST_PROVIDER_LIST"):
                 with self.subTest(page=page.name, name=name):
                     self.assertNotIn(name, text)
+
+
+def flat(path: Path) -> str:
+    return " ".join(path.read_text().split())
+
+
+class OptionsTheAgentOffersTests(unittest.TestCase):
+    """The spec has options the agent has to know to look for, ask about or report: a direct connection for an
+    app's own clients, shared-group files, a database inside a data folder, folders not worth archiving, and
+    devices on the dashboard. Each is found by research, asked where it gives up protection, and reported."""
+
+    def setUp(self):
+        from layout import SKILLS
+        self.research = flat(SKILLS / "researching-apps-for-self-hosting" / "SKILL.md").lower()
+        self.guide = flat(GUIDE / "03-add-a-service.md")
+        self.questions = flat(QUESTIONS)
+        self.prompt = flat(ROOT / ".opencode" / "agents" / "fcos-app-installer.md")
+
+    def test_research_looks_for_the_facts_behind_each_option(self):
+        for needle in ("connect straight to the app's address and port", "only a group may open",
+                       "database inside its data folder", "rebuilds by itself"):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, self.research)
+
+    def test_the_guide_maps_each_fact_to_its_spec_field(self):
+        section = self.guide.split("## 3.2", 1)[1].split("## 3.3", 1)[0]
+        for field in ("`direct_networks`", "`extra_groups`", "`keep_groups", "`files_backup", "`backup_skip`"):
+            with self.subTest(field=field):
+                self.assertIn(field, section)
+        # A direct connection needs the app's port open on the VM's address.
+        self.assertIn("`bind: vm_ip`", section)
+
+    def test_a_direct_connection_is_asked_and_says_what_it_gives_up(self):
+        section = self.questions.split("## 10a.", 1)[1].split("## 11.", 1)[0]
+        for needle in ("plain HTTP", "login page", "router", 'pick "Other" and type', "private", "Skipped when"):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, section)
+
+    def test_devices_on_the_dashboard_are_offered_once_the_login_page_exists(self):
+        section = self.questions.split("## 9c.", 1)[1].split("## 10.", 1)[0]
+        for needle in ("router", "file server", "dashboard", "Skipped when"):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, section)
+        self.assertIn("6.11", self.guide + flat(GUIDE / "06-edge-vm.md"))
+
+    def test_the_prompt_asks_reports_and_never_signs_in_to_a_device(self):
+        for needle in ("questions.md 10a", "questions.md 9c", "guide 6.11", "never sign in to a device"):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, self.prompt)
+        # The archive options are the agent's call from the docs: reported, and asked about only when the docs
+        # are silent (the same rule as guide 3.3), so prompt and guide can't disagree.
+        final = self.prompt.split("## Final report", 1)[1].split(" ## ", 1)[0]
+        self.assertIn("files archive", final)
+        steps = self.prompt.split("## Final report", 1)[0].split("files archive", 1)[1]
+        self.assertIn("unless the docs are silent (questions.md 14)", steps)
+        self.assertNotIn("never ask", steps)
+        # Devices on the dashboard are offered only when the chosen auth gateway can make dashboard links.
+        self.assertIn("can make dashboard links", self.prompt)
+        # The router rule is stated from the spec, since no adapter step produces it.
+        for needle in ("source networks", "VM address", "port"):
+            self.assertIn(needle, final)
+
+    def test_a_direct_connection_is_not_asked_when_the_web_name_works_and_warns_about_passwords(self):
+        section = self.questions.split("## 10a.", 1)[1].split("## 11.", 1)[0]
+        self.assertIn("web name over HTTPS", section.split("**Skipped when:**", 1)[1])
+        self.assertIn("can be read", section)
+
+    def test_group_files_are_a_container_setting_that_needs_the_map_user_mode(self):
+        section = self.guide.split("## 3.2", 1)[1].split("## 3.3", 1)[0]
+        part = section.split("Files only a group may open", 1)[1].split("| The database", 1)[0]
+        self.assertIn("on the container", part)
+        self.assertIn("`map-user`", part)
+
+    def test_the_archive_choices_are_decided_from_the_docs_and_reported(self):
+        section = self.guide.split("## 3.3", 1)[1].split("## 3.4", 1)[0]
+        for needle in ("files archive", "`files_backup", "`backup_skip`", "reported"):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, section)
 
 
 class ReadmeTests(unittest.TestCase):

@@ -752,7 +752,12 @@ exact wording, options and what each answer fills are in
    under `login_frontend` (an ingress and an auth gateway). Never pick one for
    the user: run `python3 tools/modules.py list`, say what each provides and
    what it pairs with, recommend from the pairings marked tested, and ask. If the
-   user wants a product with no module, build one with guide 12.
+   user wants a product with no module, build one with guide 12. Once the
+   login front end exists and its auth gateway can make dashboard links, offer
+   once to list other devices (a router, a file
+   server) on its dashboard (questions.md 9c, guide 6.11); ask again only if
+   the user mentions a device. You never sign in to a device: its settings
+   are manual steps.
 7. **Research** the app with the skill `researching-apps-for-self-hosting`
    (guide 3.2). Cite each fact's source in `<workspace>/services/<svc>/research.md`.
    A forum or issue only fills a gap, and you label it. Pin image tags to a
@@ -765,7 +770,13 @@ exact wording, options and what each answer fills are in
    9b); on yes, walk the user through the documented steps one at a time with
    the docs page for each, have them confirm the result, and never take a
    code or recovery key in the chat. Record the choice in `research.md` and
-   the final report.
+   the final report. If research found clients that connect straight to the
+   VM's address and port (a TV or phone app), ask which networks may do that
+   (questions.md 10a): it means plain HTTP and no login page, so never add
+   it without the answer. Decide the files archive options yourself from the
+   docs (a database inside a data folder, folders the app rebuilds, guide
+   3.3) and report them; don't ask about them unless the docs are silent
+   (questions.md 14).
 9. **Manual steps** for systems you don't touch, rendered from the adapter with
    every value filled in: write the values to a JSON file in `/tmp/opencode/`
    and run `python3 tools/adapters.py render --role <role> --provider <name>
@@ -952,6 +963,11 @@ End every run with:
 - how each new service is backed up: the table and notes from its
   `backups.md` (what, when, where, how many are kept, what happens when the
   file server is off), and the restore steps it points to (guide 4);
+- what the files archive leaves out for each new service, and why (the docs
+  page behind each folder), and, for a service that allows direct
+  connections, the networks and the router rule that is still the user's to
+  add, written from the spec: allow TCP from the source networks to the VM
+  address on the app's port;
 - the break-glass way into each new service if the login front end is down
   (guide section 8);
 - how to get a shell on the VM that runs each new service, whenever it needs a

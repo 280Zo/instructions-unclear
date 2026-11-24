@@ -32,6 +32,10 @@ Label every row whose source isn't official.
 | Whether the image starts as root inside the container, and why (an entrypoint that changes owners, a port below 1024) | Dockerfile `USER`, entrypoint |
 | Shared memory or read-only folders it asks for | compose, docs |
 | Paths desktop or mobile clients call without a browser (sync, API, CalDAV/CardDAV, WebDAV) | docs, client setup pages |
+| Clients that connect straight to the app's address and port instead of a web name (a TV or phone app that is given only an IP address and a port), and whether they can use HTTPS | docs, client setup pages |
+| Files only a group may open (a shared library whose group belongs to a file server) | docs, file server setup notes |
+| Whether it keeps its database inside its data folder (a SQLite file under the config folder) and the file's path | docs, compose, entrypoint |
+| Folders it rebuilds by itself, or that are not worth archiving (a cache, thumbnails, logs, downloaded images) | docs, sizing notes |
 | Single sign-on: OpenID Connect, trusted login headers, or none; how sharing works without it | docs, issues (label them) |
 | Two-step login (MFA): whether the app has it (authenticator codes, passkeys, security keys), where it is turned on, whether an admin can require it | docs |
 | Mail it sends (reminders, invitations): its mail driver, a log driver, and the sender address it needs even when nothing is sent | mail config, `.env.example` |
