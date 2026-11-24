@@ -54,7 +54,7 @@ Threat modeling, attack trees, requirements reviews and best-practice reviews ne
 | Optional hosted checks | Snyk or SonarQube services may need separate setup, accounts and suitable terms |
 | Active testing | OWASP ZAP (for example through the [ZAP MCP server](../../mcp-servers/zap/)); needs an explicit target scope and your approval first |
 
-Get CodeQL and other non-Python tools through their official distributions; check their license and access requirements. Some scripts and config paths in the prompts (`scripts/run-sast.sh`, `scripts/compliance/*`, `automated-dependency-update.sh`) are examples to create, not files supplied by this bundle.
+Get CodeQL and other non-Python tools through their official distributions; check their license and access requirements. Some scripts and config paths in the prompts (`scripts/compliance/*`, `automated-dependency-update.sh`) are examples to create, not files supplied by this bundle.
 
 ## Use
 
@@ -155,9 +155,9 @@ Supporting files not listed here are byte-identical to their sources.
 
 **`skills/sast-configuration/SKILL.md`**
 
-- Basic setup: tooling and install policy paragraph; `pip install semgrep` and `gh extension install github/gh-codeql` removed (Semgrep, SonarQube and CodeQL commands kept, with approval notes).
+- Basic setup: tooling and install policy paragraph; `pip install semgrep` and `gh extension install github/gh-codeql` removed (Semgrep, SonarQube and CodeQL commands kept, with approval notes). SonarQube is published on `127.0.0.1:9000` instead of every interface.
 - Custom rule example: missing `references/semgrep-rules.md` replaced by a pointer to `/security-sast`'s custom rules.
-- `scripts/run-sast.sh` marked as an example for the project to create.
+- New Project Setup: upstream's Semgrep and SonarQube commands (from `fa128d5c`) kept without `pip install semgrep`, with the same approval notes as Basic setup, and SonarQube published on `127.0.0.1:9000` instead of every interface.
 - Related skills: `/security-sast` runs scans; this skill covers configuration and CI.
 
 **`skills/security-best-practices/SKILL.md`** (OpenAI, Apache-2.0; change notice at the end of the file)
@@ -191,7 +191,7 @@ Upstreams and baselines:
 
 | Upstream | Path | Baseline |
 | --- | --- | --- |
-| [wshobson/agents](https://github.com/wshobson/agents) | `plugins/security-scanning`, `plugins/security-compliance` | Payload copied at `46891e7e60da0e52baf1050b7b6391b64e84c6d9`; verified unchanged at `0874a27b17a22e2b7c2e2bcd725768e0803cad06` on 2026-10-20 |
+| [wshobson/agents](https://github.com/wshobson/agents) | `plugins/security-scanning`, `plugins/security-compliance` | Payload copied at `46891e7e60da0e52baf1050b7b6391b64e84c6d9`; `fa128d5c` hand-ported, and verified otherwise unchanged at `34e50fee32114afd9475f25d81492712f08cb71c` on 2026-11-24 |
 | [openai/skills](https://github.com/openai/skills) | `skills/.curated/security-best-practices` | `49f948faa9258a0c61caceaf225e179651397431`; the repo is deprecated, so updates are unlikely. `security-threat-model` from the same source is maintained in its own folder |
 | This repo | `rules/secure-coding.md` | Written for this repo from the OpenSSF guide |
 

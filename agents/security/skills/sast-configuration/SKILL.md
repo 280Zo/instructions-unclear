@@ -60,8 +60,8 @@ Use the tooling the project already has. If a tool is missing, follow the packag
 # Semgrep quick start (project-provided, or an approved pinned one-off runner)
 semgrep --config=auto --error
 
-# SonarQube with Docker (ask first: pulls an image and starts a server)
-docker run -d --name sonarqube -p 9000:9000 sonarqube:10.8-community
+# SonarQube with Docker (ask first: pulls an image and starts a server; listens on this machine only)
+docker run -d --name sonarqube -p 127.0.0.1:9000:9000 sonarqube:10.8-community
 
 # CodeQL CLI (after the user approves installing it from the official distribution)
 codeql database create mydb --language=python
@@ -124,8 +124,14 @@ codeql database create mydb --language=python
 ### New Project Setup
 
 ```bash
-# Example wrapper script for the project to create; not supplied by this skill
-./scripts/run-sast.sh --setup --language python --tools semgrep,sonarqube
+# Semgrep (project-provided, or an approved pinned one-off runner): auto-config scan that exits non-zero on findings
+semgrep --config=auto --error
+
+# SonarQube (ask first: pulls an image and starts a server; listens on this machine only):
+# community server for local evaluation, then analyze with sonar-scanner.
+# SONAR_ES_BOOTSTRAP_CHECKS_DISABLE skips the Elasticsearch host checks for a local try-out;
+# a real deployment needs vm.max_map_count>=524288 and fs.file-max>=131072 on the host instead.
+docker run -d --name sonarqube -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true -p 127.0.0.1:9000:9000 sonarqube:10.8-community
 ```
 
 ### Custom Rule Development

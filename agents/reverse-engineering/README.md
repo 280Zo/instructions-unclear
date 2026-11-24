@@ -109,4 +109,4 @@ Start your tool in the profile folder and point it at what you're analyzing by p
 
 ## Origin
 
-[wshobson/agents](https://github.com/wshobson/agents), `plugins/reverse-engineering`, commit `0874a27b17a22e2b7c2e2bcd725768e0803cad06`, refreshed 2026-10-20. Protocol guidance includes the complete new binary/encryption and documentation references. Existing agent metadata adaptations are retained. [MIT](../../THIRD_PARTY_LICENSES.md#wshobsonagents), © 2024 Seth Hobson. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).
+[wshobson/agents](https://github.com/wshobson/agents), `plugins/reverse-engineering`, commit `0874a27b17a22e2b7c2e2bcd725768e0803cad06`, refreshed 2026-10-20; verified unchanged at `34e50fee32114afd9475f25d81492712f08cb71c` on 2026-11-24 (only plugin manifests, which aren't copied, changed). Protocol guidance includes the complete new binary/encryption and documentation references. Existing agent metadata adaptations are retained. [MIT](../../THIRD_PARTY_LICENSES.md#wshobsonagents), © 2024 Seth Hobson. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).
