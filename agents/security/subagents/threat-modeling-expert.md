@@ -41,7 +41,7 @@ For a threat model of a repository or path, follow the `security-threat-model` s
 - `threat-mitigation-mapping` for mapping threats to controls
 - `security-requirement-extraction` for turning threats into security requirements
 
-If the `security-threat-model` skill isn't installed (the default global install leaves it out), say so and use the steps below for the repository too, grounding each claim in repo evidence and checking assumptions with the user before the final report.
+If the `security-threat-model` skill isn't installed, say so and use the steps below for the repository too, grounding each claim in repo evidence and checking assumptions with the user before the final report.
 
 For design-only work with no repository, use the steps below directly:
 

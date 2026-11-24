@@ -4,7 +4,7 @@ Repository-grounded AppSec threat modeling: trust boundaries, assets, attacker c
 
 ## Install
 
-Use the [infosec group](../../groups/README.md#infosec), or install this skill alone into a chosen folder, from the repo root:
+The [`default`](../../groups/README.md#default) and [`work`](../../groups/README.md#work) groups install it into your home folder, and the [`infosec`](../../groups/README.md#infosec) group installs it into a folder you choose. To install this skill alone into a folder, from the repo root:
 
 ```bash
 mkdir -p ~/AI/threat-model
@@ -32,7 +32,7 @@ To update, follow [Check for updates](../../AGENTS.md#check-for-updates). The pi
 - Role in [`rules/routing`](../../rules/routing/rules/routing.md): "**Security**: threat model → `security-threat-model`".
 - It does not own security review or secure-by-default help (`security-best-practices`), codebase audits and vulnerability hunts (`security-audit`), scanner setup and SAST runs (`/security-sast`, `sast-configuration`), dependency risk (`/security-dependencies`), compliance (`/compliance-check`) or multi-phase hardening (`/security-hardening`, only when asked for by name).
 - Why: This skill overlapped with the `threat-modeling-expert` agent and the STRIDE and attack-tree skills in [`agents/security`](../../agents/security/). The rule names this skill as the threat-model owner, and `threat-modeling-expert` uses it as its primary workflow, with the technique skills inside it.
-- It stays its own folder, not inside `agents/security`, because the user keeps it out of the `default` install and rulesync can't leave one skill of a bundle out of one group. `work` and `infosec` select it. Don't move or copy it into `agents/security`.
+- It stays its own folder, not inside `agents/security`, so it remains an unchanged upstream copy and each group can select it or leave it out on its own; rulesync can't leave one skill of a bundle out of one group. `default`, `work` and `infosec` select it. Don't move or copy it into `agents/security`.
 - On upstream updates, don't edit the upstream skill text to change routing, and don't add a per-skill routing rule to this folder.
 - After a refresh, re-read the new `description` and triggers. If it now claims a job another item owns, or drops one it owned, update `rules/routing`, this section and the `agents/security` README in the same change and tell the user.
 
