@@ -92,6 +92,14 @@ class SecurityReContextTests(unittest.TestCase):
         # The copied skill comes from the same release as the server.
         self.assertIn("tag `rea-agents-6.10.1`", (ROOT / "mcp-servers/rea/README.md").read_text())
 
+    def test_freecad_server_and_addon_come_from_one_release(self):
+        version = "0.1.32"
+        server = read_jsonc(ROOT / "mcp-servers/freecad/mcp.jsonc")["mcpServers"]["freecad"]
+        self.assertEqual(server["args"], [f"freecad-mcp@{version}"])
+        readme = (ROOT / "mcp-servers/freecad/README.md").read_text()
+        self.assertIn(f"tag `v{version}`", readme)
+        self.assertNotIn("0.1.27", readme)
+
     def test_presenton_image_is_pinned_by_tag_and_digest(self):
         tag = "v0.9.12-beta"
         digest = "sha256:dd444e4384df0caeb7cb96a26bfa7543a12d2be19c83d661446b2087d09aed54"

@@ -6,7 +6,7 @@
     "freecad": {
       "type": "stdio",
       "command": "uvx",
-      "args": ["freecad-mcp@0.1.27"],
+      "args": ["freecad-mcp@0.1.32"],
       "disabled": true
     }
   }
