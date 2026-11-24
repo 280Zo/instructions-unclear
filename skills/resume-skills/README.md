@@ -40,4 +40,4 @@ To update, follow [Check for updates](../../AGENTS.md#check-for-updates).
 
 ## Origin
 
-[Paramchoudhary/ResumeSkills](https://github.com/Paramchoudhary/ResumeSkills), unchanged, copied 2026-10-09 from an install dated 2026-08-10. [MIT](../../THIRD_PARTY_LICENSES.md#paramchoudharyresumeskills), © 2026 Resume Skills. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).
+[Paramchoudhary/ResumeSkills](https://github.com/Paramchoudhary/ResumeSkills), path `skills/`, commit `74ae19e7c62b0516d1c298328e5544976c12da5d` (upstream HEAD, verified 2026-11-24), unchanged, copied 2026-10-09 from an install dated 2026-08-10. [MIT](../../THIRD_PARTY_LICENSES.md#paramchoudharyresumeskills), © 2026 Resume Skills. Updates: see "Check for updates" in [`AGENTS.md`](../../AGENTS.md).
