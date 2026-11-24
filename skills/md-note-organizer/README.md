@@ -55,6 +55,8 @@ For a broader write-up of gathered material for an audience, use [`report`](../r
 
 Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves `md-note-organizer` in each tool's global skills folder; delete it only with approval. No other folder in this repo provides that name.
 
+This skill replaced `meeting-minutes`, which the repo no longer ships. Older installs still have a `meeting-minutes` skill folder, and its description claims the same meeting-notes requests. After `md-note-organizer` is installed and listed, delete the stale `meeting-minutes` folder from each tool's skills folder, with approval.
+
 ### Update
 
 The skill is written for this repo, so there is no upstream commit to check. `reference/obsidian.md` records the plugin syntax the templates rely on, each with its source. Recheck those sources when Obsidian, Tasks or Dataview change their syntax.
