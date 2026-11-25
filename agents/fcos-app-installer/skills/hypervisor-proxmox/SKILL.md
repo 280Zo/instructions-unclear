@@ -49,6 +49,7 @@ or node name.
 | `store_api_token` | Store that token on the user's desktop, from a hidden prompt |
 | `discover_host` | Describe the server for the agent (read-only) |
 | `teardown_api_access` | Remove the agent's Proxmox access (VMs move to pool `backrooms`) |
+| `add_vm_to_pool` | Optional, only when the user asks for it: add an existing VM to the agent's pool, which lets the agent's token start, stop and reconfigure it. Not needed to add a service to an existing VM; the agent reaches it over SSH |
 | `copy_ignition_snippet` | Give a VM its Ignition file as a snippet (fallback) |
 | `rebuild_os_disk` | Replace a VM's OS disk, keep its data disk |
 | `remove_vm` | Delete a VM and its disks |

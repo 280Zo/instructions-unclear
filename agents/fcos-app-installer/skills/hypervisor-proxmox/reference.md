@@ -50,6 +50,18 @@ A VLAN whose DHCP serves only reserved MACs needs the reservation before first s
 
 Source: none; a design note, not from a document
 
+## Whole-disk backups
+
+Documented: "Proxmox VE backups are always full backups - containing the VM/CT configuration and all data". A backup storage is either a Proxmox Backup Server storage, where backups are stored as de-duplicated chunks and metadata, or a file-level storage, where backups are stored as regular files. Using Proxmox Backup Server on a dedicated host is recommended, with an NFS server a good alternative. Storage replication copies guest volumes to another node, uses snapshots so that new data is sent only incrementally after the initial full sync, and keeps the guest data available on the replicated node if a node fails. Its table of supported storage types lists only ZFS (local). Not tested here: any backup or replication job
+
+Source: https://pve.proxmox.com/pve-docs/chapter-vzdump.html (Backup, Backup Storage) · https://pve.proxmox.com/pve-docs/chapter-pvesr.html (Storage Replication)
+
+## Adding an existing VM to a pool
+
+`pveum pool modify <poolid> --vms <ids>` adds guests to a pool. `--allow-move` (default 0) is the option that allows adding a guest that is already in another pool, removing it from that pool, so a command without it leaves such a guest alone. `--delete` removes guests instead. The adapter's `add_vm_to_pool` step leaves `--allow-move` out on purpose. What the command prints for a guest that is already in another pool was not tested here
+
+Source: https://pve.proxmox.com/pve-docs/pveum.1.html (`pveum pool modify`) · `.opencode/skills/hypervisor-proxmox/scripts/teardown-agent-access.sh` (the same command with `--allow-move 1`)
+
 ## Teardown: pools
 
 A Proxmox resource pool is a set of VMs, containers and storages, useful for permission handling. The teardown script moves the agent's VMs into a pool the user names and creates it with `--create-pool` (its own usage text; run on a real server, both servers).

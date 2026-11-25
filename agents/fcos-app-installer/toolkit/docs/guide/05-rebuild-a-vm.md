@@ -34,8 +34,10 @@ python3 tools/vmssh.py run $vm -- 'for u in /var/lib/systemd/linger/*; do s=$(ba
 python3 tools/vmssh.py run $vm -- "sudo -u <svc> XDG_RUNTIME_DIR=/run/user/\$(id -u <svc>) systemctl --user start <svc>-backup-<container>.service; sudo -u <svc> ls -lt /var/mnt/backups/<vm>/<svc>/ | head -n 3"
 ```
 
-If the file server is off, the backup skips. Then ask the user to run the
-virtualization server's backup of the VM now.
+If the file server is off, the backup skips. Then, if this install has a
+whole-disk backup (section 1.5), ask the user to run it now. If it has none,
+ask whether to wait until the file server is back or to rebuild without a
+fresh backup; never decide that for them.
 
 5. Stop the services cleanly so databases close:
 

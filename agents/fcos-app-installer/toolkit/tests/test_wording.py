@@ -66,6 +66,49 @@ class GuideTests(unittest.TestCase):
                     with self.subTest(page=page.name, pattern=pattern):
                         self.assertIsNone(re.search(pattern, para), para[:120])
 
+    def test_whole_disk_backups_are_full_copies_and_never_proposed_by_default(self):
+        page = " ".join((GUIDE / "01-host-setup.md").read_text().split())
+        section = page.split("## 1.5", 1)[1].split("## 1.6", 1)[0]
+        for needle in ("full copy every time", "doesn't propose it by default", "same disk", "only one disk",
+                       "deduplicated", "replication", "only the changes", "**Providers.**", "reference.md",
+                       "Many platforms", "not against a mistake"):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, section)
+        # The old advice put every server's backups on its own storage, which fails on a one-disk server.
+        self.assertNotIn("backs its VMs up to its own storage", section)
+        from layout import SKILLS
+        reference = (SKILLS / "hypervisor-proxmox" / "reference.md").read_text()
+        block = " ".join(reference.split("## Whole-disk backups", 1)[1].split("\n## ", 1)[0].split())
+        self.assertIn("always full backups", block)
+        self.assertIn("Source: https://pve.proxmox.com/pve-docs/chapter-vzdump.html", block)
+        self.assertIn("https://pve.proxmox.com/pve-docs/chapter-pvesr.html", block)
+
+    def test_restore_follows_what_the_install_has_and_the_files_archive_comes_back_first(self):
+        page = " ".join((GUIDE / "04-databases-and-backups.md").read_text().split())
+        # A whole-disk backup is optional (1.5), so neither the process nor the restore may assume one exists.
+        self.assertNotIn("are the copy that works while the file server is away", page)
+        self.assertNotIn("Restore from the newest virtualization-server backup of the VM first", page)
+        section = page.split("## Restore", 1)[1].split("## Test a restore", 1)[0]
+        for needle in ("backups.md", "whole-disk backup", "If this install has one", "Files archive:",
+                       "podman unshare tar -C /var/lib/appdata/<svc>", "-xzf", "unpack the files archive first",
+                       "start `<app units>` again yourself", "push the service again"):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, section)
+        self.assertLess(section.index("Files archive:"), section.index("SQLite:"))
+        self.assertIn("not run on a VM here", section)
+        # tar's exit 1 keeps the archive, but it is not an exact copy: a file can be half written in it.
+        process = page.split("## The process", 1)[1].split("## Check a backup", 1)[0]
+        for needle in ("not an exact copy", "may be inconsistent"):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, process)
+
+    def test_a_rebuild_without_a_whole_disk_backup_waits_or_asks(self):
+        page = " ".join((GUIDE / "05-rebuild-a-vm.md").read_text().split())
+        part = page.split("If the file server is off, the backup skips.", 1)[1][:600]
+        self.assertIn("whole-disk backup", part)
+        self.assertIn("none", part)
+        self.assertIn("ask", part)
+
     def test_providers_paragraphs_link_adapters(self):
         found = 0
         for page in guide_pages():

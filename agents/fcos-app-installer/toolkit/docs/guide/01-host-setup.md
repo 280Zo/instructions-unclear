@@ -79,13 +79,38 @@ python3 tools/hypervisor.py check --host <host> --workspace <workspace>
 Expected: the API version, and the token's rights on exactly its pool, its
 storages and its bridge. Anything more or less: stop and report it.
 
-## 1.5 Local backups of VM disks
+## 1.5 Backups of VM disks
 
-Every VM's data disk holds state that must survive the file server being off,
-so each server backs its VMs up to its own storage, on a schedule outside the
-update window. The OS disk is rebuilt from config anyway and can be left out.
-How to set it up is in the virtualization platform's own docs (the adapter
-links them).
+Each service backs up its own data by itself: database copies and a files
+archive on the file server (section 4). When the file server is off, those
+wait. A backup of the whole VM data disk, made by the virtualization server,
+covers the data disk even then.
+
+Many platforms write a whole-disk backup as a full copy every time: each run
+writes the entire disk, and every copy you keep is another entire disk, so the
+space needed grows fast. The agent therefore doesn't propose it by default. It proposes
+one when you want a copy that survives the file server being off or lost, and
+then says what it costs in space. The OS disk is rebuilt from config anyway
+and can be left out.
+
+Where the copy goes matters more than how often. Never put it on the same disk
+as the VMs it protects: on a server that has only one disk, one failure would
+take the VMs and their backups together. Use another disk, the file server or
+another machine.
+
+Where the platform offers them, two ways cost less space: a backup server that
+stores each piece of data once (deduplicated), so a new copy adds only what
+changed; and replication of the data disk to a second server, which after the
+first full copy sends only the changes and keeps a copy for the case that a
+server fails. Replication copies a deletion or a damaged file too, so it
+protects against a failed server, not against a mistake. How to set a backup up is in the virtualization platform's own
+docs (the adapter links them).
+
+**Providers.** For Proxmox VE (`hypervisor-proxmox`), its backups are always
+full backups. Proxmox Backup Server stores deduplicated chunks, and its docs
+recommend it on a dedicated host, with an NFS server as the alternative.
+Replication needs a second node and local ZFS storage. The sources are in the
+adapter's `reference.md`, "Whole-disk backups".
 
 ## 1.6 When the install is done
 

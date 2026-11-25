@@ -8,6 +8,8 @@ notes: >-
 docs:
   - https://docs.opnsense.org/manual/dhcp.html
   - https://docs.opnsense.org/manual/unbound.html
+  - https://docs.opnsense.org/manual/dnsmasq.html
+  - https://docs.opnsense.org/manual/kea.html
   - https://docs.opnsense.org/manual/firewall.html
 discovery:
   ask: which DHCP service hands out addresses on the VM's network (Dnsmasq is the default; KEA, or ISC which is end-of-life), and whether that network gives addresses only to reserved MACs.
@@ -36,6 +38,21 @@ manual_steps:
     uses: [DOMAIN, EDGE_IP]
     report_back:
       - the dig output, and whether you used the wildcard or one override per name
+  lan_hostname:
+    title: Give VM {{VM_NAME}} a name that only works inside your network
+    steps:
+      - This name resolves only on your own network. Nothing goes to public DNS, and it is separate from the web names under your domain. {{LAN_DOMAIN}} is the one domain your network already uses for its machines; if the DHCP range of your desktop's network already has a Domain, keep it and use that.
+      - In Services, Unbound DNS, Overrides, add a host override with Host {{VM_NAME}} (the name without the domain part), Domain {{LAN_DOMAIN}}, Type A, IP {{VM_IP}}, and apply.
+      - So your desktop can use the short name, the DHCP service offers the domain as a search domain. With Dnsmasq (the default), look at the DHCP range of your desktop's network (Services, Dnsmasq DNS & DHCP, DHCP ranges). If it already has a Domain, that domain is offered to the clients, so change nothing. If it has none, don't set one just for this, because it changes the domain every client in the range gets and the name their hostnames are registered under; add {{LAN_DOMAIN}} as a search domain on your desktop instead. With KEA, set Domain search to {{LAN_DOMAIN}} in the options of that subnet, which touches nothing else. The desktop picks it up when its lease renews.
+      - Check with the commands below. The first should print {{VM_IP}}. The second works once your desktop has the search domain.
+    blocks:
+      - machine: "desktop (fish)"
+        code: |
+          dig +short {{VM_NAME}}.{{LAN_DOMAIN}}
+          getent hosts {{VM_NAME}}
+    uses: [VM_NAME, VM_IP, LAN_DOMAIN]
+    report_back:
+      - the output of both commands, and which DHCP service you set the search domain on
   allow_flows:
     title: Allow only the traffic VM {{VM_NAME}} needs
     steps:

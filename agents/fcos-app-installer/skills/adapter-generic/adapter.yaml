@@ -76,16 +76,19 @@ roles:
       nfs_export:
         title: Let VM {{VM_NAME}} mount {{SHARE_EXPORT}} over NFS
         steps:
-          - On your file server, allow {{VM_IP}} on the NFS export {{SHARE_EXPORT}}.
-          - Map root to an unprivileged user (root squash), so the VM's root can't act as root on the file server.
+          - On your file server, look at the NFS export {{SHARE_EXPORT}} before you change anything.
+          - If the export is only for this VM, allow {{VM_IP}} on it and map root to an unprivileged user (root squash), so the VM's root can't act as root on the file server.
+          - If another machine already uses the export (a shared library, say), leave its root mapping and its read-only setting as they are. If it allows every client, leave it that way, because a new client list would shut every other machine out. If it has a client list, add {{VM_IP}} to it and keep the other entries. The VM mounts the export as root, so if the export does not map root to an unprivileged user, the VM's root acts as root on it. Say whether it does.
         uses: [VM_NAME, SHARE_EXPORT, VM_IP]
         report_back:
           - done, plus the exact export path if it differs
+          - for an existing export, whether root is mapped to an unprivileged user (if not, the VM's root acts as root on it)
       service_user:
         title: Create the file server user for {{SVC_NAME}}
         steps:
           - Look for a group with GID {{SVC_GID}} on the file server. It may be its existing group for this service, or a shared group. If one exists, use it. If none exists, create it first with GID {{SVC_GID}} and the name {{SVC_NAME}}; many file servers can't set a GID on the group that their user form creates.
           - Create user {{SVC_NAME}} with UID {{SVC_UID}} and primary group GID {{SVC_GID}}, no password and no login.
+          - A folder the app only reads (a shared library) keeps its current owner, group or mode, so never change them to match the service.
           - Give it the folders the service uses on the share; for a shared group, use group ownership with the setgid bit so new files keep the group.
           - If you are moving existing data, make sure it is owned by UID {{SVC_UID}} and GID {{SVC_GID}}.
         uses: [SVC_NAME, SVC_UID, SVC_GID]

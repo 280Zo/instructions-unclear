@@ -18,7 +18,7 @@ hosts:
     vlan_tag: null              # ASK: null if untagged
     max_cores: 12               # ASK
     max_ram_mib: 12288          # ASK
-    backup_storage: local       # ASK: host-local storage for vzdump
+    backup_storage: local       # optional: where whole-disk backups go, if you want any (guide 1.5); never the disk the VMs live on when it is the server's only disk
   host-b:
     name: pve-b                 # ASK
     node: pve-b                 # optional
@@ -33,4 +33,4 @@ hosts:
     vlan_tag: null              # ASK
     max_cores: 4                # ASK
     max_ram_mib: 8192           # ASK
-    backup_storage: local       # ASK
+    backup_storage: local       # optional (see host-a)

@@ -158,6 +158,19 @@ manual_steps:
     uses: [HOST]
     report_back:
       - the check's output, then the teardown's output
+  add_vm_to_pool:
+    title: Add the existing VM {{VMID}} to the agent's pool on {{HOST}} (optional)
+    steps:
+      - You don't need this to add a service to an existing VM. The agent reaches the VM over SSH, not through the token. Do it only if you want the agent to list that VM or start it.
+      - The agent's token has its rights on every VM in the pool fcos-agent, and only on those. Adding VM {{VMID}} lets the agent start, stop and reconfigure it through the token, so add only a VM you want it to manage.
+      - Moving a VM out of another pool needs a separate option that this step leaves out on purpose, so if VM {{VMID}} is already in another pool the command should refuse. Don't work around it; report the error instead, because leaving that pool can change who may use the VM.
+    blocks:
+      - machine: "proxmox {{HOST}} (bash, root)"
+        code: |
+          pveum pool modify fcos-agent --vms {{VMID}}
+    uses: [VMID, HOST]
+    report_back:
+      - done, or the error line
   copy_ignition_snippet:
     title: Give VM {{VMID}} its Ignition file as a snippet (fallback)
     steps:

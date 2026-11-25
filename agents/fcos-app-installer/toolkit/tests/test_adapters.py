@@ -594,6 +594,41 @@ class AdapterTests(unittest.TestCase):
         self.assertIn("Credentials", truenas)
         self.assertIn("use it", truenas)  # an existing group for the service is used, not duplicated
 
+    def test_an_export_other_machines_use_is_left_as_it_is(self):
+        # Adding a Hosts list to a share that has none shuts out every other machine, and Maproot or Read Only
+        # were set for the share's other users. The step looks first; only a new share gets the full recipe.
+        for provider in ("truenas", None):
+            with self.subTest(provider=provider):
+                adapter = load_adapter("file_server", provider)
+                text = " ".join(render_step(adapter, "nfs_export", every_value(adapter, "nfs_export")).split())
+                self.assertIn("already uses", text)
+                self.assertIn("leave", text.lower())
+                self.assertIn("shut", text)  # an empty list stays empty: a new one shuts the others out
+        truenas = " ".join(render_step(load_adapter("file_server", "truenas"), "nfs_export", every_value(
+            load_adapter("file_server", "truenas"), "nfs_export")).split())
+        for field in ("Hosts", "Maproot User", "Maproot Group", "Read-Only"):
+            self.assertIn(field, truenas)
+        # The recipe for a new share is still there.
+        self.assertIn("Security", truenas)
+        self.assertIn("nobody", truenas)
+        # Leaving Maproot alone has a cost the user hears about: the VM's root may act as root on the share.
+        for provider in ("truenas", None):
+            with self.subTest(provider=provider, what="root"):
+                adapter = load_adapter("file_server", provider)
+                text = " ".join(render_step(adapter, "nfs_export", every_value(adapter, "nfs_export")).split())
+                self.assertIn("acts as root", text)
+                self.assertTrue(any("root" in line for line in adapter["manual_steps"]["nfs_export"]["report_back"]))
+
+    def test_a_shared_library_is_never_given_to_the_service_account(self):
+        # A folder the app only reads (a shared library) keeps its owner, group and mode. The generated
+        # file-server.md already leaves such folders out of its table; the step says the same.
+        for provider in ("truenas", None):
+            with self.subTest(provider=provider):
+                adapter = load_adapter("file_server", provider)
+                text = " ".join(render_step(adapter, "service_user", every_value(adapter, "service_user")).split())
+                self.assertIn("only reads", text)
+                self.assertIn("owner, group or mode", text)
+
     def test_group_number_is_its_own_question_asked_before_generating(self):
         guide = Path(ROOT / "docs" / "guide")
         questions = " ".join((guide / "questions.md").read_text().split())
@@ -621,6 +656,25 @@ class AdapterTests(unittest.TestCase):
         self.assertIn("create", text.lower())
         self.assertIn("can't create", text)
 
+    def test_an_existing_vm_can_be_added_to_the_agents_pool_but_does_not_need_to_be(self):
+        # The agent reaches a VM over SSH, so adding a service to an existing VM needs no token right on it.
+        # The pool only matters for listing and starting it. A VM in another pool is never moved silently.
+        adapter = load_adapter("virtualization", "proxmox")
+        step = adapter["manual_steps"]["add_vm_to_pool"]
+        text = " ".join(render_step(adapter, "add_vm_to_pool", every_value(adapter, "add_vm_to_pool")).split())
+        self.assertIn("pveum pool modify fcos-agent --vms ", text)
+        self.assertNotIn("--allow-move", text)
+        # The token's role on the pool carries power and config rights, so this is more than a label.
+        self.assertNotIn("only adds a label", text)
+        self.assertIn("start, stop and reconfigure", text)
+        self.assertIn("another pool", text)
+        self.assertIn("over SSH", text)
+        self.assertIn("don't need", text)
+        self.assertIn("VMID", step["uses"])
+        skill = " ".join((PROXMOX / "SKILL.md").read_text().split())
+        self.assertIn("`add_vm_to_pool`", skill)
+        self.assertIn("existing VM", skill)
+
     def test_proxmox_capabilities(self):
         adapter = load_adapter("virtualization", "proxmox")
         self.assertTrue(adapter["capabilities"]["api_create_vm"])
@@ -629,6 +683,22 @@ class AdapterTests(unittest.TestCase):
         self.assertIn("scripts/setup-agent-access.sh", adapter["scripts"])
         for path in adapter["scripts"]:
             self.assertTrue((PROXMOX / path).is_file(), path)
+
+    def test_a_lan_only_name_and_the_desktops_search_domain_have_their_own_step(self):
+        # During a move both copies of an app are reached by name. The name exists only on the network (a host
+        # override), and the desktop gets the domain from the DHCP service, whichever one the router runs.
+        adapter = load_adapter("router_firewall", "opnsense")
+        text = " ".join(render_step(adapter, "lan_hostname", every_value(adapter, "lan_hostname")).split())
+        for needle in ("only works inside your network", "Unbound DNS", "Overrides", "Dnsmasq", "KEA", "Domain search",
+                       "DHCP range", "keep it", "getent hosts", "dig +short", "change nothing",
+                       "on your desktop instead"):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, text)
+        self.assertIn("LAN_DOMAIN", adapter["manual_steps"]["lan_hostname"]["uses"])
+        self.assertIn("https://docs.opnsense.org/manual/dnsmasq.html", adapter["docs"])
+        self.assertIn("https://docs.opnsense.org/manual/kea.html", adapter["docs"])
+        skill = (SKILLS / "router-opnsense" / "SKILL.md").read_text()
+        self.assertIn("`lan_hostname`", skill)
 
     def test_reserve_ip_comes_after_create_and_before_start(self):
         adapter = load_adapter("router_firewall", "opnsense")

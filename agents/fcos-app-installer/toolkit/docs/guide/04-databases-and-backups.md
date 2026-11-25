@@ -39,8 +39,9 @@ the user agreed to under the 5 GB rule.
    disk too means a missing disk can never produce an empty backup that would
    push good ones out of the rotation.
    `Persistent=true` on the timer runs a missed backup at the next boot.
-5. **The virtualization server's own backups** of the data disk (section 1.5)
-   are the copy that works while the file server is away.
+5. **A whole-disk backup** by the virtualization server (section 1.5) is the
+   only copy that works while the file server is away. It is optional, so
+   don't count on it unless the user says this install has one.
 6. **Before any rebuild**: stop the service, run its backup by hand, confirm
    the new file exists, then rebuild. Rebuilds keep the data disk, so the
    database should never need restoring; the backup covers mistakes.
@@ -53,6 +54,10 @@ GNU tar then exits 1 ("some files were changed while being archived"), the
 archive is kept and the log says so; a fatal error (exit 2 or more) fails the
 run and removes the partial file
 ([GNU tar exit codes](https://www.gnu.org/software/tar/manual/html_section/Synopsis.html)).
+Exit 1 means the archive is not an exact copy of the file set: a file that
+changed while it was packed may be inconsistent in it. That is why a database
+gets its own online copy, and why the files archive is never a database's
+backup.
 Spec options change what it holds and when (`files_backup`,
 `backup_skip` and `backups.files`, in the field reference): a folder the app
 rebuilds by itself, such as a cache, can be left out, and so can subfolders
@@ -79,9 +84,32 @@ list. With the file server off, the journal shows the skip message instead.
 
 ## Restore (only if the data disk is lost)
 
-Restore from the newest virtualization-server backup of the VM first; it
-brings the whole data disk back. Use the file server's copies only if that
-fails.
+The order depends on what this install has. The service's `backups.md` lists
+what the generator set up: the database copies and the files archive, with
+their schedules. A whole-disk backup (section 1.5) exists only if the user set
+one up, so ask.
+
+1. If this install has one (a whole-disk backup), restore the newest one first.
+   It brings the whole data disk back, database included. Then run the
+   service's checklist (3.10).
+2. Otherwise, or if that fails, use the file server's copies: unpack the files
+   archive first, then put the database copy back.
+
+Files archive: for an app with local files (`<app units>` are the app's
+units). It is the reverse of the unit that packs it, with the same
+`podman unshare`, and was not run on a VM here. Leave the app stopped until
+any database restore below is done, then start `<app units>` again yourself:
+the database blocks start only their own units. If the folder
+`/var/lib/appdata/<svc>` is missing, push the service again first (3.7).
+
+```bash
+# vm <vm> (bash, <admin>)
+cd /
+U="sudo -u <svc> XDG_RUNTIME_DIR=/run/user/<uid>"
+$U systemctl --user stop <app units>
+f=$(sudo -u <svc> ls -1t /var/mnt/backups/<vm>/<svc>/ | grep '^files-.*\.tar\.gz$' | head -n 1); echo "$f"
+$U podman unshare tar -C /var/lib/appdata/<svc> -xzf /var/mnt/backups/<vm>/<svc>/$f
+```
 
 SQLite:
 

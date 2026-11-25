@@ -38,12 +38,15 @@ or node name.
 |---|---|
 | `reserve_ip` | Reserve a VM's address for its MAC |
 | `dns_wildcard` | Send every name under the domain to the login front end |
+| `lan_hostname` | Optional, when a guide section or the user calls for it: a name for a VM that only works inside your network, and the desktop's search domain. Needs the network's own domain, which the agent asks for |
 | `allow_flows` | Allow only the traffic a VM needs |
 
 ## Official documentation
 
 - https://docs.opnsense.org/manual/dhcp.html
 - https://docs.opnsense.org/manual/unbound.html
+- https://docs.opnsense.org/manual/dnsmasq.html
+- https://docs.opnsense.org/manual/kea.html
 - https://docs.opnsense.org/manual/firewall.html
 
 Menu names change between versions; when one doesn't match, follow the linked documentation.
