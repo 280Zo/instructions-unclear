@@ -1,6 +1,8 @@
 """Opt-in runtime check of the default group's OpenCode agents.
 
-Generates groups/default.jsonc without MCP output (so no real MCP server
+Generates groups/default.jsonc, together with the agents and skills of the
+ai_research, career and reverse_engineering folder groups (so every agent is
+checked), without MCP output (so no real MCP server
 starts) into a fresh home under /tmp/opencode, adds harmless local stub MCP
 servers named zap, codebase-memory-mcp and freecad, then runs the installed
 OpenCode against a localhost model stub. For each primary-capable agent it
@@ -96,6 +98,20 @@ class Stub(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
 
+# Specialist sets that install with their folder groups, not default.
+FOLDER_ROOTS = ["agents/ai-research", "skills/ai-research", "agents/career", "skills/career-workspace",
+                "skills/resume-skills", "skills/interview-coach", "agents/reverse-engineering",
+                "mcp-servers/reva", "mcp-servers/radare2"]
+
+
+def selection():
+    """--input-roots for default's selection plus FOLDER_ROOTS, before the closing reminder rule.
+
+    rulesync refuses a --config file outside the repo, so the roots go on the command line."""
+    roots = generate.read_jsonc(REPO / "groups/default.jsonc")["inputRoots"]
+    return ["--input-roots", *roots[:-1], *[r for r in FOLDER_ROOTS if r not in roots], roots[-1]]
+
+
 def strings(value):
     if isinstance(value, str):
         yield value
@@ -179,7 +195,7 @@ def check_portable(cli):
     print(f"Other-tools evidence directory: {root}", flush=True)
     env = {"PATH": os.environ["PATH"], "HOME": str(root), "XDG_CONFIG_HOME": str(root / ".config")}
     subprocess.run(["node", str(cli), "generate", "--config", "groups/default.jsonc", "--global",
-                    "--features", "subagents", "--targets", ",".join(generate.PORTABLE_TARGETS)],
+                    "--features", "subagents", "--targets", ",".join(generate.PORTABLE_TARGETS), *selection()],
                    cwd=REPO, env=env, check=True, capture_output=True)
     for name, spec in generate.SPECIALISTS.items():
         claude = root / ".claude/agents" / f"{name}.md"
@@ -209,7 +225,7 @@ def check(cli):
            "XDG_DATA_HOME": str(home / ".local/share"), "XDG_STATE_HOME": str(home / ".local/state"),
            "XDG_CACHE_HOME": str(home / ".cache"), "OPENCODE_DISABLE_AUTOUPDATE": "1"}
     subprocess.run(["node", str(cli), "generate", "--config", "groups/default.jsonc", "--global",
-                    "--features", "rules,subagents,skills,commands"],
+                    "--features", "rules,subagents,skills,commands", *selection()],
                    cwd=REPO, env=env, check=True, capture_output=True)
     configdir = home / ".config/opencode"
     files = {p.stem for p in (configdir / "agents").glob("*.md")}

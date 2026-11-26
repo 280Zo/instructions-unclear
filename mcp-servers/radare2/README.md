@@ -24,7 +24,7 @@ Read-only mode is not an isolation guarantee. Work with approved artifacts and r
 
 ### Install
 
-This is a folder profile, also in the [reverse-engineering group](../../groups/README.md#reverse_engineering); use the command in [Install and activate](#install-and-activate) and never `--global`. OpenCode's `default` group also installs it, switched off, where only the [`reverse-engineering` agent](../../agents/reverse-engineering/) may use its tools. It's written switched off, and needs a separately installed `r2mcp` and radare2 (see [Tools you need](#tools-you-need)).
+This is a folder profile, also in the [reverse-engineering group](../../groups/README.md#reverse_engineering); use the command in [Install and activate](#install-and-activate) and never `--global`. `default` doesn't include it; in OpenCode, only the [`reverse-engineering` agent](../../agents/reverse-engineering/) may use its tools. It's written switched off, and needs a separately installed `r2mcp` and radare2 (see [Tools you need](#tools-you-need)).
 
 Follow the [shared backend installation procedure](../../agents/reverse-engineering/README.md#for-agents-installing-and-verifying-backends). This is optional; do not install it just because a REA native backend is missing.
 

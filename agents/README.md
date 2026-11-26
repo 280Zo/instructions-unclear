@@ -5,11 +5,11 @@ One folder per agent or agent set, each with the skills, rules and commands that
 | Folder | Adds |
 | --- | --- |
 | [`design`](design/) | Graphic, brand and visual design. Installed by default |
-| [`career`](career/) | Career records, resumes, applications and interview coaching. Installed by default |
-| [`ai-research`](ai-research/) | AI and machine-learning research and engineering. Installed by default |
+| [`career`](career/) | Career records, resumes, applications and interview coaching. Installs with the `career` folder group |
+| [`ai-research`](ai-research/) | AI and machine-learning research and engineering. Installs with the `ai_research` folder group |
 | [`3d-modeling`](3d-modeling/) | CAD work in FreeCAD. Installed by default |
 | [`security`](security/) | The `security` agent plus one repo-owned security bundle: secure-coding rule, security auditor and threat-modeling agents, 6 skills, 4 commands. Installed by default |
-| [`reverse-engineering`](reverse-engineering/) | The `reverse-engineering` agent plus reverse-engineer, firmware and malware agents and 4 skills. Profile; also installed by default |
+| [`reverse-engineering`](reverse-engineering/) | The `reverse-engineering` agent plus reverse-engineer, firmware and malware agents and 4 skills. Installs with the `reverse_engineering` folder group |
 | [`second-opinion`](second-opinion/) | `second-opinion`, `evaluator` and `metacognitive`: a second check on the main agent's work. Installed by default |
 | [`local-model`](local-model/) | Small working increments, scoped delegation and fast safe pause/resume handoffs. Installed by default; use as primary or delegated worker |
 | [`fcos-app-installer`](fcos-app-installer/) | Builds Fedora CoreOS VMs on the hypervisor you choose and adds services to them, with the toolkit it runs. A profile: installs into a folder you choose (the `fcos_app_installer` group), not part of `default` |
@@ -19,7 +19,7 @@ A profile installs into one folder you choose, not your home folder. To install 
 
 ## How agents keep skills out of each other's requests
 
-Every installed skill's description is sent with every request, unless the agent can't use it. The `default` group installs about 200 skills; the AI research skills alone add about 7,000 tokens. In OpenCode, each agent therefore lists the skills, MCP servers and subagents it may use, and OpenCode leaves the rest out of what the model sees and blocks calls to them (checked on OpenCode 2.1.3). The [root README](../README.md)'s hero image shows how many skills each agent sees; the [interactive map](https://280zo.github.io/instructions-unclear/agents-map.html) ([source](../docs/agents-map.html)) lists every skill, server and subagent.
+Every installed skill's description is sent with every request, unless the agent can't use it. The `default` group installs 55 skills; the AI research skills, which install only with their folder group, would add about 7,000 tokens. In OpenCode, each agent therefore lists the skills, MCP servers and subagents it may use, and OpenCode leaves the rest out of what the model sees and blocks calls to them (checked on OpenCode 2.1.3). The [root README](../README.md)'s hero image shows how many skills each agent sees; the [interactive map](https://280zo.github.io/instructions-unclear/agents-map.html) ([source](../docs/agents-map.html)) lists every skill, server and subagent.
 
 Every agent but `fcos-app-installer` gets the Superpowers skills, `package-management`, Exa's `search` and `exa-agent`, OpenCode's built-in `opencode` skill, the user-invoked `handoff`, `teach` and `wait-what`, and the Exa and PMB servers; all but `second-opinion` also get Docling. `fcos-app-installer` keeps a shorter list of its own (last row), with no PMB or Docling, so it can't copy its private values out through memory or document tools. It starts only its own `adapter-drafter`: any other agent it started would run with that agent's own, wider permissions, not its.
 
@@ -60,19 +60,21 @@ Outside OpenCode every installed skill stays visible, so install specialist skil
 
 ## Install
 
-The [`default` group](../groups/README.md#default) installs every agent folder above except `fcos-app-installer`, and every skill folder the agents filter:
+The [`default` group](../groups/README.md#default) installs every agent folder above except `career`, `ai-research`, `reverse-engineering` and `fcos-app-installer`, and the skill folders of the agents it installs:
 
 ```bash
 npx rulesync@43.12.0 generate --config groups/default.jsonc --global
 ```
 
-It needs rulesync 41 or later. Older releases add a `name:` field that makes OpenCode 2.1.3 drop every agent permission without warning. ZAP, ReVa, radare2, FreeCAD, Presenton, Podman and codebase-memory are written switched off. REA isn't installed globally because it starts switched on; use it in a folder made with the [`reverse_engineering` group](../groups/README.md#reverse_engineering).
+It needs rulesync 41 or later. Older releases add a `name:` field that makes OpenCode 2.1.3 drop every agent permission without warning. ZAP, FreeCAD, Presenton, Podman and codebase-memory are written switched off.
 
-Other groups install agents with their sets: `infosec` and `work` include `agents/security`, so they also get the `security` agent; `reverse_engineering` gets the `reverse-engineering` agent. `work` and `writing_reporting` also include `second-opinion`, and `work` includes `local-model`. The `design`, `career`, `ai-research`, `3d-modeling`, `build`, `plan`, `general` and `explore` folders are in `default` only, and are never part of the `fcos_app_installer` group.
+The `career`, `ai-research` and `reverse-engineering` agents install whole with their folder groups (`career`, `ai_research`, `reverse_engineering`), skills and, for reverse engineering, REA, ReVa and radare2 included. Start OpenCode in that folder to pick the agent. The global `build`, `plan` and `general` files still deny those skills, so inside the folder only the owning agent loads them.
+
+Other groups install agents with their sets: `infosec` and `work` include `agents/security`, so they also get the `security` agent. `work` and `writing_reporting` also include `second-opinion`, and `work` includes `local-model`. The `design`, `3d-modeling`, `build`, `plan`, `general` and `explore` folders are in `default` only, and none of the per-agent folders is part of the `fcos_app_installer` group.
 
 ## Use
 
-- OpenCode: pick an agent with `/agents`, or ask `build` to hand a task to one: "have the career agent tailor my resume for this posting". `general`, `explore` and the helper agents are subagents: other agents start them, and they don't appear in the picker. Claude Code: `claude --agent design`, or ask for the agent by name. Codex, Copilot and Cursor: use each tool's agent picker or ask for it by name.
+- OpenCode: pick an agent with `/agents`, or ask `build` to hand a task to one: "have the security agent review this change". `general`, `explore` and the helper agents are subagents: other agents start them, and they don't appear in the picker. Claude Code: `claude --agent design`, or ask for the agent by name. Codex, Copilot and Cursor: use each tool's agent picker or ask for it by name.
 - Start your tool in the folder whose files you want used. The career skills keep records relative to it, and the design skills read `.agents/design-context.md` from it.
 - In OpenCode an agent can't load a skill it doesn't list. The global routing rule tells it to hand the task to the owning agent instead of substituting another skill.
 
@@ -110,7 +112,7 @@ The tests fail when the image is out of date, so forgetting shows up there. To p
 
 ### Install
 
-Use the `default` group as above. Don't add the per-agent folders (`build`, `plan`, `general`, `explore`, `design`, `career`, `ai-research`, `3d-modeling`) to other groups: `work` also targets Copilot, which can't filter skills. To verify in OpenCode, ask the user to open `/agents` in a new session and check that the six specialists, `build`, `plan`, `second-opinion` and `local-model` appear, then run [the runtime check](../tests/README.md#opencode-permission-regression) instead of asking a model which skills it has. For other tools, the runtime check only confirms the generated files.
+Use the `default` group as above, plus the `ai_research`, `career` or `reverse_engineering` folder group for those agents. Don't add the per-agent folders (`build`, `plan`, `general`, `explore`, `design`, `3d-modeling`) to other groups, nor `career` and `ai-research` to any group but their own: `work` also targets Copilot, which can't filter skills. To verify in OpenCode, ask the user to open `/agents` in a new session and check that `design`, `security`, `3d-modeling`, `build`, `plan`, `second-opinion` and `local-model` appear (and, inside a folder group's folder, its agent), then run [the runtime check](../tests/README.md#opencode-permission-regression) instead of asking a model which skills it has. For other tools, the runtime check only confirms the generated files.
 
 ### Remove
 

@@ -6,7 +6,7 @@ One agent file for every tool. In OpenCode it can use only its own skills (skill
 
 ## Install
 
-Part of the [`default` group](../../groups/README.md#default), which also installs its skills. For another tool, add `--targets`; see [what each assistant enforces](../README.md#what-each-assistant-enforces) for why the skills are better installed with their folder group there.
+Part of the [`ai_research` folder group](../../groups/README.md#ai_research), which also installs its skills; it isn't in `default`. Start OpenCode in that folder and pick `ai-research`. For another tool, add `--targets`; see [what each assistant enforces](../README.md#what-each-assistant-enforces) for what each one filters.
 
 ## Use
 

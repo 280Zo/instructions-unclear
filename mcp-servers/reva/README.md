@@ -31,7 +31,7 @@ Do not also install ReVa's native Claude plugin with these same skills. Do not c
 
 ### Install
 
-This is a folder profile, also in the [reverse-engineering group](../../groups/README.md#reverse_engineering); use the command in [Install and activate](#install-and-activate) and never `--global`. OpenCode's `default` group also installs it, switched off, where only the [`reverse-engineering` agent](../../agents/reverse-engineering/) may use its tools. The `reva` connection is written switched off. Ghidra, the matching ReVa extension and, for scripting, PyGhidra are prerequisites rulesync doesn't install (see [Tools you need](#tools-you-need)).
+This is a folder profile, also in the [reverse-engineering group](../../groups/README.md#reverse_engineering); use the command in [Install and activate](#install-and-activate) and never `--global`. `default` doesn't include it; in OpenCode, only the [`reverse-engineering` agent](../../agents/reverse-engineering/) may use its tools. The `reva` connection is written switched off. Ghidra, the matching ReVa extension and, for scripting, PyGhidra are prerequisites rulesync doesn't install (see [Tools you need](#tools-you-need)).
 
 Follow the [shared backend installation procedure](../../agents/reverse-engineering/README.md#for-agents-installing-and-verifying-backends). Ask whether ordinary project access or PyGhidra scripting is required; do not install the scripting stack for an ordinary read-only check.
 

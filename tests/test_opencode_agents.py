@@ -18,12 +18,16 @@ BUILTINS = {"build": "primary", "plan": "primary", "general": "subagent", "explo
 SPECIALISTS = ["design", "career", "ai-research", "security", "reverse-engineering", "3d-modeling"]
 # Agents that have a folder of their own; security and reverse-engineering join their sets.
 OWN_FOLDERS = [*BUILTINS, "design", "career", "ai-research", "3d-modeling"]
+# Specialist sets that install whole from their folder group, agent included, not with default.
+FOLDER_AGENTS = {"ai_research": "ai-research", "career": "career", "reverse_engineering": "reverse-engineering"}
+MOVED_ROOTS = {
+    "agents/ai-research", "skills/ai-research",
+    "agents/career", "skills/career-workspace", "skills/resume-skills", "skills/interview-coach",
+    "agents/reverse-engineering", "mcp-servers/reva", "mcp-servers/radare2",
+}
 GLOBAL_ROOTS = {
-    *(f"agents/{n}" for n in OWN_FOLDERS), "agents/security", "agents/reverse-engineering",
-    "skills/designskills", "skills/resume-skills", "skills/interview-coach",
-    "skills/career-workspace", "skills/ai-research", "skills/security-threat-model",
-    "skills/security-audit",
-    "mcp-servers/reva", "mcp-servers/radare2", "mcp-servers/zap",
+    *(f"agents/{n}" for n in OWN_FOLDERS if n not in FOLDER_AGENTS.values()), "agents/security",
+    "skills/designskills", "skills/security-threat-model", "skills/security-audit", "mcp-servers/zap",
 }
 
 
@@ -124,8 +128,9 @@ class AgentTests(unittest.TestCase):
             available |= set(generate.BUNDLES[key])
         # REA is folder-only, so its skill may be absent.
         available.add("reverse-engineer-anything")
-        # permission-tuning installs only with the ai_research folder group.
-        available |= set(generate.BUNDLES["permission-tuning"])
+        # permission-tuning and the moved specialist sets install only with their folder groups.
+        for bundle in ["permission-tuning", "ai-research", "career", "reverse-engineering"]:
+            available |= set(generate.BUNDLES[bundle])
         for spec in generate.agent_specs().values():
             for bundle in spec.get("bundles", []):
                 for skill in generate.BUNDLES[bundle]:
@@ -211,14 +216,56 @@ class AgentTests(unittest.TestCase):
         duplicates = {k: v for k, v in default_skill_ids().items() if len(v) > 1}
         self.assertEqual(duplicates, {})
 
+    def test_folder_sets_leave_default(self):
+        default = set(read_jsonc(ROOT / "groups/default.jsonc")["inputRoots"])
+        self.assertFalse(MOVED_ROOTS & default, MOVED_ROOTS & default)
+        installed = set(default_skill_ids())
+        for group, agent in FOLDER_AGENTS.items():
+            config = read_jsonc(ROOT / f"groups/{group}.jsonc")
+            self.assertEqual(config["inputRoots"][0], f"agents/{agent}", group)
+            self.assertIn("subagents", config["features"], group)
+            # The agent's shared bundles (report, documents, humanizer, visuals) still come from default.
+            for bundle in generate.SPECIALISTS[agent]["bundles"]:
+                if bundle in generate.FOLDER_ONLY_BUNDLES or bundle in generate.NATIVE_PLUGINS:
+                    continue
+                self.assertTrue(set(generate.BUNDLES[bundle]) <= installed, (agent, bundle))
+        moved = {r for r in MOVED_ROOTS if not r.startswith("agents/")}
+        grouped = {r for g in FOLDER_AGENTS for r in read_jsonc(ROOT / f"groups/{g}.jsonc")["inputRoots"]}
+        self.assertTrue(moved <= grouped, moved - grouped)
+
+    def test_moved_bundles_show_as_folder_groups(self):
+        data = generate.map_data()
+        for group, agent in FOLDER_AGENTS.items():
+            bundle = generate.BUNDLES[agent]
+            entry = next(g for g in data["skills"] if g["title"].startswith(generate.BUNDLE_TITLES[agent]))
+            self.assertIn(f"folder group {group}, not default", entry["title"])
+            self.assertEqual(sorted(entry["items"]), sorted(bundle))
+            self.assertEqual(entry["agents"], [agent])
+        for name in BUILTINS:
+            head, _ = frontmatter(agent_file(name))
+            for skill in ["vllm", "resume-tailor", "binary-triage"]:
+                self.assertIn(f'{{action: "skill", resource: "{skill}", effect: deny}}', head, name)
+
+    def test_folder_cards_count_their_folder_group(self):
+        svg = ET.parse(ROOT / generate.HERO_FILES["light"]).getroot()
+        desc = svg.find("{http://www.w3.org/2000/svg}desc").text
+        counts = {m[1]: int(m[2]) for m in re.finditer(r"(?:: |, )([a-z0-9/ -]+?) \((\d+)\)", desc)}
+        self.assertGreaterEqual(counts["ai-research"], 98)
+        self.assertGreaterEqual(counts["career"], 30)
+        labels = [t.text for t in svg.iter("{http://www.w3.org/2000/svg}text")]
+        self.assertEqual(labels.count("FOLDER"), len(FOLDER_AGENTS))
+        self.assertEqual(labels.count("+ folder group"), len(FOLDER_AGENTS))
+
     def test_other_groups_keep_their_agents(self):
-        # Only default gets the per-agent folders.
+        # Only default gets the per-agent folders, except the sets that install with their folder group.
         # The security and reverse-engineering agents travel with their sets.
         for group in ROOT.glob("groups/*.jsonc"):
             if group.stem == "default":
                 continue
             roots = read_jsonc(group)["inputRoots"]
             for name in OWN_FOLDERS:
+                if FOLDER_AGENTS.get(group.stem) == name:
+                    continue
                 self.assertNotIn(f"agents/{name}", roots, group.stem)
         for group, folder in [("work", "security"), ("infosec", "security"),
                               ("reverse_engineering", "reverse-engineering")]:

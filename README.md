@@ -107,16 +107,16 @@ Then test functionality individually:
 
 ### Optional: folder groups
 
-`default` installs every agent and its skills into your home folder. Whether you also need the folder groups (`infosec`, `ai_research`, `career`, `reverse_engineering`, `design`) depends on your assistant.
+`default` installs the everyday agents and their skills into your home folder. The AI research, career and reverse-engineering agents and skills install only with their folder groups (`ai_research`, `career`, `reverse_engineering`); start OpenCode in that folder to use them.
 
-OpenCode filters skills per agent, so each agent already loads only its own and you don't need folder groups. Use one only for a separate workspace, or for REA, which installs only with `reverse_engineering`.
+OpenCode filters skills per agent, so the design and security agents in `default` already load only their own skills, and you don't need the `design` or `infosec` folder groups for OpenCode. Use them for a separate workspace or another assistant.
 
 Claude Code, Codex, Copilot, Cursor and most other assistants show every installed skill to every agent. For those, install the specialist skills with a folder group and start your assistant in that folder when you need them. Adding them to `default` with `--targets` would load every specialist skill in every session; `work` and `writing_reporting` are smaller home-folder selections. [What each assistant enforces](agents/README.md#what-each-assistant-enforces) has the details.
 
 Generate only the groups you want, into folders you choose. Add `--targets` for assistants other than OpenCode:
 
 ```sh
-for profile in career design
+for profile in ai_research career reverse_engineering
     mkdir -p "$HOME/AI/$profile"
     or break
 
@@ -163,7 +163,7 @@ The secure-coding rule ships inside [`agents/security`](agents/security/).
 
 | Folder                                            | Adds                                                                                                                                                                     |
 | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [`agents/design`](agents/design/), [`career`](agents/career/), [`ai-research`](agents/ai-research/), [`3d-modeling`](agents/3d-modeling/) | One agent each, for every assistant; in OpenCode each sees only its own skills and MCP tools ([how](agents/README.md#how-agents-keep-skills-out-of-each-others-requests)) |
+| [`agents/design`](agents/design/), [`career`](agents/career/), [`ai-research`](agents/ai-research/), [`3d-modeling`](agents/3d-modeling/) | One agent each, for every assistant; in OpenCode each sees only its own skills and MCP tools ([how](agents/README.md#how-agents-keep-skills-out-of-each-others-requests)). `career` and `ai-research` install with their folder groups |
 | [`agents/build`](agents/build/), [`plan`](agents/plan/), [`general`](agents/general/), [`explore`](agents/explore/) | Restrictions for OpenCode's own agents of these names, so they don't see the specialist skills |
 | [`agents/second-opinion`](agents/second-opinion/) | `second-opinion` reviews how the session is going; `evaluator` and `metacognitive` check answers and reasoning                                                           |
 | [`agents/local-model`](agents/local-model/)       | Small working turns, scoped delegation and safe pause/resume handoffs for local models or fragile connections                                                            |
@@ -217,16 +217,16 @@ The secure-coding rule ships inside [`agents/security`](agents/security/).
 | [`skills/handoff`](skills/handoff/)                             | `/handoff`: a handoff document so a fresh session can pick up the work                                                                                                  |
 | [`skills/teach`](skills/teach/)                                 | `/teach`: a course over several sessions, kept in a teaching workspace folder                                                                                           |
 | [`skills/wait-what`](skills/wait-what/)                         | `/wait-what`: re-pitches the agent's last message more simply, with the missing context                                                                                 |
-| [`skills/resume-skills`](skills/resume-skills/)                 | 22 skills for resumes, cover letters, applications, interviews and offers. Career group; in OpenCode's default install, `career` agent only                              |
-| [`skills/interview-coach`](skills/interview-coach/)             | `interview-coach`: interview prep, mock interviews, debriefs and a storybank, with scoring. Career group; in OpenCode's default install, `career` agent only               |
-| [`skills/career-workspace`](skills/career-workspace/)           | 7 skills that file career records, set yearly goals, keep a work log and write performance and promotion reviews from it, build a master resume and official work history, and start a reviewed application with `career-start-application`. Career group; in OpenCode's default install, `career` agent only |
+| [`skills/resume-skills`](skills/resume-skills/)                 | 22 skills for resumes, cover letters, applications, interviews and offers. Career group only; `career` agent only                                                        |
+| [`skills/interview-coach`](skills/interview-coach/)             | `interview-coach`: interview prep, mock interviews, debriefs and a storybank, with scoring. Career group only; `career` agent only                                         |
+| [`skills/career-workspace`](skills/career-workspace/)           | 7 skills that file career records, set yearly goals, keep a work log and write performance and promotion reviews from it, build a master resume and official work history, and start a reviewed application with `career-start-application`. Career group only; `career` agent only |
 
 </details>
 
 <details>
 <summary>Profiles: sets that load only in a folder you choose</summary>
 
-A profile installs into one folder instead of your home folder, keeping specialist context separate from your normal setup. Start your coding tool there to load it; discovery and context costs depend on the assistant. In OpenCode, `default` also installs all of these except REA and the FCOS app installer globally, where only the matching [agent](agents/README.md) loads them.
+A profile installs into one folder instead of your home folder, keeping specialist context separate from your normal setup. Start your coding tool there to load it; discovery and context costs depend on the assistant. In OpenCode, `default` also installs the design skills and ZAP globally, where only the matching [agent](agents/README.md) loads them; the AI research, career, REA, ReVa, radare2 and FCOS app installer sets install only with their folder groups.
 
 | Folder                                                      | Adds                                                                                            |
 | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
@@ -372,8 +372,8 @@ Saved selections, so you don't have to list folders. [`groups/README.md`](groups
 | `work`                | OpenCode, Copilot and Copilot CLI on a work machine                                                                                           |
 | `writing_reporting`   | Writing, reports and visuals, without touching MCP settings                                                                                   |
 | `infosec`             | Security rule/agents, 12 security and utility skills and a disabled ZAP connection, in a folder you choose; native plugins install separately |
-| `ai_research`         | AI research skills, plus the permission-tuning skill and its shell-habits rule, in a folder you choose                                        |
-| `career`              | Career skills in a folder you choose; the `career` agent comes with `default`                                                                 |
+| `ai_research`         | The `ai-research` agent and AI research skills, plus the permission-tuning skill and its shell-habits rule, in a folder you choose           |
+| `career`              | The `career` agent and career skills, in a folder you choose                                                                                  |
 | `reverse_engineering` | REA, the `reverse-engineering` agent and its helpers, and disabled ReVa/radare2 connections, in a folder you choose; IoTHackBot is native-owned                                      |
 | `design`              | Design skills for graphics, UI, palettes and brand, in a folder you choose                                                                    |
 | `fcos_app_installer`  | The FCOS app installer agent, helper, command, 8 skills and 3 rules, in a folder of its own; run `install.py` first                           |

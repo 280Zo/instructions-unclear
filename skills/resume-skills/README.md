@@ -11,7 +11,7 @@ mkdir -p ~/AI/career
 npx rulesync@43.12.0 generate --targets opencode --features skills --input-roots skills/resume-skills --output-roots ~/AI/career
 ```
 
-Swap `--targets` for your tools. Never add `--global` to the command above. In OpenCode, `default` installs them globally for the [`career` agent](../../agents/career/), the only agent that loads them.
+Swap `--targets` for your tools. Never add `--global` to the command above. The [`career` group](../../groups/README.md#career) installs them with the [`career` agent](../../agents/career/), the only OpenCode agent that loads them; `default` doesn't include them.
 
 ## Use
 

@@ -8,9 +8,9 @@ Saved selections, so you don't have to name every folder. Run every command from
 | [`work`](#work) | Your home folder, OpenCode, Copilot and Copilot CLI | Rules, agents, MCP servers and writing skills for a work machine |
 | [`writing_reporting`](#writing_reporting) | Your home folder, OpenCode | Rules plus writing, report and visual skills, without touching MCP settings |
 | [`infosec`](#infosec) | A folder you choose | The security bundle (rule, 3 agents, 4 commands), 12 security and utility skills and disabled ZAP MCP; native security plugins install separately |
-| [`ai_research`](#ai_research) | A folder you choose | 98 AI research skills, the `permission-tuning` skill and its shell-habits rule |
-| [`career`](#career) | A folder you choose | 22 career skills, the interview coach, 7 career-workspace skills (including the application starter and the goal setting, work log and review set) and humanizer. The `career` agent comes with `default` |
-| [`reverse_engineering`](#reverse_engineering) | A folder you choose | REA, RE agents and disabled ReVa/radare2 MCPs; IoTHackBot is native-owned |
+| [`ai_research`](#ai_research) | A folder you choose | The `ai-research` agent, 98 AI research skills, the `permission-tuning` skill and its shell-habits rule |
+| [`career`](#career) | A folder you choose | The `career` agent, 22 career skills, the interview coach, 7 career-workspace skills (including the application starter and the goal setting, work log and review set) and humanizer |
+| [`reverse_engineering`](#reverse_engineering) | A folder you choose | REA, the `reverse-engineering` agent and its helpers, and disabled ReVa/radare2 MCPs; IoTHackBot is native-owned |
 | [`design`](#design) | A folder you choose | 19 design skills (graphics, brand, palettes, typography, design systems, critique) plus `anatomy` |
 | [`fcos_app_installer`](#fcos_app_installer) | A folder you choose | The FCOS app installer agent and its helper, the `/add-service` command, 8 skills and 3 rules; `install.py` places the toolkit's own files |
 
@@ -28,9 +28,11 @@ Context generation does not install native analysis tools or authorize target op
 
 ## default
 
-Everything in [`rulesync.jsonc`](../rulesync.jsonc), into OpenCode: all selected global rules (including `routing`, the career routing rule and `preferences`), every [agent folder](../agents/README.md) (`design`, `career`, `ai-research`, `3d-modeling`, `second-opinion`, `local-model`, the `security` and `reverse-engineering` sets, and restrictions for OpenCode's `build`, `plan`, `general` and `explore`), the repo-owned [`agents/security`](../agents/security/) bundle, and the selected global MCP servers/skills.
+Everything in [`rulesync.jsonc`](../rulesync.jsonc), into OpenCode: all selected global rules (including `routing` and `preferences`), the `design`, `3d-modeling`, `second-opinion` and `local-model` [agents](../agents/README.md), the `security` set, restrictions for OpenCode's `build`, `plan`, `general` and `explore`, the repo-owned [`agents/security`](../agents/security/) bundle, and the selected global MCP servers/skills. That's 55 skills.
 
-`default` also installs the design, career, AI research, threat-model and reverse-engineering skills, plus switched-off ZAP, ReVa and radare2 connections. Each OpenCode agent loads only its own skills and tools, so these add nothing to the other agents' requests. REA stays in the `reverse_engineering` folder group because it starts switched on. The folder groups below still work for other tools and workspaces.
+`default` also installs the design and threat-model skills, plus a switched-off ZAP connection. Each OpenCode agent loads only its own skills and tools, so these add nothing to the other agents' requests.
+
+The AI research, career and reverse-engineering sets aren't in `default`: they're specialist, and together they are 138 skills. Each installs whole, agent included, with its folder group ([`ai_research`](#ai_research), [`career`](#career), [`reverse_engineering`](#reverse_engineering)). Start OpenCode in that folder to use the agent. There it still has the shared skills it lists from `default`, and `build`, `plan` and `general` keep denying its specialist skills. To have one of these sets everywhere, add its folders to your `rulesync.local.jsonc`. If an older `default` installed them, regenerating leaves them in place (`delete: false`): with approval, delete the `ai-research`, `career`, `reverse-engineering`, `reverse-engineer`, `malware-analyst` and `firmware-analyst` agents and those folders' skills from your home install.
 
 `documents` is included, and so are `handoff`, `teach` and `wait-what` (user-invoked only), Docker's 4 core skills ([`skills/docker`](../skills/docker/)) and the [Podman MCP](../mcp-servers/podman/), switched off. Docker's Sandboxes and Docker Agent skills are in `work` only. `security-threat-model` and Cloudflare's [`security-audit`](../skills/security-audit/) are included, and only the `security` agent can load them.
 
@@ -125,7 +127,7 @@ npx rulesync@43.12.0 generate --config groups/infosec.jsonc --output-roots ~/AI/
 
 ## ai_research
 
-The 98 skills from [`skills/ai-research`](../skills/ai-research/), plus the [`permission-tuning`](../skills/permission-tuning/) skill and its shell-habits rule. That's 99 skills and 1 rule. `default` also installs the 98 for the OpenCode [`ai-research` agent](../agents/ai-research/), the only agent that sees them; use this group for other tools.
+The OpenCode [`ai-research` agent](../agents/ai-research/), the 98 skills from [`skills/ai-research`](../skills/ai-research/), plus the [`permission-tuning`](../skills/permission-tuning/) skill and its shell-habits rule. That's 1 agent, 99 skills and 1 rule. `default` doesn't include any of them: start OpenCode in this folder and pick `ai-research`, the only agent that sees the 98.
 
 The rule lands in the folder's own `AGENTS.md`, replacing any `AGENTS.md` already there, so it applies only when you start your tool in this folder. `default`, `work` and `writing_reporting` don't include `permission-tuning`, so your global instructions file doesn't get the shell habits. In OpenCode, the `ai-research` agent and the `build` family can load the skill.
 
@@ -136,7 +138,7 @@ npx rulesync@43.12.0 generate --config groups/ai_research.jsonc --output-roots ~
 
 ## career
 
-The 22 skills from [`skills/resume-skills`](../skills/resume-skills/), from [Paramchoudhary/ResumeSkills](https://github.com/Paramchoudhary/ResumeSkills), and [`interview-coach`](../skills/interview-coach/), from [noamseg/interview-coach-skill](https://github.com/noamseg/interview-coach-skill), and the 7 [`career-workspace`](../skills/career-workspace/) skills, written for this repo, that keep career records, set yearly goals, keep a work log and write performance and promotion reviews from it, build a master resume and official work history, and start a reviewed application. Say “Use career-start-application” to load the workflow and supply a job link when asked; no copied kickoff prompt is needed. [`humanizer`](../skills/humanizer/) is included because `performance-review` runs it on the final text. The [career-workspace README](../skills/career-workspace/README.md#workflow) shows how all of these fit together. That's 31 skills. The group also writes the career routing rule (which skill owns each step) into the folder's own `AGENTS.md`. In OpenCode, `default` installs these skills globally for the [`career` agent](../agents/career/); use this group for other tools, or start OpenCode in a career folder either way, because the skills keep records relative to it. Document export also needs an installed document-authoring skill and its tools; the career group does not install them.
+The OpenCode [`career` agent](../agents/career/), the 22 skills from [`skills/resume-skills`](../skills/resume-skills/), from [Paramchoudhary/ResumeSkills](https://github.com/Paramchoudhary/ResumeSkills), and [`interview-coach`](../skills/interview-coach/), from [noamseg/interview-coach-skill](https://github.com/noamseg/interview-coach-skill), and the 7 [`career-workspace`](../skills/career-workspace/) skills, written for this repo, that keep career records, set yearly goals, keep a work log and write performance and promotion reviews from it, build a master resume and official work history, and start a reviewed application. Say “Use career-start-application” to load the workflow and supply a job link when asked; no copied kickoff prompt is needed. [`humanizer`](../skills/humanizer/) is included because `performance-review` runs it on the final text. The [career-workspace README](../skills/career-workspace/README.md#workflow) shows how all of these fit together. That's 1 agent and 31 skills. The group also writes the career routing rule (which skill owns each step) into the folder's own `AGENTS.md`. `default` doesn't include any of them: start OpenCode in this folder and pick `career`. The skills keep records relative to it. Document export also needs an installed document-authoring skill and its tools; the career group does not install them.
 
 ```bash
 mkdir -p ~/AI/career
@@ -147,7 +149,7 @@ npx rulesync@43.12.0 generate --config groups/career.jsonc --output-roots ~/AI/c
 
 The [REA](../mcp-servers/rea/) MCP/skill, [reverse-engineering agents](../agents/reverse-engineering/), and optional [ReVa](../mcp-servers/reva/) and [radare2](../mcp-servers/radare2/) connections. That's 11 skills, 4 agents (pick `reverse-engineering`; the other three are its helpers) and 3 MCP definitions: REA retains its existing enabled state; ReVa/radare2 are disabled until explicitly configured. ReVa's 6 companion skills can be discovered before its backend is enabled; they do not start it. [IoTHackBot](../skills/iothackbot/) is now installed through its native plugin separately, not generated here.
 
-`default` installs everything here except REA for the OpenCode [`reverse-engineering` agent](../agents/reverse-engineering/). REA's connection starts switched on, so it stays in this group; start OpenCode in the group's folder to use it. All component READMEs list prerequisites. Prefer REA for broad analysis; enable ReVa for shared Ghidra projects or radare2 for r2-specific work. Don't install their native skill plugins again alongside these same skills.
+`default` doesn't include any of this: start OpenCode in the group's folder and pick the [`reverse-engineering` agent](../agents/reverse-engineering/). All component READMEs list prerequisites. Prefer REA for broad analysis; enable ReVa for shared Ghidra projects or radare2 for r2-specific work. Don't install their native skill plugins again alongside these same skills.
 
 ```bash
 mkdir -p ~/AI/reverse_engineering

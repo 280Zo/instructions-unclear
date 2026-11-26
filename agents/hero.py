@@ -98,7 +98,7 @@ def render(theme, agents, total_skills, mcp_count, shared, note):
     # Agent cards.
     for (name, kind, count, tag), cx in zip(agents, centers):
         x = cx - CARD_W // 2
-        bar = max(4, round(96 * count / total_skills / 4) * 4)
+        bar = min(96, max(4, round(96 * count / total_skills / 4) * 4))
         out.append(f'<rect x="{x}" y="{CARD_Y}" width="{CARD_W}" height="{CARD_H}" rx="6" fill="{t["card"]}" stroke="{t["border"]}" stroke-width="1"/>')
         out.append(text(x + 12, CARD_Y + 20, kind.upper(), 8, t["soft"], MONO, 500, spacing="0.16em"))
         for j, line in enumerate(name_lines(name)):
@@ -106,7 +106,8 @@ def render(theme, agents, total_skills, mcp_count, shared, note):
         out.append(text(x + 12, CARD_Y + 104, str(count), 44, t["ink"], SERIF))
         out.append(f'<rect x="{x + 12}" y="{CARD_Y + 112}" width="96" height="4" rx="2" fill="{t["rule"]}"/>')
         out.append(f'<rect x="{x + 12}" y="{CARD_Y + 112}" width="{bar}" height="4" rx="2" fill="{t["muted"]}"/>')
-        out.append(text(x + 12, CARD_Y + 132, f"of {total_skills} skills", 9, t["muted"], MONO))
+        caption = "+ folder group" if kind == "folder" else f"of {total_skills} skills"
+        out.append(text(x + 12, CARD_Y + 132, caption, 9, t["muted"], MONO))
         out.append(text(x + 12, CARD_Y + 148, tag, 9, t["soft"], MONO))
 
     # Tool strip.

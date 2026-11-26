@@ -466,7 +466,7 @@ class GroupTests(unittest.TestCase):
 
     def test_the_root_readme_says_default_leaves_out_the_installer(self):
         text = " ".join((ROOT / "README.md").read_text().split())
-        self.assertIn("except REA and the FCOS app installer", text)
+        self.assertIn("career, REA, ReVa, radare2 and FCOS app installer sets install only with their folder groups", text)
 
     def test_agents_md_explains_how_to_add_a_service_module(self):
         text = " ".join((ROOT / "AGENTS.md").read_text().split())

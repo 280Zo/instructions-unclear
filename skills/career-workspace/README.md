@@ -73,7 +73,7 @@ npx rulesync@43.12.0 generate --targets opencode --features skills --input-roots
 
 Never add `--global` to this command: the skills read paths relative to the folder you start your tool in. The workflow also needs [`resume-skills`](../resume-skills/), [`interview-coach`](../interview-coach/) and [`humanizer`](../humanizer/); the `career` group installs all four folders.
 
-In OpenCode, the `default` group installs all four folders and the career routing rule globally for the [`career` agent](../../agents/career/), the only agent that loads these skills. Start OpenCode in your career folder so records land there.
+In OpenCode, the `career` group installs all four folders, the career routing rule and the [`career` agent](../../agents/career/), the only agent that loads these skills; `default` doesn't include them. Start OpenCode in your career folder so records land there.
 
 ## Workspace layout
 
@@ -118,7 +118,7 @@ Intake reads documents with Docling when it's available. If an interview or offe
 
 ### Install
 
-- For tools other than OpenCode, this folder installs into a career folder, never the home folder. The [`career` group](../../groups/README.md#career) installs it with `resume-skills`, `interview-coach` and `humanizer`, run with `--output-roots` into a folder the user picks (suggest `~/AI/career`). Never add `--global` to that command. OpenCode's `default` group installs it globally behind the `career` agent's permissions; the user still starts OpenCode in the career folder.
+- This folder installs into a career folder, never the home folder. The [`career` group](../../groups/README.md#career) installs it with the `career` agent, `resume-skills`, `interview-coach` and `humanizer`, run with `--output-roots` into a folder the user picks (suggest `~/AI/career`). Never add `--global` to that command. `default` doesn't include it; the user starts OpenCode in the career folder.
 - The single-folder command under [Install](#install) uses `--features skills`, so it skips `rules/career-routing.md`. The workflow still needs `resume-skills`, `interview-coach` and `humanizer`, so prefer the group.
 - Docling is optional; intake uses it for documents when it's available. Document export in stage 4 relies on document skills and their own runtimes, which rulesync doesn't install.
 - To verify, start the tool in the career folder and confirm the skills list includes `career-intake` and `career-start-application`, and that the folder's `AGENTS.md` contains the career routing rule. Don't run intake as a test unless the user wants the workspace folders created.

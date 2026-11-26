@@ -4,7 +4,7 @@
 
 From this repo it's a **profile**: it lives in one folder you choose. All 98 descriptions together add about 7,000 tokens to every request, so they load only when you start your tool in that folder.
 
-In OpenCode, the `default` group also installs all 98 globally for the [`ai-research` agent](../../agents/ai-research/). Only that agent loads them, so other agents' requests don't include them.
+The [`ai_research` group](../../groups/README.md#ai_research) installs them with the [`ai-research` agent](../../agents/ai-research/), the only OpenCode agent that loads them. `default` doesn't include them.
 
 ## Install
 
@@ -39,7 +39,7 @@ Some skills install Python packages or use cloud GPUs (Modal, Lambda Labs, SkyPi
 
 ### Install
 
-- This folder is a profile. The [`ai_research` group](../../groups/README.md#ai_research) installs it, and so does the command under [Install](#install) above, run with `--output-roots` into a folder the user picks (suggest `~/research` or `~/AI/ai_research`). Never add `--global`. The `default` group installs it globally only alongside the filtering [specialist agents](../../agents/README.md).
+- This folder is a profile. The [`ai_research` group](../../groups/README.md#ai_research) installs it, and so does the command under [Install](#install) above, run with `--output-roots` into a folder the user picks (suggest `~/research` or `~/AI/ai_research`). Never add `--global`. The `default` group doesn't include it.
 - This profile installs skills only, with no rules and no MCP servers. The `ai_research` group adds one more folder, [`skills/permission-tuning`](../permission-tuning/), and with it the folder's own `AGENTS.md` holding the shell-habits rule. Python packages, GPUs and cloud accounts are not installed; each skill asks for what it needs when used.
 - To verify, start the tool in that folder and confirm the skills list includes `autoresearch` and `serving-llms-vllm`. Don't run training, serving or cloud jobs as a test.
 

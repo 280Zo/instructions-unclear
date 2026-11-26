@@ -1,9 +1,9 @@
 {
   "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
-  // Folder-scoped: the 22 career skills, the interview coach, the 7 career-workspace skills and humanizer (which performance-review needs), plus a career agent once one is added.
+  // Folder-scoped: the career agent, the 22 career skills, the interview coach, the 7 career-workspace skills and humanizer (which performance-review needs). Not part of default.
   // Run from the repo root with --output-roots <folder>. Never run this with --global.
   "targets": ["opencode"],
   "features": ["rules", "skills", "subagents"],
   "delete": false,
-  "inputRoots": ["skills/resume-skills", "skills/interview-coach", "skills/career-workspace", "skills/humanizer"]
+  "inputRoots": ["agents/career", "skills/resume-skills", "skills/interview-coach", "skills/career-workspace", "skills/humanizer"]
 }

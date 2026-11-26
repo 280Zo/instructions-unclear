@@ -122,14 +122,15 @@ BUNDLE_TITLES = {
     "browser": "Browser and screenshots", "secure-coding": "Secure coding and SAST",
     "threat": "Threat modeling and photo geolocation", "audit": "Codebase security audits",
     "design": "Design skills",
-    "career": "Career skills", "ai-research": "AI research skills",
+    "career": "Career skills (folder group career, not default)",
+    "ai-research": "AI research skills (folder group ai_research, not default)",
     "permission-tuning": "Permission tuning (folder group ai_research, not default)",
-    "reverse-engineering": "Reverse-engineering skills",
+    "reverse-engineering": "Reverse-engineering skills (folder group reverse_engineering, not default)",
     "fcos": "FCOS app installer skills (folder group fcos_app_installer, not default)",
     **{key: f"{plugin['title']} (native plugin, installed separately)" for key, plugin in NATIVE_PLUGINS.items()},
 }
 # Bundles no group but their own folder group installs: shown whole on the map.
-FOLDER_ONLY_BUNDLES = ["fcos", "permission-tuning"]
+FOLDER_ONLY_BUNDLES = ["fcos", "permission-tuning", "ai-research", "career", "reverse-engineering"]
 # Only build-family agents see everything else; these stay with their specialist.
 SPECIALIST_BUNDLES = ["design", "career", "ai-research", "threat", "audit", "reverse-engineering", "fcos", *NATIVE_PLUGINS]
 
@@ -413,10 +414,10 @@ def map_data():
 HERO_AGENTS = [  # (map name, card label, one-line focus)
     ("build / plan", "default", "everyday coding"),
     ("design", "specialist", "brand, UI, slides"),
-    ("career", "specialist", "resumes · jobs"),
-    ("ai-research", "specialist", "train · eval · RAG"),
+    ("career", "folder", "resumes · jobs"),
+    ("ai-research", "folder", "train · eval · RAG"),
     ("security", "specialist", "audits · ZAP"),
-    ("reverse-engineering", "specialist", "Ghidra · radare2"),
+    ("reverse-engineering", "folder", "Ghidra · radare2"),
     ("3d-modeling", "specialist", "FreeCAD parts"),
     ("second-opinion", "workflow", "session review"),
     ("local-model", "workflow", "small, safe steps"),
@@ -425,16 +426,19 @@ HERO_FILES = {"light": "docs/hero-light.svg", "dark": "docs/hero-dark.svg"}
 
 
 def hero_svgs():
-    """Skill counts are what the model sees: user-invoked skills are hidden from it."""
+    """Skill counts are what the model sees: user-invoked skills are hidden from it.
+
+    A "folder" card counts the default install plus its own folder group's skills."""
     installed = default_skills()
     visible = (installed | set(SHARED)) - set(USER_INVOKED)
-    agents = [(name, kind, len(allowed_skills(spec_of(name), installed) & visible), tag)
+    folder = {s for b in FOLDER_ONLY_BUNDLES for s in BUNDLES[b]}
+    agents = [(name, kind, len(allowed_skills(spec_of(name), installed) & (visible | folder if kind == "folder" else visible)), tag)
               for name, kind, tag in HERO_AGENTS]
     shared = "Superpowers, search, package-management · Exa, PMB"
     owners = {key: name for name, spec in SPECIALISTS.items() for key in spec["bundles"] if key in NATIVE_PLUGINS}
     plugins = ", ".join(f"{plugin['title']} ({len(BUNDLES[key])} skills, {owners[key]} agent)"
                         for key, plugin in NATIVE_PLUGINS.items())
-    note = f"Counts cover the default group. Installed separately as native plugins: {plugins}."
+    note = f"Folder cards add their group. Plugins installed separately: {plugins}."
     return {path: hero.render(theme, agents, len(visible), len(MCP), shared, note)
             for theme, path in HERO_FILES.items()}
 

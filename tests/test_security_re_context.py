@@ -192,6 +192,7 @@ class SecurityReContextTests(unittest.TestCase):
         self.assertEqual(
             config["inputRoots"],
             [
+                "agents/career",
                 "skills/resume-skills",
                 "skills/interview-coach",
                 "skills/career-workspace",
@@ -344,12 +345,11 @@ class SecurityReContextTests(unittest.TestCase):
         default = read_jsonc(ROOT / "rulesync.jsonc")
         mirror = read_jsonc(ROOT / "groups/default.jsonc")
         self.assertEqual(default["inputRoots"], mirror["inputRoots"])
-        # ZAP, ReVa and radare2 are in default, switched off, behind agent
-        # permissions. REA starts enabled, so it stays folder-only.
-        specialists = {"skills/iothackbot", "mcp-servers/rea"}
+        # ZAP is in default, switched off, behind agent permissions. REA, ReVa and
+        # radare2 install with the reverse_engineering folder group only.
+        specialists = {"skills/iothackbot", "mcp-servers/rea", "mcp-servers/reva", "mcp-servers/radare2"}
         self.assertFalse(specialists & set(default["inputRoots"]))
-        for name in ["zap", "reva", "radare2"]:
-            self.assertIn(f"mcp-servers/{name}", default["inputRoots"])
+        self.assertIn("mcp-servers/zap", default["inputRoots"])
 
 
 if __name__ == "__main__":
