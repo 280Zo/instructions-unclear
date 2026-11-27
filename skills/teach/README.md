@@ -22,7 +22,7 @@ From the repo root:
 npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/teach
 ```
 
-Swap `--targets` for your tools. The `default`, `work` and `writing_reporting` groups include it. The skill's `*-FORMAT.md` files must stay beside `SKILL.md`; rulesync copies them.
+Swap `--targets` for your tools. The `default` and `work` groups include it. The skill's `*-FORMAT.md` files must stay beside `SKILL.md`; rulesync copies them.
 
 ## Use
 
@@ -35,7 +35,7 @@ It writes into the current folder, so don't start it in a project you don't want
 
 ## For agents: install, remove and update
 
-To install, use the `default`, `work` or `writing_reporting` group, or the single-folder command above. It needs no other software; its research uses whatever web search is installed. To verify, start a new session and check that `teach` is listed among the skills. Don't run `/teach` as a test, because it writes lesson files into the current folder.
+To install, use the `default` or `work` group, or the single-folder command above. It needs no other software; its research uses whatever web search is installed. To verify, start a new session and check that `teach` is listed among the skills. Don't run `/teach` as a test, because it writes lesson files into the current folder.
 
 To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `teach` skill folder behind; delete it with approval. Teaching workspaces it created (`MISSION.md`, `lessons/`, `learning-records/` and the rest) are the user's files and stay unless the user asks.
 

@@ -56,7 +56,7 @@ The OpenCode row was tested on OpenCode 2.1.3. The others follow each vendor's d
 - **Codex** can disable individual skills with `skills.config`, but rulesync (41 through at least 43) writes that table before `developer_instructions`, so TOML reads the instructions as part of the table. Its agents can't change MCP servers.
 - **Copilot**'s `tools` field is an allowlist. Leaving out a built-in tool alias removes that tool, and this couldn't be tested without Copilot, so it isn't set.
 
-Outside OpenCode every installed skill stays visible, so install specialist skills there with their folder groups (`design`, `career`, `ai_research`, `infosec`, `reverse_engineering`) rather than globally. Installing just the agents (`--features subagents`) gives other tools their instructions without the skills.
+Outside OpenCode every installed skill stays visible, so install specialist skills there with their folder groups (`career`, `ai_research`, `reverse_engineering`) rather than globally. Installing just the agents (`--features subagents`) gives other tools their instructions without the skills.
 
 ## Install
 
@@ -70,7 +70,7 @@ It needs rulesync 41 or later. Older releases add a `name:` field that makes Ope
 
 The `career`, `ai-research` and `reverse-engineering` agents install whole with their folder groups (`career`, `ai_research`, `reverse_engineering`), skills and, for reverse engineering, REA, ReVa and radare2 included. Start OpenCode in that folder to pick the agent. The global `build`, `plan` and `general` files still deny those skills, so inside the folder only the owning agent loads them.
 
-Other groups install agents with their sets: `infosec` and `work` include `agents/security`, so they also get the `security` agent. `work` and `writing_reporting` also include `second-opinion`, and `work` includes `local-model`. The `design`, `3d-modeling`, `build`, `plan`, `general` and `explore` folders are in `default` only, and none of the per-agent folders is part of the `fcos_app_installer` group.
+Other groups install agents with their sets: `work` includes `agents/security`, so it also gets the `security` agent. `work` also includes `second-opinion` and `local-model`. The `design`, `3d-modeling`, `build`, `plan`, `general` and `explore` folders are in `default` only, and none of the per-agent folders is part of the `fcos_app_installer` group.
 
 ## Use
 

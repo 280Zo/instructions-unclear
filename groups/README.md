@@ -6,20 +6,17 @@ Saved selections, so you don't have to name every folder. Run every command from
 |---|---|---|
 | [`default`](#default) | Your home folder, OpenCode | The repo's default selection, with OpenCode agents that each see only their own skills |
 | [`work`](#work) | Your home folder, OpenCode, Copilot and Copilot CLI | Rules, agents, MCP servers and writing skills for a work machine |
-| [`writing_reporting`](#writing_reporting) | Your home folder, OpenCode | Rules plus writing, report and visual skills, without touching MCP settings |
-| [`infosec`](#infosec) | A folder you choose | The security bundle (rule, 3 agents, 4 commands), 12 security and utility skills and disabled ZAP MCP; native security plugins install separately |
 | [`ai_research`](#ai_research) | A folder you choose | The `ai-research` agent, 98 AI research skills, the `permission-tuning` skill and its shell-habits rule |
 | [`career`](#career) | A folder you choose | The `career` agent, 22 career skills, the interview coach, 7 career-workspace skills (including the application starter and the goal setting, work log and review set) and humanizer |
 | [`reverse_engineering`](#reverse_engineering) | A folder you choose | REA, the `reverse-engineering` agent and its helpers, and disabled ReVa/radare2 MCPs; IoTHackBot is native-owned |
-| [`design`](#design) | A folder you choose | 19 design skills (graphics, brand, palettes, typography, design systems, critique) plus `anatomy` |
 | [`fcos_app_installer`](#fcos_app_installer) | A folder you choose | The FCOS app installer agent and its helper, the `/add-service` command, 8 skills and 3 rules; `install.py` places the toolkit's own files |
 
 ## How they behave
 
-- **Home-folder groups** (`default`, `work`, `writing_reporting`) replace your tool's whole rules file with that group's rules. Skills, agents and commands are added or overwritten by name; nothing else is deleted, so switching to a smaller group leaves the extra skills in place.
-- `default` and `work` also replace your tool's MCP server list. `writing_reporting` leaves it alone.
-- `infosec` and `reverse_engineering` write their selected MCP sets into the chosen folder. Generate a combined selection in one run if you need both; sequential runs can replace the earlier MCP set. New ZAP/ReVa/radare2 connections are disabled, and generated configuration contains environment references rather than key values.
-- **Folder groups** (`infosec`, `ai_research`, `career`, `reverse_engineering`, `design`, `fcos_app_installer`) install into one folder and load only when you start your tool there. Never add `--global` to them.
+- **Home-folder groups** (`default`, `work`) replace your tool's whole rules file with that group's rules. Skills, agents and commands are added or overwritten by name; nothing else is deleted, so switching to a smaller group leaves the extra skills in place.
+- Both also replace your tool's MCP server list. To leave it alone, add `--features rules,subagents,skills,commands`.
+- `reverse_engineering` writes its MCP set into the chosen folder. Its ReVa/radare2 connections are disabled, and generated configuration contains environment references rather than key values.
+- **Folder groups** (`ai_research`, `career`, `reverse_engineering`, `fcos_app_installer`) install into one folder and load only when you start your tool there. Never add `--global` to them.
 - Add `--dry-run` to any command to list what it would write without writing anything.
 - None of them installs the programs a skill or MCP server uses. See each folder's README for that.
 - Codebase-memory's complete integration belongs to its upstream installer: apply it after rulesync, as its [verified ordering requirement](../mcp-servers/codebase-memory/README.md) explains. The repo ships no extracted skill.
@@ -106,30 +103,12 @@ Codebase-memory, Presenton, ZAP and Podman are written switched off. OpenCode V2
 >
 > Install the Superpowers plugin and opencode-quota plugin by following their READMEs in the plugins folder.
 
-## writing_reporting
-
-Rules (including `routing` and `preferences`), `second-opinion`, the Docling, Exa and PMB rules and skills, and `eli5`, `report`, `humanizer`, [`md-note-organizer`](../skills/md-note-organizer/), `visual-explainer`, `diagram-design`, `frontend-slides`, `frontend-design`, `theme-factory`, Magnus's [`documents`](../skills/documents/), and Matt Pocock's [`handoff`](../skills/handoff/), [`teach`](../skills/teach/) and [`wait-what`](../skills/wait-what/). That's 16 skills. MCP servers you already have stay as they are. The document skill adds authoring and smoke validation; it does not replace Docling's OCR/extraction role.
-
-```bash
-npx rulesync@43.12.0 generate --config groups/writing_reporting.jsonc --global
-```
-
-## infosec
-
-The repo-owned [security bundle](../agents/security/) (secure-coding rule, the `security`, `security-auditor` and `threat-modeling-expert` agents, 6 skills including `security-best-practices`, and 4 commands), [`security-threat-model`](../skills/security-threat-model/), Cloudflare's [`security-audit`](../skills/security-audit/), the four audio/capture/browser skills, and the [official ZAP connection](../mcp-servers/zap/). That's 12 skills, 3 agents, 4 commands and 1 disabled MCP connection. In OpenCode, pick the `security` agent: it can't load the audio skills, so use another agent for those. Installing skills authorizes none of their runtime operations. [Trail of Bits](../skills/trailofbits/) and [IoTHackBot](../skills/iothackbot/) use complete native plugins, installed separately rather than flattened by this group. No complete OpenCode equivalent is claimed. Each README lists prerequisites and ownership limits.
-
-The rule lands in the folder's own `AGENTS.md`, which OpenCode reads along with your global one. If you also installed `default` or `work`, the security bundle is there globally too; the folder copies load only in that folder and are identical. Reverse engineering has its own group below.
-
-```bash
-mkdir -p ~/AI/infosec
-npx rulesync@43.12.0 generate --config groups/infosec.jsonc --output-roots ~/AI/infosec
-```
 
 ## ai_research
 
 The OpenCode [`ai-research` agent](../agents/ai-research/), the 98 skills from [`skills/ai-research`](../skills/ai-research/), plus the [`permission-tuning`](../skills/permission-tuning/) skill and its shell-habits rule. That's 1 agent, 99 skills and 1 rule. `default` doesn't include any of them: start OpenCode in this folder and pick `ai-research`, the only agent that sees the 98.
 
-The rule lands in the folder's own `AGENTS.md`, replacing any `AGENTS.md` already there, so it applies only when you start your tool in this folder. `default`, `work` and `writing_reporting` don't include `permission-tuning`, so your global instructions file doesn't get the shell habits. In OpenCode, the `ai-research` agent and the `build` family can load the skill.
+The rule lands in the folder's own `AGENTS.md`, replacing any `AGENTS.md` already there, so it applies only when you start your tool in this folder. `default` and `work` don't include `permission-tuning`, so your global instructions file doesn't get the shell habits. In OpenCode, the `ai-research` agent and the `build` family can load the skill.
 
 ```bash
 mkdir -p ~/AI/ai_research
@@ -156,14 +135,6 @@ mkdir -p ~/AI/reverse_engineering
 npx rulesync@43.12.0 generate --config groups/reverse_engineering.jsonc --output-roots ~/AI/reverse_engineering
 ```
 
-## design
-
-The 19 skills from [`skills/designskills`](../skills/designskills/), including `color-palette` and `design-context`, which the others read brand settings from. Nine upstream skills that overlapped `frontend-design`, `frontend-slides` and `diagram-design` aren't included, so the folder needs no routing rule. `default` installs them for the OpenCode [`design` agent](../agents/design/); `work` doesn't include them. The group also installs [`anatomy`](../skills/anatomy/), the isometric explainer, which `default` and `work` include too. Image generation needs a Gemini key and Python packages, and the render and critique scripts need Playwright; the [folder README](../skills/designskills/README.md#what-the-skills-need) lists them. Writes no MCP settings.
-
-```bash
-mkdir -p ~/AI/design
-npx rulesync@43.12.0 generate --config groups/design.jsonc --output-roots ~/AI/design
-```
 
 ## fcos_app_installer
 
@@ -179,7 +150,7 @@ npx rulesync@43.12.0 generate --config groups/fcos_app_installer.jsonc --output-
 
 Every group targets OpenCode by default (`work` adds the two Copilots). For other tools, add `--targets`, for example `--targets opencode,claudecode,codexcli`.
 
-The security groups can also be generated for Claude Code and Codex CLI. Folder-scoped command support depends on the target; heed generation warnings rather than adding `--global` to work around them. Native plugin ownership is separate from this target override; it does not restore the retired flattened Trail of Bits/IoTHackBot profiles.
+The `reverse_engineering` group can also be generated for Claude Code and Codex CLI. Folder-scoped command support depends on the target; heed generation warnings rather than adding `--global` to work around them. Native plugin ownership is separate from this target override; it does not restore the retired flattened Trail of Bits/IoTHackBot profiles.
 
 ## For agents: install, remove and update
 
@@ -187,7 +158,7 @@ Install. Follow [Installing on a machine](../AGENTS.md#installing-on-a-machine):
 
 Remove. Follow [Removing or replacing a component](../AGENTS.md#removing-or-replacing-a-component) for each folder in the group.
 
-- Home-folder groups: switching to a smaller group replaces the rules file, and `default` and `work` also replace the MCP list. `writing_reporting` leaves the MCP list alone, so switching to it from `default` or `work` keeps their MCP servers. Because of `delete: false`, skills, agents and commands from the larger group stay installed. Compare the two groups' `inputRoots`, list the names that only the old group provided, and delete them only with approval.
+- Home-folder groups: switching to a smaller group replaces the rules file and the MCP list. Because of `delete: false`, skills, agents and commands from the larger group stay installed. Compare the two groups' `inputRoots`, list the names that only the old group provided, and delete them only with approval.
 - Folder groups: nothing outside the chosen folder changes. Delete the files the group generated there (the tool directories such as `.opencode/` or `.claude/`, plus the folder's own `AGENTS.md` and MCP settings where the group writes them), or the whole folder if nothing else lives there. Never delete the user's own work in that folder.
 
 Programs, containers and plugins a group's folders used stay installed unless the user asks.

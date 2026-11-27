@@ -43,7 +43,7 @@ OpenCode names each tool `<server name>_<tool>`, e.g. `docling_convert_...`. Per
 
 ### Install
 
-- It's in the `default` and `work` [install groups](../../groups/README.md), and `writing_reporting` installs its rule but leaves MCP settings alone. Follow [Install](#install) above.
+- It's in the `default` and `work` [install groups](../../groups/README.md). Follow [Install](#install) above.
 - It needs [uv](https://docs.astral.sh/uv/). The first launch downloads `docling-mcp[local]==3.5.1` and its large dependencies, so get the user's approval first.
 - The connection is written switched on.
 - To verify, check in a new session that `docling` connects, then convert one small harmless document. Convert one file at a time, as `rules/docling.md` says.

@@ -23,7 +23,7 @@ import sys
 import tempfile
 
 REPO = Path(__file__).resolve().parent.parent
-HOME_GROUPS = ("default", "work", "writing_reporting")
+HOME_GROUPS = ("default", "work")
 OTHER_TARGETS = "claudecode,codexcli,geminicli,cursor"
 SEED = """{
   // seed comment

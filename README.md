@@ -109,9 +109,9 @@ Then test functionality individually:
 
 `default` installs the everyday agents and their skills into your home folder. The AI research, career and reverse-engineering agents and skills install only with their folder groups (`ai_research`, `career`, `reverse_engineering`); start OpenCode in that folder to use them.
 
-OpenCode filters skills per agent, so the design and security agents in `default` already load only their own skills, and you don't need the `design` or `infosec` folder groups for OpenCode. Use them for a separate workspace or another assistant.
+The design and security agents and their skills come with `default`; OpenCode filters skills per agent, so each loads only its own.
 
-Claude Code, Codex, Copilot, Cursor and most other assistants show every installed skill to every agent. For those, install the specialist skills with a folder group and start your assistant in that folder when you need them. Adding them to `default` with `--targets` would load every specialist skill in every session; `work` and `writing_reporting` are smaller home-folder selections. [What each assistant enforces](agents/README.md#what-each-assistant-enforces) has the details.
+Claude Code, Codex, Copilot, Cursor and most other assistants show every installed skill to every agent. For those, install the specialist skills with a folder group and start your assistant in that folder when you need them. Adding them to `default` with `--targets` would load every specialist skill in every session; `work` is a smaller home-folder selection. [What each assistant enforces](agents/README.md#what-each-assistant-enforces) has the details.
 
 Generate only the groups you want, into folders you choose. Add `--targets` for assistants other than OpenCode:
 
@@ -370,8 +370,6 @@ Saved selections, so you don't have to list folders. [`groups/README.md`](groups
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `default`             | Everything in `rulesync.jsonc`, into OpenCode, with agents that each see only their own skills                                                |
 | `work`                | OpenCode, Copilot and Copilot CLI on a work machine                                                                                           |
-| `writing_reporting`   | Writing, reports and visuals, without touching MCP settings                                                                                   |
-| `infosec`             | Security rule/agents, 12 security and utility skills and a disabled ZAP connection, in a folder you choose; native plugins install separately |
 | `ai_research`         | The `ai-research` agent and AI research skills, plus the permission-tuning skill and its shell-habits rule, in a folder you choose           |
 | `career`              | The `career` agent and career skills, in a folder you choose                                                                                  |
 | `reverse_engineering` | REA, the `reverse-engineering` agent and its helpers, and disabled ReVa/radare2 connections, in a folder you choose; IoTHackBot is native-owned                                      |

@@ -9,7 +9,7 @@ Two of Anthropic's published skills:
 
 ## Install
 
-This folder holds only the two skills. When to use them comes from the repo's routing rule, [`rules/routing`](../../rules/routing/rules/routing.md), which the `default`, `work` and `writing_reporting` [install groups](../../groups/) install. To add just the skills, from the repo root:
+This folder holds only the two skills. When to use them comes from the repo's routing rule, [`rules/routing`](../../rules/routing/rules/routing.md), which the `default` and `work` [install groups](../../groups/) install. To add just the skills, from the repo root:
 
 ```bash
 npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/anthropic-design
@@ -32,7 +32,7 @@ Only these two are here. Anthropic's document skills (`pptx`, `docx`, `xlsx`, `p
 
 ### Install
 
-- The [`default`](../../groups/README.md#default), [`work`](../../groups/README.md#work) and [`writing_reporting`](../../groups/README.md#writing_reporting) groups install it globally. For this folder alone, use the command under [Install](#install) above.
+- The [`default`](../../groups/README.md#default) and [`work`](../../groups/README.md#work) groups install it globally. For this folder alone, use the command under [Install](#install) above.
 - Nothing else is needed for the skills themselves. The routing lines that say when to use them come from `rules/routing`, which the single-folder command doesn't install.
 - To verify, start a new session and confirm the skills list includes `frontend-design` and `theme-factory`.
 

@@ -4,7 +4,7 @@
 
 UI pages, slide decks and infographics aren't here: `frontend-design`, `frontend-slides` and `diagram-design` own those jobs (see [Changes from upstream](#changes-from-upstream)).
 
-From this repo it's a **profile**: it lives in one folder you choose, so the descriptions load only when you start your tool there. The [`design` group](../../groups/README.md#design) installs it. In OpenCode, the `default` group also installs it globally for the [`design` agent](../../agents/design/), the only agent that loads these skills. `design-context` still reads and writes `.agents/design-context.md` in the folder you start in.
+From this repo it's a **profile**: it lives in one folder you choose, so the descriptions load only when you start your tool there. Its `profile.jsonc` installs it there. In OpenCode, the `default` group installs it globally for the [`design` agent](../../agents/design/), the only agent that loads these skills. `design-context` still reads and writes `.agents/design-context.md` in the folder you start in.
 
 ## Install
 
@@ -12,7 +12,7 @@ From the repo root:
 
 ```bash
 mkdir -p ~/AI/design
-npx rulesync@43.12.0 generate --config groups/design.jsonc --output-roots ~/AI/design
+npx rulesync@43.12.0 generate --config skills/designskills/profile.jsonc --output-roots ~/AI/design
 ```
 
 Add `--targets` for tools other than OpenCode. Never add `--global`. Run the same command again to update the folder.
@@ -33,7 +33,7 @@ Code-only output (HTML/CSS) needs none of these.
 
 ### Install
 
-The [`design` group](../../groups/README.md#design) installs this folder profile. Never add `--global` to that command; `default` installs it globally only alongside the filtering [specialist agents](../../agents/README.md).
+Its `profile.jsonc` installs this folder profile. Never add `--global` to that command; `default` installs it globally only alongside the filtering [specialist agents](../../agents/README.md).
 
 1. Ask where the folder should go (suggest `~/AI/design`) and which tools to target, then generate as above. Don't add `--global`.
 2. Tell the user which runtimes in the table above are missing, and install them only with approval, following the `package-management` skill. Never ask for the Gemini key's value; tell the user to set the variable themselves.

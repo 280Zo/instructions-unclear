@@ -12,7 +12,7 @@ Nothing to do: the skill loads by itself before installs and download-and-run co
 
 ## For agents: install, remove and update
 
-To install, use the `default`, `work` or `writing_reporting` group, or add this folder to `rulesync.local.jsonc` as [Install](#install) says. Installing only the skill without the rule leaves nothing telling the agent to load it. It needs no other software. To verify, start a new session, check that the generated rules file contains the "Package & Tool Management" rule and that `package-management` is listed among the skills.
+To install, use the `default` or `work` group, or add this folder to `rulesync.local.jsonc` as [Install](#install) says. Installing only the skill without the rule leaves nothing telling the agent to load it. It needs no other software. To verify, start a new session, check that the generated rules file contains the "Package & Tool Management" rule and that `package-management` is listed among the skills.
 
 To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). Regenerating without this folder drops the rule; `delete: false` leaves the `package-management` skill folder behind, which you delete with approval. The `rules/preferences` rule still says this skill governs every install, so tell the user.
 

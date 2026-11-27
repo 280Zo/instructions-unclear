@@ -12,7 +12,7 @@ From the repo root:
 npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/wait-what
 ```
 
-Swap `--targets` for your tools. The `default`, `work` and `writing_reporting` groups include it.
+Swap `--targets` for your tools. The `default` and `work` groups include it.
 
 ## Use
 
@@ -20,7 +20,7 @@ Type `/wait-what` right after a reply you couldn't follow.
 
 ## For agents: install, remove and update
 
-To install, use the `default`, `work` or `writing_reporting` group, or the single-folder command above. It needs no other software and no `GLOSSARY.md`. To verify, start a new session and check that `wait-what` is listed among the skills.
+To install, use the `default` or `work` group, or the single-folder command above. It needs no other software and no `GLOSSARY.md`. To verify, start a new session and check that `wait-what` is listed among the skills.
 
 To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `wait-what` skill folder behind; delete it with approval. It writes no files of its own, and any project `GLOSSARY.md` stays.
 

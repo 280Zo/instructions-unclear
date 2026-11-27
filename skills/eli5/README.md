@@ -26,7 +26,7 @@ Claude Code's `allowed-tools` sits under a `claudecode:` section so other tools 
 
 ### Install
 
-- The [`default`](../../groups/README.md#default), [`work`](../../groups/README.md#work) and [`writing_reporting`](../../groups/README.md#writing_reporting) groups install it globally. For this folder alone, use the command under [Install](#install) above; it skips `rules/routing`.
+- The [`default`](../../groups/README.md#default) and [`work`](../../groups/README.md#work) groups install it globally. For this folder alone, use the command under [Install](#install) above; it skips `rules/routing`.
 - The saved explainer needs `visual-explainer` and `diagram-design`, and research uses Exa `search` when it's installed. The groups above include them; the single-folder command doesn't.
 - To verify, start a new session and confirm the skills list includes `eli5`, or that `/eli5` is offered.
 

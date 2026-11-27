@@ -1,6 +1,6 @@
 # transcribe
 
-OpenAI audio transcription with optional speaker identification. Included in `default`, `work` and `infosec`; independently selectable.
+OpenAI audio transcription with optional speaker identification. Included in `default` and `work`; independently selectable.
 
 ## Install context
 
@@ -27,7 +27,7 @@ Supply `OPENAI_API_KEY` through an approved process environment/secret mechanism
 
 ## For agents: install, remove and update
 
-To install, use the `default`, `work` or `infosec` group, or the single-folder command above. rulesync doesn't install the `openai` Python package (see [Runtime setup](#runtime-setup--prefer-uv)) or supply `OPENAI_API_KEY`; the user sets that variable themselves. To verify, start a new session and check that `transcribe` is listed among the skills. Don't transcribe audio as a test, because it uploads audio to OpenAI and can cost money.
+To install, use the `default` or `work` group, or the single-folder command above. rulesync doesn't install the `openai` Python package (see [Runtime setup](#runtime-setup--prefer-uv)) or supply `OPENAI_API_KEY`; the user sets that variable themselves. To verify, start a new session and check that `transcribe` is listed among the skills. Don't transcribe audio as a test, because it uploads audio to OpenAI and can cost money.
 
 To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `transcribe` skill folder behind; delete it with approval. Task environments with the `openai` package, transcripts already written and the user's OpenAI account and key stay unless the user asks.
 

@@ -6,7 +6,7 @@ Static diagrams and motion variants have different runtime requirements: the bun
 
 ## Install
 
-This folder holds only the skill. When to use it comes from the repo's routing rule, [`rules/routing`](../../rules/routing/rules/routing.md), which the `default`, `work` and `writing_reporting` [install groups](../../groups/) install. To add just the skill, from the repo root:
+This folder holds only the skill. When to use it comes from the repo's routing rule, [`rules/routing`](../../rules/routing/rules/routing.md), which the `default` and `work` [install groups](../../groups/) install. To add just the skill, from the repo root:
 
 ```bash
 npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/diagram-design
@@ -27,7 +27,7 @@ The routing rule sends diagram requests here, and `report` uses it for the diagr
 
 ### Install
 
-- The [`default`](../../groups/README.md#default), [`work`](../../groups/README.md#work) and [`writing_reporting`](../../groups/README.md#writing_reporting) groups install it globally. For this folder alone, use the command under [Install](#install) above; it skips `rules/routing`.
+- The [`default`](../../groups/README.md#default) and [`work`](../../groups/README.md#work) groups install it globally. For this folder alone, use the command under [Install](#install) above; it skips `rules/routing`.
 - Nothing extra is required for HTML/SVG output. The bundled templates load Google Fonts from the internet unless the user asks for system fonts.
 - After each diagram, the skill renders it to a temporary PNG with `scripts/export_png.py` (Playwright and Chromium) and looks at it. Without Playwright it skips that step and says the diagram passed its automated checks but wasn't visually reviewed. Installing Playwright needs the user's approval and the package-management skill.
 - To verify, start a new session and confirm the skills list includes `diagram-design`, or open `assets/index.html` in the installed skill folder.

@@ -4,7 +4,7 @@
 
 ## Install context
 
-Included in `default`, `work` and `writing_reporting`. To install this skill alone, run from the repo root:
+Included in `default` and `work`. To install this skill alone, run from the repo root:
 
 ```bash
 npx rulesync@43.12.0 generate --global --features skills --input-roots skills/documents
@@ -52,7 +52,7 @@ The validator does not establish formula caches/calculation, complete relationsh
 
 ### Install
 
-- The [`default`](../../groups/README.md#default), [`work`](../../groups/README.md#work) and [`writing_reporting`](../../groups/README.md#writing_reporting) groups install it globally. For this folder alone, use the command under [Install context](#install-context) above.
+- The [`default`](../../groups/README.md#default) and [`work`](../../groups/README.md#work) groups install it globally. For this folder alone, use the command under [Install context](#install-context) above.
 - Pick one owner per tool: rulesync or the upstream skills CLI, not both (see [Upstream installation ownership](#upstream-installation-ownership)).
 - rulesync doesn't install Python libraries, LibreOffice, Poppler, WeasyPrint's system libraries or a TeX or browser toolchain. Set up only what the chosen format needs, with approval, as [Python setup](#python-setup--prefer-uv) describes.
 - To verify, start a new session and confirm the skills list includes `documents`. If the user wants a further check, run `scripts/validate-documents.py --json` from the installed skill folder on a bundled fixture such as `fixtures/sample.pdf`, without `--render-check`, and read the JSON status, not just the exit code.

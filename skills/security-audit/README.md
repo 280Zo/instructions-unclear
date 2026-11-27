@@ -1,10 +1,10 @@
 # security-audit
 
-Cloudflare's multi-phase security audit: reconnaissance, coverage-led hunting with isolated subagents, adversarial validation of every candidate, schema-checked `findings.json`, independent record verification and a target-neutral report. Included in `infosec`, `work` and `default`. In OpenCode's `default` install, only the [`security` agent](../../agents/security/) can load it.
+Cloudflare's multi-phase security audit: reconnaissance, coverage-led hunting with isolated subagents, adversarial validation of every candidate, schema-checked `findings.json`, independent record verification and a target-neutral report. Included in `default` and `work`. In OpenCode's `default` install, only the [`security` agent](../../agents/security/) can load it.
 
 ## Install
 
-The [`default`](../../groups/README.md#default) and [`work`](../../groups/README.md#work) groups install it into your home folder, and the [`infosec`](../../groups/README.md#infosec) group installs it into a folder you choose. To install this skill alone into a folder, from the repo root:
+The [`default`](../../groups/README.md#default) and [`work`](../../groups/README.md#work) groups install it into your home folder. To install this skill alone into a folder, from the repo root:
 
 ```bash
 mkdir -p ~/AI/security-audit
@@ -31,7 +31,7 @@ A full run starts many subagents, so it costs far more than a normal review. Nam
 
 ## For agents: install, remove and update
 
-To install, use the `infosec` group (folder), the `default` or `work` group (home folder), or the folder command above. Check that Node.js is on `PATH` for the validators; don't install it without the user's approval and the package-management skill. To verify, start a new session in the install location and check that `security-audit` is listed among the skills. Don't run an audit as a test. A harmless check is running the validators' own tests from the installed skill folder: `node validate-findings.test.cjs` and `node validate-coverage-ledger.test.cjs`. They create and remove folders in the system temporary directory and start `node` and `mkfifo` child processes; nothing else is touched.
+To install, use the `default` or `work` group, or the folder command above. Check that Node.js is on `PATH` for the validators; don't install it without the user's approval and the package-management skill. To verify, start a new session in the install location and check that `security-audit` is listed among the skills. Don't run an audit as a test. A harmless check is running the validators' own tests from the installed skill folder: `node validate-findings.test.cjs` and `node validate-coverage-ledger.test.cjs`. They create and remove folders in the system temporary directory and start `node` and `mkfifo` child processes; nothing else is touched.
 
 To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `security-audit` skill folder behind; delete it with approval. Audit runs it already wrote under `~/security-audit-skill/` or elsewhere are the user's files and stay unless the user asks. If the user keeps `rules/routing`, its line still names this skill, so tell them.
 

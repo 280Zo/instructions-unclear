@@ -4,7 +4,7 @@ A skill that turns explanations, plans, code reviews and data into a self-contai
 
 ## Install
 
-This folder holds only the skill. When to use it comes from the repo's routing rule, [`rules/routing`](../../rules/routing/rules/routing.md), which the `default`, `work` and `writing_reporting` [install groups](../../groups/) install. To add just the skill, from the repo root:
+This folder holds only the skill. When to use it comes from the repo's routing rule, [`rules/routing`](../../rules/routing/rules/routing.md), which the `default` and `work` [install groups](../../groups/) install. To add just the skill, from the repo root:
 
 ```bash
 npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/visual-explainer
@@ -32,7 +32,7 @@ The folder also holds upstream's slash commands (`/diff-review`, `/plan-review`,
 
 ## For agents: install, remove and update
 
-To install, use the `default`, `work` or `writing_reporting` group, or the single-folder command above. rulesync installs no other software; rendering through `kit/render.mjs` needs Node.js, and pages need an internet connection for their CDN scripts and fonts. To verify, start a new session, check that `visual-explainer` is listed among the skills, and ask for a small test page.
+To install, use the `default` or `work` group, or the single-folder command above. rulesync installs no other software; rendering through `kit/render.mjs` needs Node.js, and pages need an internet connection for their CDN scripts and fonts. To verify, start a new session, check that `visual-explainer` is listed among the skills, and ask for a small test page.
 
 To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `visual-explainer` skill folder behind; delete it with approval. Pages already written to `~/.agent/diagrams/` or `Clanker_Crayon_Box/` are the user's files and stay unless the user asks. If the user keeps `rules/routing`, its line still names this skill, and `report` and `eli5` render through it, so tell them.
 

@@ -47,7 +47,7 @@ OpenCode names each tool `<server name>_<tool>`, e.g. `pmb_prepare`. Any permiss
 
 ### Install
 
-- It's in the `default` and `work` [install groups](../../groups/README.md), and `writing_reporting` installs its rule but leaves MCP settings alone. Follow [Install](#install) above.
+- It's in the `default` and `work` [install groups](../../groups/README.md). Follow [Install](#install) above.
 - It needs [uv](https://docs.astral.sh/uv/). The first launch downloads `pmb-ai==1.2.3` and may download an embedding model, so get the user's approval first.
 - The connection is written switched on. To verify, start a new session in the intended project, check that `pmb` connects, and call a read-only tool such as `session_brief`. Confirm the memory path and selected workspace as [Per-project setup](#per-project-setup) describes before anything writes to it.
 

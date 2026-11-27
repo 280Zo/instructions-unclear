@@ -132,16 +132,16 @@ Adding, removing or renaming a skill folder, an MCP server or an agent, or chang
 Each agent has one folder, `agents/<name>/subagents/<name>.md`, except agents that belong to a set (`second-opinion` with its two reviewers; `security` and `reverse-engineering` with their bundles; `fcos-app-installer` with its `adapter-drafter` helper). rulesync merges source trees by file path: when two trees in one selection hold the same relative path, the later one replaces the earlier one even if their `targets` differ, so agent file names must be unique within a group.
 
 `groups/*.jsonc` are named install selections, not source trees. Home-folder
-groups (`default`, `work`, `writing_reporting`) run with `--config` and
+groups (`default`, `work`) run with `--config` and
 `--global`; each carries a complete rule selection with the preamble first and
-the reminder last. Folder groups (`infosec`, `ai_research`, `career`,
-`reverse_engineering`, `design`, `fcos_app_installer`) run with `--output-roots` and never `--global`.
+the reminder last. Folder groups (`ai_research`, `career`,
+`reverse_engineering`, `fcos_app_installer`) run with `--output-roots` and never `--global`.
 `groups/default.jsonc` mirrors `rulesync.jsonc`: change both together. Each
 group's README section states whether it writes MCP settings. All groups are
 documented in the single `groups/README.md`, with a one-line row in the root
 README; groups don't get their own folders or READMEs.
 
-**Whenever you add, rename, move or remove a folder anywhere in this repo, check `groups/*.jsonc` and `groups/README.md` and update them in the same change.** Decide which groups the folder belongs in (for example, a new security skill goes in `infosec`; anything in `rulesync.jsonc` also goes in `groups/default.jsonc`), keep the preamble first and the reminder last, and update the counts and descriptions in `groups/README.md`. Then generate each changed group into a throwaway folder to check it.
+**Whenever you add, rename, move or remove a folder anywhere in this repo, check `groups/*.jsonc` and `groups/README.md` and update them in the same change.** Decide which groups the folder belongs in (for example, a new reverse-engineering skill goes in `reverse_engineering`; anything in `rulesync.jsonc` also goes in `groups/default.jsonc`), keep the preamble first and the reminder last, and update the counts and descriptions in `groups/README.md`. Then generate each changed group into a throwaway folder to check it.
 
 Third-party license texts all live in `THIRD_PARTY_LICENSES.md`, one section per upstream; each folder's README links to its section. Whenever you add, update or remove third-party files (skills, agents, extracted skill text), add, update or remove that upstream's section in the same change, with the full license text copied from upstream's `LICENSE` file, the folder it applies to, and the source link. Never add a third-party folder without it. MIT and Apache 2.0 require shipping the license text with copies, so a link to upstream alone isn't enough. Licenses that sit inside an upstream skill folder (Anthropic's `LICENSE.txt`) stay where they are, because that folder is copied unchanged.
 

@@ -24,7 +24,7 @@ Claude Code's `allowed-tools` sits under a `claudecode:` section so other tools 
 
 ## For agents: install, remove and update
 
-To install, use the `default`, `work` or `writing_reporting` group, or the single-folder command above. Rendering needs the skills or Presenton server listed in [Use](#use); without them it only gathers and checks evidence. To verify, start a new session and check that `report` is listed among the skills.
+To install, use the `default` or `work` group, or the single-folder command above. Rendering needs the skills or Presenton server listed in [Use](#use); without them it only gathers and checks evidence. To verify, start a new session and check that `report` is listed among the skills.
 
 To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `report` skill folder behind; delete it with approval. Reports already saved under `Clanker_Crayon_Box/reports/` are the user's files and stay unless the user asks. If the user keeps `rules/routing`, its line still names `report`, so tell them.
 

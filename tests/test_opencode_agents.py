@@ -175,7 +175,7 @@ class AgentTests(unittest.TestCase):
         for name in BUILTINS:
             head, _ = frontmatter(agent_file(name))
             self.assertIn('{action: "skill", resource: "security-audit", effect: deny}', head, name)
-        for group in ["default", "work", "infosec"]:
+        for group in ["default", "work"]:
             self.assertIn("skills/security-audit", read_jsonc(ROOT / f"groups/{group}.jsonc")["inputRoots"], group)
 
     def test_local_model_keeps_unrestricted_delegation(self):
@@ -250,11 +250,29 @@ class AgentTests(unittest.TestCase):
         svg = ET.parse(ROOT / generate.HERO_FILES["light"]).getroot()
         desc = svg.find("{http://www.w3.org/2000/svg}desc").text
         counts = {m[1]: int(m[2]) for m in re.finditer(r"(?:: |, )([a-z0-9/ -]+?) \((\d+)\)", desc)}
-        self.assertGreaterEqual(counts["ai-research"], 98)
-        self.assertGreaterEqual(counts["career"], 30)
+        # What the agent's model sees inside its folder: its allowed skills among default's,
+        # its folder group's and the shared plugin skills, minus user-invoked ones.
+        for group, agent in FOLDER_AGENTS.items():
+            folder = {p.parent.name for root in read_jsonc(ROOT / f"groups/{group}.jsonc")["inputRoots"]
+                      for p in (ROOT / root / "skills").glob("*/SKILL.md")}
+            visible = (set(default_skill_ids()) | folder | set(generate.SHARED)) - set(generate.USER_INVOKED)
+            head, _ = frontmatter(agent_file(agent))
+            allowed = set(re.findall(r'resource: "([^"*]+)", effect: allow', head))
+            self.assertEqual(counts[agent], len(allowed & visible), agent)
         labels = [t.text for t in svg.iter("{http://www.w3.org/2000/svg}text")]
         self.assertEqual(labels.count("FOLDER"), len(FOLDER_AGENTS))
         self.assertEqual(labels.count("+ folder group"), len(FOLDER_AGENTS))
+
+    def test_hero_counts_the_mcp_servers_default_installs(self):
+        installed = {name for root in read_jsonc(ROOT / "groups/default.jsonc")["inputRoots"]
+                     if (ROOT / root / "mcp.jsonc").is_file()
+                     for name in read_jsonc(ROOT / root / "mcp.jsonc")["mcpServers"]}
+        self.assertNotIn("reva", installed)
+        svg = ET.parse(ROOT / generate.HERO_FILES["light"]).getroot()
+        labels = " ".join(t.text or "" for t in svg.iter("{http://www.w3.org/2000/svg}text"))
+        self.assertIn(f"skills · {len(installed)} MCP servers", labels)
+        desc = svg.find("{http://www.w3.org/2000/svg}desc").text
+        self.assertIn(f"and {len(installed)} MCP servers", desc)
 
     def test_other_groups_keep_their_agents(self):
         # Only default gets the per-agent folders, except the sets that install with their folder group.
@@ -267,7 +285,7 @@ class AgentTests(unittest.TestCase):
                 if FOLDER_AGENTS.get(group.stem) == name:
                     continue
                 self.assertNotIn(f"agents/{name}", roots, group.stem)
-        for group, folder in [("work", "security"), ("infosec", "security"),
+        for group, folder in [("work", "security"),
                               ("reverse_engineering", "reverse-engineering")]:
             self.assertIn(f"agents/{folder}", read_jsonc(ROOT / f"groups/{group}.jsonc")["inputRoots"])
 

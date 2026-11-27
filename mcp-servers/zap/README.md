@@ -12,7 +12,7 @@ Install ZAP/add-ons through the [official distribution](https://www.zaproxy.org/
 
 ## Install and activate
 
-From the repo root, use the [infosec group](../../groups/README.md#infosec) (folder-scoped), the [work group](../../groups/README.md#work) (home folder; the connection is still written disabled), or this folder alone:
+From the repo root, use the [`default`](../../groups/README.md#default) or [`work`](../../groups/README.md#work) group (the connection is still written disabled), or this folder alone:
 
 ```bash
 npx rulesync@43.12.0 generate --config mcp-servers/zap/profile.jsonc --output-roots ~/AI/zap
@@ -28,13 +28,13 @@ Starting a spider, authentication flow or scan requires explicit target scope an
 
 ## Updating
 
-Compare the add-on's release/source before changing the pin; verify listener, TLS, header and dependency behavior again. Generate both isolated ZAP and infosec selections into temporary output roots. Keep the key placeholder and disabled default.
+Compare the add-on's release/source before changing the pin; verify listener, TLS, header and dependency behavior again. Generate the isolated ZAP selection and the `default` group into temporary output roots. Keep the key placeholder and disabled default.
 
 ## For agents: install, remove and update
 
 ### Install
 
-- It's in the `infosec` folder group and the `work` home-folder group, or installs alone as a folder profile with the command in [Install and activate](#install-and-activate). It's written switched off either way.
+- It's in the `default` and `work` groups, or installs alone as a folder profile with the command in [Install and activate](#install-and-activate). It's written switched off either way.
 - ZAP, the MCP Integration 0.4.0 add-on and its dependencies, and a trusted HTTPS certificate are prerequisites rulesync doesn't install; see [Tools you need](#tools-you-need). The user sets `ZAP_MCP_SECURITY_KEY` in their runtime environment. Never ask for, read or print its value.
 - Leave the connection off unless the user asks for it, and turn it on only after their ZAP listener is set up as described above.
 - To verify, once it's on, check that `zap` connects and its tools are listed. Don't start a spider, scan or authentication flow as a test.

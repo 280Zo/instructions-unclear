@@ -46,7 +46,7 @@ For a broader write-up of gathered material for an audience, use [`report`](../r
 
 ### Install
 
-- The [`default`](../../groups/README.md#default), [`work`](../../groups/README.md#work) and [`writing_reporting`](../../groups/README.md#writing_reporting) groups install it globally. For this folder alone, use the command under [Install](#install) above; it skips `rules/routing`.
+- The [`default`](../../groups/README.md#default) and [`work`](../../groups/README.md#work) groups install it globally. For this folder alone, use the command under [Install](#install) above; it skips `rules/routing`.
 - The prose pass uses `humanizer`, which the groups above include. Images and scanned files are read with whatever reader or OCR tool the assistant has, such as the Docling MCP server. Refresh mode needs a web search tool.
 - In OpenCode's default install, the `build`, `plan` and `general` agents can load it.
 - To verify, start a new session and confirm the skills list includes `md-note-organizer`.

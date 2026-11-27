@@ -4,7 +4,7 @@ One security bundle owned by this repo: a secure-coding rule, three agents, six 
 
 The `security` agent is the one to pick for security work. In OpenCode's `default` install it's the only main agent that loads the threat-modeling skills, `security-audit` and ZAP; see [`agents/README.md`](../README.md#how-agents-keep-skills-out-of-each-others-requests).
 
-`security-threat-model` stays its own folder, [`skills/security-threat-model`](../../skills/security-threat-model/), selected by `default`, `work` and `infosec`. The `threat-modeling-expert` agent here uses it wherever it's installed.
+`security-threat-model` stays its own folder, [`skills/security-threat-model`](../../skills/security-threat-model/), selected by `default` and `work`. The `threat-modeling-expert` agent here uses it wherever it's installed.
 
 Cloudflare's `security-audit` is also its own folder, [`skills/security-audit`](../../skills/security-audit/), selected by the same three groups. The `security` agent follows it for codebase audits, vulnerability hunts and pen-tests of code, and sends compliance, DevSecOps and cloud-posture audits to `security-auditor`.
 
@@ -29,7 +29,7 @@ Installing the bundle adds instructions, agents, skills and commands. It does no
 
 ## Install
 
-The `default`, `work` and `infosec` groups include `agents/security`, `skills/security-threat-model` and `skills/security-audit`. See [`groups/README.md`](../../groups/README.md). To install this bundle alone, from the repo root:
+The `default` and `work` groups include `agents/security`, `skills/security-threat-model` and `skills/security-audit`. See [`groups/README.md`](../../groups/README.md). To install this bundle alone, from the repo root:
 
 ```bash
 npx rulesync@43.12.0 generate --global --targets opencode,claudecode,codexcli --features subagents,skills,commands --input-roots agents/security
@@ -171,7 +171,7 @@ Supporting files not listed here are byte-identical to their sources.
 
 ## For agents: install, remove and update
 
-Install. The `default` and `work` home-folder groups and the `infosec` folder group include this folder; see [`groups/README.md`](../../groups/README.md). To add the bundle alone, use the command under [Install](#install) and heed its warning about `rules`. rulesync installs no scanners or other programs; the [Tools you need](#tools-you-need) table lists them, and each install needs the user's approval and the package-management skill. To verify, ask the user to open a new session and check that the six skills, the `security`, `security-auditor` and `threat-modeling-expert` agents and the four commands are listed. A harmless check is asking for a STRIDE outline of a made-up login form, with no scan and no project changes.
+Install. The `default` and `work` groups include this folder; see [`groups/README.md`](../../groups/README.md). To add the bundle alone, use the command under [Install](#install) and heed its warning about `rules`. rulesync installs no scanners or other programs; the [Tools you need](#tools-you-need) table lists them, and each install needs the user's approval and the package-management skill. To verify, ask the user to open a new session and check that the six skills, the `security`, `security-auditor` and `threat-modeling-expert` agents and the four commands are listed. A harmless check is asking for a STRIDE outline of a made-up login form, with no scan and no project changes.
 
 Remove. Take `agents/security` out of the user's selection (or pick a group without it) and regenerate. That drops the secure-coding rule. Then follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). Because of `delete: false`, these stay behind and are deleted only with approval:
 
@@ -179,7 +179,7 @@ Remove. Take `agents/security` out of the user's selection (or pick a group with
 - Agents: `security`, `security-auditor`, `threat-modeling-expert`
 - Commands: `compliance-check`, `security-dependencies`, `security-hardening`, `security-sast`
 
-`security-threat-model` and `security-audit` are separate folders; remove them only if the user asks, following each one's README. Agents from the old separate folders (`security-scanning-security-auditor`, `security-compliance-security-auditor`) may also still be installed; list them and ask. For the `infosec` folder group, delete the same names from the folder's own tool directories, and its `AGENTS.md` only if nothing else in the folder needs it. Scanners and other tools the user installed, and any `.security-hardening/` state written inside a project, stay unless the user asks.
+`security-threat-model` and `security-audit` are separate folders; remove them only if the user asks, following each one's README. Agents from the old separate folders (`security-scanning-security-auditor`, `security-compliance-security-auditor`) may also still be installed; list them and ask. Scanners and other tools the user installed, and any `.security-hardening/` state written inside a project, stay unless the user asks.
 
 Update. Follow [Check for updates](../../AGENTS.md#check-for-updates) together with the next section, which holds the upstream baselines and the hand-porting steps. This bundle is repo-owned, so never copy upstream over it. When a baseline changes, update "Changes from upstream", the baseline table and the matching sections of [`THIRD_PARTY_LICENSES.md`](../../THIRD_PARTY_LICENSES.md) together.
 

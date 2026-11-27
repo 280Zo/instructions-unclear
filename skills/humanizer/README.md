@@ -4,7 +4,7 @@ A skill that rewrites text that sounds AI-written so it reads like a person wrot
 
 ## Install
 
-This folder holds only the skill. When to use it comes from the repo's routing rule, [`rules/routing`](../../rules/routing/rules/routing.md), which the `default`, `work` and `writing_reporting` [install groups](../../groups/) install. To add just the skill, from the repo root:
+This folder holds only the skill. When to use it comes from the repo's routing rule, [`rules/routing`](../../rules/routing/rules/routing.md), which the `default` and `work` [install groups](../../groups/) install. To add just the skill, from the repo root:
 
 ```bash
 npx rulesync@43.12.0 generate --global --targets opencode,claudecode --features skills --input-roots skills/humanizer
@@ -22,7 +22,7 @@ The routing rule tells the agent to use it for anything people will read: README
 
 ## For agents: install, remove and update
 
-To install, use the `default`, `work` or `writing_reporting` group, the `career` folder group (where `performance-review` needs it), or the single-folder command above. It needs no other software. To verify, start a new session, check that `humanizer` is listed among the skills, and ask it to humanize one pasted sentence.
+To install, use the `default` or `work` group, the `career` folder group (where `performance-review` needs it), or the single-folder command above. It needs no other software. To verify, start a new session, check that `humanizer` is listed among the skills, and ask it to humanize one pasted sentence.
 
 To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `humanizer` skill folder behind; delete it with approval. If the user keeps `rules/routing`, its line still names `humanizer`, so tell them.
 

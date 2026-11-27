@@ -44,7 +44,7 @@ class OpenAISkillsTests(unittest.TestCase):
     def test_groups_select_skills_without_default_threat_model(self):
         # default installs security-threat-model too: only the
         # OpenCode security agent may load it (agents/generate.py).
-        for group in ["default", "work", "infosec"]:
+        for group in ["default", "work"]:
             roots = read_jsonc(ROOT / f"groups/{group}.jsonc")["inputRoots"]
             for name in STANDALONE:
                 self.assertIn(f"skills/{name}", roots, (group, name))
@@ -71,7 +71,7 @@ class OpenAISkillsTests(unittest.TestCase):
         self.assertRegex(fm, r"(?m)^name: playwright-cli$")
         self.assertNotRegex(fm, r"(?m)^allowed-tools:")
         self.assertRegex(fm, r"(?m)^claudecode:\n  allowed-tools: ")
-        for config in ["rulesync.jsonc", "groups/default.jsonc", "groups/work.jsonc", "groups/infosec.jsonc"]:
+        for config in ["rulesync.jsonc", "groups/default.jsonc", "groups/work.jsonc"]:
             roots = read_jsonc(ROOT / config)["inputRoots"]
             self.assertIn("skills/playwright-cli", roots, config)
             self.assertNotIn("skills/playwright", roots, config)

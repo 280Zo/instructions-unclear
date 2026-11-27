@@ -49,7 +49,7 @@ and [TUI](https://opencode.ai/v2/docs/cli/tui/).
 
 ## For agents: install, remove and update
 
-Install. The `default`, `work` and `writing_reporting` groups include this
+Install. The `default` and `work` groups include this
 folder (see [`groups/README.md`](../../groups/README.md)). To add it alone, use
 the command under [Install](#install) with the user's `--targets`. It installs
 three agents and no skills, commands, rules or MCP servers, and needs nothing

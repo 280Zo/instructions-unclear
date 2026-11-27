@@ -4,7 +4,7 @@ import unittest
 
 from test_security_re_context import ROOT, read_jsonc
 
-HOME_GROUPS = ["default", "work", "writing_reporting"]
+HOME_GROUPS = ["default", "work"]
 OLD_ROUTING_RULES = [
     "skills/diagram-design/rules/diagram-design.md",
     "skills/frontend-slides/rules/frontend-slides.md",
@@ -99,6 +99,18 @@ class RuleTests(unittest.TestCase):
         for action in ["commit", "push", "deploy", "scan"]:
             self.assertIn(action, scope)
         self.assertIn("is not approval", scope)
+
+    def test_subset_groups_are_gone(self):
+        # writing_reporting, infosec and design held nothing default doesn't already install.
+        needles = ["writing_reporting", "`infosec`", "groups/infosec", "infosec group", "#infosec",
+                   "groups/design.jsonc", "`design` group", "`design` folder group", "#design)", "design group"]
+        for name in ["writing_reporting", "infosec", "design"]:
+            self.assertFalse((ROOT / f"groups/{name}.jsonc").exists(), name)
+        for path in [*ROOT.glob("*.md"), *ROOT.glob("*/*.md"), *ROOT.glob("*/*/README.md"), *ROOT.glob("tests/*.py")]:
+            if path.name != "test_rules.py":
+                text = path.read_text()
+                for needle in needles:
+                    self.assertNotIn(needle, text, (path, needle))
 
     def test_home_groups_load_new_rules_inside_the_preamble_pair(self):
         for group in HOME_GROUPS:

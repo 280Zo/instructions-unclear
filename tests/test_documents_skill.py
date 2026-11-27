@@ -30,7 +30,7 @@ class DocumentsSkillTests(unittest.TestCase):
         self.assertTrue(all(item["status"] == "pass" for item in report["files"]))
 
     def test_document_groups_discover_one_complete_family_skill(self):
-        for group in ["default", "work", "writing_reporting"]:
+        for group in ["default", "work"]:
             config = read_jsonc(ROOT / f"groups/{group}.jsonc")
             self.assertIn("skills/documents", config["inputRoots"])
         skill = ROOT / "skills/documents/skills/documents"

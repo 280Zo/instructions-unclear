@@ -1,6 +1,6 @@
 # screenshot
 
-Desktop/system screenshot capture with OS-specific helpers. Included in `default`, `work` and `infosec`; independently selectable.
+Desktop/system screenshot capture with OS-specific helpers. Included in `default` and `work`; independently selectable.
 
 ## Install
 
@@ -18,7 +18,7 @@ Approve the screen/window, sensitive content exposure and output path before cap
 
 ## For agents: install, remove and update
 
-To install, use the `default`, `work` or `infosec` group, or the single-folder command above. rulesync doesn't install a capture utility (`scrot`, `gnome-screenshot`, ImageMagick or the OS helper), and installing one follows `package-management`. To verify, start a new session and check that `screenshot` is listed among the skills. Don't take a screenshot as a test unless the user approves the screen and output path.
+To install, use the `default` or `work` group, or the single-folder command above. rulesync doesn't install a capture utility (`scrot`, `gnome-screenshot`, ImageMagick or the OS helper), and installing one follows `package-management`. To verify, start a new session and check that `screenshot` is listed among the skills. Don't take a screenshot as a test unless the user approves the screen and output path.
 
 To remove, follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `screenshot` skill folder behind; delete it with approval. Screenshots already taken and any capture utility stay unless the user asks.
 

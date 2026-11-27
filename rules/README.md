@@ -32,7 +32,7 @@ Every rule installs into the same file (`~/.config/opencode/AGENTS.md`, `~/.clau
 
 ## For agents: install, remove and update
 
-Install. The `default`, `work` and `writing_reporting` home-folder groups include all seven rule folders in the right order; see [`groups/README.md`](../groups/README.md). For a custom set, follow [Install](#install). Rules need no programs. The preamble and its reminder work as a pair, so warn the user before leaving one of them out. To verify, ask the user to open the installed instructions file (for OpenCode, `~/.config/opencode/AGENTS.md`) and check that it starts with the shell preamble and ends with its reminder.
+Install. The `default` and `work` home-folder groups include all seven rule folders in the right order; see [`groups/README.md`](../groups/README.md). For a custom set, follow [Install](#install). Rules need no programs. The preamble and its reminder work as a pair, so warn the user before leaving one of them out. To verify, ask the user to open the installed instructions file (for OpenCode, `~/.config/opencode/AGENTS.md`) and check that it starts with the shell preamble and ends with its reminder.
 
 Remove. Drop the rule folders from `inputRoots` in the user's `rulesync.local.jsonc` (or pick a group without them), keeping `rules/shell-preamble` first and `rules/shell-preamble-reminder` last, then regenerate with `rules` in `--features`. Every run replaces the whole instructions file, so removed rules disappear and leave no files behind. A run without `rules` in `--features` leaves the old file as it was. See [Removing or replacing a component](../AGENTS.md#removing-or-replacing-a-component).
 

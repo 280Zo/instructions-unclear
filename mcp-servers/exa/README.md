@@ -92,7 +92,7 @@ Refresh `skills/search/` and `skills/exa-agent/` together from the recorded upst
 
 ### Install
 
-- It's in the `default` and `work` [install groups](../../groups/README.md), and `writing_reporting` installs its rule and skills but leaves MCP settings alone.
+- It's in the `default` and `work` [install groups](../../groups/README.md).
 - Follow [Let your agent do it](#let-your-agent-do-it) above. Nothing needs installing locally. A key is optional; ask only whether the user has one, never for its value. With a key, OpenCode needs the user's `$XDG_RUNTIME_DIR/opencode/exa.key` file and other tools need `EXA_API_KEY`.
 - The connection is written switched on. To verify, run one ordinary search with separate approval. Don't use `agent_run` as a test.
 

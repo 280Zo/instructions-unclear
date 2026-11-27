@@ -1,9 +1,10 @@
 """Opt-in runtime check of the default group's OpenCode agents.
 
-Generates groups/default.jsonc, together with the agents and skills of the
-ai_research, career and reverse_engineering folder groups (so every agent is
-checked), without MCP output (so no real MCP server
-starts) into a fresh home under /tmp/opencode, adds harmless local stub MCP
+Generates groups/default.jsonc into a fresh home under /tmp/opencode and each
+of the ai_research, career and reverse_engineering folder groups into its own
+folder there, as users install them, all without MCP output (so no real MCP
+server starts). The folder agents are checked from their own folder, where
+build must still be denied their skills. It adds harmless local stub MCP
 servers named zap, codebase-memory-mcp and freecad, then runs the installed
 OpenCode against a localhost model stub. For each primary-capable agent it
 compares the skills, MCP servers and subagents shown to the model with
@@ -45,20 +46,32 @@ MODES = {"build": "primary", "plan": "primary", "general": "subagent", "explore"
          "local-model": "all"}
 STUB_SERVERS = ["zap", "codebase-memory-mcp", "freecad"]
 LISTED_SUBAGENTS = ["security-auditor", "reverse-engineer", "evaluator", "career"]
+# Folder groups whose agent installs only there, not with default, and their helper agents.
+FOLDER_GROUPS = {"ai_research": "ai-research", "career": "career", "reverse_engineering": "reverse-engineering"}
+FOLDER_HELPERS = {"reverse_engineering": {"reverse-engineer", "malware-analyst", "firmware-analyst"}}
+DEFAULT_PRIMARY = [a for a in PRIMARY if a not in FOLDER_GROUPS.values()]
+DEFAULT_MODES = {a: m for a, m in MODES.items() if a not in FOLDER_GROUPS.values()}
+DEFAULT_HELPERS = {"evaluator", "metacognitive", "security-auditor", "threat-modeling-expert"}
 # One skill from each native plugin is planted in the test home, as if the plugin were installed.
 PLUGIN_SKILLS = {key: generate.BUNDLES[key][0] for key in generate.NATIVE_PLUGINS}
-SKILL_CALLS = [("design", "resume-tailor", False), ("career", "resume-tailor", True),
-               ("build", "typography", False), ("ai-research", "humanizer", True),
-               ("security", "binary-triage", False), ("reverse-engineering", "binary-triage", True),
-               ("security", PLUGIN_SKILLS["trailofbits"], True), ("build", PLUGIN_SKILLS["trailofbits"], False),
-               ("reverse-engineering", PLUGIN_SKILLS["iothackbot"], True),
-               ("security", PLUGIN_SKILLS["iothackbot"], False)]
+SKILL_CALLS = [("design", "typography", True), ("build", "typography", False),
+               ("security", PLUGIN_SKILLS["trailofbits"], True), ("build", PLUGIN_SKILLS["trailofbits"], False)]
 MCP_CALLS = [("security", "zap", True), ("design", "zap", False),
              ("build", "codebase-memory-mcp", True), ("design", "codebase-memory-mcp", False),
              ("3d-modeling", "freecad", True), ("build", "freecad", False)]
 SUBAGENT_CALLS = [("design", "security-auditor", False), ("security", "security-auditor", True),
-                  ("build", "career", True), ("career", "evaluator", False),
                   ("second-opinion", "evaluator", True)]
+# Made inside each folder group's folder: its agent loads its skills, the others are still denied them.
+FOLDER_SKILL_CALLS = {
+    "ai_research": [("ai-research", "humanizer", True), ("ai-research", "vllm", True), ("build", "vllm", False)],
+    "career": [("career", "resume-tailor", True), ("design", "resume-tailor", False),
+               ("build", "resume-tailor", False)],
+    "reverse_engineering": [("reverse-engineering", "binary-triage", True), ("security", "binary-triage", False),
+                            ("build", "binary-triage", False),
+                            ("reverse-engineering", PLUGIN_SKILLS["iothackbot"], True),
+                            ("security", PLUGIN_SKILLS["iothackbot"], False)],
+}
+FOLDER_SUBAGENT_CALLS = {"career": [("build", "career", True), ("career", "evaluator", False)]}
 
 
 class Stub(BaseHTTPRequestHandler):
@@ -216,6 +229,88 @@ def check_portable(cli):
           "(shared by Copilot CLI) and Cursor; Codex TOML parses", flush=True)
 
 
+def start_server(cwd, env, expected_agents, servers):
+    """Start a private OpenCode server in cwd. Returns (port, env, agents) once its agents and stub MCP servers are up."""
+    password = secrets.token_urlsafe(32)
+    env = {**env, "OPENCODE_PASSWORD": password}
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        port = sock.getsockname()[1]
+    server = subprocess.Popen(["opencode", "serve", "--hostname", "127.0.0.1", "--port", str(port)],
+                              cwd=cwd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    servers.append(server)
+    headers = {"Authorization": "Basic " + base64.b64encode(("opencode:" + password).encode()).decode()}
+    deadline = time.monotonic() + 40
+    while True:
+        if server.poll() is not None:
+            raise RuntimeError(f"Private OpenCode server in {cwd} exited before discovery")
+        try:
+            request = urllib.request.Request(f"http://127.0.0.1:{port}/api/agent", headers=headers)
+            with urllib.request.urlopen(request, timeout=5) as response:
+                agents = {a["id"]: a for a in json.load(response)["data"]}
+            if set(expected_agents) <= agents.keys():
+                break
+        except (urllib.error.URLError, TimeoutError):
+            pass
+        if time.monotonic() > deadline:
+            raise TimeoutError(f"Agent discovery in {cwd} did not complete")
+        time.sleep(0.2)
+    # The Code Mode catalog can lag MCP connection by a few milliseconds, so wait
+    # for every stub server to report connected, then let the catalog settle.
+    deadline = time.monotonic() + 40
+    while True:
+        request = urllib.request.Request(f"http://127.0.0.1:{port}/api/mcp", headers=headers)
+        with urllib.request.urlopen(request, timeout=5) as response:
+            status = {s["name"]: s["status"].get("status") for s in json.load(response)["data"]}
+        if all(status.get(name) == "connected" for name in STUB_SERVERS):
+            break
+        if time.monotonic() > deadline:
+            raise TimeoutError(f"Stub MCP servers did not connect: {status}")
+        time.sleep(0.2)
+    time.sleep(2)
+    return port, env, agents
+
+
+def check_agents(port, env, cwd, names, skills, agents, results, where):
+    """Each agent sees exactly the skills, MCP servers and subagents generate.py gives it."""
+    installed = set(skills)
+    for agent in names:
+        before = len(Stub.requests)
+        run_agent(port, env, cwd, agent, "hello")
+        text = "\n".join(s for raw in Stub.requests[before:] for s in strings(json.loads(raw)))
+        visible = {name for name, snippet in skills.items() if snippet in text}
+        expected = expected_skills(agent, installed)
+        mcp = {s: f"{mcp_path(s)}.ping(" in text for s in STUB_SERVERS}
+        listed = {a: re.search(rf"^- {re.escape(a)}: ", text, re.M) is not None for a in LISTED_SUBAGENTS}
+        results[f"{where} {agent}"] = {"skills": len(visible), "missing": sorted(expected - visible),
+                                       "unexpected": sorted(visible - expected), "mcp": mcp, "subagents": listed}
+        assert visible == expected, (where, agent, results[f"{where} {agent}"])
+        assert mcp == {s: mcp_allowed(agent, s) for s in STUB_SERVERS}, (where, agent, mcp)
+        assert listed == {a: a in agents and a != agent and subagent_allowed(agent, a)
+                          for a in LISTED_SUBAGENTS}, (where, agent, listed)
+        print(f"PASS {where}: {agent} sees {len(visible)} skills; MCP and subagent lists match", flush=True)
+
+
+def check_calls(port, env, cwd, skill_calls, mcp_calls, subagent_calls, results, where):
+    for agent, skill, allowed in skill_calls:
+        state = call(port, env, cwd, agent, "skill", {"id": skill})
+        results[f"{where} skill {agent}/{skill}"] = state["status"]
+        assert state["status"] == ("completed" if allowed else "error"), (where, agent, skill, state)
+        print(f"PASS {where}: {agent} loads {skill}: {state['status']}", flush=True)
+    for agent, server_name, allowed in mcp_calls:
+        state = call(port, env, cwd, agent, "execute", {"code": f"return await {mcp_path(server_name)}.ping()"})
+        reached = "MCP_STUB_PONG" in json.dumps(state)
+        results[f"{where} mcp {agent}/{server_name}"] = reached
+        assert reached is allowed, (where, agent, server_name, state)
+        print(f"PASS {where}: {agent} calls {server_name}: {'reached' if reached else 'blocked'}", flush=True)
+    for agent, target, allowed in subagent_calls:
+        state = call(port, env, cwd, agent, "subagent",
+                     {"agent": target, "description": "permission test", "prompt": "Reply ok."})
+        results[f"{where} subagent {agent}/{target}"] = state["status"]
+        assert state["status"] == ("completed" if allowed else "error"), (where, agent, target, state)
+        print(f"PASS {where}: {agent} delegates to {target}: {state['status']}", flush=True)
+
+
 def check(cli):
     root = Path(tempfile.mkdtemp(prefix="opencode-agents-", dir="/tmp/opencode"))
     print(f"Evidence directory: {root}", flush=True)
@@ -224,20 +319,31 @@ def check(cli):
     env = {"PATH": os.environ["PATH"], "HOME": str(home), "XDG_CONFIG_HOME": str(home / ".config"),
            "XDG_DATA_HOME": str(home / ".local/share"), "XDG_STATE_HOME": str(home / ".local/state"),
            "XDG_CACHE_HOME": str(home / ".cache"), "OPENCODE_DISABLE_AUTOUPDATE": "1"}
+    # default into the home, as a user installs it; each folder group into its own folder.
     subprocess.run(["node", str(cli), "generate", "--config", "groups/default.jsonc", "--global",
-                    "--features", "rules,subagents,skills,commands", *selection()],
+                    "--features", "rules,subagents,skills,commands"],
                    cwd=REPO, env=env, check=True, capture_output=True)
+    folders = {}
+    for group in FOLDER_GROUPS:
+        folders[group] = root / group
+        folders[group].mkdir()
+        subprocess.run(["node", str(cli), "generate", "--config", f"groups/{group}.jsonc",
+                        "--output-roots", str(folders[group]), "--features", "rules,subagents,skills,commands"],
+                       cwd=REPO, env=env, check=True, capture_output=True)
     configdir = home / ".config/opencode"
-    files = {p.stem for p in (configdir / "agents").glob("*.md")}
-    expected = set(MODES) | {"evaluator", "metacognitive", "security-auditor", "threat-modeling-expert",
-                             "reverse-engineer", "malware-analyst", "firmware-analyst"}
-    assert files == expected, ("unexpected OpenCode agent files", files ^ expected)
-    for path in (configdir / "agents").glob("*.md"):
-        head = path.read_text().split("---", 2)[1]
-        assert not re.search(r"^name:", head, re.M), path
-        assert "disallowedTools" not in head, path  # Claude Code's section stays out of OpenCode
+    agent_dirs = {"default": configdir / "agents", **{g: folders[g] / ".opencode/agents" for g in FOLDER_GROUPS}}
+    expected_files = {"default": set(DEFAULT_MODES) | DEFAULT_HELPERS,
+                      **{g: {a} | FOLDER_HELPERS.get(g, set()) for g, a in FOLDER_GROUPS.items()}}
+    for where, directory in agent_dirs.items():
+        files = {p.stem for p in directory.glob("*.md")}
+        assert files == expected_files[where], ("unexpected OpenCode agent files", where, files ^ expected_files[where])
+        for path in directory.glob("*.md"):
+            head = path.read_text().split("---", 2)[1]
+            assert not re.search(r"^name:", head, re.M), path
+            assert "disallowedTools" not in head, path  # Claude Code's section stays out of OpenCode
     for name, spec in generate.SPECIALISTS.items():
-        body = (configdir / "agents" / f"{name}.md").read_text().split("---", 2)[2]
+        where = next((g for g, a in FOLDER_GROUPS.items() if a == name), "default")
+        body = (agent_dirs[where] / f"{name}.md").read_text().split("---", 2)[2]
         assert body.strip() == generate.agent_body(spec), name
     for key, skill in PLUGIN_SKILLS.items():
         base = REPO / generate.NATIVE_PLUGINS[key]["root"]
@@ -248,7 +354,7 @@ def check(cli):
     skills = model_visible_skills(configdir / "skills")
     stub = ThreadingHTTPServer(("127.0.0.1", 0), Stub)
     threading.Thread(target=stub.serve_forever, daemon=True).start()
-    server = None
+    servers = []
     results = {}
     try:
         (configdir / "opencode.json").write_text(json.dumps({
@@ -260,88 +366,34 @@ def check(cli):
                                        "limit": {"context": 200000, "output": 1000}}}}},
             "mcp": {"servers": {name: {"type": "local", "command": [sys.executable, str(MCP_STUB)]}
                                 for name in STUB_SERVERS}}}))
-        password = secrets.token_urlsafe(32)
-        env["OPENCODE_PASSWORD"] = password
-        with socket.socket() as sock:
-            sock.bind(("127.0.0.1", 0))
-            port = sock.getsockname()[1]
-        server = subprocess.Popen(["opencode", "serve", "--hostname", "127.0.0.1", "--port", str(port)],
-                                  cwd=root, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        headers = {"Authorization": "Basic " + base64.b64encode(("opencode:" + password).encode()).decode()}
-        deadline = time.monotonic() + 40
-        while True:
-            if server.poll() is not None:
-                raise RuntimeError("Private OpenCode server exited before discovery")
-            try:
-                request = urllib.request.Request(f"http://127.0.0.1:{port}/api/agent", headers=headers)
-                with urllib.request.urlopen(request, timeout=5) as response:
-                    agents = {a["id"]: a for a in json.load(response)["data"]}
-                if set(MODES) <= agents.keys():
-                    break
-            except (urllib.error.URLError, TimeoutError):
-                pass
-            if time.monotonic() > deadline:
-                raise TimeoutError("Agent discovery did not complete")
-            time.sleep(0.2)
-        # The Code Mode catalog can lag MCP connection by a few milliseconds, so wait
-        # for every stub server to report connected, then let the catalog settle.
-        deadline = time.monotonic() + 40
-        while True:
-            request = urllib.request.Request(f"http://127.0.0.1:{port}/api/mcp", headers=headers)
-            with urllib.request.urlopen(request, timeout=5) as response:
-                servers = {s["name"]: s["status"].get("status") for s in json.load(response)["data"]}
-            if all(servers.get(name) == "connected" for name in STUB_SERVERS):
-                break
-            if time.monotonic() > deadline:
-                raise TimeoutError(f"Stub MCP servers did not connect: {servers}")
-            time.sleep(0.2)
-        time.sleep(2)
-        results["modes"] = {a: agents[a]["mode"] for a in MODES}
-        assert results["modes"] == MODES, results["modes"]
+        port, run_env, agents = start_server(root, env, DEFAULT_MODES, servers)
+        assert not set(FOLDER_GROUPS.values()) & agents.keys(), "a folder group's agent installed with default"
+        results["modes"] = {a: agents[a]["mode"] for a in DEFAULT_MODES}
+        assert results["modes"] == DEFAULT_MODES, results["modes"]
         explore = agents["explore"]["permissions"]
         assert {"action": "*", "resource": "*", "effect": "deny"} in explore, explore
         assert not any(r["action"] in ("edit", "write", "skill") and r["effect"] == "allow"
                        for r in explore[explore.index({"action": "*", "resource": "*", "effect": "deny"}):]), explore
         print("PASS explore keeps its built-in read-only policy", flush=True)
-        installed = set(skills)
-        for agent in PRIMARY:
-            before = len(Stub.requests)
-            run_agent(port, env, root, agent, "hello")
-            text = "\n".join(s for raw in Stub.requests[before:] for s in strings(json.loads(raw)))
-            visible = {name for name, snippet in skills.items() if snippet in text}
-            expected = expected_skills(agent, installed)
-            mcp = {s: f"{mcp_path(s)}.ping(" in text for s in STUB_SERVERS}
-            listed = {a: re.search(rf"^- {re.escape(a)}: ", text, re.M) is not None for a in LISTED_SUBAGENTS}
-            results[agent] = {"skills": len(visible), "missing": sorted(expected - visible),
-                              "unexpected": sorted(visible - expected), "mcp": mcp, "subagents": listed}
-            assert visible == expected, (agent, results[agent])
-            assert mcp == {s: mcp_allowed(agent, s) for s in STUB_SERVERS}, (agent, mcp)
-            assert listed == {a: subagent_allowed(agent, a) and a != agent for a in LISTED_SUBAGENTS}, (agent, listed)
-            print(f"PASS {agent}: {len(visible)} skills; MCP and subagent lists match", flush=True)
-        for agent, skill, allowed in SKILL_CALLS:
-            state = call(port, env, root, agent, "skill", {"id": skill})
-            results[f"skill {agent}/{skill}"] = state["status"]
-            assert state["status"] == ("completed" if allowed else "error"), (agent, skill, state)
-            print(f"PASS {agent} loads {skill}: {state['status']}", flush=True)
-        for agent, server_name, allowed in MCP_CALLS:
-            state = call(port, env, root, agent, "execute",
-                         {"code": f"return await {mcp_path(server_name)}.ping()"})
-            reached = "MCP_STUB_PONG" in json.dumps(state)
-            results[f"mcp {agent}/{server_name}"] = reached
-            assert reached is allowed, (agent, server_name, state)
-            print(f"PASS {agent} calls {server_name}: {'reached' if reached else 'blocked'}", flush=True)
-        for agent, target, allowed in SUBAGENT_CALLS:
-            state = call(port, env, root, agent, "subagent",
-                         {"agent": target, "description": "permission test", "prompt": "Reply ok."})
-            results[f"subagent {agent}/{target}"] = state["status"]
-            assert state["status"] == ("completed" if allowed else "error"), (agent, target, state)
-            print(f"PASS {agent} delegates to {target}: {state['status']}", flush=True)
+        check_agents(port, run_env, root, DEFAULT_PRIMARY, skills, agents, results, "default")
+        check_calls(port, run_env, root, SKILL_CALLS, MCP_CALLS, SUBAGENT_CALLS, results, "default")
+        for group, owner in FOLDER_GROUPS.items():
+            folder = folders[group]
+            # Skills from the home install and the folder's own, as OpenCode loads both there.
+            here = {**skills, **model_visible_skills(folder / ".opencode/skills")}
+            port, run_env, agents = start_server(folder, env, set(DEFAULT_MODES) | {owner}, servers)
+            assert agents[owner]["mode"] == MODES[owner], (group, agents[owner]["mode"])
+            others = [a for a in FOLDER_GROUPS.values() if a != owner]
+            assert not set(others) & agents.keys(), (group, "another folder group's agent is visible")
+            check_agents(port, run_env, folder, ["build", owner], here, agents, results, group)
+            check_calls(port, run_env, folder, FOLDER_SKILL_CALLS[group], [],
+                        FOLDER_SUBAGENT_CALLS.get(group, []), results, group)
     finally:
         try:
             (root / "results.json").write_text(json.dumps(results, indent=2) + "\n")
         finally:
             try:
-                if server is not None:
+                for server in servers:
                     server.terminate()
                     try:
                         server.wait(timeout=10)

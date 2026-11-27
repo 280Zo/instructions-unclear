@@ -1,9 +1,0 @@
-{
-  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
-  // Folder-scoped: the 19 designskills kept after removing overlaps. Run from
-  // the repo root with --output-roots <folder>. Never run this with --global.
-  "targets": ["opencode"],
-  "features": ["skills"],
-  "delete": false,
-  "inputRoots": ["skills/designskills", "skills/anatomy"]
-}

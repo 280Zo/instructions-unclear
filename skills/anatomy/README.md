@@ -2,7 +2,7 @@
 
 `anatomy` explains a technical idea by inventing a physical machine whose working *is* the idea, then drawing it as a detailed, interactive isometric SVG figure. A cache key that skips unchanged work becomes a pin-tumbler lock; one GPU context serving many canvases becomes a plotter with one print head. Figures can add WebGL effects (fire, water, lamp light) or an optional 3D mode, and can print as A4 PDFs. It ships eight complete example machines in `examples/`, which the skill opens and builds from.
 
-It's in the `default` and `work` groups next to `visual-explainer` and `diagram-design`, and in the `design` folder group.
+It's in the `default` and `work` groups next to `visual-explainer` and `diagram-design`.
 
 ## Install
 
@@ -30,7 +30,7 @@ rulesync copies the skill, its kit, scripts and examples (about 27 MB). It doesn
 
 ### Install
 
-1. Install with the `default`, `work` or `design` group, or the command above.
+1. Install with the `default` or `work` group, or the command above.
 2. Check `node --version` (20.10 or newer) and whether Chrome or Chromium is installed. Install either only with approval, following the `package-management` skill.
 3. To verify, confirm `anatomy` is in the skills list, then build the smallest example from the installed skill folder: `node examples/dial-indicator/build.mjs`. It writes a standalone HTML page beside the script and touches nothing else.
 
@@ -40,7 +40,7 @@ rulesync copies the skill, its kit, scripts and examples (about 27 MB). It doesn
 
 ### Remove
 
-Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `anatomy` skill folder behind in each tool's skills directory (and inside the design folder if the `design` group installed it); delete it only with approval. Figures, PDFs and pages the user built stay. Node, Chrome and `gh` stay installed unless the user asks.
+Follow [Removing or replacing a component](../../AGENTS.md#removing-or-replacing-a-component). `delete: false` leaves the `anatomy` skill folder behind in each tool's skills directory; delete it only with approval. Figures, PDFs and pages the user built stay. Node, Chrome and `gh` stay installed unless the user asks.
 
 ### Update
 

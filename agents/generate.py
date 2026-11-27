@@ -367,6 +367,13 @@ def default_skills():
     return set(skill_ids(*[r for r in roots if any((ROOT / r / "skills").glob("*/SKILL.md"))]))
 
 
+def default_mcp():
+    """MCP server names the default group installs."""
+    roots = read_jsonc(ROOT / "groups/default.jsonc")["inputRoots"]
+    return {name for r in roots if (ROOT / r / "mcp.jsonc").is_file()
+            for name in read_jsonc(ROOT / r / "mcp.jsonc")["mcpServers"]}
+
+
 def map_data():
     installed = default_skills()
     listed = set(SHARED).union(*BUNDLES.values())
@@ -439,7 +446,7 @@ def hero_svgs():
     plugins = ", ".join(f"{plugin['title']} ({len(BUNDLES[key])} skills, {owners[key]} agent)"
                         for key, plugin in NATIVE_PLUGINS.items())
     note = f"Folder cards add their group. Plugins installed separately: {plugins}."
-    return {path: hero.render(theme, agents, len(visible), len(MCP), shared, note)
+    return {path: hero.render(theme, agents, len(visible), len(default_mcp()), shared, note)
             for theme, path in HERO_FILES.items()}
 
 

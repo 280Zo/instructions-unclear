@@ -173,7 +173,7 @@ class SecurityReContextTests(unittest.TestCase):
 
     def test_group_roots_and_features(self):
         expected = {
-            "infosec": {"mcp-servers/zap"},
+            "default": {"mcp-servers/zap"},
             "reverse_engineering": {
                 "mcp-servers/reva",
                 "mcp-servers/radare2",
@@ -330,7 +330,7 @@ class SecurityReContextTests(unittest.TestCase):
         )
 
     def test_skill_names_are_unique_in_each_group(self):
-        for group in ["infosec", "reverse_engineering", "career"]:
+        for group in ["reverse_engineering", "career"]:
             names = []
             for root in read_jsonc(ROOT / f"groups/{group}.jsonc")["inputRoots"]:
                 for skill in (ROOT / root / "skills").glob("*/SKILL.md"):

@@ -17,7 +17,7 @@ SKILLS = {
     "wait-what": ["agents/openai.yaml"],
 }
 COMMIT = "5beb35b040e3de97e54fa9e386d7e42d15c295c2"
-GROUPS = ["default", "work", "writing_reporting"]
+GROUPS = ["default", "work"]
 
 
 def frontmatter(name):
