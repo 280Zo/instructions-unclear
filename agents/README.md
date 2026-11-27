@@ -19,7 +19,7 @@ A profile installs into one folder you choose, not your home folder. To install 
 
 ## How agents keep skills out of each other's requests
 
-Every installed skill's description is sent with every request, unless the agent can't use it. The `default` group installs 55 skills; the AI research skills, which install only with their folder group, would add about 7,000 tokens. In OpenCode, each agent therefore lists the skills, MCP servers and subagents it may use, and OpenCode leaves the rest out of what the model sees and blocks calls to them (checked on OpenCode 2.1.3). The [root README](../README.md)'s hero image shows how many skills each agent sees; the [interactive map](https://280zo.github.io/instructions-unclear/agents-map.html) ([source](../docs/agents-map.html)) lists every skill, server and subagent.
+Every installed skill's description is sent with every request, unless the agent can't use it. The `default` group installs 55 skills; the AI research skills, which install only with their folder group, would add about 7,000 tokens. In OpenCode, each agent therefore lists the skills, MCP servers and subagents it may use, and OpenCode leaves the rest out of what the model sees and blocks calls to them (checked on OpenCode 2.1.3). The [root README](../README.md)'s hero image shows the repo's totals, each group and the agents it installs, with the skills only each agent loads; the [interactive map](https://280zo.github.io/instructions-unclear/agents-map.html) ([source](../docs/agents-map.html)) lists every skill, server and subagent.
 
 Every agent but `fcos-app-installer` gets the Superpowers skills, `package-management`, Exa's `search` and `exa-agent`, OpenCode's built-in `opencode` skill, the user-invoked `handoff`, `teach` and `wait-what`, and the Exa and PMB servers; all but `second-opinion` also get Docling. `fcos-app-installer` keeps a shorter list of its own (last row), with no PMB or Docling, so it can't copy its private values out through memory or document tools. It starts only its own `adapter-drafter`: any other agent it started would run with that agent's own, wider permissions, not its.
 
@@ -97,7 +97,7 @@ The image at the top of the [root README](../README.md) (`docs/hero-light.svg` a
 - adding, removing or renaming an agent, or changing its skills, servers or description;
 - a new Superpowers release that adds or renames skills (update `SUPERPOWERS` in `generate.py` first);
 - adding, removing or updating a plugin that brings skills, such as Trail of Bits (see [Adding a plugin that brings skills](#adding-a-plugin-that-brings-skills));
-- changing the agent cards (`HERO_AGENTS` in `generate.py`) or the look (`agents/hero.py`).
+- adding, removing or renaming a group in `groups/`, changing which agents count as pickable or global (`HERO_ORDER` and `GLOBAL_GROUPS` in `generate.py`), or the look (`agents/hero.py`).
 
 From the repo root:
 
@@ -127,7 +127,7 @@ python3 agents/generate.py
 python3 -m unittest discover -s tests
 ```
 
-Run it after every event listed in [Keeping the README image and agent map current](#keeping-the-readme-image-and-agent-map-current), in the same change, and include the regenerated `docs/hero-*.svg` and `docs/agents-map.html` in it. When an image change is visible (new card, new counts, new look), render a preview (for example `rsvg-convert -w 1800 docs/hero-light.svg -o /tmp/opencode/hero.png`) and look at both themes before reporting it done; check that long agent names and tags still fit their cards. Card labels and tags are in `HERO_AGENTS`; a new user-selectable agent needs a card there (the layout fits nine, so ask the user which to merge or drop beyond that). Colors, fonts and layout are in `hero.py`; keep its 4 px grid, accessible `<title>`/`<desc>`, and no external fonts, images or links.
+Run it after every event listed in [Keeping the README image and agent map current](#keeping-the-readme-image-and-agent-map-current), in the same change, and include the regenerated `docs/hero-*.svg` and `docs/agents-map.html` in it. When an image change is visible (new card, new counts, new look), render a preview (for example `rsvg-convert -w 1800 docs/hero-light.svg -o /tmp/opencode/hero.png`) and look at both themes before reporting it done; check that chips fit and long rows wrap cleanly. The image has three tiers: the repo's totals, one row per group in `groups/` (global groups from `GLOBAL_GROUPS` first, then folder groups), and a chip for each agent the group installs, numbered with the skills only that agent may load. A new user-selectable agent goes in `HERO_ORDER`; every other agent file counts as a helper. Colors, fonts and layout are in `hero.py`; keep its 4 px grid, accessible `<title>`/`<desc>`, and no external fonts, images or links.
 
 `tests/test_opencode_agents.py` fails until every generated file matches. Don't edit generated files or the lines between `BEGIN generated` and `END generated` markers by hand. Superpowers is a plugin, so its skill IDs are listed in the script; update them when Superpowers adds or renames a skill.
 
@@ -138,7 +138,7 @@ rulesync doesn't install plugins, so their skills never appear in the `default` 
 1. Decide which agent owns it. If every agent should have it, as with Superpowers, list its skill IDs in `SHARED` and skip the next two steps.
 2. Otherwise add it to `NATIVE_PLUGINS` in `generate.py` with a title and the folder holding its complete tree. The script reads skill IDs from every `SKILL.md` there, skipping test and eval fixtures. If the repo holds no copy, list the IDs explicitly, as `SUPERPOWERS` does.
 3. Add its key to the owning agent's `bundles` in `SPECIALISTS`, and mention it in that agent's `instructions`.
-4. Run `python3 agents/generate.py` and the tests. Build-family agents now deny the skills, the owner allows them, the map lists the plugin as installed separately, and the hero footnote names it.
+4. Run `python3 agents/generate.py` and the tests. Build-family agents now deny the skills, the owner allows them, the map lists the plugin as installed separately, and the hero's plugin line names it.
 5. Check that no new skill ID matches an existing repo skill; `test_native_plugin_skills_go_to_one_agent` fails if one does, because denying it would also block the repo skill. Update that test's owner list, and the plugin's wrapper README and this README's agent table.
 6. Run the runtime check: it plants one skill from each listed plugin and confirms only the owner can load it.
 

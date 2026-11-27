@@ -19,6 +19,7 @@ SPECIALISTS = ["design", "career", "ai-research", "security", "reverse-engineeri
 # Agents that have a folder of their own; security and reverse-engineering join their sets.
 OWN_FOLDERS = [*BUILTINS, "design", "career", "ai-research", "3d-modeling"]
 # Specialist sets that install whole from their folder group, agent included, not with default.
+HERO_PICKABLE = ["build", "plan", *SPECIALISTS, "second-opinion", "local-model", "fcos-app-installer"]
 FOLDER_AGENTS = {"ai_research": "ai-research", "career": "career", "reverse_engineering": "reverse-engineering"}
 MOVED_ROOTS = {
     "agents/ai-research", "skills/ai-research",
@@ -164,7 +165,7 @@ class AgentTests(unittest.TestCase):
             self.assertIn("installed separately", group["title"])
             self.assertEqual(group["agents"], [owner])
         hero = (ROOT / generate.HERO_FILES["light"]).read_text()
-        self.assertIn("Trail of Bits (97 skills, security agent)", hero)
+        self.assertIn("Trail of Bits 97 (security)", hero)
 
     def test_security_audit_belongs_to_the_security_agent(self):
         self.assertEqual(generate.BUNDLES["audit"], ["security-audit"])
@@ -246,33 +247,59 @@ class AgentTests(unittest.TestCase):
             for skill in ["vllm", "resume-tailor", "binary-triage"]:
                 self.assertIn(f'{{action: "skill", resource: "{skill}", effect: deny}}', head, name)
 
-    def test_folder_cards_count_their_folder_group(self):
+    def hero_texts(self):
         svg = ET.parse(ROOT / generate.HERO_FILES["light"]).getroot()
-        desc = svg.find("{http://www.w3.org/2000/svg}desc").text
-        counts = {m[1]: int(m[2]) for m in re.finditer(r"(?:: |, )([a-z0-9/ -]+?) \((\d+)\)", desc)}
-        # What the agent's model sees inside its folder: its allowed skills among default's,
-        # its folder group's and the shared plugin skills, minus user-invoked ones.
-        for group, agent in FOLDER_AGENTS.items():
-            folder = {p.parent.name for root in read_jsonc(ROOT / f"groups/{group}.jsonc")["inputRoots"]
-                      for p in (ROOT / root / "skills").glob("*/SKILL.md")}
-            visible = (set(default_skill_ids()) | folder | set(generate.SHARED)) - set(generate.USER_INVOKED)
-            head, _ = frontmatter(agent_file(agent))
-            allowed = set(re.findall(r'resource: "([^"*]+)", effect: allow', head))
-            self.assertEqual(counts[agent], len(allowed & visible), agent)
-        labels = [t.text for t in svg.iter("{http://www.w3.org/2000/svg}text")]
-        self.assertEqual(labels.count("FOLDER"), len(FOLDER_AGENTS))
-        self.assertEqual(labels.count("+ folder group"), len(FOLDER_AGENTS))
+        return [t.text or "" for t in svg.iter("{http://www.w3.org/2000/svg}text")]
 
-    def test_hero_counts_the_mcp_servers_default_installs(self):
-        installed = {name for root in read_jsonc(ROOT / "groups/default.jsonc")["inputRoots"]
-                     if (ROOT / root / "mcp.jsonc").is_file()
-                     for name in read_jsonc(ROOT / root / "mcp.jsonc")["mcpServers"]}
-        self.assertNotIn("reva", installed)
-        svg = ET.parse(ROOT / generate.HERO_FILES["light"]).getroot()
-        labels = " ".join(t.text or "" for t in svg.iter("{http://www.w3.org/2000/svg}text"))
-        self.assertIn(f"skills · {len(installed)} MCP servers", labels)
-        desc = svg.find("{http://www.w3.org/2000/svg}desc").text
-        self.assertIn(f"and {len(installed)} MCP servers", desc)
+    def test_hero_shows_repo_totals(self):
+        comps = [p for top in ("skills", "agents", "mcp-servers") for p in (ROOT / top).iterdir() if p.is_dir()]
+        skills = {s.parent.name for c in comps for s in c.glob("skills/*/SKILL.md")}
+        files = {p.stem for p in ROOT.glob("agents/*/subagents/*.md")}
+        pick = set(HERO_PICKABLE)
+        servers = {n for p in ROOT.glob("mcp-servers/*/mcp.jsonc") for n in read_jsonc(p)["mcpServers"]}
+        plugins = len(generate.SUPERPOWERS) + sum(len(generate.BUNDLES[k]) for k in generate.NATIVE_PLUGINS)
+        texts = self.hero_texts()
+        for number, label in [(len(skills), "skills"), (len(pick), "agents you pick"),
+                              (len(files - pick), "helper agents"), (len(servers), "MCP servers"),
+                              (plugins, "plugin skills")]:
+            i = texts.index(label)
+            self.assertEqual(texts[i - 1], str(number), label)
+
+    def test_hero_lists_every_group_with_its_agents(self):
+        texts = self.hero_texts()
+        groups = sorted(p.stem for p in ROOT.glob("groups/*.jsonc"))
+        self.assertEqual(sorted(g for g, _scope in generate.hero_groups()), groups)
+        for group in groups:
+            roots = read_jsonc(ROOT / f"groups/{group}.jsonc")["inputRoots"]
+            skills = {p.parent.name for r in roots for p in (ROOT / r / "skills").glob("*/SKILL.md")}
+            servers = {n for r in roots if (ROOT / r / "mcp.jsonc").is_file()
+                       for n in read_jsonc(ROOT / r / "mcp.jsonc")["mcpServers"]}
+            # A group's row is its name followed by its summary; an agent chip may share the name (career).
+            row_start = lambda j: texts[j] in groups and j + 1 < len(texts) and re.fullmatch(r"\d+ skills.*", texts[j + 1])
+            i = next(j for j in range(len(texts)) if texts[j] == group and row_start(j))
+            summary = f"{len(skills)} skills" + (f" \u00b7 {len(servers)} MCP" if servers else "")
+            self.assertEqual(texts[i + 1], summary, group)
+            agents = {p.stem for r in roots for p in (ROOT / r / "subagents").glob("*.md")} & set(HERO_PICKABLE)
+            end = next((j for j in range(i + 2, len(texts)) if row_start(j) or texts[j].isupper()), len(texts))
+            row = [a for a in texts[i + 2:end] if a in HERO_PICKABLE]
+            self.assertEqual(sorted(row), sorted(agents), group)
+        self.assertEqual([g for g, scope in generate.hero_groups() if scope == "global"], ["default", "work"])
+
+    def test_hero_chips_count_only_skills_the_agent_alone_loads(self):
+        own = {"design": len(generate.BUNDLES["design"]), "career": len(generate.BUNDLES["career"]),
+               "ai-research": len(generate.BUNDLES["ai-research"]),
+               "reverse-engineering": len(generate.BUNDLES["reverse-engineering"]),
+               "security": len(generate.BUNDLES["threat"]) + len(generate.BUNDLES["audit"]),
+               "fcos-app-installer": len(generate.BUNDLES["fcos"])}
+        texts = self.hero_texts()
+        for agent in HERO_PICKABLE:
+            # The chip, not a group row of the same name (a row's next text is its skill summary).
+            i = next(j for j, s in enumerate(texts) if s == agent and not texts[j + 1].endswith(("skills", "MCP")))
+            following = texts[i + 1] if i + 1 < len(texts) else ""
+            if agent in own:
+                self.assertEqual(following, str(own[agent]), agent)
+            else:
+                self.assertFalse(following.isdigit(), agent)
 
     def test_other_groups_keep_their_agents(self):
         # Only default gets the per-agent folders, except the sets that install with their folder group.
@@ -331,7 +358,7 @@ class FcosAppInstallerMapTests(unittest.TestCase):
         self.assertNotIn(self.NAME, generate.SPECIALISTS)
         self.assertNotIn(generate.DECLARED[self.NAME], generate.MARKED)
         self.assertNotIn(generate.DECLARED[self.NAME], generate.outputs())  # its file is the source of truth
-        self.assertNotIn(self.NAME, [name for name, _kind, _tag in generate.HERO_AGENTS])  # no hero card
+        self.assertIn(self.NAME, generate.HERO_ORDER)  # a chip in its folder group's row
 
     def test_the_map_reads_the_skills_it_may_load_from_its_rules(self):
         allowed = generate.allowed_skills(generate.spec_of(self.NAME), set(default_skill_ids()))

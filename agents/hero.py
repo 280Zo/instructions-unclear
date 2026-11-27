@@ -1,10 +1,15 @@
 """Render the README hero image (light and dark SVG) for agents/generate.py.
 
+Three tiers, read top to bottom: the repo's totals, the install groups (global
+first, then per folder), and in each group's row the agents it brings. A chip's
+number is how many skills only that agent may load; agents without one work
+through shared skills or tools. Rows come from groups/*.jsonc and chips wrap,
+so a new group adds a row and a new agent adds a chip.
+
 Style: the diagram-design skill's default editorial tokens, except the accent,
-which is deep teal.
-In light mode the small label uses a darker teal so it passes WCAG AA. Text
-uses the skill's "system" font stacks, because GitHub shows README SVGs as
-images that can't load web fonts. Coordinates sit on a 4 px grid.
+which is deep teal. In light mode the small label uses a darker teal so it
+passes WCAG AA. Text uses the skill's "system" font stacks, because GitHub shows
+README SVGs as images that can't load web fonts. Coordinates sit on a 4 px grid.
 """
 
 from html import escape
@@ -25,11 +30,15 @@ SERIF = "'Instrument Serif', Georgia, 'Times New Roman', serif"
 SANS = "'Geist', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
 MONO = "'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
 
-WIDTH, HEIGHT = 1200, 600
+WIDTH = 1200
 RADIUS = 16  # rounded image corners; the README background shows outside them
-LEFT, CARD_W, CARD_GAP, CARD_Y, CARD_H = 28, 120, 8, 276, 160
-BUS_Y = 252
-TOOLS = ["OpenCode", "Claude Code", "Codex", "Copilot", "Cursor"]
+LEFT = 40
+NAME_X, SUMMARY_X, CHIP_X = 40, 232, 384  # columns of a group row
+ROW_H, CHIP_H, CHIP_GAP, WRAP_H = 40, 24, 8, 32
+SCOPES = {
+    "global": ("GLOBAL", "installs for every project · pick one"),
+    "folder": ("PER FOLDER", "installs into one folder you choose · add any"),
+}
 
 
 def text(x, y, content, size, color, family=SANS, weight=None, anchor=None, spacing=None):
@@ -43,86 +52,104 @@ def text(x, y, content, size, color, family=SANS, weight=None, anchor=None, spac
     return f'<text {" ".join(attrs)}>{escape(content)}</text>'
 
 
-def name_lines(name):
-    if len(name) > 14 and "-" in name:
-        head, tail = name.split("-", 1)
-        return [head + "-", tail]
-    return [name]
+def grid(value):
+    return (int(value) + 3) // 4 * 4
 
 
-def render(theme, agents, total_skills, mcp_count, shared, note):
-    """agents: list of (name, kind, skills_in_view, tag)."""
+def chip_width(name, own):
+    return grid(len(name) * 7.2 + 20 + (len(str(own)) * 7 + 14 if own else 0))
+
+
+def summary(group):
+    return f"{group['skills']} skills" + (f" · {group['mcp']} MCP" if group["mcp"] else "")
+
+
+def describe(data):
+    repo = data["repo"]
+    rows = "; ".join(f"{g['name']} ({summary(g)}): " + (", ".join(a for a, _n in g["agents"]) or "no agents")
+                     for g in data["groups"])
+    return (f"The repo has {repo['skills']} skills, {repo['agents']} agents you pick, {repo['helpers']} helper agents, "
+            f"{repo['mcp']} MCP servers and {repo['plugin_skills']} plugin skills. Groups and the agents they bring: {rows}.")
+
+
+def render(theme, data):
     t = THEMES[theme]
-    centers = [LEFT + i * (CARD_W + CARD_GAP) + CARD_W // 2 for i in range(len(agents))]
-    names = ", ".join(f"{a[0]} ({a[2]})" for a in agents)
+    label = t.get("label", t["accent"])
+    body = []
+
+    # Tier 1: the repo.
+    repo = data["repo"]
+    body.append(f'<rect x="{LEFT}" y="112" width="{WIDTH - 2 * LEFT}" height="88" rx="8" fill="{t["tint"]}" '
+                f'stroke="{t["accent"]}" stroke-width="1.2"/>')
+    body.append(text(LEFT + 20, 136, "THE REPO", 10, label, MONO, 500, spacing="0.18em"))
+    x = LEFT + 20
+    for number, name in [(repo["skills"], "skills"), (repo["agents"], "agents you pick"),
+                         (repo["helpers"], "helper agents"), (repo["mcp"], "MCP servers"),
+                         (repo["plugin_skills"], "plugin skills")]:
+        body.append(text(x, 168, str(number), 28, t["ink"], SERIF))
+        x += grid(len(str(number)) * 14 + 8)
+        body.append(text(x, 168, name, 12, t["muted"], MONO))
+        x += grid(len(name) * 7.4 + 32)
+    plugins = " · ".join(f"{title} {count} ({owner})" for title, count, owner in data["plugins"])
+    body.append(text(LEFT + 20, 188, f"Plugins install separately: {plugins}", 11, t["muted"], MONO))
+
+    # Tiers 2 and 3: groups, each row with the agents it brings.
+    y = 240
+    for scope in ("global", "folder"):
+        groups = [g for g in data["groups"] if g["scope"] == scope]
+        if not groups:
+            continue
+        caption, sub = SCOPES[scope]
+        body.append(text(LEFT, y, caption, 10, label, MONO, 500, spacing="0.18em"))
+        body.append(text(LEFT + grid(len(caption) * 9.6 + 12), y, sub, 12, t["muted"]))
+        y += 12
+        for i, group in enumerate(groups):
+            if i:
+                body.append(f'<line x1="{LEFT}" y1="{y}" x2="{WIDTH - LEFT}" y2="{y}" stroke="{t["rule"]}" stroke-width="1"/>')
+            body.append(text(NAME_X, y + 25, group["name"], 15, t["ink"], MONO, 600))
+            body.append(text(SUMMARY_X, y + 25, summary(group), 12, t["muted"], MONO))
+            cx, cy = CHIP_X, y + 8
+            for name, own in group["agents"]:
+                w = chip_width(name, own)
+                if cx + w > WIDTH - LEFT:
+                    cx, cy = CHIP_X, cy + WRAP_H
+                body.append(f'<rect x="{cx}" y="{cy}" width="{w}" height="{CHIP_H}" rx="4" fill="{t["card"]}" '
+                            f'stroke="{t["border"]}" stroke-width="1"/>')
+                body.append(text(cx + 10, cy + 16, name, 12, t["ink"], SANS, 600))
+                if own:
+                    body.append(text(cx + w - 10, cy + 16, str(own), 11, label, MONO, 600, anchor="end"))
+                cx += w + CHIP_GAP
+            if not group["agents"]:
+                body.append(text(CHIP_X, cy + 16, "skills only, no agent", 11, t["soft"], MONO))
+            y = cy - 8 + ROW_H
+        y += 32
+
+    # Key and notes.
+    key_w = chip_width("name", "n")
+    body.append(f'<rect x="{LEFT}" y="{y - 16}" width="{key_w}" height="{CHIP_H}" rx="4" fill="{t["card"]}" '
+                f'stroke="{t["border"]}" stroke-width="1"/>')
+    body.append(text(LEFT + 10, y, "name", 12, t["ink"], SANS, 600))
+    body.append(text(LEFT + key_w - 10, y, "n", 11, label, MONO, 600, anchor="end"))
+    body.append(text(LEFT + key_w + 12, y, "An agent and the skills only it loads. No number: it works through shared "
+                     "skills or tools.", 11, t["muted"], MONO))
+    y += 28
+    body.append(text(LEFT, y, "OpenCode enforces each agent's skill list; other tools get the agent's instructions "
+                     "without the filter.", 11, t["soft"], MONO))
+    height = grid(y + 28)
+
     out = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {WIDTH} {HEIGHT}" width="{WIDTH}" height="{HEIGHT}" '
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {WIDTH} {height}" width="{WIDTH}" height="{height}" '
         'role="img" aria-labelledby="hero-title hero-desc">',
-        '<title id="hero-title">Install once. Each agent sees only its own skills.</title>',
-        f'<desc id="hero-desc">{escape(f"One shared install of {total_skills} skills and {mcp_count} MCP servers feeds nine agents. Skills each agent can see: {names}. Installs into " + ", ".join(TOOLS) + " and about 40 more tools with rulesync.")}</desc>',
+        '<title id="hero-title">Pick the groups you want. Each agent brings its own skills.</title>',
+        f'<desc id="hero-desc">{escape(describe(data))}</desc>',
         "<defs>",
         f'<pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="0.9" fill="{t["dots"]}"/></pattern>',
-        f'<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="{t["muted"]}"/></marker>',
         "</defs>",
-        f'<rect width="{WIDTH}" height="{HEIGHT}" rx="{RADIUS}" fill="{t["paper"]}"/>',
-        f'<rect width="{WIDTH}" height="{HEIGHT}" rx="{RADIUS}" fill="url(#dots)" opacity="0.6"/>',
+        f'<rect width="{WIDTH}" height="{height}" rx="{RADIUS}" fill="{t["paper"]}"/>',
+        f'<rect width="{WIDTH}" height="{height}" rx="{RADIUS}" fill="url(#dots)" opacity="0.6"/>',
         text(LEFT, 44, "INSTRUCTIONS-UNCLEAR · CONTEXT FILES FOR AI CODING TOOLS", 11, t["soft"], MONO, 500, spacing="0.18em"),
-        text(LEFT, 96, "Install once. Each agent sees only its own skills.", 44, t["ink"], SERIF),
-        text(LEFT, 132, "Rules, agents, skills and MCP servers for every assistant. Specialist agents keep everything else "
-             "out of the request, so context stays small.", 15, t["muted"]),
+        text(LEFT, 88, "Pick the groups you want. Each agent brings its own skills.", 40, t["ink"], SERIF),
+        *body,
+        "</svg>",
     ]
-
-    # Shared install band: the one focal element.
-    band_w = WIDTH - 2 * LEFT
-    out += [
-        f'<rect x="{LEFT}" y="156" width="{band_w}" height="72" rx="8" fill="{t["tint"]}" stroke="{t["accent"]}" stroke-width="1.2"/>',
-        text(LEFT + 20, 180, "SHARED INSTALL", 10, t.get("label", t["accent"]), MONO, 500, spacing="0.18em"),
-        text(LEFT + 20, 212, f"{total_skills} skills · {mcp_count} MCP servers · one rules file", 28, t["ink"], SERIF),
-        text(WIDTH - LEFT - 20, 188, "Every agent also gets", 11, t["muted"], MONO, anchor="end"),
-        text(WIDTH - LEFT - 20, 206, shared, 11, t["ink"], MONO, anchor="end"),
-    ]
-
-    # Connectors before cards (z-order): trunk, bus, one drop per card.
-    first, last = centers[0], centers[-1]
-    out.append(f'<path d="M {WIDTH // 2},228 V {BUS_Y}" fill="none" stroke="{t["muted"]}" stroke-width="1"/>')
-    out.append(f'<path d="M {first + 8},{BUS_Y} H {last - 8}" fill="none" stroke="{t["muted"]}" stroke-width="1"/>')
-    for i, cx in enumerate(centers):
-        if i == 0:
-            d = f"M {cx + 8},{BUS_Y} Q {cx},{BUS_Y} {cx},{BUS_Y + 8} V {CARD_Y - 2}"
-        elif i == len(centers) - 1:
-            d = f"M {cx - 8},{BUS_Y} Q {cx},{BUS_Y} {cx},{BUS_Y + 8} V {CARD_Y - 2}"
-        else:
-            d = f"M {cx},{BUS_Y} V {CARD_Y - 2}"
-        out.append(f'<path d="{d}" fill="none" stroke="{t["muted"]}" stroke-width="1" marker-end="url(#arrow)"/>')
-
-    # Agent cards.
-    for (name, kind, count, tag), cx in zip(agents, centers):
-        x = cx - CARD_W // 2
-        bar = min(96, max(4, round(96 * count / total_skills / 4) * 4))
-        out.append(f'<rect x="{x}" y="{CARD_Y}" width="{CARD_W}" height="{CARD_H}" rx="6" fill="{t["card"]}" stroke="{t["border"]}" stroke-width="1"/>')
-        out.append(text(x + 12, CARD_Y + 20, kind.upper(), 8, t["soft"], MONO, 500, spacing="0.16em"))
-        for j, line in enumerate(name_lines(name)):
-            out.append(text(x + 12, CARD_Y + 40 + 16 * j, line, 13, t["ink"], SANS, 600))
-        out.append(text(x + 12, CARD_Y + 104, str(count), 44, t["ink"], SERIF))
-        out.append(f'<rect x="{x + 12}" y="{CARD_Y + 112}" width="96" height="4" rx="2" fill="{t["rule"]}"/>')
-        out.append(f'<rect x="{x + 12}" y="{CARD_Y + 112}" width="{bar}" height="4" rx="2" fill="{t["muted"]}"/>')
-        caption = "+ folder group" if kind == "folder" else f"of {total_skills} skills"
-        out.append(text(x + 12, CARD_Y + 132, caption, 9, t["muted"], MONO))
-        out.append(text(x + 12, CARD_Y + 148, tag, 9, t["soft"], MONO))
-
-    # Tool strip.
-    out.append(f'<line x1="{LEFT}" y1="464" x2="{WIDTH - LEFT}" y2="464" stroke="{t["rule"]}" stroke-width="1"/>')
-    out.append(text(LEFT, 496, "INSTALLS INTO", 10, t["soft"], MONO, 500, spacing="0.18em"))
-    x = 148
-    for tool in TOOLS:
-        w = (len(tool) * 7 + 24 + 3) // 4 * 4
-        out.append(f'<rect x="{x}" y="480" width="{w}" height="24" rx="4" fill="{t["card"]}" stroke="{t["border"]}" stroke-width="1"/>')
-        out.append(text(x + w // 2, 496, tool, 12, t["ink"], SANS, 500, anchor="middle"))
-        x += w + 8
-    out.append(text(x + 4, 496, "and about 40 more, each in its own format, via rulesync", 12, t["muted"]))
-    out.append(text(LEFT, 536, "Per-agent filtering is enforced where the tool supports it: skills, MCP servers and subagents in OpenCode, "
-                    "MCP servers in Claude Code.", 12, t["muted"]))
-    out.append(text(LEFT, 556, "Other tools get each agent's instructions; install specialist skills there with a folder group.", 12, t["muted"]))
-    out.append(text(LEFT, 584, note, 10, t["soft"], MONO))
-    out.append("</svg>")
     return "\n".join(out) + "\n"

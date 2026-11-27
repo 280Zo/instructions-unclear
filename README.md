@@ -13,7 +13,7 @@ Rules, agents, skills, MCP servers, and plugins for AI coding tools. Pick the pi
   <a href="https://280zo.github.io/instructions-unclear/agents-map.html">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/hero-dark.svg">
-      <img alt="Diagram: one shared install of skills and MCP servers feeds nine agents, and each agent sees only its own skills." src="docs/hero-light.svg" width="100%">
+      <img alt="Diagram: the repo's skill, agent and MCP server totals, the groups you can install, and the agents each group brings with the skills only they load." src="docs/hero-light.svg" width="100%">
     </picture>
   </a>
 </p>

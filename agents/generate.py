@@ -367,13 +367,6 @@ def default_skills():
     return set(skill_ids(*[r for r in roots if any((ROOT / r / "skills").glob("*/SKILL.md"))]))
 
 
-def default_mcp():
-    """MCP server names the default group installs."""
-    roots = read_jsonc(ROOT / "groups/default.jsonc")["inputRoots"]
-    return {name for r in roots if (ROOT / r / "mcp.jsonc").is_file()
-            for name in read_jsonc(ROOT / r / "mcp.jsonc")["mcpServers"]}
-
-
 def map_data():
     installed = default_skills()
     listed = set(SHARED).union(*BUNDLES.values())
@@ -418,41 +411,65 @@ def map_data():
     return {"agents": MAP_AGENTS, "skills": skills, "mcp": mcp, "subagents": subagents}
 
 
-HERO_AGENTS = [  # (map name, card label, one-line focus)
-    ("build / plan", "default", "everyday coding"),
-    ("design", "specialist", "brand, UI, slides"),
-    ("career", "folder", "resumes · jobs"),
-    ("ai-research", "folder", "train · eval · RAG"),
-    ("security", "specialist", "audits · ZAP"),
-    ("reverse-engineering", "folder", "Ghidra · radare2"),
-    ("3d-modeling", "specialist", "FreeCAD parts"),
-    ("second-opinion", "workflow", "session review"),
-    ("local-model", "workflow", "small, safe steps"),
-]
+# Agents a user picks, in the order the hero lists them; every other agent file is a helper.
+HERO_ORDER = ["build", "plan", "design", "security", "3d-modeling", "second-opinion", "local-model",
+              "ai-research", "career", "reverse-engineering", "fcos-app-installer"]
+# Groups installed with --global; every other group installs into a folder you choose.
+GLOBAL_GROUPS = ["default", "work"]
 HERO_FILES = {"light": "docs/hero-light.svg", "dark": "docs/hero-dark.svg"}
 
 
-def hero_svgs():
-    """Skill counts are what the model sees: user-invoked skills are hidden from it.
+def repo_skills():
+    """Every skill ID in the repo's rulesync source folders."""
+    comps = [p for top in ("skills", "agents", "mcp-servers") for p in sorted((ROOT / top).iterdir()) if p.is_dir()]
+    return {s.parent.name for c in comps for s in c.glob("skills/*/SKILL.md")}
 
-    A "folder" card counts the default install plus its own folder group's skills."""
-    installed = default_skills()
-    visible = (installed | set(SHARED)) - set(USER_INVOKED)
-    folder = {s for b in FOLDER_ONLY_BUNDLES for s in BUNDLES[b]}
-    agents = [(name, kind, len(allowed_skills(spec_of(name), installed) & (visible | folder if kind == "folder" else visible)), tag)
-              for name, kind, tag in HERO_AGENTS]
-    shared = "Superpowers, search, package-management · Exa, PMB"
+
+def own_skills():
+    """Agent -> how many repo skills only it may load (plugin skills not counted)."""
+    plugin = {s for k in NATIVE_PLUGINS for s in BUNDLES[k]}
+    every = repo_skills() | set(SHARED) | plugin
+    allowed = {a: allowed_skills(spec_of(a), every) & every for a in HERO_ORDER}
+    return {a: len(allowed[a] - set().union(*(allowed[b] for b in HERO_ORDER if b != a)) - plugin)
+            for a in HERO_ORDER}
+
+
+def hero_groups():
+    """(group, "global" or "folder"): global groups first, then folder groups by name."""
+    names = sorted(p.stem for p in (ROOT / "groups").glob("*.jsonc"))
+    return ([(g, "global") for g in GLOBAL_GROUPS if g in names]
+            + [(g, "folder") for g in names if g not in GLOBAL_GROUPS])
+
+
+def hero_data():
+    own = own_skills()
+    groups = []
+    for name, scope in hero_groups():
+        roots = read_jsonc(ROOT / f"groups/{name}.jsonc")["inputRoots"]
+        skills = {p.parent.name for r in roots for p in (ROOT / r / "skills").glob("*/SKILL.md")}
+        servers = {n for r in roots if (ROOT / r / "mcp.jsonc").is_file()
+                   for n in read_jsonc(ROOT / r / "mcp.jsonc")["mcpServers"]}
+        files = {p.stem for r in roots for p in (ROOT / r / "subagents").glob("*.md")}
+        agents = [(a, own[a] or None) for a in HERO_ORDER if a in files]
+        groups.append({"name": name, "scope": scope, "skills": len(skills), "mcp": len(servers), "agents": agents})
     owners = {key: name for name, spec in SPECIALISTS.items() for key in spec["bundles"] if key in NATIVE_PLUGINS}
-    plugins = ", ".join(f"{plugin['title']} ({len(BUNDLES[key])} skills, {owners[key]} agent)"
-                        for key, plugin in NATIVE_PLUGINS.items())
-    note = f"Folder cards add their group. Plugins installed separately: {plugins}."
-    return {path: hero.render(theme, agents, len(visible), len(default_mcp()), shared, note)
-            for theme, path in HERO_FILES.items()}
+    plugins = [("Superpowers", len(SUPERPOWERS), "every agent")]
+    plugins += [(NATIVE_PLUGINS[k]["title"], len(BUNDLES[k]), owners[k]) for k in NATIVE_PLUGINS]
+    files = {p.stem for p in ROOT.glob("agents/*/subagents/*.md")}
+    servers = {n for p in ROOT.glob("mcp-servers/*/mcp.jsonc") for n in read_jsonc(p)["mcpServers"]}
+    repo = {"skills": len(repo_skills()), "agents": len(HERO_ORDER), "helpers": len(files - set(HERO_ORDER)),
+            "mcp": len(servers), "plugin_skills": sum(n for _t, n, _o in plugins)}
+    return {"repo": repo, "plugins": plugins, "groups": groups}
+
+
+def hero_svgs():
+    data = hero_data()
+    return {path: hero.render(theme, data) for theme, path in HERO_FILES.items()}
 
 
 def readme_block():
-    alt = ("Diagram: one shared install of skills and MCP servers feeds nine agents, "
-           "and each agent sees only its own skills.")
+    alt = ("Diagram: the repo's skill, agent and MCP server totals, the groups you can install, "
+           "and the agents each group brings with the skills only they load.")
     return "\n".join([
         MAP_BEGIN,
         "",
